@@ -21,6 +21,8 @@ const config: Config = {
       fontFamily: {
         'clash': ['"Clash Display"', 'sans-serif'],
         'general-sans': ['"General Sans"', 'sans-serif'],
+        'nunito': ['Nunito', 'sans-serif'], // Kept for potential specific use, but Plus Jakarta Sans is new default
+        'plus-jakarta-sans': ['"Plus Jakarta Sans"', 'sans-serif'],
       },
       maxWidth: {
         '8xl': '1440px',

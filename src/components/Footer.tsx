@@ -1,6 +1,7 @@
 import React from 'react';
 import { Lightbulb, Twitter, Linkedin, Youtube, Instagram } from 'lucide-react';
 import Container from './Container';
+import { headingStyles, textStyles, opacityVariants } from '@/styles/typography';
 
 const Footer: React.FC = () => {
   return (
@@ -14,78 +15,78 @@ const Footer: React.FC = () => {
                 EduTech<span className="text-sm">AI</span>
               </span>
             </div>
-            <p className="text-white/70 mb-6">
+            <p className={`${textStyles.body} ${opacityVariants.secondary} mb-6`}>
               Transforming education through responsible AI, empowering organizations to deliver exceptional learning experiences.
             </p>
             <div className="flex space-x-4">
-              <a href="#" className="text-white/60 hover:text-turquoise transition-colors" aria-label="Twitter">
+              <a href="#" className={`${opacityVariants.tertiary} hover:text-turquoise transition-colors`} aria-label="Twitter">
                 <Twitter size={20} />
               </a>
-              <a href="#" className="text-white/60 hover:text-turquoise transition-colors" aria-label="LinkedIn">
+              <a href="#" className={`${opacityVariants.tertiary} hover:text-turquoise transition-colors`} aria-label="LinkedIn">
                 <Linkedin size={20} />
               </a>
-              <a href="#" className="text-white/60 hover:text-turquoise transition-colors" aria-label="YouTube">
+              <a href="#" className={`${opacityVariants.tertiary} hover:text-turquoise transition-colors`} aria-label="YouTube">
                 <Youtube size={20} />
               </a>
-              <a href="#" className="text-white/60 hover:text-turquoise transition-colors" aria-label="Instagram">
+              <a href="#" className={`${opacityVariants.tertiary} hover:text-turquoise transition-colors`} aria-label="Instagram">
                 <Instagram size={20} />
               </a>
             </div>
           </div>
           
           <div className="lg:col-span-2">
-            <h3 className="font-inter-tight font-bold text-lg mb-4 text-white">Product</h3>
+            <h3 className={`${headingStyles.subsection} text-white mb-4`}>Product</h3>
             <ul className="space-y-2">
-              <li><a href="#" className="text-white/70 hover:text-turquoise transition-colors">AI Tutor</a></li>
-              <li><a href="#" className="text-white/70 hover:text-turquoise transition-colors">OB3 Badges</a></li>
-              <li><a href="#" className="text-white/70 hover:text-turquoise transition-colors">VR Labs</a></li>
-              <li><a href="#" className="text-white/70 hover:text-turquoise transition-colors">Analytics</a></li>
-              <li><a href="#" className="text-white/70 hover:text-turquoise transition-colors">Integration</a></li>
+              <li><a href="#" className={`${textStyles.body} ${opacityVariants.secondary} hover:text-turquoise transition-colors`}>AI Tutor</a></li>
+              <li><a href="#" className={`${textStyles.body} ${opacityVariants.secondary} hover:text-turquoise transition-colors`}>OB3 Badges</a></li>
+              <li><a href="#" className={`${textStyles.body} ${opacityVariants.secondary} hover:text-turquoise transition-colors`}>VR Labs</a></li>
+              <li><a href="#" className={`${textStyles.body} ${opacityVariants.secondary} hover:text-turquoise transition-colors`}>Analytics</a></li>
+              <li><a href="#" className={`${textStyles.body} ${opacityVariants.secondary} hover:text-turquoise transition-colors`}>Integration</a></li>
             </ul>
           </div>
           
           <div className="lg:col-span-2">
-            <h3 className="font-inter-tight font-bold text-lg mb-4 text-white">Resources</h3>
+            <h3 className={`${headingStyles.subsection} text-white mb-4`}>Resources</h3>
             <ul className="space-y-2">
-              <li><a href="#" className="text-white/70 hover:text-turquoise transition-colors">Documentation</a></li>
-              <li><a href="#" className="text-white/70 hover:text-turquoise transition-colors">Case Studies</a></li>
-              <li><a href="#" className="text-white/70 hover:text-turquoise transition-colors">Blog</a></li>
-              <li><a href="#" className="text-white/70 hover:text-turquoise transition-colors">Webinars</a></li>
-              <li><a href="#" className="text-white/70 hover:text-turquoise transition-colors">API</a></li>
+              <li><a href="#" className={`${textStyles.body} ${opacityVariants.secondary} hover:text-turquoise transition-colors`}>Documentation</a></li>
+              <li><a href="#" className={`${textStyles.body} ${opacityVariants.secondary} hover:text-turquoise transition-colors`}>Case Studies</a></li>
+              <li><a href="#" className={`${textStyles.body} ${opacityVariants.secondary} hover:text-turquoise transition-colors`}>Blog</a></li>
+              <li><a href="#" className={`${textStyles.body} ${opacityVariants.secondary} hover:text-turquoise transition-colors`}>Webinars</a></li>
+              <li><a href="#" className={`${textStyles.body} ${opacityVariants.secondary} hover:text-turquoise transition-colors`}>API</a></li>
             </ul>
           </div>
           
           <div className="lg:col-span-2">
-            <h3 className="font-inter-tight font-bold text-lg mb-4 text-white">Company</h3>
+            <h3 className={`${headingStyles.subsection} text-white mb-4`}>Company</h3>
             <ul className="space-y-2">
-              <li><a href="#" className="text-white/70 hover:text-turquoise transition-colors">About</a></li>
-              <li><a href="#" className="text-white/70 hover:text-turquoise transition-colors">Team</a></li>
-              <li><a href="#" className="text-white/70 hover:text-turquoise transition-colors">Careers</a></li>
-              <li><a href="#" className="text-white/70 hover:text-turquoise transition-colors">Press</a></li>
-              <li><a href="#" className="text-white/70 hover:text-turquoise transition-colors">Contact</a></li>
+              <li><a href="#" className={`${textStyles.body} ${opacityVariants.secondary} hover:text-turquoise transition-colors`}>About</a></li>
+              <li><a href="#" className={`${textStyles.body} ${opacityVariants.secondary} hover:text-turquoise transition-colors`}>Team</a></li>
+              <li><a href="#" className={`${textStyles.body} ${opacityVariants.secondary} hover:text-turquoise transition-colors`}>Careers</a></li>
+              <li><a href="#" className={`${textStyles.body} ${opacityVariants.secondary} hover:text-turquoise transition-colors`}>Press</a></li>
+              <li><a href="#" className={`${textStyles.body} ${opacityVariants.secondary} hover:text-turquoise transition-colors`}>Contact</a></li>
             </ul>
           </div>
           
           <div className="lg:col-span-2">
-            <h3 className="font-inter-tight font-bold text-lg mb-4 text-white">Legal</h3>
+            <h3 className={`${headingStyles.subsection} text-white mb-4`}>Legal</h3>
             <ul className="space-y-2">
-              <li><a href="#" className="text-white/70 hover:text-turquoise transition-colors">Terms</a></li>
-              <li><a href="#" className="text-white/70 hover:text-turquoise transition-colors">Privacy</a></li>
-              <li><a href="#" className="text-white/70 hover:text-turquoise transition-colors">Cookies</a></li>
-              <li><a href="#" className="text-white/70 hover:text-turquoise transition-colors">Licenses</a></li>
-              <li><a href="#" className="text-white/70 hover:text-turquoise transition-colors">Settings</a></li>
+              <li><a href="#" className={`${textStyles.body} ${opacityVariants.secondary} hover:text-turquoise transition-colors`}>Terms</a></li>
+              <li><a href="#" className={`${textStyles.body} ${opacityVariants.secondary} hover:text-turquoise transition-colors`}>Privacy</a></li>
+              <li><a href="#" className={`${textStyles.body} ${opacityVariants.secondary} hover:text-turquoise transition-colors`}>Cookies</a></li>
+              <li><a href="#" className={`${textStyles.body} ${opacityVariants.secondary} hover:text-turquoise transition-colors`}>Licenses</a></li>
+              <li><a href="#" className={`${textStyles.body} ${opacityVariants.secondary} hover:text-turquoise transition-colors`}>Settings</a></li>
             </ul>
           </div>
         </div>
         
         <div className="pt-8 flex flex-col md:flex-row items-center justify-between">
-          <p className="text-sm text-white/60 mb-4 md:mb-0">
+          <p className={`${textStyles.small} ${opacityVariants.tertiary} mb-4 md:mb-0`}>
             &copy; {new Date().getFullYear()} EduTechAI. All rights reserved.
           </p>
           <div className="flex space-x-6">
-            <a href="#" className="text-sm text-white/60 hover:text-turquoise transition-colors">Terms</a>
-            <a href="#" className="text-sm text-white/60 hover:text-turquoise transition-colors">Privacy</a>
-            <a href="#" className="text-sm text-white/60 hover:text-turquoise transition-colors">Cookies</a>
+            <a href="#" className={`${textStyles.small} ${opacityVariants.tertiary} hover:text-turquoise transition-colors`}>Terms</a>
+            <a href="#" className={`${textStyles.small} ${opacityVariants.tertiary} hover:text-turquoise transition-colors`}>Privacy</a>
+            <a href="#" className={`${textStyles.small} ${opacityVariants.tertiary} hover:text-turquoise transition-colors`}>Cookies</a>
           </div>
         </div>
       </Container>

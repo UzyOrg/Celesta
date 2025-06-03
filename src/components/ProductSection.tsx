@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { headingStyles, textStyles, opacityVariants } from '../styles/typography';
 import { Bot, Award, Laptop as Laptop3, Brain } from 'lucide-react';
 import Container from './Container';
 
@@ -22,8 +23,8 @@ const Feature: React.FC<FeatureProps> = ({ icon, title, description, delay }) =>
       <div className="w-12 h-12 rounded-full bg-gradient-to-r from-turquoise to-lime flex items-center justify-center mb-6">
         {icon}
       </div>
-      <h3 className="font-['Clash_Display'] text-[clamp(2.8rem,6vw,5rem)] leading-[1.1] tracking-tight mb-3 text-white">{title}</h3>
-      <p className="text-white/70">{description}</p>
+      <h3 className={`${headingStyles.h4} mb-3 text-white`}>{title}</h3>
+      <p className={`${textStyles.body} ${opacityVariants.secondary}`}>{description}</p>
     </motion.div>
   );
 };
@@ -68,7 +69,7 @@ const ProductSection: React.FC = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
                 viewport={{ once: true }}
-                className="font-['Clash_Display'] text-[clamp(2.8rem,6vw,5rem)] leading-[1.1] tracking-tight mb-6"
+                className={`${headingStyles.h2} text-[clamp(2.8rem,6vw,5rem)] leading-[1.1] tracking-tight mb-6`}
               >
                 Breakthrough Features for{" "}
                 <span className="bg-gradient-to-r from-turquoise to-lime bg-clip-text text-transparent">
@@ -82,7 +83,7 @@ const ProductSection: React.FC = () => {
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.1 }}
               viewport={{ once: true }}
-              className="text-xl max-w-3xl mx-auto text-white/80"
+              className={`${textStyles.largeBody} max-w-3xl mx-auto ${opacityVariants.secondary}`}
             >
               Our platform combines cutting-edge AI with practical educational tools to deliver measurable results for institutions and businesses.
             </motion.p>

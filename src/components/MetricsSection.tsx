@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, useAnimation, useInView } from 'framer-motion';
+import { headingStyles, textStyles, opacityVariants } from '../styles/typography';
 import { TrendingUp } from 'lucide-react';
 import Container from './Container';
 
@@ -58,11 +59,11 @@ const Metric: React.FC<MetricProps> = ({ value, unit, label, delay }) => {
       viewport={{ once: true }}
       className="text-center"
     >
-      <div className="text-4xl md:text-5xl font-['Clash_Display'] leading-[1.1] tracking-tight mb-2">
+      <div className={`${headingStyles.h2} text-4xl md:text-5xl leading-[1.1] tracking-tight mb-2`}>
         {count}
         <span className="text-turquoise">{unit}</span>
       </div>
-      <p className="text-white/70">{label}</p>
+      <p className={`${textStyles.body} ${opacityVariants.secondary}`}>{label}</p>
     </motion.div>
   );
 };
@@ -88,7 +89,7 @@ const MetricsSection: React.FC = () => {
               className="inline-flex items-center px-4 py-2 rounded-full bg-white/5 backdrop-blur-sm mb-4"
             >
               <TrendingUp className="w-4 h-4 mr-2 text-turquoise" />
-              <span className="font-medium">Real Results</span>
+              <span className={`${textStyles.button} ${opacityVariants.primary}`}>Real Results</span>
             </motion.div>
             
             <div className="relative">
@@ -98,7 +99,7 @@ const MetricsSection: React.FC = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.1 }}
                 viewport={{ once: true }}
-                className="font-['Clash_Display'] text-[clamp(2.8rem,6vw,5rem)] leading-[1.1] tracking-tight mb-6"
+                className={`${headingStyles.h2} text-[clamp(2.8rem,6vw,5rem)] leading-[1.1] tracking-tight mb-6`}
               >
                 Impact That{" "}
                 <span className="bg-gradient-to-r from-turquoise to-lime bg-clip-text text-transparent">

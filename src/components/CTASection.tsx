@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { ArrowRight, Mail } from 'lucide-react';
 import Container from './Container';
 import Button from './Button';
+import { headingStyles, textStyles } from '../styles/typography';
 
 const CTASection: React.FC = () => {
   return (
@@ -21,7 +22,7 @@ const CTASection: React.FC = () => {
                   whileInView={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5 }}
                   viewport={{ once: true }}
-                  className="font-['Clash_Display'] text-[clamp(2.8rem,6vw,5rem)] leading-[1.1] tracking-tight mb-6"
+                  className={`${headingStyles.h2} text-[clamp(2.8rem,6vw,5rem)] leading-[1.1] tracking-tight mb-6`}
                 >
                   Ready to Transform Your{" "}
                   <span className="bg-gradient-to-r from-turquoise to-lime bg-clip-text text-transparent">
@@ -36,7 +37,7 @@ const CTASection: React.FC = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.1 }}
                 viewport={{ once: true }}
-                className="text-xl mb-8 text-white/90"
+                className={`${textStyles.largeBody} mb-8 text-white/90`}
               >
                 Join forward-thinking organizations already leveraging our responsible AI platform to revolutionize learning outcomes.
               </motion.p>

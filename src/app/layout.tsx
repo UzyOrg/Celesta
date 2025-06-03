@@ -15,11 +15,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Clash+Display:wght@600;700;800;900&family=General+Sans:wght@400;500&display=swap" rel="stylesheet" />
+        {/* Font imports are now handled in globals.css */}
       </head>
-      <body>
+      <body className="font-plus-jakarta-sans">
         <ThemeProvider>
           {children}
         </ThemeProvider>
