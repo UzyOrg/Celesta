@@ -32,7 +32,7 @@ const Navbar: React.FC = () => {
           <div className="flex items-center">
             <Lightbulb className="w-8 h-8 text-turquoise" />
             <span className="ml-2 text-2xl font-general-sans font-black bg-gradient-to-r from-turquoise to-lime bg-clip-text text-transparent">
-              EduTech<span className="text-base">AI</span>
+              Celestea<span className="text-base">AI</span>
             </span>
           </div>
           

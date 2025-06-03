@@ -1,5 +1,6 @@
 import React from 'react';
-import { Lightbulb, Twitter, Linkedin, Youtube, Instagram } from 'lucide-react';
+import Link from 'next/link';
+import { Twitter, Linkedin, Youtube, Instagram, Lightbulb } from 'lucide-react';
 import Container from './Container';
 import { headingStyles, textStyles, opacityVariants } from '@/styles/typography';
 
@@ -12,7 +13,7 @@ const Footer: React.FC = () => {
             <div className="flex items-center mb-4">
               <Lightbulb className="w-6 h-6 text-turquoise" />
               <span className="ml-2 text-xl font-inter-tight font-black bg-gradient-to-r from-turquoise to-lime bg-clip-text text-transparent">
-                EduTech<span className="text-sm">AI</span>
+                Celestea<span className="text-sm">AI</span>
               </span>
             </div>
             <p className={`${textStyles.body} ${opacityVariants.secondary} mb-6`}>
@@ -71,7 +72,7 @@ const Footer: React.FC = () => {
             <h3 className={`${headingStyles.subsection} text-white mb-4`}>Legal</h3>
             <ul className="space-y-2">
               <li><a href="#" className={`${textStyles.body} ${opacityVariants.secondary} hover:text-turquoise transition-colors`}>Terms</a></li>
-              <li><a href="#" className={`${textStyles.body} ${opacityVariants.secondary} hover:text-turquoise transition-colors`}>Privacy</a></li>
+              <li><Link href="/privacy-policy" className={`${textStyles.body} ${opacityVariants.secondary} hover:text-turquoise transition-colors`}>Privacy Policy</Link></li>
               <li><a href="#" className={`${textStyles.body} ${opacityVariants.secondary} hover:text-turquoise transition-colors`}>Cookies</a></li>
               <li><a href="#" className={`${textStyles.body} ${opacityVariants.secondary} hover:text-turquoise transition-colors`}>Licenses</a></li>
               <li><a href="#" className={`${textStyles.body} ${opacityVariants.secondary} hover:text-turquoise transition-colors`}>Settings</a></li>
@@ -81,7 +82,7 @@ const Footer: React.FC = () => {
         
         <div className="pt-8 flex flex-col md:flex-row items-center justify-between">
           <p className={`${textStyles.small} ${opacityVariants.tertiary} mb-4 md:mb-0`}>
-            &copy; {new Date().getFullYear()} EduTechAI. All rights reserved.
+            &copy; {new Date().getFullYear()} Celestea. All rights reserved.
           </p>
           <div className="flex space-x-6">
             <a href="#" className={`${textStyles.small} ${opacityVariants.tertiary} hover:text-turquoise transition-colors`}>Terms</a>
