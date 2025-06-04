@@ -1,20 +1,28 @@
 // src/app/privacy-policy/page.tsx
-import fs from 'fs';
-import path from 'path';
 import Container from '@/components/Container';
 import { headingStyles, opacityVariants, textStyles } from '@/styles/typography';
 
-const PrivacyPolicyPage = () => {
-  // process.cwd() is the root of the Next.js project (Celesta directory)
-  // termly.html is in the parent directory of Celesta (project-edTech)
-  const filePath = path.join(process.cwd(), '..', 'termly.html');
+// This is now an async Server Component
+const PrivacyPolicyPage = async () => {
   let htmlContent = '';
   let errorLoading = false;
 
   try {
-    htmlContent = fs.readFileSync(filePath, 'utf8');
+    // Fetch the content from the public directory.
+    // This fetch runs on the server.
+    // Using a cache option like 'no-store' ensures you get the latest version during development,
+    // or 'force-cache' if the content rarely changes and you want to optimize.
+    // For production, consider revalidating strategies if the HTML can change without a new build.
+    const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/termly.html`, {
+      cache: 'no-store', // Or 'force-cache' or configure revalidation
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch privacy policy: ${response.status} ${response.statusText}`);
+    }
+    htmlContent = await response.text();
   } catch (error) {
-    console.error('Error reading privacy policy file (termly.html):', error);
+    console.error('Error fetching privacy policy file (termly.html):', error);
     errorLoading = true;
   }
 
@@ -35,8 +43,9 @@ const PrivacyPolicyPage = () => {
 
   return (
     <Container>
-      {/* Adding a wrapper for some padding, assuming termly.html might not have its own full-page layout margins */}
-      <div className="py-8 md:py-12 lg:py-16">
+      {/* Adding a wrapper for some padding */}
+      <div className="py-8 md:py-12 lg:py-16 prose max-w-none">
+        {/* The 'prose' class from Tailwind Typography can help style raw HTML */}
         <div dangerouslySetInnerHTML={{ __html: htmlContent }} />
       </div>
     </Container>
