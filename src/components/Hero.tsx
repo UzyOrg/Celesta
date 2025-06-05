@@ -1,10 +1,15 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { motion, useAnimation, useScroll } from 'framer-motion';
 import { Sparkles, Play } from 'lucide-react';
 import Container from './Container';
 import Button from './Button';
+import LeadModal from './LeadModal';
 
 const Hero: React.FC = () => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const openModal = () => setIsModalOpen(true);
+  const closeModal = () => setIsModalOpen(false);
   const controls = useAnimation();
   const { scrollY } = useScroll();
   const particlesRef = useRef<HTMLDivElement>(null);
@@ -54,7 +59,8 @@ const Hero: React.FC = () => {
   }, [controls, scrollY]);
 
   return (
-    <section className="relative pt-32 pb-20 md:pt-40 md:pb-32 overflow-hidden">
+    <>
+      <section className="relative pt-32 pb-20 md:pt-40 md:pb-32 overflow-hidden">
       <div ref={particlesRef} className="absolute inset-0 pointer-events-none" />
       
       <Container>
@@ -89,8 +95,8 @@ const Hero: React.FC = () => {
             </p>
             
             <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
-              <Button size="lg">
-                Get Started Free
+              <Button size="lg" onClick={openModal}>
+                Únete a la Lista de Espera
               </Button>
               <Button variant="outline" size="lg" className="group">
                 <Play className="w-4 h-4 mr-2 text-turquoise group-hover:text-white transition-colors" />
@@ -123,6 +129,8 @@ const Hero: React.FC = () => {
         </div>
       </Container>
     </section>
+    <LeadModal open={isModalOpen} onClose={closeModal} />
+    </>
   );
 };
 

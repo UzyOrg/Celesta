@@ -1,12 +1,18 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight, Mail } from 'lucide-react';
 import Container from './Container';
 import Button from './Button';
 import { headingStyles, textStyles } from '../styles/typography';
+import LeadModal from './LeadModal';
 
 const CTASection: React.FC = () => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const openModal = () => setIsModalOpen(true);
+  const closeModal = () => setIsModalOpen(false);
   return (
+    <>
     <section className="pt-24 pb-24">
       <Container>
         <div className="border-t border-[#1A1E26]/80 pt-16">
@@ -50,7 +56,7 @@ const CTASection: React.FC = () => {
                 className="flex flex-col sm:flex-row items-center justify-center gap-4"
               >
                 <div className="w-full sm:w-auto">
-                  <Button size="lg">
+                  <Button size="lg" onClick={openModal}>
                     Request Demo <ArrowRight className="ml-2 w-4 h-4" />
                   </Button>
                 </div>
@@ -65,6 +71,8 @@ const CTASection: React.FC = () => {
         </div>
       </Container>
     </section>
+      <LeadModal open={isModalOpen} onClose={closeModal} />
+    </>
   );
 };
 
