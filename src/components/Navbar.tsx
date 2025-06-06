@@ -32,19 +32,19 @@ const Navbar: React.FC = () => {
           <div className="flex items-center">
             <Sparkles className="w-8 h-8 text-turquoise" />
             <span className="ml-2 text-2xl font-general-sans font-black bg-gradient-to-r from-turquoise to-lime bg-clip-text text-transparent">
-              Celestea<span className="text-base">AI</span>
+              Celestea AI
             </span>
           </div>
           
           <div className="hidden md:flex items-center space-x-8">
-            <a href="#product" className={`${textStyles.button} ${opacityVariants.primary} hover:text-turquoise transition-colors`}>Product</a>
-            <a href="#solutions" className={`${textStyles.button} ${opacityVariants.primary} hover:text-turquoise transition-colors`}>Solutions</a>
-            <a href="#pricing" className={`${textStyles.button} ${opacityVariants.primary} hover:text-turquoise transition-colors`}>Pricing</a>
-            <a href="#resources" className={`${textStyles.button} ${opacityVariants.primary} hover:text-turquoise transition-colors`}>Resources</a>
+            <a href="#product" className={`${textStyles.button} ${opacityVariants.primary} hover:text-turquoise transition-colors`}>Producto</a>
+            <a href="#solutions" className={`${textStyles.button} ${opacityVariants.primary} hover:text-turquoise transition-colors`}>Soluciones</a>
+            <a href="#pricing" className={`${textStyles.button} ${opacityVariants.primary} hover:text-turquoise transition-colors`}>Planes</a>
+            <a href="#resources" className={`${textStyles.button} ${opacityVariants.primary} hover:text-turquoise transition-colors`}>Recursos</a>
             <button
               onClick={toggleTheme}
               className="p-2 rounded-lg hover:bg-white/10 transition-colors"
-              aria-label="Toggle theme"
+              aria-label="Cambiar tema"
             >
               {theme === 'dark' ? (
                 <Sun className="w-5 h-5 text-white/90" />
@@ -54,7 +54,7 @@ const Navbar: React.FC = () => {
             </button>
             <Button variant="secondary">
               <Sparkles className="w-4 h-4 mr-2" />
-              Book Demo
+              Agenda una Demo
             </Button>
           </div>
           
@@ -62,7 +62,7 @@ const Navbar: React.FC = () => {
             <button
               onClick={toggleTheme}
               className="p-2 rounded-lg hover:bg-white/10 transition-colors"
-              aria-label="Toggle theme"
+              aria-label="Cambiar tema"
             >
               {theme === 'dark' ? (
                 <Sun className="w-5 h-5 text-white/90" />
@@ -73,7 +73,7 @@ const Navbar: React.FC = () => {
             <button 
               className="text-white/90 focus:outline-none"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
+              aria-label={isMenuOpen ? 'Cerrar menú' : 'Abrir menú'}
             >
               {isMenuOpen ? <X size={24} /> : <MenuIcon size={24} />}
             </button>
@@ -83,13 +83,13 @@ const Navbar: React.FC = () => {
       
       {isMenuOpen && (
         <div className="md:hidden absolute top-full left-0 right-0 bg-[#0D1117]/95 backdrop-blur-sm border-b border-[#1A1E26]/80 py-4 px-6 flex flex-col space-y-4">
-          <a href="#product" className={`${textStyles.button} ${opacityVariants.primary} py-2`} onClick={() => setIsMenuOpen(false)}>Product</a>
-          <a href="#solutions" className={`${textStyles.button} ${opacityVariants.primary} py-2`} onClick={() => setIsMenuOpen(false)}>Solutions</a>
-          <a href="#pricing" className={`${textStyles.button} ${opacityVariants.primary} py-2`} onClick={() => setIsMenuOpen(false)}>Pricing</a>
-          <a href="#resources" className={`${textStyles.button} ${opacityVariants.primary} py-2`} onClick={() => setIsMenuOpen(false)}>Resources</a>
+          <a href="#product" className={`${textStyles.button} ${opacityVariants.primary} py-2`} onClick={() => setIsMenuOpen(false)}>Producto</a>
+          <a href="#solutions" className={`${textStyles.button} ${opacityVariants.primary} py-2`} onClick={() => setIsMenuOpen(false)}>Soluciones</a>
+          <a href="#pricing" className={`${textStyles.button} ${opacityVariants.primary} py-2`} onClick={() => setIsMenuOpen(false)}>Planes</a>
+          <a href="#resources" className={`${textStyles.button} ${opacityVariants.primary} py-2`} onClick={() => setIsMenuOpen(false)}>Recursos</a>
           <Button variant="secondary" className="w-full">
             <Sparkles className="w-4 h-4 mr-2" />
-            Book Demo
+            Agenda una Demo
           </Button>
         </div>
       )}

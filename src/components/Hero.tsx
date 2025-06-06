@@ -74,7 +74,7 @@ const Hero: React.FC = () => {
             <div className="inline-flex items-center px-3 py-1.5 mb-6 rounded-full bg-white/5 backdrop-blur-sm border border-white/10">
               <span className="text-white/90">
                 <Sparkles className="inline h-4 w-4 mr-2 text-turquoise" /> 
-                AI-Powered Education
+                Innovación Educativa con IA
               </span>
             </div>
             
@@ -82,16 +82,16 @@ const Hero: React.FC = () => {
               <span className="absolute -z-10 inset-0 pointer-events-none bg-[radial-gradient(circle_at_center,_rgba(5,247,255,0.35)_0%,_transparent_60%)] blur-[80px] opacity-0 motion-safe:animate-fadeGlow"></span>
               <h1 className="text-[clamp(2.8rem,6vw,5rem)] font-bold leading-[1.1] tracking-tight mb-6">
                 <span className="text-white">
-                  Transforming Education Through{' '}
+                  Transformamos la Educación con{' '}
                   <span className="bg-gradient-to-r from-turquoise to-lime bg-clip-text text-transparent">
-                    Responsible AI
+                    Inteligencia Artificial Responsable
                   </span>
                 </span>
               </h1>
             </div>
             
             <p className="text-xl md:text-2xl text-white/80 mb-8 max-w-2xl mx-auto lg:mx-0">
-              Empower your organization with 24/7 AI tutoring, verifiable skill badges, and immersive VR learning labs.
+              Impulsa tu institución con tutoría IA 24/7, insignias de habilidades verificables y laboratorios de aprendizaje inmersivos en RV.
             </p>
             
             <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
@@ -100,7 +100,7 @@ const Hero: React.FC = () => {
               </Button>
               <Button variant="outline" size="lg" className="group">
                 <Play className="w-4 h-4 mr-2 text-turquoise group-hover:text-white transition-colors" />
-                Watch Demo
+                Ver Demo
               </Button>
             </div>
           </motion.div>
@@ -119,8 +119,8 @@ const Hero: React.FC = () => {
                     <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-r from-turquoise to-lime flex items-center justify-center">
                       <Sparkles className="w-8 h-8 text-white" />
                     </div>
-                    <p className="text-lg font-medium text-white/90">AI Learning Environment</p>
-                    <p className="text-sm text-white/70">Interactive VR Labs & AI Tutoring</p>
+                    <p className="text-lg font-medium text-white/90">Entorno de Aprendizaje IA</p>
+                    <p className="text-sm text-white/70">Laboratorios RV Interactivos y Tutoría con IA</p>
                   </div>
                 </div>
               </div>

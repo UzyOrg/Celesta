@@ -1,3 +1,4 @@
+// TODO: Internacionalizar (i18n) todos los textos para soportar múltiples idiomas.
 'use client';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -11,7 +12,7 @@ import { CheckCircle, PartyPopper } from 'lucide-react'; // <--- Cambiar AlertTr
 
 const schema = z.object({
   name: z.string().min(2, 'Ingresa tu nombre'),
-  email: z.string().email('Correo inválido'),
+  email: z.string().email('Correo electrónico inválido'),
   phone: z.string()
     .transform((val: string | undefined) => val?.trim() === '' ? undefined : val?.trim())
     .optional()
@@ -34,7 +35,7 @@ const schema = z.object({
     .transform((val: string) => val.trim() === '' ? undefined : val.trim())
     .optional()
     .refine((val: string | undefined) => val === undefined || val.length <= 200, {
-      message: 'Máx. 200 caracteres',
+      message: 'Máximo 200 caracteres',
     }),
 });
 
@@ -75,7 +76,7 @@ export default function LeadModal({
       setIsSubmissionSuccessful(true);
 
     } catch (error: any) {
-      let errorMessage = 'Error, intenta de nuevo';
+      let errorMessage = 'Ocurrió un error, por favor intenta de nuevo.';
       // Verificar si es un error de Axios y si tiene una respuesta
       if (axios.isAxiosError(error) && error.response) {
         const { status, data: responseData } = error.response;
@@ -135,9 +136,9 @@ export default function LeadModal({
           {isSubmissionSuccessful ? (
             <div className="text-center py-8">
               <CheckCircle className="w-16 h-16 text-lime mx-auto mb-6" />
-              <h2 className={`text-3xl font-bold text-white/95 ${fontFamilies.plusJakartaSans} mb-3`}>¡Registro Exitoso!</h2>
+              <h2 className={`text-3xl font-bold text-white/95 ${fontFamilies.plusJakartaSans} mb-3`}>¡Registro exitoso!</h2>
               <p className={`text-white/70 ${fontFamilies.plusJakartaSans} text-lg mb-8`}>
-                Gracias por unirte a nuestra lista de espera. <br />Pronto podrás experimentar una mejor educación.
+                Gracias por unirte a nuestra lista de espera. <br />Pronto podrás vivir una nueva experiencia educativa.
               </p>
               <button
                 onClick={handleCloseModal}
@@ -149,9 +150,9 @@ export default function LeadModal({
           ) : showAlreadyRegisteredView ? ( 
             <div className="text-center py-8">
               <PartyPopper className="w-16 h-16 text-green-500 mx-auto mb-6" /> {/* Icono y color cambiados */}
-              <h2 className={`text-3xl font-bold text-white/95 ${fontFamilies.plusJakartaSans} mb-3`}>¡Ya Estás en la Lista!</h2> {/* Mensaje cambiado */}
+              <h2 className={`text-3xl font-bold text-white/95 ${fontFamilies.plusJakartaSans} mb-3`}>¡Ya estás en la lista!</h2> {/* Mensaje cambiado */}
               <p className={`text-white/70 ${fontFamilies.plusJakartaSans} text-lg mb-8`}>
-                ¡Excelente! Tu correo electrónico ya estaba registrado con nosotros. <br />Muy pronto tendrás noticias.
+                ¡Excelente! Tu correo electrónico ya estaba registrado con nosotros. <br />Muy pronto recibirás noticias nuestras.
               </p> {/* Mensaje cambiado */}
               <button
                 onClick={handleCloseModal}
@@ -162,24 +163,24 @@ export default function LeadModal({
             </div>
           ) : (
             <>
-              <h2 className={`text-3xl font-bold text-white/95 ${fontFamilies.plusJakartaSans} mb-1`}>Solicita tu Piloto</h2>
-              <p className={`text-white/60 ${fontFamilies.plusJakartaSans} text-sm mb-6`}>Completa el formulario y nos pondremos en contacto.</p>
+              <h2 className={`text-3xl font-bold text-white/95 ${fontFamilies.plusJakartaSans} mb-1`}>Solicita acceso al programa piloto</h2>
+              <p className={`text-white/60 ${fontFamilies.plusJakartaSans} text-sm mb-6`}>Completa el siguiente formulario y nuestro equipo se pondrá en contacto contigo a la brevedad.</p>
 
               <form onSubmit={handleSubmit(submit)} className="space-y-5">
             <div>
-              <label htmlFor="name" className={`block text-sm font-medium text-white/70 mb-1.5 ${fontFamilies.plusJakartaSans}`}>Nombre Completo</label>
-              <input {...register('name')} id="name" placeholder="Ej: Ada Lovelace" className={`w-full px-4 py-2.5 bg-white/5 border border-white/20 rounded-lg text-white/90 placeholder:text-white/50 focus:ring-2 focus:ring-turquoise focus:border-turquoise outline-none transition-colors duration-150 ${fontFamilies.plusJakartaSans} disabled:opacity-70 disabled:cursor-not-allowed`} disabled={isSubmitting} />
+              <label htmlFor="name" className={`block text-sm font-medium text-white/70 mb-1.5 ${fontFamilies.plusJakartaSans}`}>Nombre completo</label>
+              <input {...register('name')} id="name" placeholder="Ej: María López" className={`w-full px-4 py-2.5 bg-white/5 border border-white/20 rounded-lg text-white/90 placeholder:text-white/50 focus:ring-2 focus:ring-turquoise focus:border-turquoise outline-none transition-colors duration-150 ${fontFamilies.plusJakartaSans} disabled:opacity-70 disabled:cursor-not-allowed`} disabled={isSubmitting} />
             </div>
             {errors.name && <p className={`text-red-400 text-sm mt-1 ${fontFamilies.plusJakartaSans}`}>{errors.name.message}</p>}
 
             <div>
-              <label htmlFor="email" className={`block text-sm font-medium text-white/70 mb-1.5 ${fontFamilies.plusJakartaSans}`}>Correo Electrónico</label>
-              <input {...register('email')} id="email" placeholder="tu@empresa.com" className={`w-full px-4 py-2.5 bg-white/5 border border-white/20 rounded-lg text-white/90 placeholder:text-white/50 focus:ring-2 focus:ring-turquoise focus:border-turquoise outline-none transition-colors duration-150 ${fontFamilies.plusJakartaSans} disabled:opacity-70 disabled:cursor-not-allowed`} disabled={isSubmitting} />
+              <label htmlFor="email" className={`block text-sm font-medium text-white/70 mb-1.5 ${fontFamilies.plusJakartaSans}`}>Correo electrónico</label>
+              <input {...register('email')} id="email" placeholder="tu@ejemplo.com" className={`w-full px-4 py-2.5 bg-white/5 border border-white/20 rounded-lg text-white/90 placeholder:text-white/50 focus:ring-2 focus:ring-turquoise focus:border-turquoise outline-none transition-colors duration-150 ${fontFamilies.plusJakartaSans} disabled:opacity-70 disabled:cursor-not-allowed`} disabled={isSubmitting} />
             </div>
             {errors.email && <p className={`text-red-400 text-sm mt-1 ${fontFamilies.plusJakartaSans}`}>{errors.email.message}</p>}
 
             <div>
-              <label htmlFor="phone" className={`block text-sm font-medium text-white/70 mb-1.5 ${fontFamilies.plusJakartaSans}`}>Celular (Opcional)</label>
+              <label htmlFor="phone" className={`block text-sm font-medium text-white/70 mb-1.5 ${fontFamilies.plusJakartaSans}`}>Teléfono celular (Opcional)</label>
               <input {...register('phone')} id="phone" placeholder="Ej: 55 1234 5678" className={`w-full px-4 py-2.5 bg-white/5 border border-white/20 rounded-lg text-white/90 placeholder:text-white/50 focus:ring-2 focus:ring-turquoise focus:border-turquoise outline-none transition-colors duration-150 ${fontFamilies.plusJakartaSans} disabled:opacity-70 disabled:cursor-not-allowed`} disabled={isSubmitting} />
             </div>
             {errors.phone && <p className={`text-red-400 text-sm mt-1 ${fontFamilies.plusJakartaSans}`}>{errors.phone.message}</p>}
@@ -187,29 +188,29 @@ export default function LeadModal({
             {/* B2B Fields - Hidden for now */}
             <div className="hidden space-y-5">
               <div>
-                <label htmlFor="company" className={`block text-sm font-medium text-white/70 mb-1.5 ${fontFamilies.plusJakartaSans}`}>Empresa</label>
-                <input {...register('company')} id="company" placeholder="Nombre de tu organización" className={`w-full px-4 py-2.5 bg-white/5 border border-white/20 rounded-lg text-white/90 placeholder:text-white/50 focus:ring-2 focus:ring-turquoise focus:border-turquoise outline-none transition-colors duration-150 ${fontFamilies.plusJakartaSans} disabled:opacity-70 disabled:cursor-not-allowed`} disabled={isSubmitting} />
+                <label htmlFor="company" className={`block text-sm font-medium text-white/70 mb-1.5 ${fontFamilies.plusJakartaSans}`}>Nombre de la Institución / Empresa (Opcional)</label>
+                <input {...register('company')} id="company" placeholder="Ej: Colegio Nacional, Innovaciones Educativas S.A." className={`w-full px-4 py-2.5 bg-white/5 border border-white/20 rounded-lg text-white/90 placeholder:text-white/50 focus:ring-2 focus:ring-turquoise focus:border-turquoise outline-none transition-colors duration-150 ${fontFamilies.plusJakartaSans} disabled:opacity-70 disabled:cursor-not-allowed`} disabled={isSubmitting} />
                 {errors.company && <p className={`text-red-400 text-sm mt-1 ${fontFamilies.plusJakartaSans}`}>{errors.company.message}</p>}
               </div>
 
               <div>
-                <label htmlFor="size" className={`block text-sm font-medium text-white/70 mb-1.5 ${fontFamilies.plusJakartaSans}`}>Tamaño de Empresa</label>
+                <label htmlFor="size" className={`block text-sm font-medium text-white/70 mb-1.5 ${fontFamilies.plusJakartaSans}`}>Tamaño de la Institución / Empresa (Opcional)</label>
                 <select {...register('size')} id="size" className={`w-full px-4 py-2.5 bg-white/5 border border-white/20 rounded-lg text-white/90 focus:ring-2 focus:ring-turquoise focus:border-turquoise outline-none appearance-none transition-colors duration-150 ${fontFamilies.plusJakartaSans} h-[46px] disabled:opacity-70 disabled:cursor-not-allowed`} disabled={isSubmitting}>
-                  <option value="" className="bg-[#10161E] text-white/70">Selecciona una opción</option>
-                  <option value="1-10" className="bg-[#10161E] text-white/90">1-10 empleados</option>
-                  <option value="11-50" className="bg-[#10161E] text-white/90">11-50 empleados</option>
-                  <option value="51-200" className="bg-[#10161E] text-white/90">51-200 empleados</option>
-                  <option value="200+" className="bg-[#10161E] text-white/90">200+ empleados</option>
+                  <option value="" className="bg-[#10161E] text-white/70">Selecciona un rango</option>
+                  <option value="1-10" className="bg-[#10161E] text-white/90">1-10 empleados/colaboradores</option>
+                  <option value="11-50" className="bg-[#10161E] text-white/90">11-50 empleados/colaboradores</option>
+                  <option value="51-200" className="bg-[#10161E] text-white/90">51-200 empleados/colaboradores</option>
+                  <option value="200+" className="bg-[#10161E] text-white/90">Más de 200 empleados/colaboradores</option>
                 </select>
                 {errors.size && <p className={`text-red-400 text-sm mt-1 ${fontFamilies.plusJakartaSans}`}>{errors.size.message}</p>}
               </div>
 
               <div>
-                <label htmlFor="pain" className={`block text-sm font-medium text-white/70 mb-1.5 ${fontFamilies.plusJakartaSans}`}>Principal Desafío</label>
+                <label htmlFor="pain" className={`block text-sm font-medium text-white/70 mb-1.5 ${fontFamilies.plusJakartaSans}`}>Principal desafío o necesidad (Opcional)</label>
                 <textarea
                   {...register('pain')}
                   id="pain"
-                  placeholder="Describe brevemente el principal desafío educativo o tecnológico que enfrentas..."
+                  placeholder="Describe brevemente el principal desafío o necesidad que tiene tu institución..."
                   rows={3}
                   className={`w-full px-4 py-2.5 bg-white/5 border border-white/20 rounded-lg text-white/90 placeholder:text-white/50 focus:ring-2 focus:ring-turquoise focus:border-turquoise outline-none resize-none transition-colors duration-150 ${fontFamilies.plusJakartaSans} disabled:opacity-70 disabled:cursor-not-allowed`}
                   disabled={isSubmitting}
@@ -224,14 +225,14 @@ export default function LeadModal({
                 onClick={handleCloseModal}
                 className={`px-6 py-2.5 rounded-lg text-white/70 hover:text-turquoise transition-colors duration-150 ${fontFamilies.plusJakartaSans} font-medium`}
               >
-                Cerrar
+                Cancelar
               </button>
               <button
                 type="submit"
                 disabled={isSubmitting}
                 className={`w-full sm:w-auto px-6 py-2.5 rounded-lg font-bold text-black bg-gradient-to-r from-turquoise to-lime hover:shadow-[0_0_20px_rgba(5,247,255,0.5)] hover:scale-[1.03] transition-all duration-150 ${fontFamilies.plusJakartaSans} disabled:opacity-70 disabled:cursor-not-allowed`}
               >
-                {isSubmitting ? 'Enviando…' : 'Enviar'}
+                {isSubmitting ? 'Enviando…' : 'Enviar solicitud'}
               </button>
             </div>
               </form>
