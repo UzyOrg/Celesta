@@ -1,6 +1,8 @@
 // src/app/privacy-policy/page.tsx
 import Container from '@/components/Container';
 import { headingStyles, opacityVariants, textStyles } from '@/styles/typography';
+import fs from 'fs/promises'; // Importar fs/promises
+import path from 'path';     // Importar path
 
 // This is now an async Server Component
 const PrivacyPolicyPage = async () => {
@@ -8,23 +10,13 @@ const PrivacyPolicyPage = async () => {
   let errorLoading = false;
 
   try {
-    // Fetch the content from the public directory.
-    // This fetch runs on the server.
-    // Using a cache option like 'no-store' ensures you get the latest version during development,
-    // or 'force-cache' if the content rarely changes and you want to optimize.
-    // For production, consider revalidating strategies if the HTML can change without a new build.
-    const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/termly.html`, {
-      // cache: 'no-store', // Eliminado para permitir cache por defecto y generación estática
-      // Para contenido que rara vez cambia, el cache por defecto (force-cache) es apropiado.
-      // Si necesitas revalidación periódica, considera: next: { revalidate: 3600 } (ej. cada hora)
-    });
+    // Construir la ruta al archivo en la carpeta public
+    const filePath = path.join(process.cwd(), 'public', 'termly.html');
+    // Leer el archivo directamente
+    htmlContent = await fs.readFile(filePath, 'utf8');
 
-    if (!response.ok) {
-      throw new Error(`Failed to fetch privacy policy: ${response.status} ${response.statusText}`);
-    }
-    htmlContent = await response.text();
   } catch (error) {
-    console.error('Error fetching privacy policy file (termly.html):', error);
+    console.error('Error reading privacy policy file (termly.html):', error);
     errorLoading = true;
   }
 
