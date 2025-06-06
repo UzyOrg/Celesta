@@ -70,10 +70,10 @@ const Metric: React.FC<MetricProps> = ({ value, unit, label, delay }) => {
 
 const MetricsSection: React.FC = () => {
   const metrics: MetricProps[] = [
-    { value: 94, unit: '%', label: 'Completion Rate', delay: 0 },
-    { value: 3, unit: 'x', label: 'ROI for Businesses', delay: 0.1 },
-    { value: 45, unit: '%', label: 'Time Saving', delay: 0.2 },
-    { value: 250, unit: 'k+', label: 'Active Learners', delay: 0.3 },
+    { value: 94, unit: '%', label: 'Mayor Comprensión y Retención', delay: 0 },
+    { value: 3, unit: 'x', label: 'Optimización del Proceso Educativo', delay: 0.1 },
+    { value: 45, unit: '%', label: 'Reducción de Carga Operativa Docente', delay: 0.2 },
+    { value: 250, unit: 'k+', label: 'Estudiantes Activamente Involucrados', delay: 0.3 },
   ];
 
   return (
@@ -89,7 +89,7 @@ const MetricsSection: React.FC = () => {
               className="inline-flex items-center px-4 py-2 rounded-full bg-white/5 backdrop-blur-sm mb-4"
             >
               <TrendingUp className="w-4 h-4 mr-2 text-turquoise" />
-              <span className={`${textStyles.button} ${opacityVariants.primary}`}>Real Results</span>
+              <span className={`${textStyles.button} ${opacityVariants.primary}`}>Evidencia de Progreso</span>
             </motion.div>
             
             <div className="relative">
@@ -101,9 +101,9 @@ const MetricsSection: React.FC = () => {
                 viewport={{ once: true }}
                 className={`${headingStyles.h2} text-[clamp(2.8rem,6vw,5rem)] leading-[1.1] tracking-tight mb-6`}
               >
-                Impact That{" "}
+                Datos que Transforman la{" "}
                 <span className="bg-gradient-to-r from-turquoise to-lime bg-clip-text text-transparent">
-                  Speaks for Itself
+                  Enseñanza
                 </span>
               </motion.h2>
             </div>

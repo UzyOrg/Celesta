@@ -30,9 +30,9 @@ const CTASection: React.FC = () => {
                   viewport={{ once: true }}
                   className={`${headingStyles.h2} text-[clamp(2.8rem,6vw,5rem)] leading-[1.1] tracking-tight mb-6`}
                 >
-                  Ready to Transform Your{" "}
+                  ¿Listo para Potenciar la Educación con{" "}
                   <span className="bg-gradient-to-r from-turquoise to-lime bg-clip-text text-transparent">
-                    Educational Approach
+                    IA Inteligente
                   </span>
                   ?
                 </motion.h2>
@@ -45,7 +45,7 @@ const CTASection: React.FC = () => {
                 viewport={{ once: true }}
                 className={`${textStyles.largeBody} mb-8 text-white/90`}
               >
-                Join forward-thinking organizations already leveraging our responsible AI platform to revolutionize learning outcomes.
+                Impulsa un cambio significativo en tu institución. Descubre cómo nuestro copiloto IA, tutor socrático y métricas avanzadas pueden enriquecer la enseñanza y el aprendizaje.
               </motion.p>
               
               <motion.div
@@ -57,12 +57,12 @@ const CTASection: React.FC = () => {
               >
                 <div className="w-full sm:w-auto">
                   <Button size="lg" onClick={openModal}>
-                    Request Demo <ArrowRight className="ml-2 w-4 h-4" />
+                    Solicita Demo Piloto <ArrowRight className="ml-2 w-4 h-4" />
                   </Button>
                 </div>
                 <div className="w-full sm:w-auto">
                   <Button variant="outline" size="lg" className="border-white/20 text-white">
-                    <Mail className="mr-2 w-4 h-4" /> Contact Sales
+                    <Mail className="mr-2 w-4 h-4" /> Hablar con un Asesor
                   </Button>
                 </div>
               </motion.div>

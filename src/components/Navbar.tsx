@@ -54,7 +54,7 @@ const Navbar: React.FC = () => {
             </button>
             <Button variant="secondary">
               <Sparkles className="w-4 h-4 mr-2" />
-              Agenda una Demo
+              Solicita Demo Piloto
             </Button>
           </div>
           
@@ -89,7 +89,7 @@ const Navbar: React.FC = () => {
           <a href="#resources" className={`${textStyles.button} ${opacityVariants.primary} py-2`} onClick={() => setIsMenuOpen(false)}>Recursos</a>
           <Button variant="secondary" className="w-full">
             <Sparkles className="w-4 h-4 mr-2" />
-            Agenda una Demo
+            Solicita Demo Piloto
           </Button>
         </div>
       )}

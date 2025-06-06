@@ -33,26 +33,26 @@ const ProductSection: React.FC = () => {
   const features: FeatureProps[] = [
     {
       icon: <Bot className="w-6 h-6 text-white" />,
-      title: "AI Tutor Available 24/7",
-      description: "Personalized learning assistance whenever students need it, providing immediate feedback and adaptive support.",
+      title: "Tutor Socrático IA 24/7",
+      description: "Fomenta el pensamiento crítico con un tutor IA que guía a los estudiantes mediante preguntas, promoviendo un aprendizaje profundo y autónomo.",
       delay: 0
     },
     {
       icon: <Award className="w-6 h-6 text-white" />,
-      title: "OB3 Verified Skill Badges",
-      description: "Blockchain-verified credentials that authenticate skills and achievements for real-world recognition.",
+      title: "Métricas de Aprendizaje Reales",
+      description: "Visualiza el progreso y comprende las necesidades de tus estudiantes con datos claros y accionables, facilitando una enseñanza más personalizada.",
       delay: 0.1
     },
     {
       icon: <Laptop3 className="w-6 h-6 text-white" />,
-      title: "Immersive VR Learning Labs",
-      description: "Practical, hands-on experience in virtual environments that simulate real-world scenarios and challenges.",
+      title: "Copiloto IA para Educadores",
+      description: "Optimiza tu tiempo con IA que asiste en la planificación, creación de contenido y evaluación, permitiéndote enfocarte en lo que más importa: enseñar.",
       delay: 0.2
     },
     {
       icon: <Brain className="w-6 h-6 text-white" />,
-      title: "Responsible AI Framework",
-      description: "Built on ethical principles with transparent algorithms and data privacy protection at its core.",
+      title: "IA Ética Centrada en el Humano",
+      description: "Nuestra IA, desarrollada con transparencia y equidad, está diseñada para potenciar la invaluable conexión humana en la educación.",
       delay: 0.3
     }
   ];
@@ -71,9 +71,9 @@ const ProductSection: React.FC = () => {
                 viewport={{ once: true }}
                 className={`${headingStyles.h2} text-[clamp(2.8rem,6vw,5rem)] leading-[1.1] tracking-tight mb-6`}
               >
-                Breakthrough Features for{" "}
+                IA Inteligente para Potenciar la{" "}
                 <span className="bg-gradient-to-r from-turquoise to-lime bg-clip-text text-transparent">
-                  Modern Learning
+                  Enseñanza
                 </span>
               </motion.h2>
             </div>
@@ -85,7 +85,7 @@ const ProductSection: React.FC = () => {
               viewport={{ once: true }}
               className={`${textStyles.largeBody} max-w-3xl mx-auto ${opacityVariants.secondary}`}
             >
-              Our platform combines cutting-edge AI with practical educational tools to deliver measurable results for institutions and businesses.
+              Descubre herramientas IA diseñadas como tu copiloto, un tutor socrático para estudiantes y un generador de métricas que enriquecen la labor educativa.
             </motion.p>
           </div>
           

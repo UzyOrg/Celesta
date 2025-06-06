@@ -14,7 +14,9 @@ const PrivacyPolicyPage = async () => {
     // or 'force-cache' if the content rarely changes and you want to optimize.
     // For production, consider revalidating strategies if the HTML can change without a new build.
     const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/termly.html`, {
-      cache: 'no-store', // Or 'force-cache' or configure revalidation
+      // cache: 'no-store', // Eliminado para permitir cache por defecto y generación estática
+      // Para contenido que rara vez cambia, el cache por defecto (force-cache) es apropiado.
+      // Si necesitas revalidación periódica, considera: next: { revalidate: 3600 } (ej. cada hora)
     });
 
     if (!response.ok) {

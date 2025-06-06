@@ -17,7 +17,7 @@ const Footer: React.FC = () => {
               </span>
             </div>
             <p className={`${textStyles.body} ${opacityVariants.secondary} mb-6`}>
-              Transforming education through responsible AI, empowering organizations to deliver exceptional learning experiences.
+              Potenciamos la educación con IA que enseña, mide y fortalece el rol fundamental del educador.
             </p>
             <div className="flex space-x-4">
               <a href="#" className={`${opacityVariants.tertiary} hover:text-turquoise transition-colors`} aria-label="Twitter">
@@ -38,11 +38,11 @@ const Footer: React.FC = () => {
           <div className="lg:col-span-2">
             <h3 className={`${headingStyles.subsection} text-white mb-4`}>Product</h3>
             <ul className="space-y-2">
-              <li><a href="#" className={`${textStyles.body} ${opacityVariants.secondary} hover:text-turquoise transition-colors`}>AI Tutor</a></li>
-              <li><a href="#" className={`${textStyles.body} ${opacityVariants.secondary} hover:text-turquoise transition-colors`}>OB3 Badges</a></li>
-              <li><a href="#" className={`${textStyles.body} ${opacityVariants.secondary} hover:text-turquoise transition-colors`}>VR Labs</a></li>
-              <li><a href="#" className={`${textStyles.body} ${opacityVariants.secondary} hover:text-turquoise transition-colors`}>Analytics</a></li>
-              <li><a href="#" className={`${textStyles.body} ${opacityVariants.secondary} hover:text-turquoise transition-colors`}>Integration</a></li>
+              <li><a href="#" className={`${textStyles.body} ${opacityVariants.secondary} hover:text-turquoise transition-colors`}>Tutor Socrático IA</a></li>
+              <li><a href="#" className={`${textStyles.body} ${opacityVariants.secondary} hover:text-turquoise transition-colors`}>Métricas de Aprendizaje</a></li>
+              <li><a href="#" className={`${textStyles.body} ${opacityVariants.secondary} hover:text-turquoise transition-colors`}>Copiloto IA Docente</a></li>
+              <li><a href="#" className={`${textStyles.body} ${opacityVariants.secondary} hover:text-turquoise transition-colors`}>Integraciones Flexibles</a></li>
+              
             </ul>
           </div>
           
@@ -82,7 +82,7 @@ const Footer: React.FC = () => {
         
         <div className="pt-8 flex flex-col md:flex-row items-center justify-between">
           <p className={`${textStyles.small} ${opacityVariants.tertiary} mb-4 md:mb-0`}>
-            &copy; {new Date().getFullYear()} Celestea. All rights reserved.
+            &copy; {new Date().getFullYear()} Celestea AI. Todos los derechos reservados.
           </p>
           <div className="flex space-x-6">
             <a href="#" className={`${textStyles.small} ${opacityVariants.tertiary} hover:text-turquoise transition-colors`}>Terms</a>
