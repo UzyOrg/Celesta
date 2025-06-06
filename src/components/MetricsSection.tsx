@@ -70,10 +70,10 @@ const Metric: React.FC<MetricProps> = ({ value, unit, label, delay }) => {
 
 const MetricsSection: React.FC = () => {
   const metrics: MetricProps[] = [
-    { value: 94, unit: '%', label: 'Mayor Comprensión y Retención', delay: 0 },
-    { value: 3, unit: 'x', label: 'Optimización del Proceso Educativo', delay: 0.1 },
-    { value: 45, unit: '%', label: 'Reducción de Carga Operativa Docente', delay: 0.2 },
-    { value: 250, unit: 'k+', label: 'Estudiantes Activamente Involucrados', delay: 0.3 },
+    { value: 30, unit: '%', label: 'Menos Tiempo en Tareas Operativas para Docentes', delay: 0 },
+    { value: 85, unit: '%', label: 'Mejora en la Comprensión de Conceptos Clave', delay: 0.1 },
+    { value: 100, unit: '%', label: 'Visibilidad del Desarrollo de Competencias (Skill-Graph)', delay: 0.2 },
+    { value: 20, unit: '%', label: 'Incremento en Participación Activa del Estudiante', delay: 0.3 },
   ];
 
   return (
@@ -101,10 +101,10 @@ const MetricsSection: React.FC = () => {
                 viewport={{ once: true }}
                 className={`${headingStyles.h2} text-[clamp(2.8rem,6vw,5rem)] leading-[1.1] tracking-tight mb-6`}
               >
-                Datos que Transforman la{" "}
+                Evidenciando la{" "}
                 <span className="bg-gradient-to-r from-turquoise to-lime bg-clip-text text-transparent">
-                  Enseñanza
-                </span>
+                  Transformación Educativa
+                </span>.
               </motion.h2>
             </div>
           </div>

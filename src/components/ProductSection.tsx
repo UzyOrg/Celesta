@@ -23,8 +23,8 @@ const Feature: React.FC<FeatureProps> = ({ icon, title, description, delay }) =>
       <div className="w-12 h-12 rounded-full bg-gradient-to-r from-turquoise to-lime flex items-center justify-center mb-6">
         {icon}
       </div>
-      <h3 className={`${headingStyles.h4} mb-3 text-white`}>{title}</h3>
-      <p className={`${textStyles.body} ${opacityVariants.secondary}`}>{description}</p>
+      <h3 className="text-lg font-semibold mb-3 text-white">{title}</h3>
+      <p className="text-sm leading-relaxed text-white/75">{description}</p>
     </motion.div>
   );
 };
@@ -33,26 +33,26 @@ const ProductSection: React.FC = () => {
   const features: FeatureProps[] = [
     {
       icon: <Bot className="w-6 h-6 text-white" />,
-      title: "Tutor Socrático IA 24/7",
-      description: "Fomenta el pensamiento crítico con un tutor IA que guía a los estudiantes mediante preguntas, promoviendo un aprendizaje profundo y autónomo.",
+      title: "Tutor IA: Álgebra y Soft-Skills",
+      description: "Acompaña el aprendizaje desde Álgebra I con hints escalonados hasta el desarrollo de soft-skills como la resiliencia. Fomenta el pensamiento crítico con IA que guía, no solo entrega respuestas.",
       delay: 0
     },
     {
       icon: <Award className="w-6 h-6 text-white" />,
-      title: "Métricas de Aprendizaje Reales",
-      description: "Visualiza el progreso y comprende las necesidades de tus estudiantes con datos claros y accionables, facilitando una enseñanza más personalizada.",
+      title: "Impacto Medible: Skill-Graph y OB3",
+      description: "Visualiza competencias con el Skill-Graph, implementa evaluaciones auténticas (proyectos + defensa oral) y emite micro-credenciales OB3 con QR verificable, co-firmadas por universidades. Conecta el aprendizaje a resultados y ROI.",
       delay: 0.1
     },
     {
       icon: <Laptop3 className="w-6 h-6 text-white" />,
-      title: "Copiloto IA para Educadores",
-      description: "Optimiza tu tiempo con IA que asiste en la planificación, creación de contenido y evaluación, permitiéndote enfocarte en lo que más importa: enseñar.",
+      title: "Copiloto Docente: Planificación y Evaluación IA",
+      description: "Ahorra hasta un 30% de tu tiempo. Genera planes de clase (45 min) y rúbricas completas alineadas a SEP. Nuestro dashboard \"semáforo\" detecta la frustración estudiantil y sugiere intervenciones oportunas.",
       delay: 0.2
     },
     {
       icon: <Brain className="w-6 h-6 text-white" />,
-      title: "IA Ética Centrada en el Humano",
-      description: "Nuestra IA, desarrollada con transparencia y equidad, está diseñada para potenciar la invaluable conexión humana en la educación.",
+      title: "Tecnología Segura: Online y Offline",
+      description: "Nuestro modelo Llama-3-EduMX y el Kit Edge-School (opera offline con <2s de latencia) garantizan acceso y soberanía de datos. Cumplimos con LFPDPPP, sin trackers y con panel de sesgo, para una IA responsable y confiable.",
       delay: 0.3
     }
   ];
@@ -71,9 +71,9 @@ const ProductSection: React.FC = () => {
                 viewport={{ once: true }}
                 className={`${headingStyles.h2} text-[clamp(2.8rem,6vw,5rem)] leading-[1.1] tracking-tight mb-6`}
               >
-                IA Inteligente para Potenciar la{" "}
+                Nuestra Plataforma Docente-First en{" "}
                 <span className="bg-gradient-to-r from-turquoise to-lime bg-clip-text text-transparent">
-                  Enseñanza
+                  Acción.
                 </span>
               </motion.h2>
             </div>
@@ -85,7 +85,7 @@ const ProductSection: React.FC = () => {
               viewport={{ once: true }}
               className={`${textStyles.largeBody} max-w-3xl mx-auto ${opacityVariants.secondary}`}
             >
-              Descubre herramientas IA diseñadas como tu copiloto, un tutor socrático para estudiantes y un generador de métricas que enriquecen la labor educativa.
+              En Celestea, creemos en potenciar tu labor con tecnología que comprende tus desafíos. Te ofrecemos soluciones intuitivas que se integran a tu flujo de trabajo, permitiéndote enfocarte en lo esencial: inspirar y guiar a tus estudiantes.
             </motion.p>
           </div>
           

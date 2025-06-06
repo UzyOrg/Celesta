@@ -136,23 +136,23 @@ export default function LeadModal({
           {isSubmissionSuccessful ? (
             <div className="text-center py-8">
               <CheckCircle className="w-16 h-16 text-lime mx-auto mb-6" />
-              <h2 className={`text-3xl font-bold text-white/95 ${fontFamilies.plusJakartaSans} mb-3`}>¡Registro exitoso!</h2>
+              <h2 className={`text-3xl font-bold text-white/95 ${fontFamilies.plusJakartaSans} mb-3`}>¡Excelente! Tu Solicitud Está en Camino.</h2>
               <p className={`text-white/70 ${fontFamilies.plusJakartaSans} text-lg mb-8`}>
-                Gracias por unirte a nuestra lista de espera. <br />Pronto podrás vivir una nueva experiencia educativa.
+                Hemos recibido tus datos para el Programa Piloto Celestea AI. <br />Muy pronto, nuestro equipo se comunicará contigo. ¡Prepárate para redifinir el futuro del aprendizaje!
               </p>
               <button
                 onClick={handleCloseModal}
                 className={`w-full sm:w-auto px-8 py-3 rounded-lg font-bold text-black bg-gradient-to-r from-turquoise to-lime hover:shadow-[0_0_20px_rgba(5,247,255,0.5)] hover:scale-[1.03] transition-all duration-150 ${fontFamilies.plusJakartaSans}`}
               >
-                Finalizar
+                ¡Entendido!
               </button>
             </div>
           ) : showAlreadyRegisteredView ? ( 
             <div className="text-center py-8">
               <PartyPopper className="w-16 h-16 text-green-500 mx-auto mb-6" /> {/* Icono y color cambiados */}
-              <h2 className={`text-3xl font-bold text-white/95 ${fontFamilies.plusJakartaSans} mb-3`}>¡Ya estás en la lista!</h2> {/* Mensaje cambiado */}
+              <h2 className={`text-3xl font-bold text-white/95 ${fontFamilies.plusJakartaSans} mb-3`}>Correo Ya Registrado</h2> {/* Mensaje cambiado */}
               <p className={`text-white/70 ${fontFamilies.plusJakartaSans} text-lg mb-8`}>
-                ¡Excelente! Tu correo electrónico ya estaba registrado con nosotros. <br />Muy pronto recibirás noticias nuestras.
+                Tu dirección de correo electrónico ya se encuentra en nuestra lista. <br />Estamos igual de emocionados.
               </p> {/* Mensaje cambiado */}
               <button
                 onClick={handleCloseModal}
@@ -163,8 +163,8 @@ export default function LeadModal({
             </div>
           ) : (
             <>
-              <h2 className={`text-3xl font-bold text-white/95 ${fontFamilies.plusJakartaSans} mb-1`}>Solicita acceso al programa piloto</h2>
-              <p className={`text-white/60 ${fontFamilies.plusJakartaSans} text-sm mb-6`}>Completa el siguiente formulario y nuestro equipo se pondrá en contacto contigo a la brevedad.</p>
+              <h2 className={`text-3xl font-bold text-white/95 ${fontFamilies.plusJakartaSans} mb-1`}>Únete al Programa Piloto Celestea AI</h2>
+              <p className={`text-white/60 ${fontFamilies.plusJakartaSans} text-sm mb-6`}>Sé de los primeros en transformar la educación. Déjanos tus datos y te contactaremos para explorar cómo nuestra IA puede potenciar tu labor docente.</p>
 
               <form onSubmit={handleSubmit(submit)} className="space-y-5">
             <div>
@@ -232,7 +232,7 @@ export default function LeadModal({
                 disabled={isSubmitting}
                 className={`w-full sm:w-auto px-6 py-2.5 rounded-lg font-bold text-black bg-gradient-to-r from-turquoise to-lime hover:shadow-[0_0_20px_rgba(5,247,255,0.5)] hover:scale-[1.03] transition-all duration-150 ${fontFamilies.plusJakartaSans} disabled:opacity-70 disabled:cursor-not-allowed`}
               >
-                {isSubmitting ? 'Enviando…' : 'Enviar solicitud'}
+                {isSubmitting ? 'Enviando…' : 'Registrarme'}
               </button>
             </div>
               </form>

@@ -30,11 +30,11 @@ const CTASection: React.FC = () => {
                   viewport={{ once: true }}
                   className={`${headingStyles.h2} text-[clamp(2.8rem,6vw,5rem)] leading-[1.1] tracking-tight mb-6`}
                 >
-                  ¿Listo para Potenciar la Educación con{" "}
+                  ¿Listo para{" "}
                   <span className="bg-gradient-to-r from-turquoise to-lime bg-clip-text text-transparent">
-                    IA Inteligente
+                    Transformar la Educación
                   </span>
-                  ?
+                  {" "}en tu Institución?
                 </motion.h2>
               </div>
               
@@ -45,7 +45,7 @@ const CTASection: React.FC = () => {
                 viewport={{ once: true }}
                 className={`${textStyles.largeBody} mb-8 text-white/90`}
               >
-                Impulsa un cambio significativo en tu institución. Descubre cómo nuestro copiloto IA, tutor socrático y métricas avanzadas pueden enriquecer la enseñanza y el aprendizaje.
+                Únete a la vanguardia de la innovación educativa en México. Descubre cómo nuestra plataforma docente-first, con su Copiloto Inteligente, Tutor Socrático IA y el Skill-Graph, está ayudando a educadores como tú a ahorrar tiempo, profundizar el aprendizaje y evidenciar el impacto real. Es momento de co-crear el futuro.
               </motion.p>
               
               <motion.div
@@ -62,7 +62,7 @@ const CTASection: React.FC = () => {
                 </div>
                 <div className="w-full sm:w-auto">
                   <Button variant="outline" size="lg" className="border-white/20 text-white">
-                    <Mail className="mr-2 w-4 h-4" /> Hablar con un Asesor
+                    <Mail className="mr-2 w-4 h-4" /> Conocer Más
                   </Button>
                 </div>
               </motion.div>

@@ -5,6 +5,7 @@ import Hero from '@/components/Hero';
 import TrustSection from '@/components/TrustSection';
 import ProductSection from '@/components/ProductSection';
 import MetricsSection from '@/components/MetricsSection';
+import RoadMapSection from '@/components/RoadMapSection'; // Added import
 import CTASection from '@/components/CTASection';
 import Footer from '@/components/Footer';
 
@@ -17,6 +18,7 @@ export default function Home() {
         <TrustSection />
         <ProductSection />
         <MetricsSection />
+        <RoadMapSection /> {/* Added component */}
         <CTASection />
       </main>
       <Footer />

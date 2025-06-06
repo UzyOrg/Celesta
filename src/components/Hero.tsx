@@ -74,21 +74,24 @@ const Hero: React.FC = () => {
             <div className="inline-flex items-center px-3 py-1.5 mb-6 rounded-full bg-white/5 backdrop-blur-sm border border-white/10">
               <span className="text-white/90">
                 <Sparkles className="inline h-4 w-4 mr-2 text-turquoise" /> 
-                IA que Potencia al Educador
+                Plataforma Docente-First.
               </span>
             </div>
             
             <div className="relative">
               <span className="absolute -z-10 inset-0 pointer-events-none bg-[radial-gradient(circle_at_center,_rgba(5,247,255,0.35)_0%,_transparent_60%)] blur-[80px] opacity-0 motion-safe:animate-fadeGlow"></span>
               <h1 className="text-[clamp(2.8rem,6vw,5rem)] font-bold leading-[1.1] tracking-tight mb-6">
+                <span className="bg-gradient-to-r from-turquoise to-lime bg-clip-text text-transparent">
+                  Transformemos el futuro
+                </span>
                 <span className="text-white">
-                  Eleva la Enseñanza: IA que Inspira el Aprendizaje y Fortalece tu Rol Docente.
+                  {" "}con una Mejor Educación.
                 </span>
               </h1>
             </div>
             
             <p className="text-xl md:text-2xl text-white/80 mb-8 max-w-2xl mx-auto lg:mx-0">
-              Descubre cómo nuestra IA se convierte en tu copiloto ideal: optimizando la planificación y evaluación, ofreciendo un tutor socrático 24/7 a los estudiantes y generando métricas de aprendizaje claras y accionables. Todo diseñado para potenciar tu invaluable labor educativa.
+              Redefinamos la educación, midamos el cambio y acompañemos el aprendizaje con IA responsable.
             </p>
             
             <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
