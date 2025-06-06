@@ -30,7 +30,7 @@ const Navbar: React.FC = () => {
       <Container>
         <nav className="flex items-center justify-between">
           <div className="flex items-center">
-            <Lightbulb className="w-8 h-8 text-turquoise" />
+            <Sparkles className="w-8 h-8 text-turquoise" />
             <span className="ml-2 text-2xl font-general-sans font-black bg-gradient-to-r from-turquoise to-lime bg-clip-text text-transparent">
               Celestea<span className="text-base">AI</span>
             </span>

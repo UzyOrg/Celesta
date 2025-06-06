@@ -7,30 +7,33 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import { Toaster, toast } from 'react-hot-toast';
-import { CheckCircle } from 'lucide-react';
+import { CheckCircle, PartyPopper } from 'lucide-react'; // <--- Cambiar AlertTriangle por PartyPopper
 
 const schema = z.object({
   name: z.string().min(2, 'Ingresa tu nombre'),
   email: z.string().email('Correo inválido'),
   phone: z.string()
-    .transform(val => val.trim() === '' ? undefined : val.trim())
-    .optional(),
-  company: z.string()
-    .transform(val => val.trim() === '' ? undefined : val.trim())
+    .transform((val: string | undefined) => val?.trim() === '' ? undefined : val?.trim())
     .optional()
-    .refine(val => val === undefined || val.length >= 2, {
+    .refine((val: string | undefined) => val === undefined || /^[+]?[0-9]{10,15}$/.test(val ?? ''), {
+      message: "Número de teléfono inválido",
+    }),
+  company: z.string()
+    .transform((val: string) => val.trim() === '' ? undefined : val.trim())
+    .optional()
+    .refine((val: string | undefined) => val === undefined || val.length >= 2, {
       message: "El nombre de la empresa debe tener al menos 2 caracteres",
     }),
   size: z.string()
-    .transform(val => val === '' ? undefined : val)
+    .transform((val: string) => val === '' ? undefined : val)
     .optional()
-    .refine(val => val === undefined || ['1-10', '11-50', '51-200', '200+'].includes(val ?? ''), {
+    .refine((val: string | undefined) => val === undefined || ['1-10', '11-50', '51-200', '200+'].includes(val ?? ''), {
       message: "Selecciona un tamaño de empresa válido",
     }),
   pain: z.string()
-    .transform(val => val.trim() === '' ? undefined : val.trim())
+    .transform((val: string) => val.trim() === '' ? undefined : val.trim())
     .optional()
-    .refine(val => val === undefined || val.length <= 200, {
+    .refine((val: string | undefined) => val === undefined || val.length <= 200, {
       message: 'Máx. 200 caracteres',
     }),
 });
@@ -45,6 +48,7 @@ export default function LeadModal({
   onClose: () => void;
 }) {
   const [isSubmissionSuccessful, setIsSubmissionSuccessful] = useState(false);
+  const [showAlreadyRegisteredView, setShowAlreadyRegisteredView] = useState(false); // <--- NUEVO ESTADO
   const {
     register,
     handleSubmit,
@@ -56,21 +60,55 @@ export default function LeadModal({
 
   const submit = async (data: FormValues) => {
     console.log('Submit function called with data:', data);
+    // Resetear vistas previas al inicio de un nuevo envío
+    setIsSubmissionSuccessful(false);
+    setShowAlreadyRegisteredView(false);
+
     try {
-      await axios.post('/api/lead', data);
+      // La llamada a axios.post ya está aquí, no la duplicamos.
+      // axios.post('/api/lead', data) devuelve una promesa que podemos usar.
+      await axios.post('/api/lead', data); // Si esto es exitoso (status 2xx), va al .then() o finaliza el try
+
+      // Si llegamos aquí, la API respondió con éxito (status 201)
       toast.success('¡Gracias por tu interés!');
       reset();
       setIsSubmissionSuccessful(true);
-      // onClose(); // Don't close immediately, show success view
-    } catch {
-      toast.error('Error, intenta de nuevo');
+
+    } catch (error: any) {
+      let errorMessage = 'Error, intenta de nuevo';
+      // Verificar si es un error de Axios y si tiene una respuesta
+      if (axios.isAxiosError(error) && error.response) {
+        const { status, data: responseData } = error.response;
+        
+        if (status === 409 && responseData && responseData.emailExists) {
+          // Email ya registrado
+          setShowAlreadyRegisteredView(true);
+          // No mostramos toast de error aquí, la vista lo indicará.
+          // Podrías resetear el formulario si lo deseas, o dejar el email para que el usuario lo vea.
+          // reset(); // Opcional: resetear el formulario
+          return; // Salir de la función submit
+        }
+        
+        // Usar el mensaje de error de la API si está disponible para otros errores
+        if (responseData && responseData.error) {
+          errorMessage = responseData.error;
+        } else if (responseData && responseData.message) { // A veces el mensaje puede estar en 'message'
+          errorMessage = responseData.message;
+        }
+      } else if (error instanceof Error) {
+        console.error("Submit error details:", error.message);
+      }
+      toast.error(errorMessage);
     }
   };
 
   const handleCloseModal = () => {
     onClose();
     // Ensure the success view is reset if modal is closed while it's shown
-    setTimeout(() => setIsSubmissionSuccessful(false), 300); // Delay to allow exit animation
+    setTimeout(() => {
+      setIsSubmissionSuccessful(false);
+      setShowAlreadyRegisteredView(false); // <--- Resetear también esta vista
+    }, 300); // Delay to allow exit animation
   };
 
 
@@ -108,6 +146,20 @@ export default function LeadModal({
                 Finalizar
               </button>
             </div>
+          ) : showAlreadyRegisteredView ? ( 
+            <div className="text-center py-8">
+              <PartyPopper className="w-16 h-16 text-green-500 mx-auto mb-6" /> {/* Icono y color cambiados */}
+              <h2 className={`text-3xl font-bold text-white/95 ${fontFamilies.plusJakartaSans} mb-3`}>¡Ya Estás en la Lista!</h2> {/* Mensaje cambiado */}
+              <p className={`text-white/70 ${fontFamilies.plusJakartaSans} text-lg mb-8`}>
+                ¡Excelente! Tu correo electrónico ya estaba registrado con nosotros. <br />Muy pronto tendrás noticias.
+              </p> {/* Mensaje cambiado */}
+              <button
+                onClick={handleCloseModal}
+                className={`w-full sm:w-auto px-8 py-3 rounded-lg font-bold text-white bg-gradient-to-r from-green-500 to-emerald-600 hover:shadow-[0_0_20px_rgba(16,185,129,0.5)] hover:scale-[1.03] transition-all duration-150 ${fontFamilies.plusJakartaSans}`} // Colores de botón y sombra cambiados
+              >
+                ¡Entendido!
+              </button>
+            </div>
           ) : (
             <>
               <h2 className={`text-3xl font-bold text-white/95 ${fontFamilies.plusJakartaSans} mb-1`}>Solicita tu Piloto</h2>
@@ -116,19 +168,19 @@ export default function LeadModal({
               <form onSubmit={handleSubmit(submit)} className="space-y-5">
             <div>
               <label htmlFor="name" className={`block text-sm font-medium text-white/70 mb-1.5 ${fontFamilies.plusJakartaSans}`}>Nombre Completo</label>
-              <input {...register('name')} id="name" placeholder="Ej: Ada Lovelace" className={`w-full px-4 py-2.5 bg-white/5 border border-white/20 rounded-lg text-white/90 placeholder:text-white/50 focus:ring-2 focus:ring-turquoise focus:border-turquoise outline-none transition-colors duration-150 ${fontFamilies.plusJakartaSans}`} />
+              <input {...register('name')} id="name" placeholder="Ej: Ada Lovelace" className={`w-full px-4 py-2.5 bg-white/5 border border-white/20 rounded-lg text-white/90 placeholder:text-white/50 focus:ring-2 focus:ring-turquoise focus:border-turquoise outline-none transition-colors duration-150 ${fontFamilies.plusJakartaSans} disabled:opacity-70 disabled:cursor-not-allowed`} disabled={isSubmitting} />
             </div>
             {errors.name && <p className={`text-red-400 text-sm mt-1 ${fontFamilies.plusJakartaSans}`}>{errors.name.message}</p>}
 
             <div>
               <label htmlFor="email" className={`block text-sm font-medium text-white/70 mb-1.5 ${fontFamilies.plusJakartaSans}`}>Correo Electrónico</label>
-              <input {...register('email')} id="email" placeholder="tu@empresa.com" className={`w-full px-4 py-2.5 bg-white/5 border border-white/20 rounded-lg text-white/90 placeholder:text-white/50 focus:ring-2 focus:ring-turquoise focus:border-turquoise outline-none transition-colors duration-150 ${fontFamilies.plusJakartaSans}`} />
+              <input {...register('email')} id="email" placeholder="tu@empresa.com" className={`w-full px-4 py-2.5 bg-white/5 border border-white/20 rounded-lg text-white/90 placeholder:text-white/50 focus:ring-2 focus:ring-turquoise focus:border-turquoise outline-none transition-colors duration-150 ${fontFamilies.plusJakartaSans} disabled:opacity-70 disabled:cursor-not-allowed`} disabled={isSubmitting} />
             </div>
             {errors.email && <p className={`text-red-400 text-sm mt-1 ${fontFamilies.plusJakartaSans}`}>{errors.email.message}</p>}
 
             <div>
               <label htmlFor="phone" className={`block text-sm font-medium text-white/70 mb-1.5 ${fontFamilies.plusJakartaSans}`}>Celular (Opcional)</label>
-              <input {...register('phone')} id="phone" placeholder="Ej: 55 1234 5678" className={`w-full px-4 py-2.5 bg-white/5 border border-white/20 rounded-lg text-white/90 placeholder:text-white/50 focus:ring-2 focus:ring-turquoise focus:border-turquoise outline-none transition-colors duration-150 ${fontFamilies.plusJakartaSans}`} />
+              <input {...register('phone')} id="phone" placeholder="Ej: 55 1234 5678" className={`w-full px-4 py-2.5 bg-white/5 border border-white/20 rounded-lg text-white/90 placeholder:text-white/50 focus:ring-2 focus:ring-turquoise focus:border-turquoise outline-none transition-colors duration-150 ${fontFamilies.plusJakartaSans} disabled:opacity-70 disabled:cursor-not-allowed`} disabled={isSubmitting} />
             </div>
             {errors.phone && <p className={`text-red-400 text-sm mt-1 ${fontFamilies.plusJakartaSans}`}>{errors.phone.message}</p>}
 
@@ -136,13 +188,13 @@ export default function LeadModal({
             <div className="hidden space-y-5">
               <div>
                 <label htmlFor="company" className={`block text-sm font-medium text-white/70 mb-1.5 ${fontFamilies.plusJakartaSans}`}>Empresa</label>
-                <input {...register('company')} id="company" placeholder="Nombre de tu organización" className={`w-full px-4 py-2.5 bg-white/5 border border-white/20 rounded-lg text-white/90 placeholder:text-white/50 focus:ring-2 focus:ring-turquoise focus:border-turquoise outline-none transition-colors duration-150 ${fontFamilies.plusJakartaSans}`} />
+                <input {...register('company')} id="company" placeholder="Nombre de tu organización" className={`w-full px-4 py-2.5 bg-white/5 border border-white/20 rounded-lg text-white/90 placeholder:text-white/50 focus:ring-2 focus:ring-turquoise focus:border-turquoise outline-none transition-colors duration-150 ${fontFamilies.plusJakartaSans} disabled:opacity-70 disabled:cursor-not-allowed`} disabled={isSubmitting} />
                 {errors.company && <p className={`text-red-400 text-sm mt-1 ${fontFamilies.plusJakartaSans}`}>{errors.company.message}</p>}
               </div>
 
               <div>
                 <label htmlFor="size" className={`block text-sm font-medium text-white/70 mb-1.5 ${fontFamilies.plusJakartaSans}`}>Tamaño de Empresa</label>
-                <select {...register('size')} id="size" className={`w-full px-4 py-2.5 bg-white/5 border border-white/20 rounded-lg text-white/90 focus:ring-2 focus:ring-turquoise focus:border-turquoise outline-none appearance-none transition-colors duration-150 ${fontFamilies.plusJakartaSans} h-[46px]`}>
+                <select {...register('size')} id="size" className={`w-full px-4 py-2.5 bg-white/5 border border-white/20 rounded-lg text-white/90 focus:ring-2 focus:ring-turquoise focus:border-turquoise outline-none appearance-none transition-colors duration-150 ${fontFamilies.plusJakartaSans} h-[46px] disabled:opacity-70 disabled:cursor-not-allowed`} disabled={isSubmitting}>
                   <option value="" className="bg-[#10161E] text-white/70">Selecciona una opción</option>
                   <option value="1-10" className="bg-[#10161E] text-white/90">1-10 empleados</option>
                   <option value="11-50" className="bg-[#10161E] text-white/90">11-50 empleados</option>
@@ -159,7 +211,8 @@ export default function LeadModal({
                   id="pain"
                   placeholder="Describe brevemente el principal desafío educativo o tecnológico que enfrentas..."
                   rows={3}
-                  className={`w-full px-4 py-2.5 bg-white/5 border border-white/20 rounded-lg text-white/90 placeholder:text-white/50 focus:ring-2 focus:ring-turquoise focus:border-turquoise outline-none resize-none transition-colors duration-150 ${fontFamilies.plusJakartaSans}`}
+                  className={`w-full px-4 py-2.5 bg-white/5 border border-white/20 rounded-lg text-white/90 placeholder:text-white/50 focus:ring-2 focus:ring-turquoise focus:border-turquoise outline-none resize-none transition-colors duration-150 ${fontFamilies.plusJakartaSans} disabled:opacity-70 disabled:cursor-not-allowed`}
+                  disabled={isSubmitting}
                 />
                 {errors.pain && <p className={`text-red-400 text-sm mt-1 ${fontFamilies.plusJakartaSans}`}>{errors.pain.message}</p>}
               </div>
