@@ -25,6 +25,8 @@ export default {
         'float': 'float 6s ease-in-out infinite',
         'gradient': 'gradient 8s ease infinite',
         'fadeGlow': 'fadeGlow 2s ease-out forwards',
+        'pulseSlow': 'pulseSlow 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        'pulseSlowDelay': 'pulseSlow 4s cubic-bezier(0.4, 0, 0.6, 1) 2s infinite',
       },
       keyframes: {
         fadeUp: {
@@ -63,6 +65,10 @@ export default {
           'to': {
             opacity: '1',
           },
+        },
+        pulseSlow: {
+          '0%, 100%': { opacity: '0.7' },
+          '50%': { opacity: '1' },
         },
       },
     },

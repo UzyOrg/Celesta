@@ -2,41 +2,39 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import Container from './Container';
 import { headingStyles, textStyles, opacityVariants } from '../styles/typography';
-import { Lightbulb, BarChartBig, ShieldCheck, Globe } from 'lucide-react'; // Icons for phases
+import { Lightbulb, BarChartBig, ShieldCheck, Globe, CheckCircle2 } from 'lucide-react'; // Icons for phases, added CheckCircle2
 
 interface RoadmapPhaseProps {
   icon: React.ReactNode;
   title: string;
   duration: string;
   achievements: string[];
-  impact: string;
   delay: number;
 }
 
-const RoadmapPhase: React.FC<RoadmapPhaseProps> = ({ icon, title, duration, achievements, impact, delay }) => {
+const RoadmapPhase: React.FC<RoadmapPhaseProps> = ({ icon, title, duration, achievements, delay }) => {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay }}
       viewport={{ once: true, amount: 0.3 }}
-      className="bg-white/5 backdrop-blur-sm p-6 rounded-xl border border-gray-700/50 shadow-lg flex flex-col h-full" // Added flex flex-col h-full for consistent card height
+      className="bg-black/20 backdrop-blur-sm p-6 rounded-xl border border-white/30 hover:bg-white/10 hover:border-white/50 shadow-lg flex flex-col h-full"
     >
-      <div className="flex items-center mb-4">
-        <span className="text-turquoise mr-3">{icon}</span>
-        <h3 className={`${headingStyles.h3} text-xl font-semibold`}>{title}</h3>
+      <div className="flex items-start mb-1"> {/* Align icon with potential multi-line title better */}
+        <span className="text-turquoise-400 mr-3 mt-1 flex-shrink-0">{icon}</span>
+        <h3 className="text-xl font-bold text-neutral-100 leading-tight">{title}</h3>
       </div>
-      <p className={`${textStyles.small} text-white/60 mb-3 font-medium`}>{duration}</p>
-      <div className="flex-grow"> {/* This will make the list take available space */}
-        <ul className="list-disc list-inside mb-4 space-y-1.5">
+      <p className="text-xs text-turquoise-400 uppercase tracking-wider mb-4 pl-10">{duration}</p> {/* Adjusted margin to align with title text if icon is present */}
+      <div className="flex-grow">
+        <ul className="space-y-3">
           {achievements.map((ach, index) => (
-            <li key={index} className={`${textStyles.body} ${opacityVariants.secondary}`}>{ach}</li>
+            <li key={index} className={`flex items-start ${textStyles.body} text-neutral-300 leading-relaxed`}>
+              <CheckCircle2 size={18} className="text-lime mr-2.5 mt-1 flex-shrink-0" />
+              <span>{ach}</span>
+            </li>
           ))}
         </ul>
-      </div>
-      <div> {/* This div ensures impact text is at the bottom if cards have different content lengths */}
-        <p className={`${textStyles.body} font-semibold ${opacityVariants.primary} mb-1`}>Impacto Esperado:</p>
-        <p className={`${textStyles.body} ${opacityVariants.secondary}`}>{impact}</p>
       </div>
     </motion.div>
   );
@@ -46,60 +44,41 @@ const RoadMapSection: React.FC = () => {
   const phases: RoadmapPhaseProps[] = [
     {
       icon: <Lightbulb size={28} />,
-      title: "Fase 1: Cimientos y Primeros Pilotos",
-      duration: "Meses 0-4",
+      title: "Ponemos la IA al servicio del maestro y del alumno",
+      duration: "Fase 1 · Hoy",
       achievements: [
-        "Lanzamiento MVP del Copiloto Docente (Planificación y Evaluación).",
-        "Lanzamiento MVP del Tutor Socrático IA (Álgebra).",
-        "Incorporación de las primeras escuelas piloto.",
-        "Validación del modelo Llama-3-EduMX."
+        "El maestro obtiene un asistente que prepara la clase y corrige tareas por él.",
+        "El alumno recibe preguntas guiadas que le ayudan a entender, no a copiar.",
+        "Todo el progreso queda registrado y es visible en un panel sencillo."
       ],
-      impact: "Herramientas esenciales en manos de los educadores, retroalimentación temprana y mejora continua.",
       delay: 0.1
     },
     {
       icon: <BarChartBig size={28} />,
-      title: "Fase 2: Evidencia del Aprendizaje e Impacto Inicial",
-      duration: "Meses 5-8",
+      title: "Modelo propio + acceso sin internet",
+      duration: "Fase 2 · Próximos 6 meses",
       achievements: [
-        "Desarrollo del Skill-Graph MVP para visualización de competencias.",
-        "Implementación del Dashboard Semáforo para detección de frustración.",
-        "Emisión de la primera insignia Open Badge 3.0 co-firmada con universidad aliada."
+        "Entrenamos nuestra propia IA con ejemplos de escuelas mexicanas: más barata y adaptada al programa oficial.",
+        "Llevamos la plataforma a zonas sin conexión con un pequeño servidor portátil.",
+        "Al terminar cada tema, el alumno gana una insignia digital avalada por la universidad aliada."
       ],
-      impact: "Medición tangible del progreso estudiantil, intervenciones pedagógicas proactivas y credenciales verificables con valor curricular.",
       delay: 0.2
     },
     {
       icon: <ShieldCheck size={28} />,
-      title: "Fase 3: Soberanía Tecnológica y Alianzas Estratégicas",
-      duration: "Meses 9-12",
+      title: "Escalamos y creamos comunidad",
+      duration: "Fase 3 · De 6 a 18 meses",
       achievements: [
-        "Despliegue del Kit Edge-School para operación online/offline.",
-        "Implementación del panel de sesgo para IA Responsable.",
-        "Consolidación de acuerdos con clústeres industriales.",
-        "Expansión a 5 universidades aliadas.",
-        "Definición del modelo de pricing final."
+        "Los profesores podrán compartir sus mini-cursos y ganar ingresos.",
+        "Las empresas verán directamente las habilidades certificadas de los alumnos y les ofrecerán prácticas o empleo.",
+        "Incorporamos laboratorios virtuales para que practiquen procesos de la industria cuando la base anterior esté consolidada."
       ],
-      impact: "Acceso equitativo a la tecnología, IA ética y transparente, y una fuerte vinculación entre la educación y las necesidades del sector productivo.",
       delay: 0.3
-    },
-    {
-      icon: <Globe size={28} />,
-      title: "Fase 4: Expansión de Capacidades y Visión Global",
-      duration: "Meses 13-18+",
-      achievements: [
-        "Ampliación del Tutor Socrático IA para cubrir soft-skills.",
-        "Plena operatividad del sistema de Micro-credenciales OB3.",
-        "Inicio de la estrategia de internacionalización en LATAM.",
-        "Desarrollo del marketplace de contenidos educativos."
-      ],
-      impact: "Formación integral del estudiante, un ecosistema de credenciales robusto y el posicionamiento de Celestea AI como referente en EdTech regional.",
-      delay: 0.4
     }
   ];
 
   return (
-    <section className="py-16 md:py-24 bg-opacity-30"> {/* Optional: slightly different bg for visual separation */}
+    <section id="roadmap" className="py-16 md:py-24"> {/* Optional: slightly different bg for visual separation */}
       <Container>
         <div className="text-center mb-12 md:mb-16">
           <motion.h2
@@ -107,11 +86,11 @@ const RoadMapSection: React.FC = () => {
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
             viewport={{ once: true }}
-            className={`${headingStyles.h2} mb-4`}
+            className={`${headingStyles.h2} mb-4 pb-4`}
           >
-            Construyendo el Futuro de la Educación,{" "}
+            Creando un camino responsable para la Educación
             <span className="bg-gradient-to-r from-turquoise to-lime bg-clip-text text-transparent">
-              Paso a Paso.
+             {" "} Paso a Paso.
             </span>
           </motion.h2>
           <motion.p
@@ -121,11 +100,11 @@ const RoadMapSection: React.FC = () => {
             viewport={{ once: true }}
             className={`${textStyles.largeBody} ${opacityVariants.secondary} max-w-3xl mx-auto`}
           >
-            En Celestea AI, estamos comprometidos con una evolución constante y transparente. Nuestro roadmap refleja nuestra dedicación a desarrollar soluciones innovadoras que empoderen a docentes y transformen la experiencia de aprendizaje, siempre en colaboración con la comunidad educativa.
+            Nuestro roadmap refleja nuestra dedicación a desarrollar soluciones innovadoras que empoderen a docentes y transformen la experiencia de aprendizaje, siempre en colaboración con la comunidad educativa.
           </motion.p>
         </div>
         
-        <div className="grid md:grid-cols-2 gap-8 items-stretch"> {/* Added items-stretch for consistent card height */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch"> {/* Added items-stretch for consistent card height */}
           {phases.map((phase) => (
             <RoadmapPhase key={phase.title} {...phase} />
           ))}

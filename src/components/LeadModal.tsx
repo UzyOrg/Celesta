@@ -41,13 +41,10 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>;
 
-export default function LeadModal({
-  open,
-  onClose
-}: {
-  open: boolean;
-  onClose: () => void;
-}) {
+import { useModal } from '@/context/ModalContext';
+
+export default function LeadModal() {
+  const { isLeadModalOpen: open, closeLeadModal: onClose } = useModal();
   const [isSubmissionSuccessful, setIsSubmissionSuccessful] = useState(false);
   const [showAlreadyRegisteredView, setShowAlreadyRegisteredView] = useState(false); // <--- NUEVO ESTADO
   const {

@@ -1,15 +1,14 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { motion, useAnimation, useScroll } from 'framer-motion';
 import { Sparkles, Play } from 'lucide-react';
 import Container from './Container';
 import Button from './Button';
-import LeadModal from './LeadModal';
+import Link from 'next/link';
+import { useModal } from '@/context/ModalContext';
 
 const Hero: React.FC = () => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const { openLeadModal } = useModal();
 
-  const openModal = () => setIsModalOpen(true);
-  const closeModal = () => setIsModalOpen(false);
   const controls = useAnimation();
   const { scrollY } = useScroll();
   const particlesRef = useRef<HTMLDivElement>(null);
@@ -82,10 +81,11 @@ const Hero: React.FC = () => {
               <span className="absolute -z-10 inset-0 pointer-events-none bg-[radial-gradient(circle_at_center,_rgba(5,247,255,0.35)_0%,_transparent_60%)] blur-[80px] opacity-0 motion-safe:animate-fadeGlow"></span>
               <h1 className="text-[clamp(2.8rem,6vw,5rem)] font-bold leading-[1.1] tracking-tight mb-6">
                 <span className="bg-gradient-to-r from-turquoise to-lime bg-clip-text text-transparent">
-                  Transformemos el futuro
+                Impulsamos la educación con IA 
                 </span>
+                <br />
                 <span className="text-white">
-                  {" "}con una Mejor Educación.
+                  que evoluciona con docentes y alumnos.
                 </span>
               </h1>
             </div>
@@ -95,13 +95,15 @@ const Hero: React.FC = () => {
             </p>
             
             <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
-              <Button size="lg" onClick={openModal}>
+              <Button size="lg" onClick={openLeadModal}>
                 Solicita Demo Piloto
               </Button>
+              <Link href="/demo/start" passHref>
               <Button variant="outline" size="lg" className="group">
                 <Play className="w-4 h-4 mr-2 text-turquoise group-hover:text-white transition-colors" />
                 Explora Nuestra IA
               </Button>
+              </Link>
             </div>
           </motion.div>
           
@@ -129,7 +131,7 @@ const Hero: React.FC = () => {
         </div>
       </Container>
     </section>
-    <LeadModal open={isModalOpen} onClose={closeModal} />
+    
     </>
   );
 };

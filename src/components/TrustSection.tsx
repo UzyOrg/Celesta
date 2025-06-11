@@ -13,32 +13,14 @@ const trustLogos = [
 ];
 
 const TrustSection: React.FC = () => {
-  const sectionAnimation = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
-  };
-
-  const logoAnimation = {
-    hidden: { opacity: 0, scale: 0.8 },
-    visible: (custom: number) => ({
-      opacity: 1,
-      scale: 1,
-      transition: { delay: custom * 0.15 + 0.3, duration: 0.4 }, // Staggered delay
-    }),
-  };
-
   return (
-    <motion.section
-      className="py-16 md:py-24 bg-opacity-50 backdrop-filter backdrop-blur-lg border border-gray-700/50 rounded-xl shadow-xl"
-      variants={sectionAnimation}
-      initial="hidden"
-      whileInView="visible"
-      viewport={{ once: true, amount: 0.2 }}
+    <section
+      className="py-16 md:py-24"
     >
       <Container>
         <div className="text-center mb-12 md:mb-16">
           <ShieldCheck className={`w-10 h-10 ${opacityVariants.primary} mx-auto mb-4 text-turquoise`} />
-          <h2 className={`${headingStyles.h2} ${opacityVariants.primary}`}>
+          <h2 className={`${headingStyles.h2} ${opacityVariants.primary} text-white`}>
             Alianzas Estratégicas para una Educación Transformadora.
           </h2>
           <p className={`${textStyles.largeBody} ${opacityVariants.secondary} mt-4 max-w-3xl mx-auto`}>
@@ -47,25 +29,20 @@ const TrustSection: React.FC = () => {
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-x-6 gap-y-8 items-center">
           {trustLogos.map((logo, index) => (
-            <motion.div
+            <div
               key={logo.name}
-              className={`flex flex-col items-center justify-center text-center p-4 rounded-lg bg-gray-800/60 hover:bg-gray-700/80 transition-colors duration-300`}
-              custom={index}
-              variants={logoAnimation}
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, amount: 0.5 }}
+              className={`flex flex-col items-center justify-center text-center p-4 rounded-lg bg-black/20 backdrop-blur-sm border border-white/30 hover:bg-white/10 hover:border-white/50 transition-all duration-300`}
             >
               {/* Placeholder for actual logos - using text for now */}
               {/* <img src={`/logos/${logo.name.toLowerCase().replace(/\s+/g, '-')}.svg`} alt={logo.name} className="h-12 mb-2 filter grayscale hover:grayscale-0 transition-all" /> */}
-              <span className={`${textStyles.small} ${opacityVariants.primary} font-medium`}>
+              <span className={`${textStyles.small} text-neutral-200 font-medium`}>
                 {logo.name}
               </span>
-            </motion.div>
+            </div>
           ))}
         </div>
       </Container>
-    </motion.section>
+    </section>
   );
 };
 
