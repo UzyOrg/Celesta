@@ -23,20 +23,20 @@ const Navbar: React.FC = () => {
     <header 
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         isScrolled 
-          ? 'bg-[#0D1117]/90 backdrop-blur-sm border-b border-[#1A1E26]/80 py-3' 
-          : 'bg-transparent py-5'
+          ? 'bg-[#0D1117]/90 backdrop-blur-sm border-b border-[#1A1E26]/80 py-2.5 sm:py-3' 
+          : 'bg-transparent py-4 sm:py-5'
       }`}
     >
       <Container>
         <nav className="flex items-center justify-between">
           <div className="flex items-center">
-            <Sparkles className="w-8 h-8 text-turquoise" />
-            <span className="ml-2 text-2xl font-general-sans font-black bg-gradient-to-r from-turquoise to-lime bg-clip-text text-transparent">
+            <Sparkles className="w-7 h-7 sm:w-8 sm:h-8 text-turquoise" />
+            <span className="ml-2 text-xl sm:text-2xl font-general-sans font-black bg-gradient-to-r from-turquoise to-lime bg-clip-text text-transparent">
               Celestea AI
             </span>
           </div>
           
-          <div className="hidden md:flex items-center space-x-8">
+          <div className="hidden md:flex items-center space-x-4 md:space-x-6 lg:space-x-8">
             <a href="#product" className={`${textStyles.button} ${opacityVariants.primary} hover:text-turquoise transition-colors`}>Producto</a>
             <a href="#solutions" className={`${textStyles.button} ${opacityVariants.primary} hover:text-turquoise transition-colors`}>Soluciones</a>
             <a href="#pricing" className={`${textStyles.button} ${opacityVariants.primary} hover:text-turquoise transition-colors`}>Planes</a>

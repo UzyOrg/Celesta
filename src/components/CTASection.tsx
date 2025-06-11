@@ -10,10 +10,10 @@ const CTASection: React.FC = () => {
   const { openLeadModal } = useModal();
   return (
     <>
-    <section className="pt-24 pb-24">
+    <section className="pt-16 sm:pt-20 md:pt-24 pb-16 sm:pb-20 md:pb-24">
       <Container>
         <div className="border-t border-[#1A1E26]/80 pt-16">
-          <div className="relative bg-white/5 backdrop-blur-sm rounded-3xl p-8 md:p-12 lg:p-16 overflow-hidden">
+          <div className="relative bg-white/5 backdrop-blur-sm rounded-3xl p-6 sm:p-8 md:p-12 lg:p-16 overflow-hidden">
             <div className="absolute top-0 right-0 h-1 w-1/3 bg-gradient-to-r from-turquoise to-lime" />
             <div className="absolute bottom-0 left-0 h-1 w-1/3 bg-gradient-to-r from-lime to-turquoise" />
             
@@ -25,7 +25,7 @@ const CTASection: React.FC = () => {
                   whileInView={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5 }}
                   viewport={{ once: true }}
-                  className={`${headingStyles.h2} text-[clamp(2.8rem,6vw,5rem)] leading-[1.1] tracking-tight mb-6`}
+                  className={`${headingStyles.h2} text-[clamp(2.8rem,6vw,5rem)] leading-[1.1] tracking-tight mb-4 sm:mb-6`}
                 >
                   ¿Listo para{" "}
                   <span className="bg-gradient-to-r from-turquoise to-lime bg-clip-text text-transparent">
@@ -40,7 +40,7 @@ const CTASection: React.FC = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.1 }}
                 viewport={{ once: true }}
-                className={`${textStyles.largeBody} mb-8 text-white/90`}
+                className={`${textStyles.largeBody} mb-6 sm:mb-8 text-white/90`}
               >
                 Únete a la vanguardia de la innovación educativa en México. Descubre cómo nuestra plataforma docente-first, con su Copiloto Inteligente, Tutor Socrático IA y el Skill-Graph, está ayudando a educadores como tú a ahorrar tiempo, profundizar el aprendizaje y evidenciar el impacto real. Es momento de co-crear el futuro.
               </motion.p>
@@ -50,7 +50,7 @@ const CTASection: React.FC = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.2 }}
                 viewport={{ once: true }}
-                className="flex flex-col sm:flex-row items-center justify-center gap-4"
+                className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4"
               >
                 <div className="w-full sm:w-auto">
                   <Button size="lg" onClick={openLeadModal}>

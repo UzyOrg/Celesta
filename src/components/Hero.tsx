@@ -59,7 +59,7 @@ const Hero: React.FC = () => {
 
   return (
     <>
-      <section className="relative pt-32 pb-20 md:pt-40 md:pb-32 overflow-hidden">
+      <section className="relative pt-24 pb-16 sm:pt-28 sm:pb-20 md:pt-40 md:pb-32 overflow-hidden">
       <div ref={particlesRef} className="absolute inset-0 pointer-events-none" />
       
       <Container>
@@ -70,7 +70,7 @@ const Hero: React.FC = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            <div className="inline-flex items-center px-3 py-1.5 mb-6 rounded-full bg-white/5 backdrop-blur-sm border border-white/10">
+            <div className="inline-flex items-center px-3 py-1 text-sm sm:text-base mb-4 sm:mb-6 rounded-full bg-white/5 backdrop-blur-sm border border-white/10">
               <span className="text-white/90">
                 <Sparkles className="inline h-4 w-4 mr-2 text-turquoise" /> 
                 Plataforma Docente-First.
@@ -90,11 +90,11 @@ const Hero: React.FC = () => {
               </h1>
             </div>
             
-            <p className="text-xl md:text-2xl text-white/80 mb-8 max-w-2xl mx-auto lg:mx-0">
+            <p className="text-lg sm:text-xl md:text-2xl text-white/80 mb-6 sm:mb-8 max-w-2xl mx-auto lg:mx-0">
               Redefinamos la educación, midamos el cambio y acompañemos el aprendizaje con IA responsable.
             </p>
             
-            <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
+            <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 sm:gap-4">
               <Button size="lg" onClick={openLeadModal}>
                 Solicita Demo Piloto
               </Button>
@@ -117,12 +117,12 @@ const Hero: React.FC = () => {
               <div className="absolute inset-0 bg-gradient-to-tr from-turquoise to-lime opacity-20 blur-2xl rounded-full" />
               <div className="relative bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 overflow-hidden aspect-[4/3]">
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="text-center p-8">
+                  <div className="text-center p-4 sm:p-6 md:p-8">
                     <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-r from-turquoise to-lime flex items-center justify-center">
                       <Sparkles className="w-8 h-8 text-white" />
                     </div>
-                    <p className="text-lg font-medium text-white/90">IA al Servicio del Educador</p>
-                    <p className="text-sm text-white/70">Copiloto Inteligente y Tutoría Socrática</p>
+                    <p className="text-base sm:text-lg font-medium text-white/90">IA al Servicio del Educador</p>
+                    <p className="text-xs sm:text-sm text-white/70">Copiloto Inteligente y Tutoría Socrática</p>
                   </div>
                 </div>
               </div>

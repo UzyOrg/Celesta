@@ -18,12 +18,12 @@ const Feature: React.FC<FeatureProps> = ({ icon, title, description, delay }) =>
       whileInView={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay }}
       viewport={{ once: true }}
-      className="bg-white/5 backdrop-blur-sm rounded-2xl p-8"
+      className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 sm:p-8"
     >
-      <div className="w-12 h-12 rounded-full bg-gradient-to-r from-turquoise to-lime flex items-center justify-center mb-6">
+      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-r from-turquoise to-lime flex items-center justify-center mb-4 sm:mb-6">
         {icon}
       </div>
-      <h3 className="text-lg font-semibold mb-3 text-white">{title}</h3>
+      <h3 className="text-md sm:text-lg font-semibold mb-2 sm:mb-3 text-white">{title}</h3>
       <p className="text-sm leading-relaxed text-white/75">{description}</p>
     </motion.div>
   );
@@ -58,10 +58,10 @@ const ProductSection: React.FC = () => {
   ];
 
   return (
-    <section id="product" className="pt-24 pb-24">
+    <section id="product" className="pt-16 sm:pt-20 md:pt-24 pb-16 sm:pb-20 md:pb-24">
       <Container>
         <div className="border-t border-[#1A1E26]/80 pt-16">
-          <div className="text-center mb-16">
+          <div className="text-center mb-10 sm:mb-12 md:mb-16">
             <div className="relative">
               <span className="absolute -z-10 inset-0 pointer-events-none bg-[radial-gradient(circle_at_center,_rgba(5,247,255,0.35)_0%,_transparent_60%)] blur-[80px] opacity-0 motion-safe:animate-fadeGlow"></span>
               <motion.h2
@@ -69,7 +69,7 @@ const ProductSection: React.FC = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
                 viewport={{ once: true }}
-                className={`${headingStyles.h2} text-[clamp(2.8rem,6vw,5rem)] leading-[1.1] tracking-tight mb-6`}
+                className={`${headingStyles.h2} text-[clamp(2.4rem,6vw,5rem)] leading-[1.1] tracking-tight mb-4 sm:mb-6`}
               >
                 Nuestra Plataforma Docente-First en{" "}
                 <span className="bg-gradient-to-r from-turquoise to-lime bg-clip-text text-transparent">
@@ -89,7 +89,7 @@ const ProductSection: React.FC = () => {
             </motion.p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
             {features.map((feature, index) => (
               <Feature key={index} {...feature} />
             ))}

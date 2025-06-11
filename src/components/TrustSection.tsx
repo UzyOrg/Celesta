@@ -15,11 +15,11 @@ const trustLogos = [
 const TrustSection: React.FC = () => {
   return (
     <section
-      className="py-16 md:py-24"
+      className="py-12 sm:py-16 md:py-24"
     >
       <Container>
-        <div className="text-center mb-12 md:mb-16">
-          <ShieldCheck className={`w-10 h-10 ${opacityVariants.primary} mx-auto mb-4 text-turquoise`} />
+        <div className="text-center mb-8 sm:mb-12 md:mb-16">
+          <ShieldCheck className={`w-8 h-8 sm:w-10 sm:h-10 ${opacityVariants.primary} mx-auto mb-3 sm:mb-4 text-turquoise`} />
           <h2 className={`${headingStyles.h2} ${opacityVariants.primary} text-white`}>
             Alianzas Estratégicas para una Educación Transformadora.
           </h2>
@@ -31,11 +31,11 @@ const TrustSection: React.FC = () => {
           {trustLogos.map((logo, index) => (
             <div
               key={logo.name}
-              className={`flex flex-col items-center justify-center text-center p-4 rounded-lg bg-black/20 backdrop-blur-sm border border-white/30 hover:bg-white/10 hover:border-white/50 transition-all duration-300`}
+              className={`flex flex-col items-center justify-center text-center p-3 sm:p-4 rounded-lg bg-black/20 backdrop-blur-sm border border-white/30 hover:bg-white/10 hover:border-white/50 transition-all duration-300`}
             >
               {/* Placeholder for actual logos - using text for now */}
               {/* <img src={`/logos/${logo.name.toLowerCase().replace(/\s+/g, '-')}.svg`} alt={logo.name} className="h-12 mb-2 filter grayscale hover:grayscale-0 transition-all" /> */}
-              <span className={`${textStyles.small} text-neutral-200 font-medium`}>
+              <span className={`text-xs sm:text-sm text-neutral-200 font-medium`}>
                 {logo.name}
               </span>
             </div>

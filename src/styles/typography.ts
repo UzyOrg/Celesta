@@ -11,13 +11,13 @@ export const headingStyles = {
   h2: `font-plus-jakarta-sans text-4xl font-bold leading-tight tracking-tight md:text-5xl lg:text-6xl`,
   h3: `font-plus-jakarta-sans text-3xl font-bold leading-snug tracking-tight md:text-4xl lg:text-5xl`,
   h4: `font-plus-jakarta-sans text-2xl font-semibold leading-snug tracking-tight md:text-3xl lg:text-4xl`,
-  subsection: `font-plus-jakarta-sans text-lg font-bold leading-normal`,
+  subsection: `font-plus-jakarta-sans text-xs sm:text-lg font-bold leading-normal`,
   cardTitle: `font-plus-jakarta-sans text-xl font-semibold leading-normal md:text-2xl`,
 };
 
 export const textStyles = {
   body: `font-plus-jakarta-sans text-base leading-relaxed`,
-  largeBody: `font-plus-jakarta-sans text-lg leading-relaxed md:text-xl`,
+  largeBody: `font-plus-jakarta-sans text-xs leading-relaxed sm:text-lg md:text-xl`,
   small: `font-plus-jakarta-sans text-sm leading-normal`,
   caption: `font-plus-jakarta-sans text-xs leading-normal`,
   button: `font-plus-jakarta-sans font-medium text-base`,

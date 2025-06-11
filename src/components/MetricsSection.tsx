@@ -59,11 +59,11 @@ const Metric: React.FC<MetricProps> = ({ value, unit, label, delay }) => {
       viewport={{ once: true }}
       className="text-center"
     >
-      <div className={`${headingStyles.h2} text-4xl md:text-5xl leading-[1.1] tracking-tight mb-2`}>
+      <div className={`${headingStyles.h2} text-3xl sm:text-4xl md:text-5xl leading-[1.1] tracking-tight mb-1 sm:mb-2`}>
         {count}
         <span className="text-turquoise">{unit}</span>
       </div>
-      <p className={`${textStyles.body} ${opacityVariants.secondary}`}>{label}</p>
+      <p className={`text-sm sm:text-base ${opacityVariants.secondary}`}>{label}</p>
     </motion.div>
   );
 };
@@ -77,16 +77,16 @@ const MetricsSection: React.FC = () => {
   ];
 
   return (
-    <section className="pt-24 pb-24">
+    <section className="pt-16 sm:pt-20 md:pt-24 pb-16 sm:pb-20 md:pb-24">
       <Container>
         <div className="border-t border-[#1A1E26]/80 pt-16">
-          <div className="text-center mb-16">
+          <div className="text-center mb-10 sm:mb-12 md:mb-16">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
               viewport={{ once: true }}
-              className="inline-flex items-center px-4 py-2 rounded-full bg-white/5 backdrop-blur-sm mb-4"
+              className="inline-flex items-center px-3 py-1.5 text-sm sm:px-4 sm:py-2 sm:text-base rounded-full bg-white/5 backdrop-blur-sm mb-3 sm:mb-4"
             >
               <TrendingUp className="w-4 h-4 mr-2 text-turquoise" />
               <span className={`${textStyles.button} ${opacityVariants.primary}`}>Evidencia de Progreso</span>
@@ -99,7 +99,7 @@ const MetricsSection: React.FC = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.1 }}
                 viewport={{ once: true }}
-                className={`${headingStyles.h2} text-[clamp(2.8rem,6vw,5rem)] leading-[1.1] tracking-tight mb-6`}
+                className={`${headingStyles.h2} text-[clamp(2.8rem,6vw,5rem)] leading-[1.1] tracking-tight mb-4 sm:mb-6`}
               >
                 Evidenciando la{" "}
                 <span className="bg-gradient-to-r from-turquoise to-lime bg-clip-text text-transparent">
@@ -109,7 +109,7 @@ const MetricsSection: React.FC = () => {
             </div>
           </div>
           
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-6 sm:gap-x-6 sm:gap-y-8 md:gap-8">
             {metrics.map((metric, index) => (
               <Metric key={index} {...metric} />
             ))}

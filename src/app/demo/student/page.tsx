@@ -35,27 +35,29 @@ const DemoStudentPage: React.FC = () => {
       {/* Content constrained by Container */}
       <Container className="z-10 flex flex-col items-center">
         <div className="text-center mb-12">
-        <h1 className={`${headingStyles.h1} mb-2`}><span className="text-neutral-300">Tutor</span> <span className="text-turquoise-400">Personalizado</span></h1>
-        <p className={`${textStyles.largeBody} text-white/70 max-w-2xl mx-auto`}>
+        <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-2"><span className="text-neutral-300">Tutor</span> <span className="text-turquoise-400">Personalizado</span></h1>
+        <p className="text-base sm:text-lg text-white/70 max-w-2xl mx-auto">
           Resuelve problemas paso a paso con la guía de nuestra IA. Aprende a tu ritmo y fortalece tu comprensión.
         </p>
       </div>
 
-      <motion.div layout className="w-full max-w-xl p-8 shadow-xl bg-neutral-800/60 backdrop-blur-lg border border-neutral-700/80 rounded-xl">
-        <h3 className={`font-plus-jakarta-sans font-bold leading-snug tracking-tight text-xl sm:text-2xl md:text-3xl mb-4 text-center text-white`}>Problema a Resolver:</h3>
-        <p className={`text-center text-turquoise-400 font-mono text-2xl sm:text-3xl md:text-4xl mb-6 bg-neutral-900/70 p-4 rounded-lg`}>x² – 5x + 6</p>
+      <motion.div layout className="w-full max-w-xl p-4 sm:p-6 md:p-8 shadow-xl bg-neutral-800/60 backdrop-blur-lg border border-neutral-700/80 rounded-xl">
+        <h3 className={`font-plus-jakarta-sans font-bold leading-snug tracking-tight text-lg sm:text-xl md:text-2xl lg:text-3xl mb-4 text-center text-white`}>Problema a Resolver:</h3>
+        <p className={`text-center text-turquoise-400 font-mono text-xl sm:text-2xl md:text-3xl lg:text-4xl mb-6 bg-neutral-900/70 p-3 sm:p-4 rounded-lg`}>x² – 5x + 6</p>
         
-        <div className="space-y-4 mb-6 min-h-[150px]">
+        <div className="space-y-3 sm:space-y-4 mb-6 min-h-[120px] sm:min-h-[150px]">
           <AnimatePresence>
             {currentHint >= 0 && hints.slice(0, currentHint + 1).map((hint, index) => (
               <motion.div
                 key={index}
-                initial={{ opacity: 0, y: 10 }}
+                initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0 }}
-                className={`p-4 rounded-lg border ${index === hints.length - 1 ? 'bg-lime-700/40 border-t-lime-400/60 border-l-lime-400/60 border-r-neutral-700/40 border-b-neutral-700/40' : 'bg-neutral-800/80 border-t-turquoise-500/50 border-l-turquoise-500/50 border-r-neutral-700/40 border-b-neutral-700/40'}`}>
-                <p className={`${textStyles.body} ${index === hints.length - 1 ? 'text-white' : 'text-neutral-100'}`}>
-                  <span className='font-bold'>{index === hints.length - 1 ? 'Explicación Final: ' : `Pista ${index + 1}: `}</span>
+                exit={{ opacity: 0, y: -10, transition: { duration: 0.2 } }}
+                className={`${index === hints.length - 1 ? 'bg-green-400/30 border border-green-400/50' : 'bg-neutral-800/90 border border-neutral-700'} rounded-xl p-3 sm:p-4 shadow-md`}>
+                <p className="text-sm sm:text-base text-neutral-200">
+                  <span className={`font-semibold ${index === hints.length - 1 ? 'text-lime-400' : 'text-turquoise-400'}`}>
+                    {index === hints.length - 1 ? 'Explicación Final: ' : `Pista ${index + 1}: `}
+                  </span>
                   {hint}
                 </p>
               </motion.div>
