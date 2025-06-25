@@ -67,49 +67,67 @@
   color: #fff;
 }
 
-.planCard {
-  margin-top: 3rem;
-  width: 100%;
-  background-color: rgba(255, 255, 255, 0.05);
-  padding: 1.5rem;
-  border-radius: 1rem;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+/* New Grid Card Layout */
+.resultsContainer {
+  margin-top: 2rem;
 }
 
-@media (min-width: 640px) {
-  .planCard {
-    padding: 2rem;
-  }
+.planTitleContainer {
+  margin-bottom: 2rem; /* Add space below title */
 }
 
-.planBody {
-  padding: 1.5rem 2rem;
-}
-
-.planGrid {
+.resultsGrid {
   display: grid;
+  gap: 1.5rem;
   grid-template-columns: 1fr;
-  gap: 2rem;
 }
 
+.gridCard {
+  background-color: rgba(22, 27, 34, 0.8);
+  border: 1px solid #30363d;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  backdrop-filter: blur(10px);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.gridCard:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+  border-color: #4d545c;
+}
+
+/* Responsive Grid Layout */
 @media (min-width: 768px) {
-  .planGrid {
+  .resultsGrid {
     grid-template-columns: repeat(2, 1fr);
   }
 }
 
-.gridColumn {
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-}
+@media (min-width: 1024px) {
+  .resultsGrid {
+    grid-template-columns: repeat(3, 1fr);
+    grid-auto-rows: min-content;
+  }
 
-.fullWidth {
-  grid-column: 1 / -1;
-}
+  .essentialQuestionCard {
+    grid-column: 1 / 3;
+    grid-row: 1 / 2;
+  }
 
-.planBody > * + * {
-  margin-top: 2rem;
+  .objectivesCard {
+    grid-column: 3 / 4;
+    grid-row: 1 / 3;
+  }
+
+  .phasesCard {
+    grid-column: 1 / 3;
+  }
+
+  .teacherCornerCard {
+    background-color: rgba(48, 232, 191, 0.05);
+    border-color: rgba(48, 232, 191, 0.2);
+  }
 }
 
 .sectionTitle {

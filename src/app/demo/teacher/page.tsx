@@ -146,86 +146,85 @@ const DemoTeacherPage: React.FC = () => {
         )}
 
         {!loading && selectedLevel && (
-          <motion.div 
-            key={`${materia}-${grado}`}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className={styles.planCard}
-          >
+          <div className={styles.resultsContainer}>
             <div className={styles.planTitleContainer}>
               <h2 className={styles.planTitle}>
                 {selectedLevel.titulo_adaptado}
               </h2>
             </div>
-            <div className={styles.planBody}>
-              <div className={styles.planGrid}>
-                {/* Columna Izquierda */}
-                <div className={styles.gridColumn}>
-                  <div>
-                    <h3 className={styles.sectionTitle}>Pregunta Esencial</h3>
-                    <blockquote className={styles.essentialQuestion}>
-                      {selectedLevel.pregunta_esencial_adaptada}
-                    </blockquote>
-                  </div>
-                  <div>
-                    <h3 className={styles.sectionTitle}>Producto Final a Crear</h3>
-                    <p className={styles.finalProductText}>
-                      {selectedLevel.producto_final_adaptado}
-                    </p>
-                  </div>
-                </div>
 
-                {/* Columna Derecha */}
-                <div className={styles.gridColumn}>
-                  <div>
-                    <h3 className={styles.sectionTitle}>Objetivos de Aprendizaje</h3>
-                    <ul className={styles.learningObjectivesList}>
-                      {selectedLevel.objetivos_adaptados.map((obj, index) => (
-                        <li key={index}>{obj}</li>
-                      ))}
-                    </ul>
-                  </div>
-                  <div>
-                    <h3 className={styles.sectionTitle}>Evaluación</h3>
-                    <p className={styles.evaluationText}>
-                      {selectedLevel.metodo_evaluacion_adaptado}
-                    </p>
-                  </div>
-                </div>
+            <motion.div 
+              className={styles.resultsGrid}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5, staggerChildren: 0.1 }}
+            >
+              {/* Essential Question Card */}
+              <motion.div className={`${styles.gridCard} ${styles.essentialQuestionCard}`}>
+                <h3 className={styles.sectionTitle}>Pregunta Esencial</h3>
+                <blockquote className={styles.essentialQuestion}>
+                  {selectedLevel.pregunta_esencial_adaptada}
+                </blockquote>
+              </motion.div>
 
-                {/* Ancho Completo */}
-                <div className={styles.fullWidth}>
-                  <h3 className={styles.sectionTitle}>Fases del Proyecto</h3>
-                  <div className={styles.phasesContainer}>
-                    {selectedLevel.fases_adaptadas.map((fase, index) => (
-                      <details key={index} className={styles.phaseDetails}>
-                        <summary className={styles.phaseSummary}>
-                          <span>Fase {fase.fase}: {fase.titulo_fase}</span>
-                        </summary>
-                        <div className={styles.phaseContent}>
-                          <p>{fase.descripcion}</p>
-                        </div>
-                      </details>
-                    ))}
-                  </div>
-                </div>
+              {/* Learning Objectives Card */}
+              <motion.div className={`${styles.gridCard} ${styles.objectivesCard}`}>
+                <h3 className={styles.sectionTitle}>Objetivos de Aprendizaje</h3>
+                <ul className={styles.learningObjectivesList}>
+                  {selectedLevel.objetivos_adaptados.map((obj, index) => (
+                    <li key={index}>{obj}</li>
+                  ))}
+                </ul>
+              </motion.div>
 
-                <div className={styles.fullWidth}>
-                  <h3 className={styles.sectionTitle}>Teacher Corner: Pregunta para el Docente</h3>
-                  <p className={styles.teacherCornerText}>
-                    {selectedLevel.pregunta_al_docente_adaptada}
-                  </p>
-                </div>
-              </div>
+              {/* Final Product Card */}
+              <motion.div className={styles.gridCard}>
+                <h3 className={styles.sectionTitle}>Producto Final a Crear</h3>
+                <p className={styles.finalProductText}>
+                  {selectedLevel.producto_final_adaptado}
+                </p>
+              </motion.div>
 
-              <div className={styles.summaryButtonContainer}>
-                <Link href="/demo/summary?from=teacher" className={styles.summaryButton}>
-                  Ver mi Impacto →
-                </Link>
-              </div>
+              {/* Evaluation Card */}
+              <motion.div className={styles.gridCard}>
+                <h3 className={styles.sectionTitle}>Evaluación</h3>
+                <p className={styles.evaluationText}>
+                  {selectedLevel.metodo_evaluacion_adaptado}
+                </p>
+              </motion.div>
+
+              {/* Phases Card */}
+              <motion.div className={`${styles.gridCard} ${styles.phasesCard}`}>
+                <h3 className={styles.sectionTitle}>Fases del Proyecto</h3>
+                <div className={styles.phasesContainer}>
+                  {selectedLevel.fases_adaptadas.map((fase, index) => (
+                    <details key={index} className={styles.phaseDetails}>
+                      <summary className={styles.phaseSummary}>
+                        <span>Fase {fase.fase}: {fase.titulo_fase}</span>
+                      </summary>
+                      <div className={styles.phaseContent}>
+                        <p>{fase.descripcion}</p>
+                      </div>
+                    </details>
+                  ))}
+                </div>
+              </motion.div>
+
+              {/* Teacher Corner Card */}
+              <motion.div className={`${styles.gridCard} ${styles.teacherCornerCard}`}>
+                <h3 className={styles.sectionTitle}>Teacher Corner</h3>
+                <p className={styles.teacherQuestionText}>
+                  {selectedLevel.pregunta_al_docente_adaptada}
+                </p>
+              </motion.div>
+            </motion.div>
+
+            <div className={styles.summaryButtonContainer}>
+              <Link href="/demo/summary?from=teacher" className={styles.summaryButton}>
+                Ver mi Impacto →
+              </Link>
             </div>
-          </motion.div>
+          </div>
         )}
       </Container>
     </div>
