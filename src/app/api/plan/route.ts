@@ -1,28 +1,90 @@
 import { NextResponse } from 'next/server';
+import fs from 'fs/promises';
+import path from 'path';
 
-// Mock data for the lesson plan
-const mockPlan = {
-  objetivo: "Que los estudiantes comprendan y apliquen el concepto de fracciones equivalentes para resolver problemas.",
-  estructura: [
-    "Introducción (5 min): Presentar el concepto de 'partes de un todo'.",
-    "Modelado (10 min): Mostrar con ejemplos visuales cómo 1/2 es igual a 2/4.",
-    "Práctica Guiada (15 min): Resolver 3 problemas en conjunto.",
-    "Práctica Independiente (10 min): Los alumnos resuelven 5 ejercicios.",
-    "Cierre (5 min): Repaso rápido y ticket de salida."
-  ],
-  rubrica: [
-    { criterio: "Comprensión del Concepto", nivel: "Identifica y crea fracciones equivalentes." },
-    { criterio: "Aplicación en Problemas", nivel: "Usa las fracciones para resolver situaciones dadas." },
-    { criterio: "Participación", nivel: "Colabora activamente en la práctica guiada." },
-  ]
-};
+// Helper function to replace placeholders in a string
+function replacePlaceholders(text: string, tema?: string, grado?: string): string {
+  let result = text;
+  if (tema) {
+    result = result.replace(/{{tema}}/g, tema);
+  }
+  if (grado) {
+    result = result.replace(/{{grado}}/g, grado);
+  }
+  return result;
+}
+
+// Helper function to recursively replace placeholders in an object
+function processObject(obj: any, tema?: string, grado?: string): any {
+  if (typeof obj === 'string') {
+    return replacePlaceholders(obj, tema, grado);
+  }
+  if (Array.isArray(obj)) {
+    return obj.map(item => processObject(item, tema, grado));
+  }
+  if (typeof obj === 'object' && obj !== null) {
+    const newObj: { [key: string]: any } = {};
+    for (const key in obj) {
+      if (Object.prototype.hasOwnProperty.call(obj, key)) {
+        newObj[key] = processObject(obj[key], tema, grado);
+      }
+    }
+    return newObj;
+  }
+  return obj;
+}
 
 export async function POST(request: Request) {
-  // In the future, you could read the topic from the request body
-  // const { topic } = await request.json();
+  try {
+    const body = await request.json();
+    const { materia, grado } = body;
+    let tema = body.tema; // 'tema' is now optional
 
-  // For now, we return the hardcoded plan after a short delay
-  await new Promise(resolve => setTimeout(resolve, 1000));
+    if (!materia || !grado) {
+      return NextResponse.json({ error: 'Faltan parámetros: materia y grado son requeridos.' }, { status: 400 });
+    }
 
-  return NextResponse.json(mockPlan);
+    // If no specific topic is provided, use the subject's name as a default topic.
+    if (!tema) {
+      tema = materia.charAt(0).toUpperCase() + materia.slice(1);
+    }
+
+    // Normalize materia to match file names (e.g., 'Algebra' -> 'algebra')
+    const normalizedMateria = materia.toLowerCase().replace(/\s+/g, '_');
+    
+    // Construct path to templates directory (assuming it's at the project root, outside 'src')
+    // The project root is c:\Users\PC\Desktop\project-edTech\Celesta
+    const templatesDir = path.join(process.cwd(), 'templates');
+    
+    let templatePath = path.join(templatesDir, `${normalizedMateria}.json`);
+    const fallbackTemplatePath = path.join(templatesDir, 'generico.json');
+
+    let planContent;
+    try {
+      planContent = await fs.readFile(templatePath, 'utf-8');
+    } catch (error) {
+      // If specific template not found, try fallback
+      console.warn(`Plantilla para '${normalizedMateria}' no encontrada, usando 'generico.json'.`);
+      try {
+        planContent = await fs.readFile(fallbackTemplatePath, 'utf-8');
+      } catch (fallbackError) {
+        console.error(`Error al leer la plantilla genérica: ${fallbackError}`);
+        return NextResponse.json({ error: 'No se pudo cargar la plantilla del plan de estudios.' }, { status: 500 });
+      }
+    }
+
+    let planData = JSON.parse(planContent);
+
+    // Replace placeholders
+    planData = processObject(planData, tema, grado);
+
+    return NextResponse.json(planData);
+
+  } catch (error) {
+    console.error('Error en /api/plan:', error);
+    if (error instanceof SyntaxError) {
+        return NextResponse.json({ error: 'Cuerpo de la solicitud inválido (JSON malformado).' }, { status: 400 });
+    }
+    return NextResponse.json({ error: 'Ocurrió un error interno en el servidor.' }, { status: 500 });
+  }
 }

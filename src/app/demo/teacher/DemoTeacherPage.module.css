@@ -1,0 +1,418 @@
+.planTitleContainer {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 1rem;
+}
+
+.planTitle {
+  font-size: 2.25rem; /* ~text-4xl */
+  font-weight: 700;
+  background-image: linear-gradient(to right, #05F7FF, #A3E635);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+@media (min-width: 640px) {
+  .planTitle {
+    font-size: 3rem; /* ~text-5xl */
+  }
+}
+
+.essentialQuestion {
+  border-left: 4px solid #30e8bf; /* Use accent color */
+  padding: 1rem 1.5rem;
+  margin: 0;
+  font-style: italic;
+  font-size: 1.125rem; /* ~text-lg */
+  color: #e6edf3;
+  background-color: rgba(48, 232, 191, 0.05);
+  border-radius: 4px;
+}
+
+@media (min-width: 640px) {
+  .essentialQuestion {
+    font-size: 1.25rem; /* ~text-xl */
+  }
+}
+
+.summaryButtonContainer {
+  margin-top: 2.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #30363d;
+  text-align: center;
+}
+
+.summaryButton {
+  display: inline-block;
+  background-image: linear-gradient(to right, #0891b2, #0ea5e9); /* from-cyan-600 to-sky-600 */
+  color: white;
+  font-weight: 700;
+  padding: 0.75rem 2rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  transition: all 0.3s ease-in-out;
+}
+
+.summaryButton:hover {
+  transform: scale(1.05);
+  box-shadow: 0 10px 15px -3px rgba(14, 165, 233, 0.2), 0 4px 6px -4px rgba(14, 165, 233, 0.2);
+}
+
+.pageWrapper {
+  position: relative;
+  min-height: 100vh;
+  padding-top: 4rem;
+  padding-bottom: 4rem;
+  overflow: hidden;
+  color: #fff;
+}
+
+.planCard {
+  margin-top: 3rem;
+  width: 100%;
+  background-color: rgba(255, 255, 255, 0.05);
+  padding: 1.5rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+@media (min-width: 640px) {
+  .planCard {
+    padding: 2rem;
+  }
+}
+
+.planBody {
+  padding: 1.5rem 2rem;
+}
+
+.planGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+}
+
+@media (min-width: 768px) {
+  .planGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.gridColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.fullWidth {
+  grid-column: 1 / -1;
+}
+
+.planBody > * + * {
+  margin-top: 2rem;
+}
+
+.sectionTitle {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #c9d1d9;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #30363d;
+}
+
+.evaluationText,
+.phaseDescriptionText,
+.finalProductText,
+.teacherCornerText,
+.teacherQuestionText,
+.phaseContent p {
+  color: #c9d1d9;
+  line-height: 1.7; /* Increased line-height for readability */
+}
+
+
+
+@media (min-width: 640px) {
+  .evaluationText,
+  .phaseDescriptionText,
+  .finalProductText,
+  .phaseDetails p {
+    font-size: 1rem;
+  }
+}
+
+.teacherCorner {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px dashed rgba(255, 255, 255, 0.2);
+}
+
+.teacherCornerContent {
+  background-color: rgba(255, 255, 255, 0.1);
+  padding: 1rem;
+  border-radius: 0.5rem;
+}
+
+.teacherCornerTitle {
+  font-weight: 700;
+  font-size: 1rem;
+  color: #fff;
+  margin-bottom: 0.5rem;
+}
+
+
+
+.evaluationNote {
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  color: #05F7FF; /* turquoise */
+  font-style: italic;
+}
+
+.dividerContainer {
+  display: flex;
+  align-items: center;
+
+}
+
+.dividerLine {
+  flex-grow: 1;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.dividerText {
+  flex-shrink: 0;
+  margin: 0 1rem;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.875rem; /* text-sm */
+}
+
+.formContainer {
+  max-width: 35rem; /* max-w-3xl */
+  margin: 2.5rem auto 0; /* mt-10 */
+  background-color: rgba(255, 255, 255, 0.05);
+  padding: 2rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.formGrid {
+  display: grid;
+  gap: 1.5rem;
+}
+
+
+.formLabel {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem; /* text-sm */
+  font-weight: 500; /* font-medium */
+  color: rgba(203, 213, 225, 1); /* text-slate-300 */
+}
+
+.formInput {
+  display: block;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background-color: rgba(24, 29, 21, 0.322); /* Dark Green Background */
+  border: 1px solid rgba(162, 230, 53, 0.205); /* Lime Green Border */
+  border-radius: 0.5rem;
+  color: rgba(241, 245, 249, 1);
+  transition: border-color 0.2s, box-shadow 0.2s;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+select.formInput {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23e2e8f0' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 0.5rem center;
+  background-repeat: no-repeat;
+  background-size: 1.5em 1.5em;
+  padding-right: 2.5rem;
+}
+
+.formInput:focus {
+  outline: none;
+  border-color: #A3E635; /* Lime green */
+  box-shadow: 0 0 0 2px rgba(163, 230, 53, 0.5);
+}
+
+.formAction {
+  margin-top: 2rem; /* mt-8 */
+  text-align: center;
+}
+
+.pageHeader {
+  text-align: center;
+}
+
+.pageTitle {
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 2.5rem; /* ~text-4xl */
+  font-weight: 800; /* font-extrabold */
+  margin-bottom: 1rem;
+}
+
+.pageSubtitle {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 1rem; /* base: 16px */
+  line-height: 1.625;
+  color: rgba(255, 255, 255, 0.7);
+  max-width: 42rem; /* max-w-2xl */
+  margin: 0 auto 2rem;
+}
+
+@media (min-width: 640px) { /* sm */
+  .pageTitle {
+    font-size: 3rem; /* ~text-5xl */
+  }
+  .pageSubtitle {
+    font-size: 1.125rem; /* text-lg */
+  }
+}
+
+@media (min-width: 768px) { /* md */
+  .pageTitle {
+    font-size: 3.5rem; /* ~text-6xl */
+  }
+  .pageSubtitle {
+    font-size: 1.25rem; /* text-xl */
+  }
+}
+
+@media (min-width: 1024px) { /* lg */
+  .pageTitle {
+    font-size: 4rem; /* ~text-7xl */
+  }
+}
+
+.glowWrapper {
+  position: absolute;
+  inset: 0;
+  z-index: -10;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.glowTop, .glowBottom {
+  position: absolute;
+  left: 50%;
+  width: 100%;
+  height: 100%;
+  transform: translateX(-50%);
+}
+
+.glowTop {
+  top: 0;
+  background-image: radial-gradient(circle at top center, rgba(5, 247, 255, 0.12) 0%, transparent 40%);
+  opacity: 0.6;
+}
+
+.glowBottom {
+  bottom: 0;
+  background-image: radial-gradient(circle at bottom center, rgba(163, 230, 53, 0.08) 0%, transparent 45%);
+  opacity: 0.5;
+}
+
+@keyframes pulseGlow {
+  50% { opacity: 0.3; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .glowTop {
+    animation: pulseGlow 15s ease-in-out infinite;
+  }
+  .glowBottom {
+    animation: pulseGlow 15s ease-in-out 7.5s infinite;
+  }
+}
+
+.learningObjectivesList {
+    list-style-type: none;
+    padding-left: 0;
+    color: #c9d1d9;
+    line-height: 1.7;
+}
+
+.learningObjectivesList li {
+    position: relative;
+    padding-left: 1.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.learningObjectivesList li::before {
+    content: '✓';
+    position: absolute;
+    left: 0;
+    color: #30e8bf;
+    font-size: 1rem;
+    line-height: 1.6;
+}
+
+.phasesContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.phaseDetails {
+  background-color: #161b22;
+  border-radius: 0.75rem;
+  border: 1px solid #30363d;
+  transition: background-color 0.3s, border-color 0.3s;
+  overflow: hidden;
+}
+
+.phaseDetails:hover {
+    background-color: #1f252d;
+    border-color: #4d545c;
+}
+
+.phaseDetails[open] {
+  background-color: #1f252d;
+  border-color: #4d545c;
+}
+
+.phaseSummary {
+  padding: 1.25rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  list-style: none; /* Remove marker */
+}
+
+.phaseSummary::-webkit-details-marker {
+  display: none; /* Chrome/Safari */
+}
+
+.phaseSummary::after {
+  content: '›';
+  font-size: 2rem;
+  font-weight: 300;
+  line-height: 1;
+  transition: transform 0.3s ease-in-out;
+  color: #A3E635;
+}
+
+.phaseDetails[open] > .phaseSummary::after {
+  transform: rotate(90deg);
+}
+
+.phaseContent {
+  padding: 1.25rem;
+  border-top: 1px solid #30363d;
+}
+
+.teacherQuestionText {
+  font-style: italic;
+  color: rgba(255, 255, 255, 0.9);
+  background-color: rgba(24, 29, 21, 0.322);
+  padding: 1rem;
+  border-radius: 0.5rem;
+  border-left: 4px solid #A3E635; /* lime */
+}

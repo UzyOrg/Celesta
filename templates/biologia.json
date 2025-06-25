@@ -1,0 +1,26 @@
+{
+    "titulo": "Exploración Biológica: {{tema}}",
+    "meta_aprendizaje": "Fomentar que los alumnos de {{grado}} comprendan los procesos vitales relacionados con {{tema}} a través de la observación, la experimentación y el análisis crítico.",
+    "semanas": [
+      {
+        "semana": 1,
+        "topico": "Conceptos clave y vocabulario fundamental de {{tema}}.",
+        "actividad_clave": "Observación guiada (real o simulada) y creación de un glosario personal con el apoyo del Copiloto."
+      },
+      {
+        "semana": 2,
+        "topico": "Análisis de los mecanismos y ciclos involucrados.",
+        "actividad_clave": "Participación en un laboratorio virtual con el Tutor IA para simular y entender los procesos."
+      },
+      {
+        "semana": 3,
+        "topico": "El impacto y la relevancia de {{tema}} en el ecosistema y la vida diaria.",
+        "actividad_clave": "Investigación guiada sobre cómo {{tema}} afecta su entorno local o la salud humana."
+      },
+      {
+        "semana": 4,
+        "topico": "Demostración de la comprensión.",
+        "actividad_clave": "Creación de un mapa conceptual, una presentación o una maqueta que explique de forma integral {{tema}}."
+      }
+    ]
+  }

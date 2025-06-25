@@ -1,119 +1,90 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { motion, useAnimation, useInView } from 'framer-motion';
-import { headingStyles, textStyles, opacityVariants } from '../styles/typography';
-import { TrendingUp } from 'lucide-react';
+import React from 'react';
+import { motion } from 'framer-motion';
+import { Target, TrendingUp, Users } from 'lucide-react';
 import Container from './Container';
 
-interface MetricProps {
-  value: number;
-  unit: string;
-  label: string;
-  delay: number;
-}
-
-const Metric: React.FC<MetricProps> = ({ value, unit, label, delay }) => {
-  const [count, setCount] = useState(0);
-  const elementRef = useRef<HTMLDivElement>(null);
-  const [hasAnimated, setHasAnimated] = useState(false);
-  
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && !hasAnimated) {
-          setHasAnimated(true);
-          let startValue = 0;
-          const duration = 2000;
-          const increment = Math.ceil(value / (duration / 16));
-          
-          const timer = setInterval(() => {
-            startValue += increment;
-            if (startValue >= value) {
-              setCount(value);
-              clearInterval(timer);
-            } else {
-              setCount(startValue);
-            }
-          }, 16);
-        }
-      },
-      { threshold: 0.5 }
-    );
-    
-    if (elementRef.current) {
-      observer.observe(elementRef.current);
-    }
-    
-    return () => {
-      if (elementRef.current) {
-        observer.unobserve(elementRef.current);
-      }
-    };
-  }, [value, hasAnimated]);
-
-  return (
-    <motion.div
-      ref={elementRef}
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay }}
-      viewport={{ once: true }}
-      className="text-center"
-    >
-      <div className={`${headingStyles.h2} text-3xl sm:text-4xl md:text-5xl leading-[1.1] tracking-tight mb-1 sm:mb-2`}>
-        {count}
-        <span className="text-turquoise">{unit}</span>
-      </div>
-      <p className={`text-sm sm:text-base ${opacityVariants.secondary}`}>{label}</p>
-    </motion.div>
-  );
-};
-
 const MetricsSection: React.FC = () => {
-  const metrics: MetricProps[] = [
-    { value: 30, unit: '%', label: 'Menos Tiempo en Tareas Operativas para Docentes', delay: 0 },
-    { value: 85, unit: '%', label: 'Mejora en la Comprensión de Conceptos Clave', delay: 0.1 },
-    { value: 100, unit: '%', label: 'Visibilidad del Desarrollo de Competencias (Skill-Graph)', delay: 0.2 },
-    { value: 20, unit: '%', label: 'Incremento en Participación Activa del Estudiante', delay: 0.3 },
-  ];
-
   return (
-    <section className="pt-16 sm:pt-20 md:pt-24 pb-16 sm:pb-20 md:pb-24">
+    <section id="metrics" className="py-16 sm:py-20 bg-[#0D1117]">
       <Container>
-        <div className="border-t border-[#1A1E26]/80 pt-16">
-          <div className="text-center mb-10 sm:mb-12 md:mb-16">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              viewport={{ once: true }}
-              className="inline-flex items-center px-3 py-1.5 text-sm sm:px-4 sm:py-2 sm:text-base rounded-full bg-white/5 backdrop-blur-sm mb-3 sm:mb-4"
-            >
-              <TrendingUp className="w-4 h-4 mr-2 text-turquoise" />
-              <span className={`${textStyles.button} ${opacityVariants.primary}`}>Evidencia de Progreso</span>
-            </motion.div>
-            
-            <div className="relative">
-              <span className="absolute -z-10 inset-0 pointer-events-none bg-[radial-gradient(circle_at_center,_rgba(5,247,255,0.35)_0%,_transparent_60%)] blur-[80px] opacity-0 motion-safe:animate-fadeGlow"></span>
-              <motion.h2
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.1 }}
+        <div className="grid md:grid-cols-2 gap-12 items-center">
+          <div className="text-center md:text-left">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-white">
+              Métricas que importan,
+              <br />
+              <span className="bg-gradient-to-r from-turquoise to-lime bg-clip-text text-transparent">
+                no que aparentan.
+              </span>
+            </h2>
+            <p className="mt-6 text-lg sm:text-xl text-white/70">
+              Olvídate de las tasas de finalización. Nuestra plataforma mide el desarrollo de habilidades clave del siglo XXI, ofreciendo una visión clara del aprendizaje real y accionable.
+            </p>
+            <ul className="mt-8 space-y-4 text-left">
+              <motion.li 
+                className="flex items-start"
+                initial={{ opacity: 0, x: -20 }}
+                whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
-                className={`${headingStyles.h2} text-[clamp(2.8rem,6vw,5rem)] leading-[1.1] tracking-tight mb-4 sm:mb-6`}
+                transition={{ duration: 0.5, delay: 0.1 }}
               >
-                Evidenciando la{" "}
-                <span className="bg-gradient-to-r from-turquoise to-lime bg-clip-text text-transparent">
-                  Transformación Educativa
-                </span>.
-              </motion.h2>
-            </div>
+                <div className="p-2 bg-white/10 rounded-full mr-4 shrink-0">
+                  <Target className="w-6 h-6 text-turquoise" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-white">Pensamiento Crítico</h4>
+                  <p className="text-white/70 text-sm">Analizamos la capacidad del alumno para construir argumentos sólidos y evaluar información.</p>
+                </div>
+              </motion.li>
+              <motion.li 
+                className="flex items-start"
+                initial={{ opacity: 0, x: -20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+              >
+                <div className="p-2 bg-white/10 rounded-full mr-4 shrink-0">
+                  <TrendingUp className="w-6 h-6 text-lime" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-white">Resolución de Problemas</h4>
+                  <p className="text-white/70 text-sm">Medimos cómo se aplica el conocimiento para resolver desafíos complejos y auténticos.</p>
+                </div>
+              </motion.li>
+              <motion.li 
+                className="flex items-start"
+                initial={{ opacity: 0, x: -20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: 0.3 }}
+              >
+                <div className="p-2 bg-white/10 rounded-full mr-4 shrink-0">
+                  <Users className="w-6 h-6 text-turquoise" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-white">Colaboración</h4>
+                  <p className="text-white/70 text-sm">Evaluamos la efectividad del trabajo en equipo y la comunicación dentro de los proyectos.</p>
+                </div>
+              </motion.li>
+            </ul>
           </div>
           
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-6 sm:gap-x-6 sm:gap-y-8 md:gap-8">
-            {metrics.map((metric, index) => (
-              <Metric key={index} {...metric} />
-            ))}
-          </div>
+          <motion.div
+            className="relative h-full min-h-[300px]"
+            initial={{ opacity: 0, scale: 0.9 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true, amount: 0.5 }}
+            transition={{ duration: 0.7 }}
+          >
+            <div className="absolute inset-0 bg-gradient-to-tr from-turquoise to-lime opacity-10 blur-3xl rounded-full" />
+            <div className="relative bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 p-6 h-full flex flex-col items-center justify-center">
+              <p className="text-center font-bold text-white mb-4">Skill-Graph del Estudiante</p>
+              <div className="w-full h-full bg-grid-pattern relative flex items-center justify-center rounded-lg">
+                 <div className="w-full h-full flex items-center justify-center">
+                    <p className="text-white/50 text-sm">Visualización del grafo de competencias</p>
+                 </div>
+              </div>
+            </div>
+          </motion.div>
         </div>
       </Container>
     </section>

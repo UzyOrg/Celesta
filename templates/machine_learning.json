@@ -1,0 +1,26 @@
+{
+    "titulo": "Introducción al Machine Learning: {{tema}}",
+    "meta_aprendizaje": "Capacitar a los estudiantes de {{grado}} para que comprendan los conceptos fundamentales del Machine Learning y construyan su primer modelo predictivo, evaluando críticamente su funcionamiento y sus implicaciones éticas.",
+    "semanas": [
+      {
+        "semana": 1,
+        "topico": "Fundamentos: ¿Qué es el Machine Learning? Tipos de Aprendizaje (Supervisado, No Supervisado, por Refuerzo).",
+        "actividad_clave": "Clasificar problemas del mundo real (ej. predicción de precios de casas, recomendación de películas, detección de spam) según el tipo de aprendizaje aplicable."
+      },
+      {
+        "semana": 2,
+        "topico": "Tu Primer Modelo Predictivo: Regresión Lineal. Entendiendo los datos, 'features' y 'labels'.",
+        "actividad_clave": "Utilizar el Laboratorio IA para cargar un dataset simple (ej. altura vs. peso), visualizar los datos y entrenar un modelo de regresión para hacer predicciones."
+      },
+      {
+        "semana": 3,
+        "topico": "¿Funciona mi modelo? Métricas de Evaluación, el concepto de 'Error' y Overfitting.",
+        "actividad_clave": "Evaluar el modelo entrenado en la semana anterior utilizando un conjunto de datos de prueba. Analizar su precisión y proponer ideas para mejorar su rendimiento."
+      },
+      {
+        "semana": 4,
+        "topico": "El Impacto del ML: Sesgos (Bias) en los Datos, Ética de los Algoritmos y Aplicaciones Futuras.",
+        "actividad_clave": "Desarrollar un mini-proyecto sobre {{tema}}, incluyendo un análisis escrito sobre los posibles sesgos del modelo y las consideraciones éticas de su aplicación en la sociedad."
+      }
+    ]
+  }

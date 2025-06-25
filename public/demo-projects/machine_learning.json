@@ -1,0 +1,147 @@
+{
+    "id_proyecto": "ML-001",
+    "tema_general": "Machine Learning",
+    "pregunta_esencial_base": "Si las plataformas que usamos a diario pueden 'aprender' lo que nos gusta, ¿podemos usar esa misma 'magia' para resolver problemas importantes en nuestra escuela o comunidad?",
+    "niveles": [
+      {
+        "nivel_escolar": "Primaria",
+        "titulo_adaptado": "Los Guardianes del Reciclaje: Entrenando a nuestra Caja Inteligente",
+        "pregunta_esencial_adaptada": "¿Podemos enseñarle a una 'caja mágica' a clasificar la basura de nuestro salón para ayudar al planeta?",
+        "producto_final_adaptado": "Una 'Caja Inteligente' física, hecha con materiales reciclados, que tiene compartimentos para diferentes tipos de basura. Los equipos presentan su caja y explican las 'reglas' que le enseñaron para clasificar correctamente, demostrándolo con ejemplos.",
+        "objetivos_adaptados": [
+          "Identificar y clasificar objetos según sus atributos (material, origen).",
+          "Crear un conjunto de reglas visuales (un 'algoritmo' simple) para un proceso de clasificación.",
+          "Colaborar en equipo para diseñar y construir un modelo físico que represente su solución."
+        ],
+        "fases_adaptadas": [
+          {
+            "fase": 1,
+            "titulo_fase": "Descubriendo la 'Magia' que Ordena",
+            "descripcion": "Explorar cómo las apps 'saben' lo que nos gusta a través de ejemplos simples (si ves videos de gatos, te muestra más gatos). Identificar el problema en el salón: la basura está toda revuelta. Hacer una lluvia de ideas sobre los tipos de basura que generamos."
+          },
+          {
+            "fase": 2,
+            "titulo_fase": "¿Cuáles son las Reglas del Juego?",
+            "descripcion": "En equipos, recibir una bolsa con distintos tipos de basura limpia (papel, plástico, envolturas). Clasificarla en montones y escribir o dibujar la regla para cada montón. 'Si se puede escribir en él, va en el montón de papel'. Estas son las 'instrucciones' para nuestra caja."
+          },
+          {
+            "fase": 3,
+            "titulo_fase": "Construyendo nuestra Caja Inteligente",
+            "descripcion": "Usando cajas de cartón, colores, pegamento y otros materiales, cada equipo construye su propia estación de reciclaje. Deben decorar cada compartimento de forma que represente las reglas que crearon (ej. dibujos de cáscaras de fruta para lo orgánico)."
+          },
+          {
+            "fase": 4,
+            "titulo_fase": "¡Guardianes en Acción! La Gran Demostración",
+            "descripcion": "Cada equipo presenta su 'Caja Inteligente' al resto de la clase. Explican sus reglas de clasificación y demuestran cómo funciona tirando diferentes tipos de basura en ella, explicando por qué cada objeto va en su lugar correcto."
+          }
+        ],
+        "metodo_evaluacion_adaptado": "Rúbrica que valora la claridad de las reglas de clasificación, la creatividad en la construcción de la caja y la efectividad de la presentación oral.",
+        "pregunta_al_docente_adaptada": "¿Cómo puede usar objetos del día a día (juguetes, útiles, envolturas) para que los niños practiquen la creación de 'reglas de clasificación' antes de abordar el problema de la basura?"
+      },
+      {
+        "nivel_escolar": "Secundaria",
+        "titulo_adaptado": "El Detector de Viralidad: ¿Podemos Predecir el Próximo Trend?",
+        "pregunta_esencial_adaptada": "Las redes sociales parecen 'adivinar' qué se hará viral. ¿Podemos descubrir su secreto y crear un sistema simple que prediga si un video o meme de nuestra escuela podría ser popular?",
+        "producto_final_adaptado": "Un modelo de clasificación de imágenes entrenado con una herramienta 'drag-and-drop' (ej. Teachable Machine) que puede predecir si un meme escolar es 'potencialmente viral' o 'poco popular'. El entregable es un video-screencast que demuestra el modelo funcionando y explica qué patrones encontró.",
+        "objetivos_adaptados": [
+          "Recopilar y etiquetar un pequeño conjunto de datos (imágenes, textos cortos) de su entorno escolar.",
+          "Utilizar una herramienta digital de 'arrastrar y soltar' para entrenar un modelo de clasificación simple.",
+          "Analizar los resultados del modelo para identificar patrones básicos y posibles sesgos (bias)."
+        ],
+        "fases_adaptadas": [
+          {
+            "fase": 1,
+            "titulo_fase": "Anatomía de un 'Like'",
+            "descripcion": "En equipos, analizar contenido viral real. Identificar y listar sus características o 'features' (ej: usa música en tendencia, es corto, es gracioso). Introducir los conceptos de 'features' y 'etiquetas' (labels). Definir el problema: ¿podemos predecir la etiqueta 'viral' a partir de sus 'features'?"
+          },
+          {
+            "fase": 2,
+            "titulo_fase": "Misión: Recolectar Datos de Tendencias",
+            "descripcion": "Recolectar el 'dataset'. Los equipos buscan o crean memes y contenido relevante para su escuela. Crean dos carpetas: 'Populares' y 'No Populares', y guardan al menos 20-30 imágenes en cada una. Este será su set de entrenamiento."
+          },
+          {
+            "fase": 3,
+            "titulo_fase": "Entrenando al 'Adivino' Digital",
+            "descripcion": "Introducción guiada a Teachable Machine u otra plataforma similar. Los estudiantes suben sus carpetas de imágenes para 'entrenar' al modelo. Experimentan en tiempo real dándole nuevas imágenes y viendo cómo las clasifica."
+          },
+          {
+            "fase": 4,
+            "titulo_fase": "Presentando Nuestro Detector de Viralidad",
+            "descripcion": "Grabar un screencast de 3-5 minutos. En el video, deben: 1) Explicar su pregunta, 2) Mostrar los datos que recolectaron, 3) Demostrar su modelo en vivo clasificando un nuevo meme, y 4) Discutir qué aprendió el modelo y si tuvo algún sesgo (ej. 'solo le gustan los memes con gatos')."
+          }
+        ],
+        "metodo_evaluacion_adaptado": "Rúbrica que evalúa la calidad del dataset recolectado, la funcionalidad del modelo en el screencast y la profundidad del análisis sobre los patrones y sesgos encontrados.",
+        "pregunta_al_docente_adaptada": "¿Cómo puede guiar una discusión sobre el 'sesgo' (bias) si el modelo de los estudiantes muestra resultados inesperados o injustos, usando ejemplos de sus propias redes sociales?"
+      },
+      {
+        "nivel_escolar": "Preparatoria",
+        "titulo_adaptado": "BiblioBot: Programando un recomendador de libros para nuestra prepa",
+        "pregunta_esencial_adaptada": "Si Netflix recomienda películas, ¿podemos usar código y datos reales de nuestra biblioteca o de encuestas para crear un sistema que recomiende libros a los estudiantes y ayude a la escuela a comprar títulos que realmente se usarán?",
+        "producto_final_adaptado": "Un notebook de Google Colab/Jupyter que contiene código en Python. El notebook debe cargar y limpiar un dataset (real o simulado), realizar un análisis exploratorio de datos (EDA) con visualizaciones, implementar un algoritmo simple de recomendación (basado en contenido o popularidad) y concluir con un análisis crítico de los resultados, limitaciones y consideraciones éticas.",
+        "objetivos_adaptados": [
+          "Aplicar conceptos básicos de programación en Python y librerías (Pandas, Matplotlib) para manipular y analizar un conjunto de datos.",
+          "Diseñar e implementar un algoritmo de machine learning simple (ej. recomendación o clasificación) en un entorno de notebook.",
+          "Evaluar críticamente la efectividad, limitaciones y posibles implicaciones éticas de su modelo."
+        ],
+        "fases_adaptadas": [
+          {
+            "fase": 1,
+            "titulo_fase": "El Problema, los Datos y las Herramientas",
+            "descripcion": "Definir el problema de recomendación y diseñar una encuesta (Google Forms) para recolectar datos sobre hábitos de lectura (géneros favoritos, libros leídos, calificaciones). Generar un archivo CSV. Introducción a Google Colab y los fundamentos de la librería Pandas."
+          },
+          {
+            "fase": 2,
+            "titulo_fase": "Explorando el Universo de Datos (EDA)",
+            "descripcion": "Cargar el archivo CSV en un DataFrame de Pandas. Realizar un análisis exploratorio: calcular estadísticas descriptivas, contar frecuencias de géneros, etc. Crear visualizaciones (gráficos de barras, nubes de palabras) con Matplotlib/Seaborn para descubrir patrones en las preferencias de los lectores."
+          },
+          {
+            "fase": 3,
+            "titulo_fase": "Construyendo el Cerebro de BiblioBot",
+            "descripcion": "Aprender la lógica de un sistema de recomendación simple (ej. basado en contenido: 'Si te gustó un libro de ciencia ficción, te recomiendo otros con la misma etiqueta'). Escribir el código en Python que implemente esta lógica para que, dado un libro o un género, el sistema sugiera otros títulos del dataset."
+          },
+          {
+            "fase": 4,
+            "titulo_fase": "Análisis Crítico y Propuesta Final",
+            "descripcion": "Finalizar y comentar el código del notebook. En una celda de texto final (Markdown), escribir un análisis crítico: ¿Qué tan buenas son las recomendaciones? ¿Cuál es el 'problema del arranque en frío' (cold start)? ¿Podría crear una 'burbuja de filtros'? Basado en el análisis, proponer 3 libros que la biblioteca debería adquirir."
+          }
+        ],
+        "metodo_evaluacion_adaptado": "Evaluación del notebook de Colab ponderando la limpieza y comentarios del código, la calidad del análisis de datos (EDA), la funcionalidad del algoritmo y la profundidad del análisis crítico y ético final.",
+        "pregunta_al_docente_adaptada": "¿Qué recursos (tutoriales, fragmentos de código de ejemplo) puede preparar para ayudar a los estudiantes a superar los obstáculos más comunes con la librería Pandas, como manejar datos faltantes (NaN) o filtrar DataFrames?"
+      },
+      {
+        "nivel_escolar": "Universidad",
+        "titulo_adaptado": "Análisis Predictivo para el Impacto Social: Un Modelo de Machine Learning para un Problema Comunitario",
+        "pregunta_esencial_adaptada": "Partiendo de la premisa de que el ML puede optimizar sistemas complejos, ¿cómo podemos diseñar, entrenar y validar un modelo predictivo que aborde un problema cuantificable en nuestra comunidad local (ej. predecir zonas de alto tráfico, optimizar el uso de recursos, o predecir la deserción estudiantil)?",
+        "producto_final_adaptado": "Un paper de investigación en formato académico (ej. IEEE, ACM) que presente un modelo de machine learning para un problema social. Debe incluir: revisión de literatura, metodología (preprocesamiento de datos, selección y justificación del modelo), resultados (métricas de evaluación rigurosas como Precisión, Recall, F1-Score, AUC-ROC) y una discusión profunda. Se acompaña de un repositorio en GitHub con el código documentado.",
+        "objetivos_adaptados": [
+          "Formular una pregunta de investigación original y realizar una revisión de la literatura sobre aplicaciones de ML en el dominio del problema.",
+          "Seleccionar, justificar y aplicar técnicas de preprocesamiento de datos y entrenamiento de modelos (ej. Regresión Logística, SVM, Random Forest) usando librerías especializadas (Scikit-learn, TensorFlow/PyTorch).",
+          "Evaluar rigurosamente el rendimiento del modelo utilizando métricas estándar y comunicar los hallazgos, implicaciones y limitaciones en un formato académico o técnico profesional."
+        ],
+        "fases_adaptadas": [
+          {
+            "fase": 1,
+            "titulo_fase": "Definición del Problema e Investigación de Vanguardia",
+            "descripcion": "Elegir un problema social medible (ej. deserción estudiantil en la facultad). Encontrar y analizar artículos de investigación existentes sobre el tema. Formular una hipótesis y redactar una propuesta de proyecto que defina el alcance, los datasets potenciales (datos abiertos, APIs) y los modelos a explorar."
+          },
+          {
+            "fase": 2,
+            "titulo_fase": "Ingeniería de Datos: Adquisición, Limpieza y Creación de Features",
+            "descripcion": "Obtener y consolidar el dataset. Realizar un preprocesamiento exhaustivo: imputación de datos faltantes, normalización/estandarización, codificación de variables categóricas. Aplicar ingeniería de características (feature engineering) para crear nuevas variables predictivas a partir de las existentes."
+          },
+          {
+            "fase": 3,
+            "titulo_fase": "Modelado, Entrenamiento y Validación Rigurosa",
+            "descripcion": "Implementar y entrenar múltiples modelos de clasificación/regresión. Utilizar un modelo simple como baseline (ej. Regresión Logística) y comparar su rendimiento con modelos más complejos (ej. Gradient Boosting, Redes Neuronales). Aplicar validación cruzada (cross-validation) para una evaluación robusta y realizar ajuste de hiperparámetros."
+          },
+          {
+            "fase": 4,
+            "titulo_fase": "Interpretación, Discusión y Comunicación de Resultados",
+            "descripcion": "Analizar los resultados del mejor modelo. Utilizar técnicas de interpretabilidad (ej. SHAP, LIME) para entender las decisiones del modelo. Redactar el paper de investigación completo, enfocándose en la discusión de las implicaciones prácticas y limitaciones. Publicar el código limpio y documentado en un repositorio de GitHub."
+          }
+        ],
+        "metodo_evaluacion_adaptado": "Evaluación basada en el paper de investigación (calidad de la escritura, rigor metodológico, profundidad del análisis) y el repositorio de código (calidad, documentación, reproducibilidad). Posible defensa oral del proyecto.",
+        "pregunta_al_docente_adaptada": "¿Cómo puede estructurar sesiones de 'revisión de pares' (peer review) donde los estudiantes presenten sus resultados intermedios y reciban retroalimentación crítica sobre su metodología y la interpretación de sus métricas de evaluación, simulando un entorno de conferencia?"
+      }
+    ]
+  }

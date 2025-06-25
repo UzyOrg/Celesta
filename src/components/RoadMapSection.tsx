@@ -31,7 +31,7 @@ const RoadmapPhase: React.FC<RoadmapPhaseProps> = ({ icon, title, duration, achi
           {achievements.map((ach, index) => (
             <li key={index} className={`flex items-start text-sm sm:text-base text-neutral-300 leading-relaxed`}>
               <CheckCircle2 size={16} className="text-lime mr-2 sm:mr-2.5 mt-1 flex-shrink-0 sm:hidden" /><CheckCircle2 size={18} className="text-lime mr-2 sm:mr-2.5 mt-1 flex-shrink-0 hidden sm:inline" />
-              <span>{ach}</span>
+              <span className="text-slate-300">{ach}</span>
             </li>
           ))}
         </ul>

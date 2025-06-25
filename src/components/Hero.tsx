@@ -73,25 +73,25 @@ const Hero: React.FC = () => {
             <div className="inline-flex items-center px-3 py-1 text-sm sm:text-base mb-4 sm:mb-6 rounded-full bg-white/5 backdrop-blur-sm border border-white/10">
               <span className="text-white/90">
                 <Sparkles className="inline h-4 w-4 mr-2 text-turquoise" /> 
-                Plataforma Docente-First.
+                El Sistema Operativo para el Aula Moderna.
               </span>
             </div>
             
             <div className="relative">
               <span className="absolute -z-10 inset-0 pointer-events-none bg-[radial-gradient(circle_at_center,_rgba(5,247,255,0.35)_0%,_transparent_60%)] blur-[80px] opacity-0 motion-safe:animate-fadeGlow"></span>
               <h1 className="text-[clamp(2.8rem,6vw,5rem)] font-bold leading-[1.1] tracking-tight mb-6">
-                <span className="bg-gradient-to-r from-turquoise to-lime bg-clip-text text-transparent">
-                Impulsamos la educación con IA 
+                <span className="text-white">
+                  Menos administración,
                 </span>
                 <br />
-                <span className="text-white">
-                  que evoluciona con docentes y alumnos.
+                <span className="bg-gradient-to-r from-turquoise to-lime bg-clip-text text-transparent">
+                  más pedagogía.
                 </span>
               </h1>
             </div>
             
             <p className="text-lg sm:text-xl md:text-2xl text-white/80 mb-6 sm:mb-8 max-w-2xl mx-auto lg:mx-0">
-              Redefinamos la educación, midamos el cambio y acompañemos el aprendizaje con IA responsable.
+              Somos tu copiloto pedagógico para diseñar proyectos de aprendizaje impactantes. Automatiza las tareas repetitivas y dedica tu tiempo a lo que de verdad importa: inspirar a tus estudiantes.
             </p>
             
             <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 sm:gap-4">

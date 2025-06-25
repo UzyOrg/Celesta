@@ -1,0 +1,26 @@
+{
+    "titulo": "Plan de Estudio Detallado: {{tema}}",
+    "meta_aprendizaje": "Lograr que los estudiantes de {{grado}} dominen los fundamentos de {{tema}}, con un enfoque en la resolución de problemas y el pensamiento lógico-matemático.",
+    "semanas": [
+      {
+        "semana": 1,
+        "topico": "Introducción a las variables y constantes. Fundamentos del álgebra y la importancia de {{tema}}.",
+        "actividad_clave": "Ejercicios de identificación de términos y traducción de lenguaje común a lenguaje algebraico."
+      },
+      {
+        "semana": 2,
+        "topico": "Técnicas de manipulación y despeje de ecuaciones.",
+        "actividad_clave": "Práctica intensiva con el Tutor IA para dominar el proceso de resolución paso a paso."
+      },
+      {
+        "semana": 3,
+        "topico": "Aplicación de {{tema}} en problemas del mundo real.",
+        "actividad_clave": "Modelado de situaciones prácticas (costos, distancias, etc.) usando las ecuaciones aprendidas."
+      },
+      {
+        "semana": 4,
+        "topico": "Evaluación y consolidación de competencias.",
+        "actividad_clave": "Resolución de un mini-proyecto que requiere aplicar todos los conocimientos del módulo y defensa de la solución."
+      }
+    ]
+  }

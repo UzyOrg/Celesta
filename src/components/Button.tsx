@@ -6,7 +6,8 @@ interface ButtonProps {
   className?: string;
   children: React.ReactNode;
   onClick?: () => void;
-  disabled?: boolean; // Added disabled prop
+  disabled?: boolean;
+  type?: 'button' | 'submit' | 'reset';
 }
 
 const Button: React.FC<ButtonProps> = ({ 
@@ -15,7 +16,8 @@ const Button: React.FC<ButtonProps> = ({
   className = '',
   children, 
   onClick, 
-  disabled = false // Added disabled prop
+  disabled = false,
+  type = 'button'
 }) => {
   const baseClasses = 'inline-flex items-center justify-center rounded-lg font-inter-tight font-bold transition-all';
   
@@ -34,7 +36,8 @@ const Button: React.FC<ButtonProps> = ({
   const disabledClasses = disabled ? 'opacity-50 cursor-not-allowed' : '';
 
   return (
-    <button
+    <button 
+      type={type}
       className={`${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${className} ${disabledClasses}`}
       onClick={onClick}
       disabled={disabled}

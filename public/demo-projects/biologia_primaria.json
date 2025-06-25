@@ -1,0 +1,34 @@
+{
+  "titulo_proyecto": "Ciudad Célula: Un Modelo a Escala",
+  "pregunta_esencial": "¿Si una célula fuera una ciudad metropolitana, qué organelo sería la central eléctrica, el sistema de transporte, el ayuntamiento y el vertedero?",
+  "producto_final": "Los alumnos, en equipos, crearán una maqueta 3D (física o digital) y un video-reportaje tipo 'noticiero' explicando el funcionamiento de su 'Ciudad Célula'.",
+  "objetivos_de_aprendizaje": [
+    "Identificar las funciones de los principales organelos celulares (núcleo, mitocondria, membrana, etc.).",
+    "Analizar cómo los sistemas biológicos dependen de la interacción entre sus componentes.",
+    "Desarrollar habilidades de colaboración, investigación y comunicación creativa."
+  ],
+  "fases_del_proyecto": [
+    {
+      "fase": 1,
+      "titulo_fase": "Lanzamiento y Formulación de Preguntas",
+      "descripcion": "Presentar el reto de la 'Ciudad Célula' y guiar a los alumnos para que generen sus propias preguntas sobre el funcionamiento de las células y las ciudades."
+    },
+    {
+      "fase": 2,
+      "titulo_fase": "Investigación y Desarrollo de Conceptos",
+      "descripcion": "Los equipos investigan las funciones de cada organelo usando recursos curados y el Tutor IA para resolver dudas conceptuales."
+    },
+    {
+      "fase": 3,
+      "titulo_fase": "Construcción y Retroalimentación",
+      "descripcion": "Los alumnos diseñan y construyen sus maquetas. Se realizan sesiones de retroalimentación entre pares para mejorar los modelos."
+    },
+    {
+      "fase": 4,
+      "titulo_fase": "Presentación Pública y Reflexión",
+      "descripcion": "Los equipos presentan sus proyectos a otros grupos o a padres de familia. Se finaliza con una reflexión sobre el proceso de aprendizaje."
+    }
+  ],
+  "metodo_evaluacion": "La evaluación se centrará en la precisión de las analogías, la creatividad del producto final y la calidad de la colaboración, utilizando una rúbrica co-creada con los estudiantes.",
+  "pregunta_al_docente": "¿Qué expertos locales (urbanistas, biólogos, ingenieros) podrías invitar para que den una charla corta y enriquezcan la fase de investigación de tus alumnos?"
+}

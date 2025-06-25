@@ -1,0 +1,26 @@
+{
+    "titulo": "Plan de Aprendizaje: {{tema}}",
+    "meta_aprendizaje": "Desarrollar una comprensión fundamental de {{tema}} para los estudiantes de {{grado}}, promoviendo la curiosidad y las habilidades de investigación para un aprendizaje autónomo.",
+    "semanas": [
+      {
+        "semana": 1,
+        "topico": "Introducción a los conceptos fundamentales y la terminología clave.",
+        "actividad_clave": "Lluvia de ideas grupal sobre conocimientos previos y preguntas iniciales sobre {{tema}}."
+      },
+      {
+        "semana": 2,
+        "topico": "Exploración de los componentes y principios principales.",
+        "actividad_clave": "Actividad práctica o de investigación guiada por el Tutor IA para explorar las facetas de {{tema}}."
+      },
+      {
+        "semana": 3,
+        "topico": "Análisis de la relevancia, aplicaciones e impacto.",
+        "actividad_clave": "Debate o discusión estructurada sobre la importancia de {{tema}} en la sociedad o en otras áreas del conocimiento."
+      },
+      {
+        "semana": 4,
+        "topico": "Síntesis y comunicación de los aprendizajes.",
+        "actividad_clave": "Elaboración de una presentación, un video corto o un ensayo que resuma los hallazgos y conclusiones personales."
+      }
+    ]
+  }

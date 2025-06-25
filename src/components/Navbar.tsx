@@ -1,9 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { MenuIcon, X, Lightbulb, Sparkles, Moon, Sun } from 'lucide-react';
-import { textStyles, opacityVariants } from '@/styles/typography';
+import Link from 'next/link';
+import { Menu, X, Sun, Moon, Sparkles } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
 import Container from './Container';
 import Button from './Button';
-import { useTheme } from '../context/ThemeContext';
+import styles from './Navbar.module.css';
+
+const navLinks = [
+  { name: 'Producto', href: '#product' },
+  { name: 'Soluciones', href: '#solutions' },
+  { name: 'Planes', href: '#pricing' },
+  { name: 'Recursos', href: '#resources' },
+];
 
 const Navbar: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -14,82 +22,77 @@ const Navbar: React.FC = () => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 10);
     };
-    
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  const closeMenu = () => setIsMenuOpen(false);
+
   return (
-    <header 
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        isScrolled 
-          ? 'bg-[#0D1117]/90 backdrop-blur-sm border-b border-[#1A1E26]/80 py-2.5 sm:py-3' 
-          : 'bg-transparent py-4 sm:py-5'
-      }`}
-    >
+    <header className={`${styles.header} ${isScrolled ? styles.headerScrolled : ''}`}>
       <Container>
-        <nav className="flex items-center justify-between">
-          <div className="flex items-center">
-            <Sparkles className="w-7 h-7 sm:w-8 sm:h-8 text-turquoise" />
-            <span className="ml-2 text-xl sm:text-2xl font-general-sans font-black bg-gradient-to-r from-turquoise to-lime bg-clip-text text-transparent">
-              Celestea AI
-            </span>
-          </div>
-          
-          <div className="hidden md:flex items-center space-x-4 md:space-x-6 lg:space-x-8">
-            <a href="#product" className={`${textStyles.button} ${opacityVariants.primary} hover:text-turquoise transition-colors`}>Producto</a>
-            <a href="#solutions" className={`${textStyles.button} ${opacityVariants.primary} hover:text-turquoise transition-colors`}>Soluciones</a>
-            <a href="#pricing" className={`${textStyles.button} ${opacityVariants.primary} hover:text-turquoise transition-colors`}>Planes</a>
-            <a href="#resources" className={`${textStyles.button} ${opacityVariants.primary} hover:text-turquoise transition-colors`}>Recursos</a>
+        <div className={styles.navContainer}>
+          {/* Logo */}
+          <Link href="/" className={styles.logoContainer} onClick={closeMenu}>
+            <Sparkles className={styles.logoIcon} />
+            <span className={styles.logoText}>Celesta</span>
+          </Link>
+
+          {/* Desktop Navigation */}
+          <nav className={styles.desktopNav}>
+            {navLinks.map((link) => (
+              <a key={link.name} href={link.href} className={styles.navLink}>
+                {link.name}
+              </a>
+            ))}
             <button
               onClick={toggleTheme}
-              className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+              className={styles.iconButton}
               aria-label="Cambiar tema"
             >
               {theme === 'dark' ? (
-                <Sun className="w-5 h-5 text-white/90" />
+                <Sun className={styles.icon} />
               ) : (
-                <Moon className="w-5 h-5 text-white/90" />
+                <Moon className={styles.icon} />
               )}
             </button>
             <Button variant="secondary">
               <Sparkles className="w-4 h-4 mr-2" />
-              Solicita Demo Piloto
+              Solicita Demo
             </Button>
-          </div>
-          
-          <div className="md:hidden flex items-center space-x-4">
+          </nav>
+
+          {/* Mobile Menu Toggle */}
+          <div className={styles.mobileToggleContainer}>
             <button
               onClick={toggleTheme}
-              className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+              className={styles.iconButton}
               aria-label="Cambiar tema"
             >
-              {theme === 'dark' ? (
-                <Sun className="w-5 h-5 text-white/90" />
-              ) : (
-                <Moon className="w-5 h-5 text-white/90" />
-              )}
+              {theme === 'dark' ? <Sun className={styles.icon} /> : <Moon className={styles.icon} />}
             </button>
-            <button 
-              className="text-white/90 focus:outline-none"
+            <button
+              className={styles.mobileMenuToggle}
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               aria-label={isMenuOpen ? 'Cerrar menú' : 'Abrir menú'}
             >
-              {isMenuOpen ? <X size={24} /> : <MenuIcon size={24} />}
+              {isMenuOpen ? <X /> : <Menu />}
             </button>
           </div>
-        </nav>
+        </div>
       </Container>
       
+      {/* Mobile Menu Panel */}
       {isMenuOpen && (
-        <div className="md:hidden absolute top-full left-0 right-0 bg-[#0D1117]/95 backdrop-blur-sm border-b border-[#1A1E26]/80 py-4 px-6 flex flex-col space-y-4">
-          <a href="#product" className={`${textStyles.button} ${opacityVariants.primary} py-2`} onClick={() => setIsMenuOpen(false)}>Producto</a>
-          <a href="#solutions" className={`${textStyles.button} ${opacityVariants.primary} py-2`} onClick={() => setIsMenuOpen(false)}>Soluciones</a>
-          <a href="#pricing" className={`${textStyles.button} ${opacityVariants.primary} py-2`} onClick={() => setIsMenuOpen(false)}>Planes</a>
-          <a href="#resources" className={`${textStyles.button} ${opacityVariants.primary} py-2`} onClick={() => setIsMenuOpen(false)}>Recursos</a>
-          <Button variant="secondary" className="w-full">
+        <div className={styles.mobileMenuPanel}>
+          {navLinks.map((link) => (
+            <a key={link.name} href={link.href} className={styles.navLink} onClick={closeMenu}>
+              {link.name}
+            </a>
+          ))}
+          <Button variant="secondary" className="w-full mt-2">
             <Sparkles className="w-4 h-4 mr-2" />
-            Solicita Demo Piloto
+            Solicita Demo
           </Button>
         </div>
       )}
