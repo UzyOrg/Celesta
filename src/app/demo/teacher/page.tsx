@@ -6,6 +6,8 @@ import styles from './DemoTeacherPage.module.css';
 import Button from '@/components/Button';
 import Container from '@/components/Container';
 import Link from 'next/link';
+import { Lightbulb } from 'lucide-react';
+import DownloadPDFButton from '@/components/DownloadPDFButton';
 
 // --- TYPES ---
 interface ProjectPhase {
@@ -74,6 +76,8 @@ const DemoTeacherPage: React.FC = () => {
     }
   };
 
+
+
   return (
     <div className={styles.pageWrapper}>
       <div className={styles.glowWrapper}>
@@ -114,6 +118,7 @@ const DemoTeacherPage: React.FC = () => {
                     <option>Primaria</option>
                     <option>Secundaria</option>
                     <option>Preparatoria</option>
+                    <option>Universidad</option>
                   </select>
                 </div>
 
@@ -188,9 +193,17 @@ const DemoTeacherPage: React.FC = () => {
               {/* Evaluation Card */}
               <motion.div className={styles.gridCard}>
                 <h3 className={styles.sectionTitle}>Evaluación</h3>
-                <p className={styles.evaluationText}>
-                  {selectedLevel.metodo_evaluacion_adaptado}
-                </p>
+                <div>
+                  <p className={styles.evaluationText}>
+                    {selectedLevel.metodo_evaluacion_adaptado}
+                  </p>
+                  <div className={styles.evaluationNoteContainer}>
+                    <Lightbulb className={styles.evaluationNoteIcon} />
+                    <p className={styles.evaluationNote}>
+                      Pst, nuestro copiloto también puede ayudarte a generar la rúbrica perfecta para este proyecto.
+                    </p>
+                  </div>
+                </div>
               </motion.div>
 
               {/* Phases Card */}
@@ -220,6 +233,7 @@ const DemoTeacherPage: React.FC = () => {
             </motion.div>
 
             <div className={styles.summaryButtonContainer}>
+              <DownloadPDFButton projectData={selectedLevel} />
               <Link href="/demo/summary?from=teacher" className={styles.summaryButton}>
                 Ver mi Impacto →
               </Link>

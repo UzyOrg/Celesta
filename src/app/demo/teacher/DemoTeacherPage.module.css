@@ -36,6 +36,9 @@
 }
 
 .summaryButtonContainer {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
   margin-top: 2.5rem;
   padding-top: 1.5rem;
   border-top: 1px solid #30363d;
@@ -183,9 +186,23 @@
 
 
 
+.evaluationNoteContainer {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.evaluationNoteIcon {
+  width: 1rem;
+  height: 1rem;
+  color: #05F7FF; /* turquoise */
+  flex-shrink: 0;
+}
+
 .evaluationNote {
-  margin-top: 0.5rem;
-  font-size: 0.75rem;
+  margin-top: 0;
+  font-size: 0.85rem;
   color: #05F7FF; /* turquoise */
   font-style: italic;
 }
@@ -244,12 +261,22 @@
   appearance: none;
 }
 
-select.formInput {
-  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23e2e8f0' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
-  background-position: right 0.5rem center;
+
+
+.formSelect {
+  composes: formInput;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23c9d1d9' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-size: 1.5em 1.5em;
-  padding-right: 2.5rem;
+  background-position: right 1rem center;
+  padding-right: 3rem; /* Make space for arrow */
+}
+
+.formSelect option {
+  background-color: #161b22;
+  color: #c9d1d9;
 }
 
 .formInput:focus {

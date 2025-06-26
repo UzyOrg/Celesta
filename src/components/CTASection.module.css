@@ -1,0 +1,160 @@
+/* CTASection.module.css */
+
+.ctaSection {
+    padding-top: 4rem; /* pt-16 */
+    padding-bottom: 4rem; /* pb-16 */
+  }
+  
+  @media (min-width: 640px) { /* sm: */
+    .ctaSection {
+      padding-top: 5rem; /* sm:pt-20 */
+      padding-bottom: 5rem; /* sm:pb-20 */
+    }
+  }
+  
+  @media (min-width: 768px) { /* md: */
+    .ctaSection {
+      padding-top: 6rem; /* md:pt-24 */
+      padding-bottom: 6rem; /* md:pb-24 */
+    }
+  }
+  
+  .borderContainer {
+    border-top: 1px solid rgba(26, 30, 38, 0.8); /* border-t border-[#1A1E26]/80 */
+    padding-top: 4rem; /* pt-16 */
+  }
+  
+  .contentWrapper {
+    position: relative; /* relative */
+    background-color: rgba(255, 255, 255, 0.05); /* bg-white/5 */
+    backdrop-filter: blur(4px); /* backdrop-blur-sm */
+    -webkit-backdrop-filter: blur(4px);
+    border-radius: 1.5rem; /* rounded-3xl */
+    padding: 1.5rem; /* p-6 */
+    overflow: hidden; /* overflow-hidden */
+  }
+  
+  @media (min-width: 640px) { /* sm: */
+    .contentWrapper {
+      padding: 2rem; /* sm:p-8 */
+    }
+  }
+  
+  @media (min-width: 768px) { /* md: */
+    .contentWrapper {
+      padding: 3rem; /* md:p-12 */
+    }
+  }
+  
+  @media (min-width: 1024px) { /* lg: */
+    .contentWrapper {
+      padding: 4rem; /* lg:p-16 */
+    }
+  }
+  
+  .topGradient {
+    position: absolute; /* absolute */
+    top: 0; /* top-0 */
+    right: 0; /* right-0 */
+    height: 0.25rem; /* h-1 */
+    width: 33.333333%; /* w-1/3 */
+    background-image: linear-gradient(to right, var(--turquoise, #05f7ff), var(--lime, #73f229));
+  }
+  
+  .bottomGradient {
+    position: absolute; /* absolute */
+    bottom: 0; /* bottom-0 */
+    left: 0; /* left-0 */
+    height: 0.25rem; /* h-1 */
+    width: 33.333333%; /* w-1/3 */
+    background-image: linear-gradient(to right, var(--lime, #73f229), var(--turquoise, #05f7ff));
+  }
+  
+  .textContainer {
+    max-width: 48rem; /* max-w-3xl */
+    margin-left: auto; /* mx-auto */
+    margin-right: auto; /* mx-auto */
+    text-align: center; /* text-center */
+  }
+  
+  .headingContainer {
+    position: relative; /* relative */
+  }
+  
+  .glow {
+    position: absolute; /* absolute */
+    z-index: -10; /* -z-10 */
+    inset: 0; /* inset-0 */
+    pointer-events: none; /* pointer-events-none */
+    background-image: radial-gradient(circle at center, rgba(5, 247, 255, 0.35) 0%, transparent 60%);
+    filter: blur(80px); /* blur-[80px] */
+    opacity: 0; /* opacity-0 */
+  }
+  
+  @media (prefers-reduced-motion: no-preference) { /* motion-safe: */
+    .glow {
+      animation: fadeGlow 1s forwards;
+    }
+  }
+  
+  @keyframes fadeGlow {
+    to {
+      opacity: 1;
+    }
+  }
+  
+  .heading {
+    font-size: clamp(2.8rem, 6vw, 4rem); /* text-[clamp(...)] */
+    line-height: 1.1; /* leading-[1.1] */
+    letter-spacing: -0.025em; /* tracking-tight */
+    margin-bottom: 1rem; /* mb-4 */
+  }
+  
+  @media (min-width: 640px) { /* sm: */
+    .heading {
+      margin-bottom: 1.5rem; /* sm:mb-6 */
+    }
+  }
+  
+  .gradientText {
+    background-image: linear-gradient(to right, var(--turquoise, #05f7ff), var(--lime, #73f229));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent; /* text-transparent */
+  }
+  
+  .paragraph {
+    margin-bottom: 1.5rem; /* mb-6 */
+    color: rgba(255, 255, 255, 0.9); /* text-white/90 */
+  }
+  
+  @media (min-width: 640px) { /* sm: */
+    .paragraph {
+      margin-bottom: 2rem; /* sm:mb-8 */
+    }
+  }
+  
+  .buttonContainer {
+    display: flex; /* flex */
+    flex-direction: column; /* flex-col */
+    align-items: center; /* items-center */
+    justify-content: center; /* justify-center */
+    gap: 0.75rem; /* gap-3 */
+  }
+  
+  @media (min-width: 640px) { /* sm: */
+    .buttonContainer {
+      flex-direction: row; /* sm:flex-row */
+      gap: 1rem; /* sm:gap-4 */
+    }
+  }
+  
+  .buttonWrapper {
+    width: 100%; /* w-full */
+  }
+  
+  @media (min-width: 640px) { /* sm: */
+    .buttonWrapper {
+      width: auto; /* sm:w-auto */
+    }
+  }
