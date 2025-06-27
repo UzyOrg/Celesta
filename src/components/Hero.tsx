@@ -4,10 +4,10 @@ import { Sparkles, Play } from 'lucide-react';
 import Container from './Container';
 import Button from './Button';
 import Link from 'next/link';
-import { useModal } from '@/context/ModalContext';
+import { useRouter } from 'next/navigation';
 
 const Hero: React.FC = () => {
-  const { openLeadModal } = useModal();
+  const router = useRouter();
 
   const controls = useAnimation();
   const { scrollY } = useScroll();
@@ -95,7 +95,7 @@ const Hero: React.FC = () => {
             </p>
             
             <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 sm:gap-4">
-              <Button size="lg" onClick={openLeadModal}>
+              <Button size="lg" onClick={() => router.push('/questionnaire')}>
                 Solicita Demo Piloto
               </Button>
               <Link href="/demo/start" passHref>

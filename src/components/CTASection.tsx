@@ -4,11 +4,11 @@ import { ArrowRight, Mail } from 'lucide-react';
 import Container from './Container';
 import Button from './Button';
 import { headingStyles, textStyles } from '../styles/typography';
-import { useModal } from '@/context/ModalContext';
+import { useRouter } from 'next/navigation';
 import styles from './CTASection.module.css'; // Import the CSS module
 
 const CTASection: React.FC = () => {
-  const { openLeadModal } = useModal();
+  const router = useRouter();
   return (
     <>
       <section className={styles.ctaSection}>
@@ -54,7 +54,7 @@ const CTASection: React.FC = () => {
                   className={styles.buttonContainer}
                 >
                   <div className={styles.buttonWrapper}>
-                    <Button size="lg" onClick={openLeadModal}>
+                    <Button size="lg" onClick={() => router.push('/questionnaire')}>
                       Solicita Demo Piloto <ArrowRight className="ml-2 w-4 h-4" />
                     </Button>
                   </div>

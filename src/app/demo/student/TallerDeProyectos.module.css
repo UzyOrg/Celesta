@@ -1,0 +1,224 @@
+/* TallerDeProyectos.module.css */
+
+.pageContainer {
+  background-color: #0a0e14; /* Darker background for lab feel */
+  color: #d1d5db;
+  min-height: 100vh;
+  padding: 2rem 1rem;
+  font-family: var(--font-nunito);
+}
+
+.mainContent {
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+/* --- Skeleton UI --- */
+.skeleton {
+  background-color: #161b22;
+  border-radius: 8px;
+  position: relative;
+  overflow: hidden;
+}
+
+.skeleton::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -150%;
+  height: 100%;
+  width: 150%;
+  background: linear-gradient(to right, transparent 0%, #30363d 50%, transparent 100%);
+  animation: shimmer 1.5s infinite;
+}
+
+/* --- Component 1: ProjectHeader --- */
+.headerContainer {
+  background-color: #161b22;
+  border: 1px solid #21262d;
+  border-radius: 12px;
+  padding: 32px;
+  margin-bottom: 32px;
+}
+
+.headerContainer h1 {
+  font-size: 2.5rem; /* 40px */
+  font-weight: 800;
+  color: #22d3ee; /* Accent cyan */
+  margin: 0 0 16px 0;
+  line-height: 1.2;
+}
+
+.headerContainer p {
+  font-size: 1.25rem; /* 20px */
+  font-style: italic;
+  color: #d1d5db;
+  margin: 16px 0 0 0;
+  border-left: 4px solid #22d3ee;
+  padding-left: 16px;
+}
+
+/* --- Component 2: FinalProductCard --- */
+.productCard {
+  display: flex;
+  align-items: center;
+  background-color: #161b22;
+  border: 1px solid #21262d;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 32px;
+}
+
+.productIcon {
+  width: 32px;
+  height: 32px;
+  color: #34d399; /* Accent green */
+  margin-right: 16px;
+  flex-shrink: 0;
+}
+
+.productCard span {
+  font-size: 1.125rem; /* 18px */
+  font-weight: 600;
+  color: #e5e7eb;
+}
+
+/* --- Component 3: ProjectPhasesAccordion --- */
+.accordionContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.phaseButton {
+  background-color: #161b22;
+  padding: 16px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 1.125rem;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  border: 1px solid #21262d;
+  color: #e5e7eb;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.phaseButton:hover {
+  background-color: #21262d;
+}
+
+.phaseButton.activePhase {
+  color: #22d3ee;
+  background-color: #21262d;
+  border-color: #22d3ee;
+}
+
+.phaseContent {
+  background-color: transparent;
+  padding: 16px 24px 24px 24px;
+  border-left: 2px solid #21262d;
+  margin-left: 12px;
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+.taskCard {
+  background-color: #0d1117;
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid #21262d;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.taskCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+  border-color: #a5b4fc;
+}
+
+.taskInfo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.taskIcon {
+  color: #a5b4fc;
+}
+
+.taskTitle {
+  font-weight: 500;
+  color: #d1d5db;
+}
+
+.taskStatus {
+  font-size: 0.8rem;
+  font-weight: bold;
+  padding: 4px 8px;
+  border-radius: 12px;
+  text-transform: uppercase;
+}
+
+.statusCompleted {
+  background-color: rgba(52, 211, 153, 0.2);
+  color: #34d399;
+}
+
+.statusPending {
+  background-color: rgba(251, 191, 36, 0.2);
+  color: #FBBF24;
+}
+
+/* --- Component 4: TeacherNoteCard --- */
+.teacherPrompt {
+  background-color: rgba(37, 99, 235, 0.15);
+  border: 1px solid #2563eb;
+  border-radius: 8px;
+  padding: 20px;
+  margin-top: 32px;
+  display: flex;
+  align-items: flex-start;
+}
+
+.teacherPromptIcon {
+  font-size: 20px;
+  margin-right: 16px;
+  color: #60a5fa;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.teacherPrompt p {
+  color: #d1d5db;
+  font-size: 1rem;
+  margin: 0;
+}
+
+/* --- Responsiveness --- */
+@media (max-width: 640px) {
+  .headerContainer h1 {
+    font-size: 2rem;
+  }
+
+  .headerContainer, .productCard, .teacherPrompt {
+    padding: 24px;
+  }
+}
+
+/* --- Animations --- */
+@keyframes shimmer {
+  100% {
+    left: 150%;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}

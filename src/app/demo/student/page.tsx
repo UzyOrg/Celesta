@@ -1,86 +1,193 @@
 'use client';
 
-import React, { useState } from 'react';
-import Link from 'next/link';
-import Container from '@/components/Container';
+import { useState, useEffect } from 'react';
+import styles from './TallerDeProyectos.module.css';
 import { motion, AnimatePresence } from 'framer-motion';
-import { headingStyles, textStyles } from '@/styles/typography';
-import Button from '@/components/Button'; // Added Button import
+import { Video, Box, FlaskConical, BookOpen, ChevronDown, Lightbulb, CheckCircle, Clock } from 'lucide-react';
 
-const hints = [
-  "Recuerda, para factorizar un trinomio de la forma x² + bx + c, buscas dos números que multiplicados den 'c' y sumados den 'b'.",
-  "En este caso, 'c' es 6 y 'b' es -5. ¿Qué dos números negativos multiplicados dan +6 y sumados dan -5?",
-  "Los números son -2 y -3. Por lo tanto, la factorización es (x - 2)(x - 3)."
-];
+// --- TYPE DEFINITIONS ---
+interface Task {
+  id: number;
+  title: string;
+  type: 'lab' | 'research';
+  status: 'completed' | 'pending';
+}
 
-const DemoStudentPage: React.FC = () => {
-  const [currentHint, setCurrentHint] = useState(-1);
+interface ProjectPhase {
+  id: number;
+  titulo_fase: string;
+  tareas: Task[];
+}
 
-  const showNextHint = () => {
-    if (currentHint < hints.length - 1) {
-      setCurrentHint(currentHint + 1);
+interface ProjectData {
+  titulo_proyecto: string;
+  pregunta_esencial: string;
+  producto_final: {
+    nombre: string;
+    icon: 'video' | 'box';
+  }[];
+  fases_del_proyecto: ProjectPhase[];
+  pregunta_al_docente: string;
+}
+
+// --- MOCK DATA ---
+const mockProjectData: ProjectData = {
+  titulo_proyecto: "Ciudad Célula: Un Viaje al Interior",
+  pregunta_esencial: "¿Cómo funciona una célula como si fuera una ciudad bulliciosa y qué la mantiene viva?",
+  producto_final: [
+    { nombre: "Video-Reportaje", icon: 'video' },
+    { nombre: "Maqueta 3D Interactiva", icon: 'box' }
+  ],
+  fases_del_proyecto: [
+    {
+      id: 1,
+      titulo_fase: "Fase 1: La Arquitectura Celular",
+      tareas: [
+        { id: 101, title: "Laboratorio: Identificando Organelos", type: 'lab', status: 'completed' },
+        { id: 102, title: "Investigación: La Membrana Plasmática", type: 'research', status: 'pending' },
+      ]
+    },
+    {
+      id: 2,
+      titulo_fase: "Fase 2: La Energía de la Vida",
+      tareas: [
+        { id: 201, title: "Laboratorio: Simulación de la Respiración Celular", type: 'lab', status: 'pending' },
+      ]
+    },
+    {
+      id: 3,
+      titulo_fase: "Fase 3: Comunicación y Transporte",
+      tareas: [
+        { id: 301, title: "Investigación: ¿Cómo se comunican las células?", type: 'research', status: 'pending' },
+        { id: 302, title: "Laboratorio: Ósmosis en acción", type: 'lab', status: 'pending' },
+      ]
     }
+  ],
+  pregunta_al_docente: "Piensa en una ciudad. Si el núcleo es el ayuntamiento, ¿qué organelo sería la planta de energía y por qué?"
+};
+
+// --- ICON MAPPING ---
+const ICONS = {
+  video: <Video className={styles.productIcon} />,
+  box: <Box className={styles.productIcon} />,
+  lab: <FlaskConical size={20} className={styles.taskIcon} />,
+  research: <BookOpen size={20} className={styles.taskIcon} />,
+};
+
+// --- SKELETON COMPONENTS ---
+const Skeleton = ({ className }: { className?: string }) => <div className={`${styles.skeleton} ${className}`}></div>;
+
+const StudentWorkshopSkeleton = () => (
+  <div className={styles.mainContent}>
+    <div className={styles.headerContainer}>
+      <Skeleton className="h-10 w-3/4 mb-4" />
+      <Skeleton className="h-16 w-full" />
+    </div>
+    <Skeleton className={`${styles.productCard} h-20`} />
+    <div className={styles.accordionContainer}>
+      <Skeleton className="h-16 w-full" />
+      <Skeleton className="h-16 w-full" />
+    </div>
+    <Skeleton className={`${styles.teacherPrompt} h-24 mt-8`} />
+  </div>
+);
+
+
+// --- MAIN COMPONENT ---
+const StudentWorkshopPage = () => {
+  const [activePhase, setActivePhase] = useState<number | null>(1);
+  const [projectData, setProjectData] = useState<ProjectData | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    // Simulate API call
+    const timer = setTimeout(() => {
+      setProjectData(mockProjectData);
+      setIsLoading(false);
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const togglePhase = (phaseId: number) => {
+    setActivePhase(activePhase === phaseId ? null : phaseId);
   };
 
-  const isSolved = currentHint === hints.length - 1;
-
   return (
-    <div className="relative min-h-screen py-16 flex flex-col items-center justify-center overflow-hidden">
-      {/* Gradient Glow Background - Spans full width */}
-      <div className="absolute inset-0 -z-10 pointer-events-none">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[150%] h-[150%] bg-[radial-gradient(circle_at_top_center,_rgba(5,247,255,0.15)_0%,_transparent_50%)] opacity-70 motion-safe:animate-pulseSlow"></div>
-        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[150%] h-[150%] bg-[radial-gradient(circle_at_bottom_center,_rgba(163,230,53,0.1)_0%,_transparent_60%)] opacity-60 motion-safe:animate-pulseSlowDelay"></div>
-      </div>
+    <div className={styles.pageContainer}>
+      {isLoading ? (
+        <StudentWorkshopSkeleton />
+      ) : (
+        projectData && (
+          <motion.div
+            className={styles.mainContent}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5 }}
+          >
+            {/* Component 1: ProjectHeader */}
+            <header className={styles.headerContainer}>
+              <h1>{projectData.titulo_proyecto}</h1>
+              <p>{projectData.pregunta_esencial}</p>
+            </header>
 
-      {/* Content constrained by Container */}
-      <Container className="z-10 flex flex-col items-center">
-        <div className="text-center mb-12">
-        <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-2"><span className="text-neutral-300">Tutor</span> <span className="text-turquoise-400">Personalizado</span></h1>
-        <p className="text-base sm:text-lg text-white/70 max-w-2xl mx-auto">
-          Resuelve problemas paso a paso con la guía de nuestra IA. Aprende a tu ritmo y fortalece tu comprensión.
-        </p>
-      </div>
+            {/* Component 2: FinalProductCard */}
+            <div className={styles.productCard}>
+              {projectData.producto_final[0].icon && ICONS[projectData.producto_final[0].icon]}
+              <span>Producto Final: <strong>{projectData.producto_final.map(p => p.nombre).join(' y ')}</strong></span>
+            </div>
 
-      <motion.div layout className="w-full max-w-xl p-4 sm:p-6 md:p-8 shadow-xl bg-neutral-800/60 backdrop-blur-lg border border-neutral-700/80 rounded-xl">
-        <h3 className={`font-plus-jakarta-sans font-bold leading-snug tracking-tight text-lg sm:text-xl md:text-2xl lg:text-3xl mb-4 text-center text-white`}>Problema a Resolver:</h3>
-        <p className={`text-center text-turquoise-400 font-mono text-xl sm:text-2xl md:text-3xl lg:text-4xl mb-6 bg-neutral-900/70 p-3 sm:p-4 rounded-lg`}>x² – 5x + 6</p>
-        
-        <div className="space-y-3 sm:space-y-4 mb-6 min-h-[120px] sm:min-h-[150px]">
-          <AnimatePresence>
-            {currentHint >= 0 && hints.slice(0, currentHint + 1).map((hint, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10, transition: { duration: 0.2 } }}
-                className={`${index === hints.length - 1 ? 'bg-green-400/30 border border-green-400/50' : 'bg-neutral-800/90 border border-neutral-700'} rounded-xl p-3 sm:p-4 shadow-md`}>
-                <p className="text-sm sm:text-base text-neutral-200">
-                  <span className={`font-semibold ${index === hints.length - 1 ? 'text-lime-400' : 'text-turquoise-400'}`}>
-                    {index === hints.length - 1 ? 'Explicación Final: ' : `Pista ${index + 1}: `}
-                  </span>
-                  {hint}
-                </p>
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        </div>
+            {/* Component 3: ProjectPhasesAccordion */}
+            <div className={styles.accordionContainer}>
+              {projectData.fases_del_proyecto.map((phase) => (
+                <div key={phase.id}>
+                  <button
+                    className={`${styles.phaseButton} ${activePhase === phase.id ? styles.activePhase : ''}`}
+                    onClick={() => togglePhase(phase.id)}
+                  >
+                    <span>{phase.titulo_fase}</span>
+                    <motion.div animate={{ rotate: activePhase === phase.id ? 180 : 0 }}>
+                      <ChevronDown size={20} />
+                    </motion.div>
+                  </button>
+                  <AnimatePresence>
+                    {activePhase === phase.id && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className={styles.phaseContent}
+                      >
+                        <div className="flex flex-col gap-3">
+                          {phase.tareas.map(task => (
+                            <div key={task.id} className={styles.taskCard}>
+                              <div className={styles.taskInfo}>
+                                {ICONS[task.type]}
+                                <span className={styles.taskTitle}>{task.title}</span>
+                              </div>
+                              <span className={`${styles.taskStatus} ${task.status === 'completed' ? styles.statusCompleted : styles.statusPending}`}>
+                                {task.status === 'completed' ? <CheckCircle size={16} /> : <Clock size={16} />}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              ))}
+            </div>
 
-        {!isSolved ? (
-          <Button variant="secondary" className="w-full" onClick={showNextHint}>
-            Necesito una pista
-          </Button>
-        ) : (
-          <div className='text-center'>
-            <p className='text-lime-400 mb-4'>¡Excelente! Lo resolviste.</p>
-            <Link href={`/demo/summary?from=student&hints=${currentHint}`} passHref>
-              <Button variant="primary" size="lg">Ver mi Progreso &rarr;</Button>
-            </Link>
-          </div>
-        )}
-      </motion.div>
-      </Container>
+            {/* Component 4: TeacherNoteCard */}
+            <div className={styles.teacherPrompt}>
+              <Lightbulb className={styles.teacherPromptIcon} />
+              <p>{projectData.pregunta_al_docente}</p>
+            </div>
+          </motion.div>
+        )
+      )}
     </div>
   );
 };
 
-export default DemoStudentPage;
+export default StudentWorkshopPage;
+

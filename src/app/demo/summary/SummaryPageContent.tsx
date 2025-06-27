@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useSearchParams } from 'next/navigation';
-import { useModal } from '@/context/ModalContext';
+import { useRouter } from 'next/navigation';
 import Container from '@/components/Container';
 import { motion } from 'framer-motion';
 import { headingStyles, textStyles } from '@/styles/typography';
@@ -10,7 +10,7 @@ import { Clock, BarChart2 } from 'lucide-react';
 import Button from '@/components/Button';
 
 const SummaryPageContent: React.FC = () => {
-  const { openLeadModal } = useModal();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const from = searchParams.get('from');
 
@@ -47,7 +47,7 @@ const SummaryPageContent: React.FC = () => {
           <Button
             variant="primary"
             size="lg"
-            onClick={openLeadModal}
+            onClick={() => router.push('/questionnaire')}
           >
             Quiero Pilotar en mi Escuela
           </Button>
