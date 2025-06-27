@@ -15,7 +15,7 @@ const trustLogos = [
 const TrustSection: React.FC = () => {
   return (
     <section
-      className="py-8 sm:py-16 md:py-16"
+      className="py-8 sm:py-16 md:py-8"
     >
       <Container>
         <div className="text-center mb-8 sm:mb-12 md:mb-16">
