@@ -7,10 +7,10 @@ import Button from './Button';
 import styles from './Navbar.module.css';
 
 const navLinks = [
-  { name: 'Producto', href: '#product' },
-  { name: 'Soluciones', href: '#solutions' },
-  { name: 'Planes', href: '#pricing' },
-  { name: 'Recursos', href: '#resources' },
+  { name: 'Producto', href: '/#product' },
+  { name: 'Soluciones', href: '/#solutions' },
+  { name: 'Recursos', href: '/#resources' },
+  { name: 'Contacto', href: '/#contact' },
 ];
 
 const Navbar: React.FC = () => {
@@ -35,42 +35,26 @@ const Navbar: React.FC = () => {
           {/* Logo */}
           <Link href="/" className={styles.logoContainer} onClick={closeMenu}>
             <Sparkles className={styles.logoIcon} />
-            <span className={styles.logoText}>Celesta</span>
+            <span className={styles.logoText}>Celestea</span>
           </Link>
 
           {/* Desktop Navigation */}
           <nav className={styles.desktopNav}>
             {navLinks.map((link) => (
-              <a key={link.name} href={link.href} className={styles.navLink}>
+              <Link key={link.name} href={link.href} className={styles.navLink}>
                 {link.name}
-              </a>
+              </Link>
             ))}
-            <button
-              onClick={toggleTheme}
-              className={styles.iconButton}
-              aria-label="Cambiar tema"
-            >
-              {theme === 'dark' ? (
-                <Sun className={styles.icon} />
-              ) : (
-                <Moon className={styles.icon} />
-              )}
-            </button>
-            <Button variant="secondary">
-              <Sparkles className="w-4 h-4 mr-2" />
-              Solicita Demo
-            </Button>
+            <Link href="/questionnaire">
+              <Button variant="secondary">
+                <Sparkles className="w-4 h-4 mr-2" />
+                Solicita Demo
+              </Button>
+            </Link>
           </nav>
 
           {/* Mobile Menu Toggle */}
           <div className={styles.mobileToggleContainer}>
-            <button
-              onClick={toggleTheme}
-              className={styles.iconButton}
-              aria-label="Cambiar tema"
-            >
-              {theme === 'dark' ? <Sun className={styles.icon} /> : <Moon className={styles.icon} />}
-            </button>
             <button
               className={styles.mobileMenuToggle}
               onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -86,14 +70,16 @@ const Navbar: React.FC = () => {
       {isMenuOpen && (
         <div className={styles.mobileMenuPanel}>
           {navLinks.map((link) => (
-            <a key={link.name} href={link.href} className={styles.navLink} onClick={closeMenu}>
+            <Link key={link.name} href={link.href} className={styles.navLink} onClick={closeMenu}>
               {link.name}
-            </a>
+            </Link>
           ))}
-          <Button variant="secondary" className="w-full mt-2">
-            <Sparkles className="w-4 h-4 mr-2" />
-            Solicita Demo
-          </Button>
+          <Link href="/questionnaire" className="w-full">
+            <Button variant="secondary" className="w-full mt-2">
+              <Sparkles className="w-4 h-4 mr-2" />
+              Solicita Demo
+            </Button>
+          </Link>
         </div>
       )}
     </header>

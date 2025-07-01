@@ -2,10 +2,9 @@
 
 import Navbar from '@/components/Navbar';
 import Hero from '@/components/Hero';
-import TrustSection from '@/components/TrustSection';
 import ProductSection from '@/components/ProductSection';
 import MetricsSection from '@/components/MetricsSection';
-import RoadMapSection from '@/components/RoadMapSection'; // Added import
+import ManifiestoSection from '@/components/ManifiestoSection';
 import CTASection from '@/components/CTASection';
 import Footer from '@/components/Footer';
 
@@ -15,10 +14,15 @@ export default function Home() {
       <Navbar />
       <main className="font-nunito">
         <Hero />
-        <TrustSection />
-        <ProductSection />
-        <MetricsSection />
-        <RoadMapSection /> {/* Added component */}
+        <div id="product">
+          <ProductSection />
+        </div>
+        <div id="solutions">
+          <MetricsSection />
+        </div>
+        <div id="manifesto">
+          <ManifiestoSection />
+        </div>
         <CTASection />
       </main>
       <Footer />

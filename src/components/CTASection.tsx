@@ -43,7 +43,9 @@ const CTASection: React.FC = () => {
                   viewport={{ once: true }}
                   className={`${textStyles.largeBody} ${styles.paragraph}`}
                 >
-                  Únete a la vanguardia de la innovación educativa en México. Descubre cómo nuestra plataforma docente-first, con su Copiloto Inteligente, Tutor Socrático IA y el Skill-Graph, está ayudando a educadores como tú a ahorrar tiempo, profundizar el aprendizaje y evidenciar el impacto real. Es momento de co-crear el futuro.
+                  <>
+                    En un mundo de respuestas instantáneas, enseñamos a hacer las preguntas correctas.
+                  </>
                 </motion.p>
                 
                 <motion.div
@@ -58,11 +60,7 @@ const CTASection: React.FC = () => {
                       Solicita Demo Piloto <ArrowRight className="ml-2 w-4 h-4" />
                     </Button>
                   </div>
-                  <div className={styles.buttonWrapper}>
-                    <Button variant="outline" size="lg" className="border-white/20 text-white">
-                      <Mail className="mr-2 w-4 h-4" /> Conocer Más
-                    </Button>
-                  </div>
+                  
                 </motion.div>
               </div>
             </div>

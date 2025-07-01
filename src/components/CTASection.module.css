@@ -107,12 +107,12 @@
     font-size: clamp(2.8rem, 6vw, 4rem); /* text-[clamp(...)] */
     line-height: 1.1; /* leading-[1.1] */
     letter-spacing: -0.025em; /* tracking-tight */
-    margin-bottom: 1rem; /* mb-4 */
+    margin-bottom: 2.5rem; /* mb-10 */
   }
   
   @media (min-width: 640px) { /* sm: */
     .heading {
-      margin-bottom: 1.5rem; /* sm:mb-6 */
+      margin-bottom: 3rem; /* sm:mb-12 */
     }
   }
   
@@ -124,21 +124,25 @@
   }
   
   .paragraph {
-    margin-bottom: 1.5rem; /* mb-6 */
-    color: rgba(255, 255, 255, 0.9); /* text-white/90 */
+    max-width: 36rem; /* max-w-lg */
+    margin-left: auto;
+    margin-right: auto;
+    color: var(--color-text-secondary);
+    font-size: 1.125rem; /* text-lg */
+    line-height: 1.7;
+    margin-bottom: 3.5rem; /* mb-14 */
   }
   
   @media (min-width: 640px) { /* sm: */
     .paragraph {
-      margin-bottom: 2rem; /* sm:mb-8 */
+      margin-bottom: 4rem; /* sm:mb-16 */
     }
   }
   
   .buttonContainer {
-    display: flex; /* flex */
-    flex-direction: column; /* flex-col */
-    align-items: center; /* items-center */
-    justify-content: center; /* justify-center */
+    margin-top: 0; /* mt-0 */
+    display: flex;
+    justify-content: center;
     gap: 0.75rem; /* gap-3 */
   }
   

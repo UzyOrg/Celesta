@@ -2,7 +2,6 @@ import React from 'react';
 import { ThemeProvider } from './context/ThemeContext';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
-import TrustSection from './components/TrustSection';
 import ProductSection from './components/ProductSection';
 import MetricsSection from './components/MetricsSection';
 import CTASection from './components/CTASection';
@@ -15,7 +14,6 @@ function App() {
         <Navbar />
         <main>
           <Hero />
-          <TrustSection />
           <ProductSection />
           <MetricsSection />
           <CTASection />
