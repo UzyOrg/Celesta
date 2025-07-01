@@ -8,7 +8,7 @@ export const fontFamilies = {
 
 export const headingStyles = {
   h1: `font-plus-jakarta-sans text-5xl font-bold leading-tight tracking-tight md:text-6xl lg:text-7xl`,
-  h2: `font-plus-jakarta-sans text-4xl font-bold leading-tight tracking-tight md:text-5xl lg:text-6xl`,
+  h2: `font-plus-jakarta-sans text-[24px] sm:text-4xl font-bold leading-tight tracking-tight md:text-5xl lg:text-6xl`,
   h3: `font-plus-jakarta-sans text-3xl font-bold leading-snug tracking-tight md:text-4xl lg:text-5xl`,
   h4: `font-plus-jakarta-sans text-2xl font-semibold leading-snug tracking-tight md:text-3xl lg:text-4xl`,
   subsection: `font-plus-jakarta-sans text-xs sm:text-lg font-bold leading-normal`,

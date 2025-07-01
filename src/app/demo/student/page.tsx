@@ -74,6 +74,87 @@ const ICONS = {
   research: <BookOpen size={20} className={styles.taskIcon} />,
 };
 
+// --- SUB-COMPONENTS --- 
+
+const ProjectHeader = ({ title, question }: { title: string, question: string }) => (
+  <header className={`${styles.glassCard} ${styles.headerContainer}`}>
+    <h1>{title}</h1>
+    <p>{question}</p>
+  </header>
+);
+
+const FinalProductCard = ({ products }: { products: { nombre: string, icon: 'video' | 'box' }[] }) => (
+  <div className={`${styles.glassCard} ${styles.productCard}`}>
+    {products[0].icon && ICONS[products[0].icon]}
+    <span>Producto Final: <strong>{products.map(p => p.nombre).join(' y ')}</strong></span>
+  </div>
+);
+
+const NotesPanel = () => (
+  <div className={`${styles.glassCard} ${styles.notesPanel}`}>
+    <h3>Mis Apuntes</h3>
+    <textarea placeholder="Escribe tus ideas, notas y enlaces aquí..."></textarea>
+  </div>
+);
+
+const TeacherNoteCard = ({ prompt }: { prompt: string }) => (
+  <div className={`${styles.glassCard} ${styles.teacherPrompt}`}>
+    <Lightbulb className={styles.teacherPromptIcon} />
+    <p>{prompt}</p>
+  </div>
+);
+
+const ProjectPhasesAccordion = ({ phases, activePhase, onTogglePhase }: { phases: ProjectPhase[], activePhase: number | null, onTogglePhase: (id: number) => void }) => (
+  <div className={styles.accordionContainer}>
+    {phases.map((phase) => (
+      <motion.div
+        layout
+        key={phase.id}
+        className={`${styles.phaseItem} ${activePhase === phase.id ? styles.activePhase : ''}`}
+        transition={{ duration: 0.3, ease: 'easeInOut' }}
+      >
+        <button
+          className={`${styles.phaseButton} ${activePhase === phase.id ? styles.activePhase : ''}`}
+          onClick={() => onTogglePhase(phase.id)}
+        >
+          <span>{phase.titulo_fase}</span>
+          <motion.div animate={{ rotate: activePhase === phase.id ? 180 : 0 }} transition={{ duration: 0.3 }}>
+            <ChevronDown size={20} />
+          </motion.div>
+        </button>
+        <AnimatePresence initial={false}>
+          {activePhase === phase.id && (
+            <motion.div
+              key="content"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className={styles.phaseContent}
+            >
+              <div className={styles.phaseContentInner}>
+                <div className={styles.taskList}>
+                  {phase.tareas.map(task => (
+                    <div key={task.id} className={styles.taskCard}>
+                      <div className={styles.taskInfo}>
+                        {ICONS[task.type]}
+                        <span className={styles.taskTitle}>{task.title}</span>
+                      </div>
+                      <span className={`${styles.taskStatus} ${task.status === 'completed' ? styles.statusCompleted : styles.statusPending}`}>
+                        {task.status === 'completed' ? <CheckCircle size={16} /> : <Clock size={16} />}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
+    ))}
+  </div>
+);
+
 // --- SKELETON COMPONENTS ---
 const Skeleton = ({ className }: { className?: string }) => <div className={`${styles.skeleton} ${className}`}></div>;
 
@@ -119,69 +200,27 @@ const StudentWorkshopPage = () => {
       ) : (
         projectData && (
           <motion.div
-            className={styles.mainContent}
+            className={styles.dashboardLayout}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5 }}
           >
-            {/* Component 1: ProjectHeader */}
-            <header className={styles.headerContainer}>
-              <h1>{projectData.titulo_proyecto}</h1>
-              <p>{projectData.pregunta_esencial}</p>
-            </header>
-
-            {/* Component 2: FinalProductCard */}
-            <div className={styles.productCard}>
-              {projectData.producto_final[0].icon && ICONS[projectData.producto_final[0].icon]}
-              <span>Producto Final: <strong>{projectData.producto_final.map(p => p.nombre).join(' y ')}</strong></span>
-            </div>
-
-            {/* Component 3: ProjectPhasesAccordion */}
-            <div className={styles.accordionContainer}>
-              {projectData.fases_del_proyecto.map((phase) => (
-                <div key={phase.id}>
-                  <button
-                    className={`${styles.phaseButton} ${activePhase === phase.id ? styles.activePhase : ''}`}
-                    onClick={() => togglePhase(phase.id)}
-                  >
-                    <span>{phase.titulo_fase}</span>
-                    <motion.div animate={{ rotate: activePhase === phase.id ? 180 : 0 }}>
-                      <ChevronDown size={20} />
-                    </motion.div>
-                  </button>
-                  <AnimatePresence>
-                    {activePhase === phase.id && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        exit={{ opacity: 0, height: 0 }}
-                        className={styles.phaseContent}
-                      >
-                        <div className="flex flex-col gap-3">
-                          {phase.tareas.map(task => (
-                            <div key={task.id} className={styles.taskCard}>
-                              <div className={styles.taskInfo}>
-                                {ICONS[task.type]}
-                                <span className={styles.taskTitle}>{task.title}</span>
-                              </div>
-                              <span className={`${styles.taskStatus} ${task.status === 'completed' ? styles.statusCompleted : styles.statusPending}`}>
-                                {task.status === 'completed' ? <CheckCircle size={16} /> : <Clock size={16} />}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              ))}
-            </div>
-
-            {/* Component 4: TeacherNoteCard */}
-            <div className={styles.teacherPrompt}>
-              <Lightbulb className={styles.teacherPromptIcon} />
-              <p>{projectData.pregunta_al_docente}</p>
-            </div>
+            <main className={styles.mainColumn}>
+              <ProjectPhasesAccordion 
+                phases={projectData.fases_del_proyecto}
+                activePhase={activePhase}
+                onTogglePhase={togglePhase}
+              />
+            </main>
+            <aside className={styles.sidebarColumn}>
+              <ProjectHeader 
+                title={projectData.titulo_proyecto} 
+                question={projectData.pregunta_esencial} 
+              />
+              <FinalProductCard products={projectData.producto_final} />
+              <NotesPanel />
+              <TeacherNoteCard prompt={projectData.pregunta_al_docente} />
+            </aside>
           </motion.div>
         )
       )}

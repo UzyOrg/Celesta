@@ -1,9 +1,10 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { headingStyles, textStyles, opacityVariants } from '../styles/typography';
-import { Bot, Award, Laptop as Laptop3, Brain } from 'lucide-react';
+import styles from './ProductSection.module.css';
+import { Bot, Laptop as Laptop3 } from 'lucide-react'; // Puedes cambiar los iconos si lo deseas
 import Container from './Container';
 
+// La interfaz de props no cambia
 interface FeatureProps {
   icon: React.ReactNode;
   title: string;
@@ -11,67 +12,50 @@ interface FeatureProps {
   delay: number;
 }
 
-const Feature: React.FC<FeatureProps> = ({ icon, title, description, delay }) => {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay }}
-      viewport={{ once: true }}
-      className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 sm:p-8"
-    >
-      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-r from-turquoise to-lime flex items-center justify-center mb-4 sm:mb-6">
-        {icon}
-      </div>
-      <h3 className="text-md sm:text-lg font-semibold mb-2 sm:mb-3 text-white">{title}</h3>
-      <p className="text-sm leading-relaxed text-white/75">{description}</p>
-    </motion.div>
-  );
-};
-
 const ProductSection: React.FC = () => {
+  // AQUÍ ESTÁ LA ACTUALIZACIÓN ESTRATÉGICA DEL CONTENIDO
   const features: FeatureProps[] = [
     {
-      icon: <Bot className="w-6 h-6 text-white" />,
-      title: "Tutor IA: Álgebra y Soft-Skills",
-      description: "Acompaña el aprendizaje desde Álgebra I con hints escalonados hasta el desarrollo de soft-skills como la resiliencia. Fomenta el pensamiento crítico con IA que guía, no solo entrega respuestas.",
+      icon: <Bot className={styles.icon} />, // Icono para el estudiante
+      title: "Taller del Estudiante: El Gimnasio Cognitivo",
+      description: "Un espacio donde los estudiantes no buscan respuestas, las construyen. Nuestro andamio de IA socrática guía su razonamiento en laboratorios de habilidades y fomenta el pensamiento crítico dentro de proyectos auténticos.",
       delay: 0
     },
     {
-      icon: <Laptop3 className="w-6 h-6 text-white" />,
-      title: "Copiloto IA para Docentes",
-      description: "Diseña proyectos de aprendizaje, crea instrumentos de evaluación y ofrece retroalimentación personalizada en una fracción del tiempo. Libera tu potencial pedagógico.",
+      icon: <Laptop3 className={styles.icon} />, // Icono para el docente
+      title: "Estudio del Docente: El Copiloto Pedagógico",
+      description: "Deja de gestionar tareas y empieza a orquestar el aprendizaje. Diseña Proyectos de Aprendizaje impactantes, genera rúbricas y da feedback con una IA que es tu socia estratégica, no solo una asistente.",
       delay: 0.1
     },
   ];
 
   return (
-    <section id="product" className="py-16 sm:py-20 bg-[#0D1117]">
+    <section id="product" className={styles.productSection}>
       <Container>
-        <div className="text-center max-w-3xl mx-auto">
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-white">
-            Una plataforma, dos revoluciones
+        <div className={styles.header}>
+          <h2 className={styles.title}>
+            Una Plataforma, Dos Protagonistas
           </h2>
-          <p className="mt-4 text-lg sm:text-xl text-white/70">
-            Hemos creado herramientas de IA que fortalecen el rol del docente y potencian el aprendizaje auténtico del alumno.
+          <p className={styles.subtitle}>
+            Herramientas de IA diseñadas para devolverle el poder al docente y entregarle la autonomía al estudiante.
           </p>
         </div>
 
-        <div className="mt-12 sm:mt-16 grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
+        <div className={styles.featuresGrid}>
           {features.map((feature, index) => (
             <motion.div
               key={index}
-              className="p-8 bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl"
+              className={styles.featureCard}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.5 }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
+              transition={{ duration: 0.5, delay: feature.delay }}
             >
-              <div className="mb-6 inline-block p-4 bg-white/5 rounded-lg">
+              <div className={styles.iconWrapper}>
                 {feature.icon}
               </div>
-              <h3 className="text-2xl font-bold text-white mb-3">{feature.title}</h3>
-              <p className="text-white/70">{feature.description}</p>
+              <h3 className={styles.featureTitle}>{feature.title}</h3>
+              <p className={styles.description}>{feature.description}</p>
             </motion.div>
           ))}
         </div>

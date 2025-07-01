@@ -1,0 +1,193 @@
+.heroSection {
+  position: relative;
+  overflow: hidden;
+  padding-top: 6rem; /* 96px */
+  padding-bottom: 2.5rem; /* 40px */
+}
+
+@media (min-width: 640px) {
+  .heroSection {
+    padding-top: 12rem; /* 192px */
+    padding-bottom: 8rem; /* 128px */
+  }
+}
+
+@media (min-width: 768px) {
+  .heroSection {
+    padding-top: 16rem; /* 256px */
+    padding-bottom: 12rem; /* 192px */
+  }
+}
+
+.particlesContainer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.contentWrapper {
+  margin-left: auto;
+  margin-right: auto;
+  position: relative;
+  z-index: 10;
+}
+
+.motionDiv {
+  text-align: center;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  background-color: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 0.75rem; /* 12px */
+  font-size: 0.75rem; /* 12px */
+}
+
+@media (min-width: 420px) { /* Custom breakpoint 'xs' */
+  .badge {
+    font-size: 0.875rem; /* 14px */
+    margin-bottom: 1rem; /* 16px */
+  }
+}
+
+@media (min-width: 640px) {
+  .badge {
+    margin-bottom: 1.5rem; /* 24px */
+  }
+}
+
+.badgeText {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.sparklesIcon {
+  display: inline;
+  height: 1rem;
+  width: 1rem;
+  margin-right: 0.5rem;
+  color: #05f7ff; /* turquoise */
+}
+
+.glow {
+  position: absolute;
+  z-index: -10;
+  inset: 0;
+  pointer-events: none;
+  background-image: radial-gradient(circle at center, rgba(5, 247, 255, 0.35) 0%, transparent 60%);
+  filter: blur(80px);
+  opacity: 0;
+}
+
+.title {
+  font-size: clamp(30px, 8vw, 5rem);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.025em;
+  margin-bottom: 1rem; /* 16px */
+}
+
+@media (min-width: 420px) { /* Custom breakpoint 'xs' */
+  .title {
+    margin-bottom: 1.5rem; /* 24px */
+  }
+}
+
+.titleWhite {
+  color: white;
+}
+
+.titleGradient {
+  background-image: linear-gradient(to right, #05f7ff, #84cc16);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.subtitle {
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 1.25rem; /* 20px */
+  max-width: 42rem; /* 672px */
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  font-size: 12px;
+}
+
+@media (min-width: 640px) {
+  .subtitle {
+    font-size: 1.25rem; /* 20px */
+    margin-bottom: 2rem; /* 32px */
+  }
+}
+
+@media (min-width: 768px) {
+  .subtitle {
+    font-size: 1.5rem; /* 24px */
+  }
+}
+
+.buttonContainer {
+  width: 100%;
+  display: flex;
+  flex-direction: column; /* Mobile-first: stack buttons */
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem; /* 12px */
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+.buttonWrapper {
+  width: 80%; /* Mobile-first: buttons are 80% wide */
+}
+
+@media (min-width: 640px) {
+  .buttonContainer {
+    flex-direction: row; /* Desktop: buttons in a row */
+    gap: 1rem; /* 16px */
+  }
+
+  .buttonWrapper {
+    width: auto; /* Desktop: buttons have auto width */
+  }
+}
+
+@media (min-width: 640px) {
+  
+}
+
+.buttonLink {
+  display: block;
+  width: 100%;
+}
+
+.fullWidth {
+  width: 100%;
+  font-size: 17px;
+}
+
+@media (min-width: 420px) {
+  .fullWidth {
+    font-size: 1.08rem;
+  }
+}
+
+.exploreButton:hover .playIcon {
+  color: white;
+}
+
+.playIcon {
+  width: 1rem;
+  height: 1rem;
+  margin-right: 0.5rem;
+  color: #05f7ff; /* turquoise */
+  transition-property: color;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}

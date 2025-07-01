@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Target, TrendingUp, Users } from 'lucide-react';
 import Container from './Container';
+import CompetencyRadarChart from './CompetencyRadarChart';
 
 const MetricsSection: React.FC = () => {
   return (
@@ -69,20 +70,16 @@ const MetricsSection: React.FC = () => {
           </div>
           
           <motion.div
-            className="relative h-full min-h-[300px]"
+            className="relative h-[400px] flex flex-col items-center justify-center"
             initial={{ opacity: 0, scale: 0.9 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true, amount: 0.5 }}
             transition={{ duration: 0.7 }}
           >
             <div className="absolute inset-0 bg-gradient-to-tr from-turquoise to-lime opacity-10 blur-3xl rounded-full" />
-            <div className="relative bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 p-6 h-full flex flex-col items-center justify-center">
-              <p className="text-center font-bold text-white mb-4">Skill-Graph del Estudiante</p>
-              <div className="w-full h-full bg-grid-pattern relative flex items-center justify-center rounded-lg">
-                 <div className="w-full h-full flex items-center justify-center">
-                    <p className="text-white/50 text-sm">Visualización del grafo de competencias</p>
-                 </div>
-              </div>
+            <h3 className="text-lg font-bold text-white mb-4 z-10">Radar de Competencias del Siglo XXI</h3>
+            <div className="w-full h-full z-10">
+              <CompetencyRadarChart />
             </div>
           </motion.div>
         </div>

@@ -1,145 +1,242 @@
-/* TallerDeProyectos.module.css */
+/* === Keyframes === */
+@keyframes pulse {
+  50% { opacity: .5; }
+}
 
+@keyframes pulse-glow {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
+}
+
+@keyframes aurora-glow {
+  0% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  50% {
+    transform: translate(40px, 60px) rotate(3deg);
+  }
+  100% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+}
+
+/* === Base Layout & Aurora Background === */
 .pageContainer {
   background-color: #0a0e14; /* Darker background for lab feel */
   color: #d1d5db;
+  padding: 32px;
   min-height: 100vh;
-  padding: 2rem 1rem;
   font-family: var(--font-nunito);
-}
-
-.mainContent {
-  max-width: 960px;
-  margin: 0 auto;
-}
-
-/* --- Skeleton UI --- */
-.skeleton {
-  background-color: #161b22;
-  border-radius: 8px;
   position: relative;
   overflow: hidden;
 }
 
-.skeleton::after {
+.pageContainer::before {
   content: '';
   position: absolute;
-  top: 0;
-  left: -150%;
-  height: 100%;
-  width: 150%;
-  background: linear-gradient(to right, transparent 0%, #30363d 50%, transparent 100%);
-  animation: shimmer 1.5s infinite;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background-image: 
+    radial-gradient(circle at 20% 30%, rgba(34, 211, 238, 0.18), transparent 30%),
+    radial-gradient(circle at 80% 70%, rgba(20, 184, 166, 0.15), transparent 35%),
+    radial-gradient(circle at 50% 90%, rgba(96, 165, 250, 0.12), transparent 40%);
+  z-index: 0;
+  pointer-events: none;
+  animation: aurora-glow 30s infinite ease-in-out;
 }
 
-/* --- Component 1: ProjectHeader --- */
-.headerContainer {
-  background-color: #161b22;
-  border: 1px solid #21262d;
+.dashboardLayout {
+  display: grid;
+  grid-template-columns: 1fr 360px;
+  gap: 32px;
+  position: relative;
+  z-index: 1;
+}
+
+.mainColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.sidebarColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  position: sticky;
+  top: 32px;
+  height: calc(100vh - 64px);
+}
+
+/* === Glassmorphism Card Style === */
+.glassCard {
+  background-color: rgba(15, 23, 42, 0.6); /* Slate 900 with alpha */
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(51, 65, 85, 0.5); /* Slate 700 with alpha */
   border-radius: 12px;
-  padding: 32px;
-  margin-bottom: 32px;
+  padding: 24px;
+  transition: border-color 0.3s, background-color 0.3s;
 }
 
+/* === Component-Specific Styles === */
+
+/* Sidebar Components */
 .headerContainer h1 {
-  font-size: 2.5rem; /* 40px */
+  font-size: 2rem;
   font-weight: 800;
-  color: #22d3ee; /* Accent cyan */
-  margin: 0 0 16px 0;
+  color: #22d3ee;
+  margin: 0 0 12px 0;
   line-height: 1.2;
 }
 
 .headerContainer p {
-  font-size: 1.25rem; /* 20px */
+  font-size: 1.1rem;
   font-style: italic;
-  color: #d1d5db;
-  margin: 16px 0 0 0;
-  border-left: 4px solid #22d3ee;
-  padding-left: 16px;
+  color: #94a3b8; /* Slate 400 */
+  margin: 0;
+  border-left: 3px solid #22d3ee;
+  padding-left: 12px;
 }
 
-/* --- Component 2: FinalProductCard --- */
 .productCard {
   display: flex;
   align-items: center;
-  background-color: #161b22;
-  border: 1px solid #21262d;
-  border-radius: 12px;
-  padding: 20px;
-  margin-bottom: 32px;
+  gap: 16px;
+  font-size: 1rem;
 }
 
 .productIcon {
-  width: 32px;
-  height: 32px;
-  color: #34d399; /* Accent green */
-  margin-right: 16px;
+  color: #2dd4bf;
   flex-shrink: 0;
 }
 
-.productCard span {
-  font-size: 1.125rem; /* 18px */
-  font-weight: 600;
-  color: #e5e7eb;
+.notesPanel {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
 }
 
-/* --- Component 3: ProjectPhasesAccordion --- */
+.notesPanel h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0 0 16px 0;
+  color: #cbd5e1; /* Slate 300 */
+}
+
+.notesPanel textarea {
+  width: 100%;
+  flex-grow: 1;
+  background-color: rgba(30, 41, 59, 0.5); /* Slate 800 with alpha */
+  border: 1px solid #334155; /* Slate 700 */
+  border-radius: 8px;
+  padding: 12px;
+  color: #e2e8f0;
+  font-family: inherit;
+  font-size: 0.95rem;
+  resize: none;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.notesPanel textarea:focus {
+  outline: none;
+  border-color: #22d3ee;
+  box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.2);
+}
+
+.teacherPrompt {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.teacherPromptIcon {
+  color: #60a5fa;
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+
+.teacherPrompt p {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #94a3b8;
+}
+
+/* Main Column Components */
 .accordionContainer {
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
+.phaseItem {
+  background-color: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(51, 65, 85, 0.5);
+  border-radius: 12px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: border-color 0.3s;
+}
+
 .phaseButton {
-  background-color: #161b22;
-  padding: 16px 24px;
-  border-radius: 8px;
-  font-weight: 600;
-  font-size: 1.125rem;
-  width: 100%;
-  text-align: left;
-  cursor: pointer;
-  transition: background-color 0.2s ease, color 0.2s ease;
-  border: 1px solid #21262d;
-  color: #e5e7eb;
   display: flex;
   justify-content: space-between;
   align-items: center;
-}
-
-.phaseButton:hover {
-  background-color: #21262d;
+  width: 100%;
+  padding: 20px 24px;
+  background-color: transparent;
+  border: none;
+  color: #e2e8f0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  cursor: pointer;
 }
 
 .phaseButton.activePhase {
   color: #22d3ee;
-  background-color: #21262d;
+}
+
+.phaseItem.activePhase {
   border-color: #22d3ee;
 }
 
 .phaseContent {
-  background-color: transparent;
-  padding: 16px 24px 24px 24px;
-  border-left: 2px solid #21262d;
-  margin-left: 12px;
-  animation: fadeIn 0.5s ease-in-out;
+  overflow: hidden;
+}
+
+.phaseContentInner {
+  padding: 0 24px 24px 24px;
+}
+
+.taskList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .taskCard {
-  background-color: #0d1117;
-  padding: 16px;
+  background-color: #020617;
+  border: 1px solid #334155;
   border-radius: 8px;
-  border: 1px solid #21262d;
+  padding: 16px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
 }
 
 .taskCard:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-  border-color: #a5b4fc;
+  transform: translateY(-3px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  border-color: #475569; /* Slate 600 */
 }
 
 .taskInfo {
@@ -149,76 +246,74 @@
 }
 
 .taskIcon {
-  color: #a5b4fc;
+  color: #94a3b8;
 }
 
 .taskTitle {
   font-weight: 500;
-  color: #d1d5db;
 }
 
 .taskStatus {
-  font-size: 0.8rem;
-  font-weight: bold;
-  padding: 4px 8px;
-  border-radius: 12px;
-  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
 }
 
 .statusCompleted {
-  background-color: rgba(52, 211, 153, 0.2);
-  color: #34d399;
+  background-color: rgba(16, 185, 129, 0.2);
+  color: #10b981;
 }
 
 .statusPending {
-  background-color: rgba(251, 191, 36, 0.2);
-  color: #FBBF24;
+  background-color: rgba(245, 158, 11, 0.2);
+  color: #f59e0b;
 }
 
-/* --- Component 4: TeacherNoteCard --- */
-.teacherPrompt {
-  background-color: rgba(37, 99, 235, 0.15);
-  border: 1px solid #2563eb;
-  border-radius: 8px;
-  padding: 20px;
-  margin-top: 32px;
-  display: flex;
-  align-items: flex-start;
+.statusPending svg {
+  animation: pulse-glow 2.5s infinite ease-in-out;
 }
 
-.teacherPromptIcon {
-  font-size: 20px;
-  margin-right: 16px;
-  color: #60a5fa;
-  flex-shrink: 0;
-  line-height: 1;
+/* === Skeleton === */
+.skeleton {
+  background-color: rgba(51, 65, 85, 0.5);
+  border-radius: 6px;
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
-.teacherPrompt p {
-  color: #d1d5db;
-  font-size: 1rem;
-  margin: 0;
+/* === Responsiveness === */
+@media (max-width: 1024px) {
+  .dashboardLayout {
+    grid-template-columns: 1fr;
+  }
+  .sidebarColumn {
+    position: static;
+    height: auto;
+  }
 }
 
-/* --- Responsiveness --- */
 @media (max-width: 640px) {
+  .pageContainer {
+    padding: 16px;
+  }
+  .dashboardLayout {
+    gap: 24px;
+  }
   .headerContainer h1 {
-    font-size: 2rem;
+    font-size: 1.75rem;
   }
-
-  .headerContainer, .productCard, .teacherPrompt {
-    padding: 24px;
+  .headerContainer p {
+    font-size: 1rem;
+  }
+  .phaseButton {
+    font-size: 1.1rem;
+    padding: 16px;
+  }
+  .phaseContentInner {
+    padding: 0 16px 16px 16px;
   }
 }
 
-/* --- Animations --- */
-@keyframes shimmer {
-  100% {
-    left: 150%;
-  }
-}
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
