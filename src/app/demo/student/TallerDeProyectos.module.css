@@ -93,7 +93,7 @@
 .headerContainer h1 {
   font-size: 2rem;
   font-weight: 800;
-  color: #22d3ee;
+  color: #f1f5f9; /* Slate 100 - Brighter White */
   margin: 0 0 12px 0;
   line-height: 1.2;
 }
@@ -103,7 +103,7 @@
   font-style: italic;
   color: #94a3b8; /* Slate 400 */
   margin: 0;
-  border-left: 3px solid #22d3ee;
+  border-left: 3px solid #475569; /* Slate 600 - Subtle */
   padding-left: 12px;
 }
 
@@ -115,7 +115,7 @@
 }
 
 .productIcon {
-  color: #2dd4bf;
+  color: #94a3b8; /* Slate 400 - Neutral */
   flex-shrink: 0;
 }
 
@@ -148,8 +148,8 @@
 
 .notesPanel textarea:focus {
   outline: none;
-  border-color: #22d3ee;
-  box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.2);
+  border-color: #475569; /* Slate 600 */
+  box-shadow: 0 0 0 3px rgba(71, 85, 105, 0.3); /* Slate 600 with alpha */
 }
 
 .teacherPrompt {
@@ -159,7 +159,7 @@
 }
 
 .teacherPromptIcon {
-  color: #60a5fa;
+  color: #94a3b8; /* Slate 400 - Neutral */
   flex-shrink: 0;
   margin-top: 4px;
 }
@@ -201,11 +201,11 @@
 }
 
 .phaseButton.activePhase {
-  color: #22d3ee;
+  color: #f1f5f9; /* Slate 100 - Brighter White */
 }
 
 .phaseItem.activePhase {
-  border-color: #22d3ee;
+  border-color: #475569; /* Slate 600 */
 }
 
 .phaseContent {
@@ -263,13 +263,13 @@
 }
 
 .statusCompleted {
-  background-color: rgba(16, 185, 129, 0.2);
-  color: #10b981;
+  background-color: rgba(16, 185, 129, 0.15); /* More subtle background */
+  color: #10b981; /* Keep professional green */
 }
 
 .statusPending {
-  background-color: rgba(245, 158, 11, 0.2);
-  color: #f59e0b;
+  background-color: rgba(100, 116, 139, 0.2); /* Slate 500 with alpha */
+  color: #94a3b8; /* Slate 400 */
 }
 
 .statusPending svg {
