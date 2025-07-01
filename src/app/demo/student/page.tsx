@@ -107,12 +107,7 @@ const TeacherNoteCard = ({ prompt }: { prompt: string }) => (
 const ProjectPhasesAccordion = ({ phases, activePhase, onTogglePhase }: { phases: ProjectPhase[], activePhase: number | null, onTogglePhase: (id: number) => void }) => (
   <div className={styles.accordionContainer}>
     {phases.map((phase) => (
-      <motion.div
-        layout
-        key={phase.id}
-        className={`${styles.phaseItem} ${activePhase === phase.id ? styles.activePhase : ''}`}
-        transition={{ duration: 0.3, ease: 'easeInOut' }}
-      >
+      <div key={phase.id} className={`${styles.phaseItem} ${activePhase === phase.id ? styles.activePhase : ''}`}>
         <button
           className={`${styles.phaseButton} ${activePhase === phase.id ? styles.activePhase : ''}`}
           onClick={() => onTogglePhase(phase.id)}
@@ -122,14 +117,18 @@ const ProjectPhasesAccordion = ({ phases, activePhase, onTogglePhase }: { phases
             <ChevronDown size={20} />
           </motion.div>
         </button>
-        <AnimatePresence initial={false}>
+        <AnimatePresence>
           {activePhase === phase.id && (
             <motion.div
               key="content"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
+              initial="collapsed"
+              animate="open"
+              exit="collapsed"
+              variants={{
+                open: { opacity: 1, height: 'auto' },
+                collapsed: { opacity: 0, height: 0 },
+              }}
+              transition={{ duration: 0.4, ease: [0.04, 0.62, 0.23, 0.98] }}
               className={styles.phaseContent}
             >
               <div className={styles.phaseContentInner}>
@@ -150,7 +149,7 @@ const ProjectPhasesAccordion = ({ phases, activePhase, onTogglePhase }: { phases
             </motion.div>
           )}
         </AnimatePresence>
-      </motion.div>
+      </div>
     ))}
   </div>
 );
