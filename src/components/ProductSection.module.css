@@ -24,33 +24,74 @@
   color: rgba(255, 255, 255, 0.7);
 }
 
-.featuresGrid {
-  margin-top: 3rem;
-  display: grid;
-  grid-template-columns: repeat(1, minmax(0, 1fr));
-  gap: 2rem;
+.featuresContainer {
+  margin-top: 4rem; /* Add space above the features */
+  display: flex;
+  flex-direction: column;
+  gap: 8rem; /* More space between feature rows */
 }
 
-.featureCard {
-  padding: 2rem;
-  background-color: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(4px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 1rem;
+.featureRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10rem; /* Keep a reasonable gap */
+  align-items: center;
+}
+
+/* Align grid items towards the center gap to reduce perceived space */
+.featureRow > div:first-child {
+  justify-self: end;
+}
+
+.featureRow > div:last-child {
+  justify-self: start;
+}
+
+.textBlock {
+  max-width: 480px;
 }
 
 .iconWrapper {
   margin-bottom: 1.5rem;
   display: inline-block;
   padding: 1rem;
-  background-color: rgba(255, 255, 255, 0.05);
-  border-radius: 0.5rem;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+  border-radius: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .icon {
-  width: 1.5rem;
-  height: 1.5rem;
-  color: white;
+  width: 1.75rem;
+  height: 1.75rem;
+  color: #93edc7; /* Celesta green for accent */
+}
+
+.videoContainer {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.videoGlow {
+  position: absolute;
+  width: 120%;
+  height: 120%;
+  background-image: radial-gradient(circle at 50% 50%, #1d5544, transparent 60%);
+  filter: blur(100px);
+  opacity: 0.5;
+  z-index: -1;
+  transform: translateZ(0); /* Promotes to new layer */
+}
+
+.featureVideo {
+  width: 100%;
+  max-width: 500px;
+  height: auto;
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  object-fit: cover;
 }
 
 .featureTitle {
@@ -68,6 +109,39 @@
 }
 
 /* Responsive Styles */
+@media (max-width: 900px) {
+  .featuresContainer {
+    gap: 4rem; /* Reduce vertical space between features on mobile */
+  }
+
+  .featureRow {
+    grid-template-columns: 1fr; /* Stack into a single column */
+    gap: 0; /* No gap needed since video is hidden */
+  }
+
+  /* Reset justification for stacked layout */
+  .featureRow > div:first-child,
+  .featureRow > div:last-child {
+    justify-self: auto;
+  }
+
+  .textBlock {
+    text-align: center;
+    max-width: 580px; /* Limit width for readability on tablets */
+    margin: 0 auto; /* Center the block itself */
+  }
+
+  .iconWrapper {
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  /* Hide videos on mobile to simplify and save bandwidth */
+  .videoContainer {
+    display: none;
+  }
+}
+
 @media (min-width: 640px) {
   .productSection {
     padding-top: 5rem;
