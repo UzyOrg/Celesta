@@ -8,6 +8,7 @@ import Container from '@/components/Container';
 import Link from 'next/link';
 import { Lightbulb } from 'lucide-react';
 import DownloadPDFButton from '@/components/DownloadPDFButton';
+import ProjectSkeleton from '@/components/ProjectSkeleton/ProjectSkeleton';
 
 // --- TYPES ---
 interface ProjectPhase {
@@ -86,7 +87,7 @@ const DemoTeacherPage: React.FC = () => {
       </div>
 
       <Container className="z-10">
-        {loading && <div className="text-center py-10">Cargando...</div>}
+        {loading && <ProjectSkeleton />}
 
         {!loading && !selectedLevel && (
           <>

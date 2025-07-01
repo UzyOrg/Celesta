@@ -1,0 +1,48 @@
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+.skeletonWrapper {
+  width: 100%;
+  padding: 2rem 0;
+}
+
+.skeletonTitle {
+  height: 40px;
+  width: 60%;
+  margin: 0 auto 2rem auto;
+  border-radius: 0.5rem;
+  background: linear-gradient(to right, #1a202c 8%, #2d3748 18%, #1a202c 33%);
+  background-size: 2000px 100%;
+  animation: shimmer 2s linear infinite;
+}
+
+.skeletonGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.skeletonCard {
+  height: 150px;
+  border-radius: 1rem;
+  background: linear-gradient(to right, #1a202c 8%, #2d3748 18%, #1a202c 33%);
+  background-size: 2000px 100%;
+  animation: shimmer 2s linear infinite;
+}
+
+.skeletonCardLarge {
+  height: 250px;
+  grid-column: span 1 / span 1;
+}
+
+@media (min-width: 768px) {
+  .skeletonCardLarge {
+    grid-column: span 2 / span 2;
+  }
+}
