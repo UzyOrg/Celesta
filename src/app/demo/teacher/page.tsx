@@ -9,6 +9,7 @@ import Link from 'next/link';
 import { Lightbulb } from 'lucide-react';
 import DownloadPDFButton from '@/components/DownloadPDFButton';
 import ProjectSkeleton from '@/components/ProjectSkeleton/ProjectSkeleton';
+import CustomTopicModal from '@/components/CustomTopicModal';
 
 // --- TYPES ---
 interface ProjectPhase {
@@ -42,6 +43,7 @@ const DemoTeacherPage: React.FC = () => {
   const [materia, setMateria] = useState('machine_learning');
   const [grado, setGrado] = useState('Primaria');
   const [specificTopic, setSpecificTopic] = useState('');
+  const [showCustomTopicModal, setShowCustomTopicModal] = useState(false);
 
   useEffect(() => {
     if (!project) {
@@ -55,8 +57,22 @@ const DemoTeacherPage: React.FC = () => {
     setSelectedLevel(levelData || null);
   }, [project, grado]);
 
+  // Handle custom topic input changes
+  const handleSpecificTopicChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSpecificTopic(value);
+    // Modal will only open when clicking the submit button, not while typing
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // If user has entered a custom topic, show the modal instead of generating
+    if (specificTopic.trim().length > 0) {
+      setShowCustomTopicModal(true);
+      return;
+    }
+    
     setLoading(true);
     setProject(null);
 
@@ -135,7 +151,7 @@ const DemoTeacherPage: React.FC = () => {
                     type="text"
                     id="specificTopic"
                     value={specificTopic}
-                    onChange={(e) => setSpecificTopic(e.target.value)}
+                    onChange={handleSpecificTopicChange}
                     className={styles.formInput}
                     placeholder="Ej: La fotosíntesis en plantas acuáticas"
                   />
@@ -235,13 +251,20 @@ const DemoTeacherPage: React.FC = () => {
 
             <div className={styles.summaryButtonContainer}>
               <DownloadPDFButton projectData={selectedLevel} />
-              <Link href="/demo/summary?from=teacher" className={styles.summaryButton}>
-                Ver mi Impacto →
-              </Link>
+              <Button href="/demo/summary?from=teacher" size="lg">
+                Ver mi Impacto
+              </Button>
             </div>
           </div>
         )}
       </Container>
+      
+      {/* Custom Topic Modal */}
+      <CustomTopicModal 
+        isOpen={showCustomTopicModal}
+        onClose={() => setShowCustomTopicModal(false)}
+        customTopic={specificTopic}
+      />
     </div>
   );
 };

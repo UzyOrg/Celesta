@@ -1,0 +1,143 @@
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.modal {
+  background: #0D0D0D;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 
+    0 20px 40px -12px rgba(0, 0, 0, 0.6),
+    0 0 0 1px rgba(255, 255, 255, 0.03);
+  max-width: 420px;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.modal::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+}
+
+.closeButton {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border: none;
+  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  z-index: 10;
+}
+
+.closeButton:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.header {
+  padding: 32px 32px 0 32px;
+  text-align: center;
+}
+
+.iconWrapper {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 20px;
+}
+
+.sparkleIcon {
+  width: 20px;
+  height: 20px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.title {
+  font-size: 1.25rem; /* 20px */
+  font-weight: 600;
+  color: white;
+  margin: 0;
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+}
+
+.content {
+  padding: 16px 32px 24px 32px;
+  text-align: center;
+}
+
+.description {
+  font-size: 0.95rem; /* 15px */
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.7);
+  margin: 0;
+}
+
+.actions {
+  padding: 0 32px 32px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.fullWidth {
+  width: 100%;
+}
+
+/* Responsive Design */
+@media (max-width: 640px) {
+  .modal {
+    margin: 20px;
+    max-width: none;
+  }
+  
+  .header {
+    padding: 24px 24px 0 24px;
+  }
+  
+  .content {
+    padding: 16px 24px 24px 24px;
+  }
+  
+  .actions {
+    padding: 0 24px 24px 24px;
+  }
+  
+  .title {
+    font-size: 1.125rem; /* 18px */
+  }
+  
+  .description {
+    font-size: 0.875rem; /* 14px */
+  }
+}

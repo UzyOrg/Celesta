@@ -107,7 +107,7 @@ const Hero: React.FC = () => {
                 <Link href="/demo/start" passHref className={styles.buttonLink}>
                   <Button variant="outline" size="lg" className={`${styles.fullWidth} ${styles.exploreButton}`}>
                     <Play className={styles.playIcon} />
-                    Explora Nuestra IA
+                    Ver demo piloto
                   </Button>
                 </Link>
               </div>
