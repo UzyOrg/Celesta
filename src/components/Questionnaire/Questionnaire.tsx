@@ -110,14 +110,19 @@ const Questionnaire = () => {
     e.preventDefault();
 
     try {
-      // TODO: Implementar aquí el guardado de datos en Supabase.
-      // Por ejemplo:
-      // const { error } = await supabase.from('registros').insert([formData]);
-      // if (error) throw error;
+      const response = await fetch('/api/questionnaire', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
 
-      console.log("Final Form Data:", formData);
-      
-      // Mostrar la tarjeta de éxito solo después de que los datos se guarden.
+      if (!response.ok) {
+        throw new Error('La respuesta de la red no fue correcta');
+      }
+
+      console.log("Datos del formulario enviados con éxito:", formData);
       setIsSubmitted(true);
 
     } catch (error) {
