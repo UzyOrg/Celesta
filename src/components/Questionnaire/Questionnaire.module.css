@@ -6,7 +6,7 @@
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background-color: #0D1117; /* Same as the other page */
+  background-color: #0D1117;
   padding: 2rem 1rem;
   font-family: var(--font-nunito);
 }
@@ -65,16 +65,15 @@
 }
 
 /* --- Step Content --- */
-
 .stepTitle {
-  font-size: 1.75rem; /* 28px */
+  font-size: 1.75rem;
   font-weight: 700;
   color: #f3f4f6;
   margin-bottom: 32px;
   text-align: center;
 }
 
-/* --- Option Buttons (Steps 1, 2, 3, 4) --- */
+/* --- Option Buttons --- */
 .optionsGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -113,7 +112,7 @@
   box-shadow: 0 0 15px rgba(34, 211, 238, 0.2);
 }
 
-/* --- Inputs (Steps 5, 6) --- */
+/* --- Inputs --- */
 .inputLabel {
   display: block;
   font-size: 1rem;
@@ -212,30 +211,7 @@
   cursor: not-allowed;
 }
 
-.confirmButton {
-  background: linear-gradient(135deg, #05f7ff 0%, #a3e635 100%);
-  color: #1a1a1a;
-  border: none;
-  padding: 0.75rem 2rem;
-  border-radius: 0.5rem;
-  font-weight: 600;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  flex: 1;
-}
-
-.confirmButton:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(5, 247, 255, 0.3);
-}
-
-.confirmButton:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none;
-}
-
+.confirmButton,
 .continueButton {
   background: linear-gradient(135deg, #05f7ff 0%, #a3e635 100%);
   color: #1a1a1a;
@@ -246,14 +222,23 @@
   font-size: 1rem;
   cursor: pointer;
   transition: all 0.3s ease;
+}
+
+.confirmButton {
+  flex: 1;
+}
+
+.continueButton {
   min-width: 120px;
 }
 
+.confirmButton:hover:not(:disabled),
 .continueButton:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 8px 25px rgba(5, 247, 255, 0.3);
 }
 
+.confirmButton:disabled,
 .continueButton:disabled {
   opacity: 0.5;
   cursor: not-allowed;
@@ -287,13 +272,59 @@
   margin: 0 auto;
 }
 
-/* Responsive */
-@media (max-width: 640px) {
+/* --- Responsive Styles --- */
+@media (max-width: 768px) {
   .optionsGrid {
     grid-template-columns: 1fr;
   }
 
   .stepTitle {
     font-size: 1.5rem;
+    margin-bottom: 24px;
+  }
+
+  .optionButton {
+    padding: 14px;
+    font-size: 0.9rem;
+  }
+
+  .navigationButtons {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .confirmButton,
+  .backButton,
+  .continueButton {
+    padding: 0.8rem 1.5rem;
+    font-size: 0.95rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .pageContainer {
+    padding: 1rem;
+  }
+
+  .stepTitle {
+    font-size: 1.25rem;
+  }
+
+  .optionButton {
+    padding: 12px;
+    font-size: 0.85rem;
+  }
+
+  .brandName {
+    font-size: 1.75rem;
+  }
+
+  .brandIcon {
+    width: 24px;
+    height: 24px;
+  }
+
+  .progressBarContainer {
+    margin-bottom: 32px;
   }
 }
