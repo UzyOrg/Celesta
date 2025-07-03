@@ -4,7 +4,7 @@ import type { Metadata } from 'next'; // Keep for now, might need adjustment wit
 import { ThemeProvider } from '@/context/ThemeContext';
 import './globals.css';
 import { ModalProvider } from '@/context/ModalContext';
-import LeadModal from '@/components/LeadModal';
+
 import { Toaster } from 'react-hot-toast';
 
 // Static metadata might be problematic with 'use client' at the root.
@@ -33,7 +33,7 @@ export default function RootLayout({
               </main>
             </div>
           </ThemeProvider>
-          <LeadModal /> {/* LeadModal will use context internally */}
+
           <Toaster position="bottom-right" />
         </ModalProvider>
       </body>

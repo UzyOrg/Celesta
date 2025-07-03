@@ -20,7 +20,7 @@ export default function Home() {
         <div id="solutions">
           <MetricsSection />
         </div>
-        <div id="manifesto">
+        <div id="El-problema">
           <ManifiestoSection />
         </div>
         <CTASection />

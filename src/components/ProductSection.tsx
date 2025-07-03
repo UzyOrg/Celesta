@@ -3,12 +3,14 @@ import { motion } from 'framer-motion';
 import styles from './ProductSection.module.css';
 import { Bot, Laptop as Laptop3 } from 'lucide-react';
 import Container from './Container';
+import Image from 'next/image';
 
 interface FeatureProps {
   icon: React.ReactNode;
   title: string;
   description: string;
   videoSrc: string;
+  mobileImageSrc: string;
   delay: number;
 }
 
@@ -18,14 +20,16 @@ const ProductSection: React.FC = () => {
       icon: <Bot className={styles.icon} />,
       title: "Taller del Estudiante: El Gimnasio Cognitivo",
       description: "Un espacio donde los estudiantes no buscan respuestas, las construyen. Nuestro andamio de IA socrática guía su razonamiento en laboratorios de habilidades y fomenta el pensamiento crítico dentro de proyectos auténticos.",
-      videoSrc: "/Video_Profesor.mp4",
+      videoSrc: "/Video_Estudiante.mp4",
+      mobileImageSrc: "/ph_student.png",
       delay: 0
     },
     {
       icon: <Laptop3 className={styles.icon} />,
       title: "Estudio del Docente: El Copiloto Pedagógico",
       description: "Deja de gestionar tareas y empieza a orquestar el aprendizaje. Diseña Proyectos de Aprendizaje impactantes, genera rúbricas y da feedback con una IA que es tu socia estratégica, no solo una asistente.",
-      videoSrc: "/Video_Estudiante.mp4",
+      videoSrc: "/Video_Profesor.mp4",
+      mobileImageSrc: "/ph_teacher.png",
       delay: 0.1
     },
   ];
@@ -73,6 +77,13 @@ const ProductSection: React.FC = () => {
                   >
                     <source src={feature.videoSrc} type="video/mp4" />
                   </video>
+                  <Image
+                    src={feature.mobileImageSrc}
+                    alt={feature.title}
+                    width={500}
+                    height={500}
+                    className={styles.featureImage}
+                  />
                 </motion.div>
               </div>
             );

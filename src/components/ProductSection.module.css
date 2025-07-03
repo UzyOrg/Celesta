@@ -94,6 +94,17 @@
   object-fit: cover;
 }
 
+.featureImage {
+  display: none; /* Hidden by default on desktop */
+  width: 100%;
+  max-width: 400px;
+  height: auto;
+  border-radius: 1rem;
+  margin-left: auto;
+  margin-right: auto;
+  box-shadow: 0 0 50px rgba(147, 237, 199, 0.15); /* More subtle glow effect */
+}
+
 .featureTitle {
   font-size: 1.5rem;
   line-height: 2rem;
@@ -115,8 +126,14 @@
   }
 
   .featureRow {
-    grid-template-columns: 1fr; /* Stack into a single column */
-    gap: 0; /* No gap needed since video is hidden */
+    display: flex;
+    flex-direction: column;
+    gap: 3rem;
+  }
+
+  /* Reverse order for the second feature on mobile to place image below text */
+  .featureRow:nth-child(2) {
+    flex-direction: column-reverse;
   }
 
   /* Reset justification for stacked layout */
@@ -136,9 +153,14 @@
     margin-right: auto;
   }
 
-  /* Hide videos on mobile to simplify and save bandwidth */
-  .videoContainer {
+  /* On mobile, hide the video and show the placeholder image */
+  .featureVideo,
+  .videoGlow {
     display: none;
+  }
+
+  .featureImage {
+    display: block;
   }
 }
 

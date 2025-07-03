@@ -11,7 +11,7 @@ const CTASection: React.FC = () => {
   const router = useRouter();
   return (
     <>
-      <section className={styles.ctaSection}>
+      <section id="cta" className={styles.ctaSection}>
         <Container>
           <div className={styles.borderContainer}>
             <div className={styles.contentWrapper}>

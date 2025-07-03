@@ -9,8 +9,8 @@ import styles from './Navbar.module.css';
 const navLinks = [
   { name: 'Producto', href: '/#product' },
   { name: 'Soluciones', href: '/#solutions' },
-  { name: 'Recursos', href: '/#resources' },
-  { name: 'Contacto', href: '/#contact' },
+  { name: 'El Problema', href: '/#El-problema' },
+  { name: 'Contacto', href: '/#cta' },
 ];
 
 const Navbar: React.FC = () => {
