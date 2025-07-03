@@ -17,7 +17,7 @@ interface FormData {
 // --- Constants for options ---
 const ROLES = [
   "Docente de Primaria", "Docente de Secundaria",
-  "Docente de Preparatoria/Bachillerato", "Director / Coordinador",
+  "Docente de Preparatoria / Bachillerato", "Director / Coordinador",
   "Profesor Universitario", "Otro"
 ];
 
@@ -184,7 +184,7 @@ const Questionnaire = () => {
           {currentStep === 3 && (
             <div className={styles.stepContainer}>
               <h2 className={styles.stepTitle}>De estas opciones, ¿cuál es tu mayor desafío en tu labor docente hoy?</h2>
-              <div className={styles.optionsColumn}>
+              <div className={styles.optionsGrid}>
                 {CHALLENGES.map(challenge => (
                   <button key={challenge} type="button" className={`${styles.optionButton} ${formData.desafio === challenge ? styles.selected : ''}`}
                     onClick={() => handleSingleSelect('desafio', challenge)}>

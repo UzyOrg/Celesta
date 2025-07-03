@@ -76,7 +76,7 @@
 /* --- Option Buttons --- */
 .optionsGrid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
 }
 
@@ -274,9 +274,11 @@
 
 /* --- Responsive Styles --- */
 @media (max-width: 768px) {
-  .optionsGrid {
-    grid-template-columns: 1fr;
+  .pageContainer {
+    justify-content: flex-start;
   }
+
+
 
   .stepTitle {
     font-size: 1.5rem;
@@ -312,7 +314,7 @@
 
   .optionButton {
     padding: 12px;
-    font-size: 0.85rem;
+    font-size: 12px;
   }
 
   .brandName {
