@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Sparkles } from 'lucide-react';
 import styles from './Questionnaire.module.css';
 
@@ -23,7 +24,7 @@ const ROLES = [
 
 const INSTITUTIONS = [
   "Escuela pública urbana", "Escuela pública rural",
-  "Colegio privado", "Universidad",
+  "Escuela privada",
   "Soy independiente / Tutor"
 ];
 
@@ -49,7 +50,9 @@ const TOTAL_STEPS = 6;
 
 // --- Main Component ---
 const Questionnaire = () => {
+  const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
+  const [isSubmitted, setIsSubmitted] = useState(false);
   const [customRole, setCustomRole] = useState('');
   const [formData, setFormData] = useState<FormData>({
     rol: '',
@@ -59,6 +62,15 @@ const Questionnaire = () => {
     exito: '',
     email: ''
   });
+
+  useEffect(() => {
+    if (isSubmitted) {
+      const timer = setTimeout(() => {
+        router.push('/');
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [isSubmitted, router]);
 
   const handleSingleSelect = (field: keyof FormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -94,18 +106,37 @@ const Questionnaire = () => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Final Form Data:", formData);
-    // Here you would typically send the data to your backend
-    setCurrentStep(TOTAL_STEPS + 1); // Go to a thank you screen
+
+    try {
+      // TODO: Implementar aquí el guardado de datos en Supabase.
+      // Por ejemplo:
+      // const { error } = await supabase.from('registros').insert([formData]);
+      // if (error) throw error;
+
+      console.log("Final Form Data:", formData);
+      
+      // Mostrar la tarjeta de éxito solo después de que los datos se guarden.
+      setIsSubmitted(true);
+
+    } catch (error) {
+      console.error("Error al enviar el formulario:", error);
+      alert("Hubo un error al enviar tu registro. Por favor, inténtalo de nuevo.");
+    }
   };
 
   const progressWidth = (currentStep <= TOTAL_STEPS) ? (currentStep - 1) / TOTAL_STEPS * 100 : 100;
 
   return (
     <div className={styles.pageContainer}>
-      <div className={styles.questionnaireContainer}>
+      {isSubmitted && (
+        <div className={styles.successCard}>
+          <h2>¡Registro Exitoso!</h2>
+          <p>¡Ya estas en nuestra whitelist!</p>
+        </div>
+      )}
+      <div className={styles.questionnaireContainer} style={{ filter: isSubmitted ? 'blur(4px)' : 'none', transition: 'filter 0.3s ease' }}>
         {/* Brand Header */}
         <div className={styles.brandHeader}>
           <div className={styles.brandContainer}>
@@ -118,7 +149,7 @@ const Questionnaire = () => {
         <div className={styles.progressBarContainer}>
           <div 
             className={styles.progressBarFill} 
-            style={{ width: `${(currentStep / TOTAL_STEPS) * 100}%` }}
+            style={{ width: `${progressWidth}%` }}
           />
         </div>
         
@@ -227,7 +258,7 @@ const Questionnaire = () => {
 
           {currentStep === 5 && (
             <div className={styles.stepContainer}>
-              <h2 className={styles.stepTitle}>Imagina que tienes un copiloto de IA perfecto. Describe en una frase qué le pedirías que hiciera para que tu vida como docente fuera drásticamente mejor.</h2>
+              <h2 className={styles.stepTitle}>Imagina que tienes un copiloto de IA perfecto. <br/><br/> Describe en una frase qué le pedirías que hiciera para que tu vida como docente fuera drásticamente mejor.</h2>
               <textarea
                 className={styles.textArea}
                 placeholder="Ej: Que me ayude a crear proyectos interdisciplinarios basados en los intereses de mis alumnos."
@@ -267,13 +298,6 @@ const Questionnaire = () => {
             </div>
           )}
         </form>
-
-        {currentStep > TOTAL_STEPS && (
-          <div className={styles.thankYouMessage}>
-            <h2>¡Registro completado!</h2>
-            <p>Gracias por tu interés. Hemos recibido tu aplicación y te contactaremos pronto con los siguientes pasos.</p>
-          </div>
-        )}
       </div>
     </div>
   );

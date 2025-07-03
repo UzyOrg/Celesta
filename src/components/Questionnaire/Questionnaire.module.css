@@ -212,7 +212,8 @@
 }
 
 .confirmButton,
-.continueButton {
+.continueButton,
+.finalSubmitButton {
   background: linear-gradient(135deg, #05f7ff 0%, #a3e635 100%);
   color: #1a1a1a;
   border: none;
@@ -233,43 +234,49 @@
 }
 
 .confirmButton:hover:not(:disabled),
-.continueButton:hover:not(:disabled) {
+.continueButton:hover:not(:disabled),
+.finalSubmitButton:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 8px 25px rgba(5, 247, 255, 0.3);
 }
 
 .confirmButton:disabled,
-.continueButton:disabled {
+.continueButton:disabled,
+.finalSubmitButton:disabled {
   opacity: 0.5;
   cursor: not-allowed;
   transform: none;
 }
 
-.finalSubmitButton {
-  background-color: #22d3ee;
-  color: #111827;
-}
 
-.finalSubmitButton:hover {
-  background-color: #67e8f9;
-}
 
-/* --- Final Step --- */
-.thankYouMessage {
+/* --- Success Card --- */
+.successCard {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: #1f2937;
+  padding: 40px;
+  border-radius: 16px;
+  border: 1px solid #4b5563;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
   text-align: center;
+  z-index: 100;
+  width: 90%;
+  max-width: 400px;
 }
 
-.thankYouMessage h2 {
+.successCard h2 {
   color: #22d3ee;
-  font-size: 2rem;
-  margin-bottom: 16px;
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin-bottom: 12px;
 }
 
-.thankYouMessage p {
-  font-size: 1.125rem;
+.successCard p {
   color: #d1d5db;
-  max-width: 500px;
-  margin: 0 auto;
+  font-size: 1rem;
 }
 
 /* --- Responsive Styles --- */
@@ -309,7 +316,8 @@
   }
 
   .stepTitle {
-    font-size: 1.25rem;
+    font-size: 16px;
+  
   }
 
   .optionButton {
