@@ -146,7 +146,7 @@ const Questionnaire = () => {
         {/* Brand Header */}
         <div className={styles.brandHeader}>
           <div className={styles.brandContainer}>
-            <Image src="/Logo_Clestea.png" alt="Celestea Logo" width={40} height={40} className={styles.brandIcon} />
+            <Image src="/Logo_Celestea.png" alt="Celestea Logo" width={38} height={58} />
             <h1 className={styles.brandName}>Celestea</h1>
           </div>
         </div>
