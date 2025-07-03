@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Menu, X, Sun, Moon, Sparkles } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import Container from './Container';
@@ -34,7 +35,7 @@ const Navbar: React.FC = () => {
         <div className={styles.navContainer}>
           {/* Logo */}
           <Link href="/" className={styles.logoContainer} onClick={closeMenu}>
-            <Sparkles className={styles.logoIcon} />
+            <Image src="/Logo_Clestea.png" alt="Celestea Logo" width={32} height={32} />
             <span className={styles.logoText}>Celestea</span>
           </Link>
 

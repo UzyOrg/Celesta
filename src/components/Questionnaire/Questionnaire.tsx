@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Sparkles } from 'lucide-react';
+import Image from 'next/image';
 import styles from './Questionnaire.module.css';
 
 // Define the structure for our form data
@@ -145,7 +146,7 @@ const Questionnaire = () => {
         {/* Brand Header */}
         <div className={styles.brandHeader}>
           <div className={styles.brandContainer}>
-            <Sparkles className={styles.brandIcon} />
+            <Image src="/Logo_Clestea.png" alt="Celestea Logo" width={40} height={40} className={styles.brandIcon} />
             <h1 className={styles.brandName}>Celestea</h1>
           </div>
         </div>
