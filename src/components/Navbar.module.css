@@ -48,6 +48,7 @@
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
+  display: none; /* Hidden on mobile */
 }
 
 .desktopNav {
@@ -57,6 +58,8 @@
 }
 
 .navLink {
+  display: inline-flex;
+  align-items: center;
   font-size: 0.875rem;
   font-weight: 600;
   color: rgba(255, 255, 255, 0.7);
@@ -87,10 +90,42 @@
   color: rgba(255, 255, 255, 0.9);
 }
 
-.mobileToggleContainer {
+.sparklesIcon {
+  width: 1rem; /* w-4 */
+  height: 1rem; /* h-4 */
+  margin-right: 0.5rem; /* mr-2 */
+}
+
+.whitelistText {
+  background-image: linear-gradient(to right, #05F7FF, #A2E635);
+padding: 6px 12px;
+border-radius: 5px;
+  color: #000;
+  font-weight: bold;
+}
+
+.mobileActions {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.5rem;
+}
+
+.mobileDemoButton {
+  display: inline-block;
+  background-image: linear-gradient(to right, #05F7FF, #A2E635);
+  color: #0D1117;
+  font-weight: 700;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  transition: all 0.2s ease-in-out;
+  text-align: center;
+  font-size: 12px;
+}
+
+.mobileDemoButton:hover {
+  box-shadow: 0 0 15px rgba(5, 247, 255, 0.5);
+  transform: scale(1.05);
 }
 
 .mobileMenuToggle {
@@ -100,6 +135,7 @@
   cursor: pointer;
   z-index: 100;
   display: block;
+  padding: 0.5rem;
 }
 
 .mobileMenuPanel {
@@ -122,12 +158,13 @@
     height: 2rem;
   }
   .logoText {
+    display: inline-block;
     font-size: 1.5rem;
   }
   .desktopNav {
     display: flex;
   }
-  .mobileToggleContainer {
+  .mobileActions {
     display: none;
   }
 }

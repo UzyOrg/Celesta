@@ -100,14 +100,14 @@ const Hero: React.FC = () => {
             <div className={styles.buttonContainer}>
               <div className={styles.buttonWrapper}>
                 <Button size="lg" className={styles.fullWidth} onClick={() => router.push('/questionnaire')}>
-                  Solicita Demo Piloto
+                  Únete a la whitelist
                 </Button>
               </div>
               <div className={styles.buttonWrapper}>
                 <Link href="/demo/start" passHref className={styles.buttonLink}>
                   <Button variant="outline" size="lg" className={`${styles.fullWidth} ${styles.exploreButton}`}>
                     <Play className={styles.playIcon} />
-                    Ver demo piloto
+                    Probar demo piloto
                   </Button>
                 </Link>
               </div>

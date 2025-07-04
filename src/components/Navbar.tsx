@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Menu, X, Sun, Moon, Sparkles } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '../context/ThemeContext';
 import Container from './Container';
 import Button from './Button';
@@ -35,7 +36,7 @@ const Navbar: React.FC = () => {
         <div className={styles.navContainer}>
           {/* Logo */}
           <Link href="/" className={styles.logoContainer} onClick={closeMenu}>
-            <Image src="/Logo_Celestea.png" alt="Celestea Logo" width={28} height={28} />
+            <Image src="/Logo_Celestea.png" alt="Celestea Logo" width={24} height={24} />
             <span className={styles.logoText}>Celestea</span>
           </Link>
 
@@ -46,16 +47,16 @@ const Navbar: React.FC = () => {
                 {link.name}
               </Link>
             ))}
-            <Link href="/questionnaire">
-              <Button variant="secondary">
-                <Sparkles className="w-4 h-4 mr-2" />
-                Solicita Demo
-              </Button>
+            <Link href="/questionnaire" className={styles.navLink}>
+              <span className={styles.whitelistText}>Únete a la whitelist</span>
             </Link>
           </nav>
 
-          {/* Mobile Menu Toggle */}
-          <div className={styles.mobileToggleContainer}>
+          {/* Mobile Actions */}
+          <div className={styles.mobileActions}>
+            <Link href="/questionnaire" className={styles.mobileDemoButton}>
+              Únete a la whitelist
+            </Link>
             <button
               className={styles.mobileMenuToggle}
               onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -68,21 +69,23 @@ const Navbar: React.FC = () => {
       </Container>
       
       {/* Mobile Menu Panel */}
-      {isMenuOpen && (
-        <div className={styles.mobileMenuPanel}>
-          {navLinks.map((link) => (
-            <Link key={link.name} href={link.href} className={styles.navLink} onClick={closeMenu}>
-              {link.name}
-            </Link>
-          ))}
-          <Link href="/questionnaire" className="w-full">
-            <Button variant="secondary" className="w-full mt-2">
-              <Sparkles className="w-4 h-4 mr-2" />
-              Solicita Demo
-            </Button>
-          </Link>
-        </div>
-      )}
+      <AnimatePresence>
+        {isMenuOpen && (
+          <motion.div 
+            className={styles.mobileMenuPanel}
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.2 }}
+          >
+            {navLinks.map((link) => (
+              <Link key={link.name} href={link.href} className={styles.navLink} onClick={closeMenu}>
+                {link.name}
+              </Link>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </header>
   );
 };

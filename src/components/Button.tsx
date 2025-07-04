@@ -35,7 +35,7 @@ const Button: React.FC<ButtonProps> = ({
   
   const variantClasses = {
     primary: 'bg-gradient-to-r from-turquoise to-lime text-base hover:shadow-lg hover:scale-[1.03]',
-    secondary: 'bg-base text-white hover:bg-opacity-90 hover:shadow-md',
+    secondary: 'bg-transparent text-white hover:text-turquoise',
     outline: 'border-2 border-turquoise text-turquoise hover:bg-turquoise hover:text-white'
   };
   
