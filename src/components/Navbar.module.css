@@ -47,14 +47,14 @@
 }
 
 .logoText {
-  margin-left: 0.5rem;
+  margin-left: 0.3rem;
   font-size: 1.25rem;
   font-weight: 900;
   background-image: linear-gradient(to right, #05F7FF, #A2E635);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  display: none; /* Hidden on mobile */
+  display: inline-block; /* Always visible */
 }
 
 .desktopNav {
@@ -135,7 +135,7 @@ border-radius: 5px;
   cursor: pointer;
   z-index: 100;
   display: block;
-  padding: 0.5rem;
+  padding: 0.5rem 0.5rem 0.2rem;
 }
 
 .mobileMenuPanel {
@@ -159,7 +159,6 @@ border-radius: 5px;
     height: 2rem;
   }
   .logoText {
-    display: inline-block;
     font-size: 1.5rem;
   }
   .desktopNav {
