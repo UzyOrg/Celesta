@@ -28,6 +28,12 @@
   justify-content: space-between;
 }
 
+.navLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 .logoContainer {
   display: flex;
   align-items: center;
@@ -122,12 +128,6 @@ border-radius: 5px;
   text-align: center;
   font-size: 12px;
 }
-
-.mobileDemoButton:hover {
-  box-shadow: 0 0 15px rgba(5, 247, 255, 0.5);
-  transform: scale(1.05);
-}
-
 .mobileMenuToggle {
   color: rgba(255, 255, 255, 0.9);
   background: none;
@@ -148,6 +148,7 @@ border-radius: 5px;
   padding: 1rem 1.5rem;
   display: flex;
   flex-direction: column;
+  text-align: right;
   gap: 1rem;
 }
 
@@ -165,6 +166,9 @@ border-radius: 5px;
     display: flex;
   }
   .mobileActions {
+    display: none;
+  }
+  .mobileMenuToggle {
     display: none;
   }
 }

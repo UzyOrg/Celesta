@@ -34,11 +34,19 @@ const Navbar: React.FC = () => {
     <header className={`${styles.header} ${isScrolled ? styles.headerScrolled : ''}`}>
       <Container>
         <div className={styles.navContainer}>
-          {/* Logo */}
-          <Link href="/" className={styles.logoContainer} onClick={closeMenu}>
-            <Image src="/Logo_Celestea.png" alt="Celestea Logo" width={28} height={28} />
-            <span className={styles.logoText}>Celestea</span>
-          </Link>
+          <div className={styles.navLeft}>
+            <button
+              className={styles.mobileMenuToggle}
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              aria-label={isMenuOpen ? 'Cerrar menú' : 'Abrir menú'}
+            >
+              {isMenuOpen ? <X /> : <Menu />}
+            </button>
+            <Link href="/" className={styles.logoContainer} onClick={closeMenu}>
+              <Image src="/Logo_Celestea.png" alt="Celestea Logo" width={26} height={26} />
+              <span className={styles.logoText}>Celestea</span>
+            </Link>
+          </div>
 
           {/* Desktop Navigation */}
           <nav className={styles.desktopNav}>
@@ -57,13 +65,6 @@ const Navbar: React.FC = () => {
             <Link href="/questionnaire" className={styles.mobileDemoButton}>
               Únete a la whitelist
             </Link>
-            <button
-              className={styles.mobileMenuToggle}
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              aria-label={isMenuOpen ? 'Cerrar menú' : 'Abrir menú'}
-            >
-              {isMenuOpen ? <X /> : <Menu />}
-            </button>
           </div>
         </div>
       </Container>
