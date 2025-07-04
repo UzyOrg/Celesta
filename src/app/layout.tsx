@@ -23,6 +23,7 @@ export default function RootLayout({
     <html lang="en">
       <head>
         {/* Font imports are now handled in globals.css */}
+        <link rel="icon" href="/Logo_Celestea.png" />
       </head>
       <body className="font-plus-jakarta-sans bg-base text-white antialiased">
         <ModalProvider>
