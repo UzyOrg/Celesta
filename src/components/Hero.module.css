@@ -28,11 +28,17 @@
   pointer-events: none;
   z-index: 0;
 }
+.particlesContainer a{
+  display: none !important;
+}
+.particlesContainer canvas{
+  height: 800px !important;
+}
 
 .gradientOverlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to bottom, transparent 0%, #0D1117 93%);
+  background: linear-gradient(to bottom, transparent 0%, #0D1117 100%);
   pointer-events: none;
   z-index: 1;
 }
