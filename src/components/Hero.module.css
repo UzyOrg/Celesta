@@ -1,24 +1,24 @@
 .heroSection {
   position: relative;
   overflow: hidden;
-  padding-top: 6rem; /* 96px */
-  padding-bottom: 2.5rem; /* 40px */
+  padding-bottom: 2.5rem;
   height: 100vh;
   display: flex;
   align-items: center;
 }
 
-@media (min-width: 640px) {
+@media (max-width: 640px) {
   .heroSection {
-    padding-top: 12rem; /* 192px */
-    padding-bottom: 8rem; /* 128px */
+    padding-bottom: 10rem;
   }
 }
 
 @media (min-width: 768px) {
   .heroSection {
-    padding-top: 16rem; /* 256px */
-    padding-bottom: 12rem; /* 192px */
+    padding-top: 16rem;
+    /* 256px */
+    padding-bottom: 12rem;
+    /* 192px */
   }
 }
 
@@ -32,7 +32,7 @@
 .gradientOverlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to bottom, transparent 0%, #0D1117 95%);
+  background: linear-gradient(to bottom, transparent 0%, #0D1117 93%);
   pointer-events: none;
   z-index: 1;
 }
@@ -56,20 +56,27 @@
   background-color: rgba(255, 255, 255, 0.05);
   backdrop-filter: blur(4px);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  margin-bottom: 0.75rem; /* 12px */
-  font-size: 0.75rem; /* 12px */
+  margin-bottom: 0.75rem;
+  /* 12px */
+  font-size: 0.75rem;
+  /* 12px */
 }
 
-@media (min-width: 420px) { /* Custom breakpoint 'xs' */
+@media (min-width: 420px) {
+
+  /* Custom breakpoint 'xs' */
   .badge {
-    font-size: 0.875rem; /* 14px */
-    margin-bottom: 1rem; /* 16px */
+    font-size: 0.875rem;
+    /* 14px */
+    margin-bottom: 1rem;
+    /* 16px */
   }
 }
 
 @media (min-width: 640px) {
   .badge {
-    margin-bottom: 1.5rem; /* 24px */
+    margin-bottom: 1.5rem;
+    /* 24px */
   }
 }
 
@@ -100,12 +107,16 @@
   font-weight: 700;
   line-height: 1.1;
   letter-spacing: -0.025em;
-  margin-bottom: 1rem; /* 16px */
+  margin-bottom: 1rem;
+  /* 16px */
 }
 
-@media (min-width: 420px) { /* Custom breakpoint 'xs' */
+@media (min-width: 420px) {
+
+  /* Custom breakpoint 'xs' */
   .title {
-    margin-bottom: 1.5rem; /* 24px */
+    margin-bottom: 1.5rem;
+    /* 24px */
   }
 }
 
@@ -122,8 +133,10 @@
 
 .subtitle {
   color: rgba(255, 255, 255, 0.8);
-  margin-bottom: 1.25rem; /* 20px */
-  max-width: 42rem; /* 672px */
+  margin-bottom: 1.25rem;
+  /* 20px */
+  max-width: 42rem;
+  /* 672px */
   margin-left: auto;
   margin-right: auto;
   padding-left: 1rem;
@@ -133,36 +146,44 @@
 
 @media (min-width: 640px) {
   .subtitle {
-    font-size: 1.25rem; /* 20px */
-    margin-bottom: 2rem; /* 32px */
+    font-size: 1.25rem;
+    /* 20px */
+    margin-bottom: 2rem;
+    /* 32px */
   }
 }
 
 @media (min-width: 768px) {
   .subtitle {
-    font-size: 1.5rem; /* 24px */
+    font-size: 1.5rem;
+    /* 24px */
   }
 }
 
 .buttonContainer {
   width: 100%;
   display: flex;
-  flex-direction: column; /* Mobile-first: stack buttons */
+  flex-direction: column;
+  /* Mobile-first: stack buttons */
   align-items: center;
   justify-content: center;
-  gap: 0.75rem; /* 12px */
+  gap: 0.75rem;
+  /* 12px */
   padding-left: 1rem;
   padding-right: 1rem;
 }
 
-.buttonWrapper {  
-  width: 80%; /* Mobile-first: buttons are 90% wide */
+.buttonWrapper {
+  width: 80%;
+  /* Mobile-first: buttons are 90% wide */
 }
 
 @media (min-width: 640px) {
   .buttonContainer {
-    flex-direction: row; /* Desktop: buttons in a row */
-    gap: 1rem; /* 16px */
+    flex-direction: row;
+    /* Desktop: buttons in a row */
+    gap: 1rem;
+    /* 16px */
     max-width: 42rem;
     margin-left: auto;
     margin-right: auto;
@@ -173,9 +194,7 @@
   }
 }
 
-@media (min-width: 640px) {
-  
-}
+@media (min-width: 640px) {}
 
 .buttonLink {
   display: block;
