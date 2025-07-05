@@ -1,17 +1,13 @@
 .heroSection {
   position: relative;
   overflow: hidden;
-  padding-bottom: 2.5rem;
+
   height: 100svh; /* Use Small Viewport Height to fix iOS issue */
   display: flex;
   align-items: center;
 }
 
-@media (max-width: 640px) {
-  .heroSection {
-    padding-bottom: 4rem;
-  }
-}
+
 
 @media (min-width: 768px) {
   .heroSection {
