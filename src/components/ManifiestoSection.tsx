@@ -46,7 +46,7 @@ const ManifiestoSection = () => {
         No estamos creando otra herramienta. Estamos sentando las bases de una nueva era educativa.
       </h2>
       <p className={styles.subHeadline}>
-        En un mundo saturado de IA que ofrece respuestas fáciles, nosotros nos obsesionamos con hacer las preguntas correctas. Creemos que el futuro de México no depende de cuánta información memorizamos, sino de nuestra capacidad para razonar, crear y resolver problemas complejos. Por eso construimos Celesta. Esta es nuestra convicción:
+        En un mundo saturado de IA que ofrece respuestas fáciles, nosotros nos obsesionamos con hacer las preguntas correctas. Creemos que el futuro de México no depende de cuánta información memorizamos, sino de nuestra capacidad para razonar, crear y resolver problemas complejos. Por eso construimos Celestea. Esta es nuestra convicción:
       </p>
       <motion.div
         className={styles.gridContainer}
