@@ -1,0 +1,109 @@
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.5rem; /* rounded-lg */
+  font-family: var(--font-inter-tight);
+  font-weight: 700; /* font-bold */
+  transition: all 0.3s ease;
+  cursor: pointer;
+  text-decoration: none;
+  border: 2px solid transparent;
+  font-size: 12px; /* Mobile first font-size */
+}
+
+/* Variants */
+.primary {
+  background-color: var(--color-crystal-blue);
+  color: black;
+  border-color: var(--color-crystal-blue);
+}
+.primary:hover {
+  background-color: transparent;
+  color: var(--color-crystal-blue);
+}
+
+.secondary {
+  background-color: transparent;
+  color: var(--color-star-white);
+  border-color: transparent;
+}
+.secondary:hover {
+  color: var(--color-crystal-blue);
+}
+
+.outline {
+  background-color: transparent;
+  color: var(--color-star-white);
+  border: 2px solid var(--color-crystal-lavender);
+}
+.outline:hover {
+  background-color: var(--color-star-white);
+  color: black;
+}
+
+.minimal {
+  background-color: transparent;
+  color: var(--color-star-white);
+  border: 1px solid rgba(var(--color-crystal-lavender-rgb), 0.25);
+}
+.minimal:hover {
+  color: var(--color-crystal-blue);
+}
+
+.soft {
+  background-color: var(--color-crystal-lavender);
+  color: black;
+  border-color: transparent;
+}
+.soft:hover {
+  filter: brightness(0.95);
+}
+
+.gradient {
+  background-image: linear-gradient(to right, var(--color-crystal-blue), var(--color-crystal-lavender));
+  color: black;
+  border: 0;
+}
+.gradient:hover {
+  filter: brightness(1.1);
+}
+
+/* Sizes */
+.sm {
+  padding: 0.5rem 0.75rem; /* py-2 px-3 */
+}
+.md {
+  padding: 0.625rem 1.25rem; /* py-2.5 px-5 */
+}
+.lg {
+  padding: 0.75rem 1.5rem; /* py-3 px-6 */
+}
+
+/* Special class for Hero CTA buttons */
+.hero {
+  font-size: 1rem; /* 16px on mobile */
+}
+
+/* Desktop overrides for font-size */
+@media (min-width: 768px) {
+  .button {
+      /* Assuming default desktop font-size is 1rem (text-base) */
+      font-size: 1rem;
+  }
+  .sm {
+    font-size: 0.875rem; /* text-sm */
+  }
+  .lg {
+    font-size: 1.125rem; /* text-lg */
+  }
+  .hero {
+    font-size: 1.125rem; /* Keep it consistent with lg on desktop, can be adjusted */
+  }
+}
+
+/* Disabled state */
+.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

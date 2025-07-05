@@ -2,7 +2,7 @@
   position: relative;
   overflow: hidden;
   padding-bottom: 2.5rem;
-  height: 100vh;
+  height: 100svh; /* Use Small Viewport Height to fix iOS issue */
   display: flex;
   align-items: center;
 }

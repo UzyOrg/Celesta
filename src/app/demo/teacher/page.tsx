@@ -248,7 +248,7 @@ const DemoTeacherPage: React.FC = () => {
             <div className={styles.summaryButtonContainer}>
               <DownloadPDFButton projectData={selectedLevel} />
               <Button href="/demo/summary?from=teacher" size="lg">
-                Ver mi Impacto
+                Ver Impacto
               </Button>
             </div>
           </div>
