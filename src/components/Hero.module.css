@@ -28,7 +28,7 @@
   display: none !important;
 }
 .particlesContainer canvas{
-  height: 800px !important;
+  height: 950px !important;
 }
 
 .gradientOverlay {
@@ -176,9 +176,11 @@
 }
 
 .buttonWrapper {
-  width: 80%;
-  /* Mobile-first: buttons are 90% wide */
+  width: 70%;
+  /* Mobile-first: buttons are 80% wide */
 }
+
+
 
 @media (min-width: 640px) {
   .buttonContainer {
@@ -208,9 +210,9 @@
   font-size: 14px;
 }
 
-@media (min-width: 420px) {
+@media (max-width: 420px) {
   .fullWidth {
-    font-size: 1.08rem;
+    font-size: 12px;
   }
 }
 

@@ -81,9 +81,7 @@
 }
 
 /* Special class for Hero CTA buttons */
-.hero {
-  font-size: 1rem; /* 16px on mobile */
-}
+
 
 /* Desktop overrides for font-size */
 @media (min-width: 768px) {
