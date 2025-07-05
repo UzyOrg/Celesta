@@ -43,7 +43,7 @@ const Navbar: React.FC = () => {
               {isMenuOpen ? <X /> : <Menu />}
             </button>
             <Link href="/" className={styles.logoContainer} onClick={closeMenu}>
-              <Image src="/Logo_Celestea.png" alt="Celestea Logo" width={22} height={22} />
+              <Image src="/Logo_Celestea.png" alt="Celestea Logo" width={32} height={32} />
               <span className={styles.logoText}>Celestea</span>
             </Link>
           </div>

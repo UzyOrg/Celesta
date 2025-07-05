@@ -3,7 +3,7 @@
   overflow: hidden;
   padding-top: 6rem; /* 96px */
   padding-bottom: 2.5rem; /* 40px */
-  min-height: 90vh;
+  height: 100vh;
   display: flex;
   align-items: center;
 }
@@ -26,6 +26,15 @@
   position: absolute;
   inset: 0;
   pointer-events: none;
+  z-index: 0;
+}
+
+.gradientOverlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, transparent 0%, #0D1117 95%);
+  pointer-events: none;
+  z-index: 1;
 }
 
 .contentWrapper {
@@ -73,7 +82,7 @@
   height: 1rem;
   width: 1rem;
   margin-right: 0.5rem;
-  color: #05f7ff; /* turquoise */
+  color: var(--color-star-white);
 }
 
 .glow {
@@ -81,7 +90,7 @@
   z-index: -10;
   inset: 0;
   pointer-events: none;
-  background-image: radial-gradient(circle at center, rgba(5, 247, 255, 0.35) 0%, transparent 60%);
+  background-image: radial-gradient(circle at center, rgba(var(--color-crystal-blue-rgb), 0.35) 0%, transparent 60%);
   filter: blur(80px);
   opacity: 0;
 }
@@ -105,7 +114,7 @@
 }
 
 .titleGradient {
-  background-image: linear-gradient(to right, #05f7ff, #84cc16);
+  background-image: linear-gradient(to right, var(--color-crystal-blue), var(--color-crystal-lavender));
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -154,10 +163,13 @@
   .buttonContainer {
     flex-direction: row; /* Desktop: buttons in a row */
     gap: 1rem; /* 16px */
+    max-width: 42rem;
+    margin-left: auto;
+    margin-right: auto;
   }
 
   .buttonWrapper {
-    width: auto; /* Desktop: buttons have auto width */
+    flex: 1;
   }
 }
 
@@ -189,7 +201,7 @@
   width: 1rem;
   height: 1rem;
   margin-right: 0.5rem;
-  color: #05f7ff; /* turquoise */
+  color: var(--color-star-white);
   transition-property: color;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   transition-duration: 150ms;

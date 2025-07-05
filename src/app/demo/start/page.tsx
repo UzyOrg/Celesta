@@ -11,10 +11,7 @@ const DemoStartPage: React.FC = () => {
   return (
     <div className={styles.pageWrapper}>
       {/* Gradient Glow Background - Spans full width */}
-      <div className={styles.glowWrapper}>
-        <div className={styles.glowTop}></div>
-        <div className={styles.glowBottom}></div>
-      </div>
+
 
       {/* Content constrained by Container */}
       <Container className="z-10">
@@ -33,7 +30,7 @@ const DemoStartPage: React.FC = () => {
               <Button variant="primary" size="lg" className="w-full sm:w-auto">Soy Docente</Button>
             </Link>
             <Link href="/demo/student" passHref>
-              <Button variant="secondary" size="lg" className="w-full sm:w-auto">Soy Alumno</Button>
+              <Button variant="primary" size="lg" className="w-full sm:w-auto">Soy Alumno</Button>
             </Link>
           </div>
         </motion.div>

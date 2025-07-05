@@ -13,7 +13,7 @@ const Footer: React.FC = () => {
           </p>
           <div className={styles.legalLinks}>
             <Link href="/terms" className={styles.legalLink}>
-              Póliza de privacidad
+              Política de privacidad
             </Link>
           </div>
         </div>

@@ -58,7 +58,7 @@
     right: 0; /* right-0 */
     height: 0.25rem; /* h-1 */
     width: 33.333333%; /* w-1/3 */
-    background-image: linear-gradient(to right, var(--turquoise, #05f7ff), var(--lime, #73f229));
+    background-image: linear-gradient(to right, var(--color-crystal-blue), var(--color-crystal-lavender));
   }
   
   .bottomGradient {
@@ -67,7 +67,7 @@
     left: 0; /* left-0 */
     height: 0.25rem; /* h-1 */
     width: 33.333333%; /* w-1/3 */
-    background-image: linear-gradient(to right, var(--lime, #73f229), var(--turquoise, #05f7ff));
+    background-image: linear-gradient(to right, var(--color-crystal-lavender), var(--color-crystal-blue));
   }
   
   .textContainer {
@@ -86,7 +86,7 @@
     z-index: -10; /* -z-10 */
     inset: 0; /* inset-0 */
     pointer-events: none; /* pointer-events-none */
-    background-image: radial-gradient(circle at center, rgba(5, 247, 255, 0.35) 0%, transparent 60%);
+    background-image: radial-gradient(circle at center, rgba(var(--color-crystal-blue-rgb), 0.2) 0%, transparent 60%);
     filter: blur(80px); /* blur-[80px] */
     opacity: 0; /* opacity-0 */
   }
@@ -117,7 +117,7 @@
   }
   
   .gradientText {
-    background-image: linear-gradient(to right, var(--turquoise, #05f7ff), var(--lime, #73f229));
+    background-image: linear-gradient(to right, var(--color-crystal-blue), var(--color-crystal-lavender));
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent; /* text-transparent */

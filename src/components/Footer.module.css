@@ -70,7 +70,7 @@
 .logoIcon {
   width: 1.5rem;
   height: 1.5rem;
-  color: #2dd4bf; /* turquoise */
+  color: var(--color-crystal-blue);
 }
 
 .logoText {

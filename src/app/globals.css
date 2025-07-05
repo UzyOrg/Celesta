@@ -1,5 +1,16 @@
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap');
 
+:root {
+  /* Crystal Theme Palette */
+  --color-crystal-blue: #a7d8f5;
+  --color-crystal-lavender: #d9d2f7;
+  --color-star-white: #f0f4f8;
+
+  /* RGB versions for opacity */
+  --color-crystal-blue-rgb: 167, 216, 245;
+  --color-crystal-lavender-rgb: 217, 210, 247;
+}
+
 html {
   scroll-behavior: smooth;
 }

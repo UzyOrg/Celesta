@@ -39,7 +39,7 @@
 .brandName {
   font-size: 2rem;
   font-weight: 900;
-  background-image: linear-gradient(to right, #05F7FF, #A2E635);
+  background-image: linear-gradient(to right, var(--color-crystal-blue), var(--color-crystal-lavender));
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -59,7 +59,7 @@
 
 .progressBarFill {
   height: 100%;
-  background-color: #22d3ee;
+  background-image: linear-gradient(to right, var(--color-crystal-blue), var(--color-crystal-lavender));
   border-radius: 4px;
   transition: width 0.4s ease-in-out;
 }
@@ -101,15 +101,15 @@
 }
 
 .optionButton:hover {
-  border-color: #22d3ee;
+  border-color: var(--color-crystal-blue);
   transform: translateY(-2px);
 }
 
 .optionButton.selected {
-  background-color: rgba(34, 211, 238, 0.1);
-  border-color: #22d3ee;
-  color: #22d3ee;
-  box-shadow: 0 0 15px rgba(34, 211, 238, 0.2);
+  background-color: rgba(167, 216, 245, 0.1); /* Crystal Blue with low opacity */
+  border-color: var(--color-crystal-blue);
+  color: var(--color-crystal-blue);
+  box-shadow: 0 0 15px rgba(167, 216, 245, 0.2);
 }
 
 /* --- Inputs --- */
@@ -165,8 +165,8 @@
 
 .customInput:focus {
   outline: none;
-  border-color: #22d3ee;
-  box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.1);
+  border-color: var(--color-crystal-blue);
+  box-shadow: 0 0 0 3px rgba(167, 216, 245, 0.1);
 }
 
 .customInput::placeholder {
@@ -214,15 +214,16 @@
 .confirmButton,
 .continueButton,
 .finalSubmitButton {
-  background: linear-gradient(135deg, #05f7ff 0%, #a3e635 100%);
-  color: #1a1a1a;
+  background-image: linear-gradient(to right, var(--color-crystal-blue), var(--color-crystal-lavender));
+  color: #0D1117;
   border: none;
   padding: 0.75rem 2rem;
   border-radius: 0.5rem;
-  font-weight: 600;
+  font-weight: 700;
   font-size: 1rem;
   cursor: pointer;
   transition: all 0.3s ease;
+  text-align: center;
 }
 
 .confirmButton {
@@ -237,7 +238,7 @@
 .continueButton:hover:not(:disabled),
 .finalSubmitButton:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(5, 247, 255, 0.3);
+  box-shadow: 0 8px 25px rgba(167, 216, 245, 0.3); /* Crystal Blue shadow */
 }
 
 .confirmButton:disabled,
@@ -256,11 +257,12 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background-color: #1f2937;
+  background-color: rgba(13, 17, 23, 0.8); /* Dark glass effect */
+  backdrop-filter: blur(10px);
   padding: 40px;
   border-radius: 16px;
-  border: 1px solid #4b5563;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(167, 216, 245, 0.2); /* Crystal Blue border */
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
   text-align: center;
   z-index: 100;
   width: 90%;
@@ -268,14 +270,17 @@
 }
 
 .successCard h2 {
-  color: #22d3ee;
+  background-image: linear-gradient(to right, var(--color-crystal-blue), var(--color-crystal-lavender));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
   font-size: 1.75rem;
   font-weight: 700;
   margin-bottom: 12px;
 }
 
 .successCard p {
-  color: #d1d5db;
+  color: var(--color-star-white);
   font-size: 1rem;
 }
 

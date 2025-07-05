@@ -43,7 +43,7 @@ const CompetencyRadarChart: React.FC = () => (
     dotSize={10}
     dotColor={{ theme: 'background' }}
     dotBorderWidth={2}
-    colors={['rgba(255, 255, 255, 0.4)', '#05F7FF']}
+    colors={['rgba(217, 210, 247, 0.5)', '#a7d8f5']} /* Crystal Lavender (subtle) & Crystal Blue */
     blendMode="multiply"
     motionConfig="wobbly"
     legends={[
@@ -54,7 +54,7 @@ const CompetencyRadarChart: React.FC = () => (
         translateY: -40,
         itemWidth: 80,
         itemHeight: 20,
-        itemTextColor: '#999',
+        itemTextColor: 'rgba(240, 244, 248, 0.7)', /* Star White with transparency */
         symbolSize: 12,
         symbolShape: 'circle',
         effects: [

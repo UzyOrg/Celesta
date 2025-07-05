@@ -28,7 +28,7 @@ export const opacityVariants = {
   secondary: 'text-white/70',
   tertiary: 'text-white/60',
   disabled: 'text-white/40',
-  linkHover: 'hover:text-turquoise',
+  linkHover: 'hover:text-[var(--color-crystal-blue)]',
 };
 
 // Example of a combined style for convenience, if needed

@@ -30,8 +30,8 @@ const SummaryPageContent: React.FC = () => {
     <div className="relative min-h-screen flex flex-col items-center justify-center text-center overflow-hidden">
       {/* Gradient Glow Background */}
       <div className="absolute inset-0 -z-10 pointer-events-none">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[150%] h-[150%] bg-[radial-gradient(circle_at_top_center,_rgba(5,247,255,0.15)_0%,_transparent_50%)] opacity-70 motion-safe:animate-pulseSlow"></div>
-        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[150%] h-[150%] bg-[radial-gradient(circle_at_bottom_center,_rgba(163,230,53,0.1)_0%,_transparent_60%)] opacity-60 motion-safe:animate-pulseSlowDelay"></div>
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[150%] h-[150%] bg-[radial-gradient(circle_at_top_center,_rgba(167,216,245,0.15)_0%,_transparent_50%)] opacity-70 motion-safe:animate-pulseSlow"></div>
+        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[150%] h-[150%] bg-[radial-gradient(circle_at_bottom_center,_rgba(217,210,247,0.1)_0%,_transparent_60%)] opacity-60 motion-safe:animate-pulseSlowDelay"></div>
       </div>
 
       {/* Content */}
@@ -51,7 +51,7 @@ const SummaryPageContent: React.FC = () => {
             </>
           ) : (
             <>
-              <p className={`font-plus-jakarta-sans font-bold leading-tight tracking-tight text-4xl sm:text-5xl lg:text-6xl bg-gradient-to-r from-turquoise to-lime bg-clip-text text-transparent text-center mb-2`}>{metricValue}</p>
+              <p className={`font-plus-jakarta-sans font-bold leading-tight tracking-tight text-4xl sm:text-5xl lg:text-6xl bg-gradient-to-r from-[var(--color-crystal-blue)] to-[var(--color-crystal-lavender)] bg-clip-text text-transparent text-center mb-2`}>{metricValue}</p>
               <p className={`font-plus-jakarta-sans font-bold leading-snug tracking-tight text-xl sm:text-2xl lg:text-3xl text-center mb-4`}>{title}</p>
               <p className={`font-plus-jakarta-sans text-sm leading-relaxed text-white/70 mb-8 max-w-lg mx-auto`}>{description}</p>
             </>

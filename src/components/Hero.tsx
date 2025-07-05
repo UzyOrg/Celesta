@@ -1,69 +1,49 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { motion, useAnimation, useScroll } from 'framer-motion';
+import React, { useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { Sparkles, Play } from 'lucide-react';
 import Container from './Container';
 import Button from './Button';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import Script from 'next/script';
 import styles from './Hero.module.css';
+
+declare global {
+  interface Window {
+    UnicornStudio: any;
+  }
+}
 
 const Hero: React.FC = () => {
   const router = useRouter();
 
-  // Removed carousel logic as per user request
-
-  const controls = useAnimation();
-  const { scrollY } = useScroll();
-  const particlesRef = useRef<HTMLDivElement>(null);
-  
   useEffect(() => {
-    const particles: HTMLDivElement[] = [];
-    if (particlesRef.current) {
-      for (let i = 0; i < 50; i++) {
-        const particle = document.createElement('div');
-        particle.className = 'absolute rounded-full bg-gradient-to-r from-turquoise to-lime opacity-20 blur-sm';
-        particle.style.width = `${Math.random() * 20 + 10}px`;
-        particle.style.height = particle.style.width;
-        particle.style.left = `${Math.random() * 100}%`;
-        particle.style.top = `${Math.random() * 100}%`;
-        particlesRef.current.appendChild(particle);
-        particles.push(particle);
-        
-        animate(particle);
-      }
-    }
-    
-    function animate(particle: HTMLDivElement) {
-      const duration = Math.random() * 3000 + 2000;
-      const xDistance = (Math.random() - 0.5) * 100;
-      const yDistance = (Math.random() - 0.5) * 100;
-      
-      particle.animate([
-        { transform: 'translate(0, 0)', opacity: 0 },
-        { transform: `translate(${xDistance}px, ${yDistance}px)`, opacity: 0.5, offset: 0.5 },
-        { transform: 'translate(0, 0)', opacity: 0 }
-      ], {
-        duration,
-        iterations: Infinity,
-        easing: 'ease-in-out'
+    if (typeof window.UnicornStudio !== 'undefined') {
+      window.UnicornStudio.addScene({
+        elementId: 'unicorn-canvas',
+        projectId: 'eMyj7N4NgblbFC5pdaWZ',
       });
     }
-    
-    return () => {
-      particles.forEach(p => p.remove());
-    };
   }, []);
-
-  useEffect(() => {
-    return scrollY.onChange(latest => {
-      controls.start({ y: latest * 0.5 });
-    });
-  }, [controls, scrollY]);
 
   return (
     <>
+      <Script 
+        src="https://cdn.jsdelivr.net/gh/hiunicornstudio/unicornstudio.js@v1.4.27/dist/unicornStudio.umd.js"
+        strategy="lazyOnload"
+        onLoad={() => {
+          if (typeof window.UnicornStudio !== 'undefined') {
+            window.UnicornStudio.addScene({
+              elementId: 'unicorn-canvas',
+              projectId: 'eMyj7N4NgblbFC5pdaWZ',
+            });
+          }
+        }}
+      />
+      
       <section className={styles.heroSection}>
-      <div ref={particlesRef} className={styles.particlesContainer} />
+      <div id="unicorn-canvas" className={styles.particlesContainer} />
+      <div className={styles.gradientOverlay} />
       
       <Container>
         <div className={styles.contentWrapper}>
@@ -99,7 +79,7 @@ const Hero: React.FC = () => {
             
             <div className={styles.buttonContainer}>
               <div className={styles.buttonWrapper}>
-                <Button size="lg" className={styles.fullWidth} onClick={() => router.push('/questionnaire')}>
+                <Button variant="gradient" size="lg" className={styles.fullWidth} onClick={() => router.push('/questionnaire')}>
                   Únete a la whitelist
                 </Button>
               </div>

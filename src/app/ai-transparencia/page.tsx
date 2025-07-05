@@ -46,7 +46,7 @@ const AITransparenciaPage = () => {
 
         <div className="mt-12 md:mt-16 text-center">
           <Link href="/" legacyBehavior>
-            <a className={`${textStyles.button} text-turquoise hover:text-lime transition-colors`}>
+            <a className={`${textStyles.button} text-[var(--color-crystal-blue)] hover:text-[var(--color-crystal-lavender)] transition-colors`}>
               &larr; Volver a la página principal
             </a>
           </Link>

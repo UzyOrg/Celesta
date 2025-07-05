@@ -114,7 +114,7 @@ const ProjectPhasesAccordion = ({ phases, activePhase, onTogglePhase }: { phases
         >
           <span>{phase.titulo_fase}</span>
           <motion.div animate={{ rotate: activePhase === phase.id ? 180 : 0 }} transition={{ duration: 0.3 }}>
-            <ChevronDown size={20} />
+            <ChevronDown size={20} color="var(--color-crystal-blue)" />
           </motion.div>
         </button>
         <AnimatePresence>

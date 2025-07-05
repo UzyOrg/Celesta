@@ -3,7 +3,7 @@ import Link from 'next/link';
 
 // Base props shared by both button and link variants
 interface ButtonBaseProps {
-  variant?: 'primary' | 'secondary' | 'outline';
+  variant?: 'primary' | 'secondary' | 'outline' | 'minimal' | 'soft' | 'gradient';
   size?: 'sm' | 'md' | 'lg';
   className?: string;
   children: React.ReactNode;
@@ -34,14 +34,17 @@ const Button: React.FC<ButtonProps> = ({
   const baseClasses = 'inline-flex items-center justify-center rounded-lg font-inter-tight font-bold transition-all';
   
   const variantClasses = {
-    primary: 'bg-gradient-to-r from-turquoise to-lime text-base hover:shadow-lg hover:scale-[1.03]',
-    secondary: 'bg-transparent text-white hover:text-turquoise',
-    outline: 'border-2 border-turquoise text-turquoise hover:bg-turquoise hover:text-white'
+    primary: 'bg-[--color-crystal-blue] text-black border-2 border-[--color-crystal-blue] hover:bg-transparent hover:text-[--color-crystal-blue]',
+    secondary: 'bg-transparent text-[--color-star-white] hover:text-[--color-crystal-blue]',
+    outline: 'bg-transparent text-[--color-star-white] border-2 border-[--color-crystal-lavender] hover:bg-[--color-star-white] hover:text-black',
+    minimal: 'bg-transparent text-[--color-star-white] border border-[rgba(var(--color-crystal-lavender-rgb), 0.25)] hover:text-[--color-crystal-blue]',
+    soft: 'bg-[--color-crystal-lavender] text-black hover:brightness-95',
+    gradient: 'bg-gradient-to-r from-[--color-crystal-blue] to-[--color-crystal-lavender] text-black border-0 hover:brightness-110'
   };
   
   const sizeClasses = {
     sm: 'text-sm py-2 px-3',
-    md: 'text-base py-2.5 px-5',
+    md: ' py-2.5 px-5',
     lg: 'text-lg py-3 px-6'
   };
   

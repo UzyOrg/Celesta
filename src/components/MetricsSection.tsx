@@ -13,7 +13,7 @@ const MetricsSection: React.FC = () => {
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-white">
               Métricas que importan,
               <br />
-              <span className="bg-gradient-to-r from-turquoise to-lime bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-[var(--color-crystal-blue)] to-[var(--color-crystal-lavender)] bg-clip-text text-transparent">
                 no que aparentan.
               </span>
             </h2>
@@ -29,7 +29,7 @@ const MetricsSection: React.FC = () => {
                 transition={{ duration: 0.5, delay: 0.1 }}
               >
                 <div className="p-2 bg-white/10 rounded-full mr-4 shrink-0">
-                  <Target className="w-6 h-6 text-turquoise" />
+                  <Target className="w-6 h-6 text-[var(--color-star-white)]" />
                 </div>
                 <div>
                   <h4 className="font-bold text-white">Pensamiento Crítico</h4>
@@ -44,7 +44,7 @@ const MetricsSection: React.FC = () => {
                 transition={{ duration: 0.5, delay: 0.2 }}
               >
                 <div className="p-2 bg-white/10 rounded-full mr-4 shrink-0">
-                  <TrendingUp className="w-6 h-6 text-lime" />
+                  <TrendingUp className="w-6 h-6 text-[var(--color-star-white)]" />
                 </div>
                 <div>
                   <h4 className="font-bold text-white">Resolución de Problemas</h4>
@@ -59,7 +59,7 @@ const MetricsSection: React.FC = () => {
                 transition={{ duration: 0.5, delay: 0.3 }}
               >
                 <div className="p-2 bg-white/10 rounded-full mr-4 shrink-0">
-                  <Users className="w-6 h-6 text-turquoise" />
+                  <Users className="w-6 h-6 text-[var(--color-star-white)]" />
                 </div>
                 <div>
                   <h4 className="font-bold text-white">Colaboración</h4>
@@ -76,7 +76,7 @@ const MetricsSection: React.FC = () => {
             viewport={{ once: true, amount: 0.5 }}
             transition={{ duration: 0.7 }}
           >
-            <div className="absolute inset-0 bg-gradient-to-tr from-turquoise to-lime opacity-10 blur-3xl rounded-full" />
+            <div className="absolute inset-0 bg-gradient-to-tr from-[var(--color-crystal-blue)] to-[var(--color-crystal-lavender)] opacity-10 blur-3xl rounded-full" />
             <h3 className="text-lg font-bold text-white mb-4 z-10">Radar de Competencias del Siglo XXI</h3>
             <div className="w-full h-full z-10">
               <CompetencyRadarChart />

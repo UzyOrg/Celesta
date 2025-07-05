@@ -5,7 +5,6 @@ import { motion } from 'framer-motion';
 import styles from './DemoTeacherPage.module.css';
 import Button from '@/components/Button';
 import Container from '@/components/Container';
-import Link from 'next/link';
 import { Lightbulb } from 'lucide-react';
 import DownloadPDFButton from '@/components/DownloadPDFButton';
 import ProjectSkeleton from '@/components/ProjectSkeleton/ProjectSkeleton';
@@ -97,10 +96,7 @@ const DemoTeacherPage: React.FC = () => {
 
   return (
     <div className={styles.pageWrapper}>
-      <div className={styles.glowWrapper}>
-        <div className={styles.glowTop}></div>
-        <div className={styles.glowBottom}></div>
-      </div>
+
 
       <Container className="z-10">
         {loading && <ProjectSkeleton />}
@@ -125,7 +121,7 @@ const DemoTeacherPage: React.FC = () => {
                   <label htmlFor="materia" className={styles.formLabel}>Materia</label>
                   <select id="materia" value={materia} onChange={e => setMateria(e.target.value)} className={`${styles.formInput} ${styles.formSelect}`}>
                     <option value="machine_learning">Machine Learning</option>
-                    <option value="historia">Historia</option>
+                    <option value="historia" disabled>Proximamente...</option>
                   </select>
                 </div>
 
@@ -159,7 +155,7 @@ const DemoTeacherPage: React.FC = () => {
               </div>
 
               <div className={styles.formAction}>
-                <Button size="lg" type="submit" disabled={!materia || !grado || loading}>
+                <Button variant="soft" size="md" type="submit" disabled={!materia || !grado || loading}>
                   {loading ? 'Generando...' : 'Diseñar Proyecto'}
                 </Button>
               </div>
