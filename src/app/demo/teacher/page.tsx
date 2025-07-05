@@ -106,7 +106,8 @@ const DemoTeacherPage: React.FC = () => {
             <div className={styles.pageHeader}>
               <h1 className={styles.pageTitle}>Copiloto Docente</h1>
               <p className={styles.pageSubtitle}>
-                Diseña proyectos de aprendizaje basados en desafíos que tus alumnos amarán. Transforma tu aula con pedagogías activas y recupera tiempo valioso.
+                Diseña proyectos de aprendizaje basados en desafíos reales para tus alumnos. Transforma tu aula con pedagogías activas y recupera tiempo valioso.
+                <br /><span className="text-xs">( el diseño es experimental )</span>
               </p>
             </div>
             <motion.form 
@@ -121,7 +122,6 @@ const DemoTeacherPage: React.FC = () => {
                   <label htmlFor="materia" className={styles.formLabel}>Materia</label>
                   <select id="materia" value={materia} onChange={e => setMateria(e.target.value)} className={`${styles.formInput} ${styles.formSelect}`}>
                     <option value="machine_learning">Machine Learning</option>
-                    <option value="historia" disabled>Proximamente...</option>
                   </select>
                 </div>
 
