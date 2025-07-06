@@ -45,6 +45,7 @@ const CompetencyRadarChart: React.FC = () => (
     dotBorderWidth={2}
     colors={['rgba(217, 210, 247, 0.5)', '#a7d8f5']} /* Crystal Lavender (subtle) & Crystal Blue */
     blendMode="multiply"
+    animate={false}
     motionConfig="wobbly"
     legends={[
       {
