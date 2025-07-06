@@ -69,19 +69,13 @@ const MetricsSection: React.FC = () => {
             </ul>
           </div>
           
-          <motion.div
-            className="relative h-[400px] flex flex-col items-center justify-center"
-            initial={{ opacity: 0, scale: 0.9 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true, amount: 0.5 }}
-            transition={{ duration: 0.7 }}
-          >
+          <div className="relative h-[400px] flex flex-col items-center justify-center">
             <div className="absolute inset-0 bg-gradient-to-tr from-[var(--color-crystal-blue)] to-[var(--color-crystal-lavender)] opacity-10 blur-3xl rounded-full" />
             <h3 className="text-lg font-bold text-white mb-4 z-10">Radar de Competencias del Siglo XXI</h3>
             <div className="w-full h-full z-10">
               <CompetencyRadarChart />
             </div>
-          </motion.div>
+          </div>
         </div>
       </Container>
     </section>
