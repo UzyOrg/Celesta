@@ -38,15 +38,37 @@ const CompetencyRadarChart: React.FC = () => (
     valueFormat=">-.2f"
     maxValue={5}
     margin={{ top: 70, right: 100, bottom: 40, left: 100 }}
+    borderWidth={2}
     borderColor={{ from: 'color' }}
+    fillOpacity={0}
     gridLabelOffset={20}
     dotSize={10}
     dotColor={{ theme: 'background' }}
     dotBorderWidth={2}
-    colors={['rgba(217, 210, 247, 0.5)', '#a7d8f5']} /* Crystal Lavender (subtle) & Crystal Blue */
+    colors={['#d9d2f7', '#a7d8f5']} /* Solid Crystal Lavender & Blue for borders */
     blendMode="multiply"
     animate={false}
     motionConfig="wobbly"
+    theme={{
+      grid: {
+        line: {
+          stroke: 'rgba(240, 244, 248, 0.15)', // Subtle light grid lines
+        },
+      },
+      axis: {
+        ticks: {
+          text: {
+            fill: 'rgba(240, 244, 248, 0.7)', // Light text for labels
+          },
+        },
+      },
+      tooltip: {
+        container: {
+          background: '#1a1f2c',
+          color: '#f0f4f8',
+        },
+      },
+    }}
     legends={[
       {
         anchor: 'top-left',
