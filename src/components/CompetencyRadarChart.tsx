@@ -52,7 +52,7 @@ const CompetencyRadarChart: React.FC = () => (
     theme={{
       grid: {
         line: {
-          stroke: 'rgba(240, 244, 248, 0.15)', // Subtle light grid lines
+          stroke: 'rgba(240, 244, 248, 0.15)',
         },
       },
       axis: {
@@ -77,7 +77,7 @@ const CompetencyRadarChart: React.FC = () => (
         translateY: -40,
         itemWidth: 80,
         itemHeight: 20,
-        itemTextColor: 'rgba(240, 244, 248, 0.7)', /* Star White with transparency */
+         /* Star White with transparency */
         symbolSize: 12,
         symbolShape: 'circle',
         effects: [
