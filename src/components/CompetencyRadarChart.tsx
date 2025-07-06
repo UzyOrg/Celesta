@@ -9,7 +9,7 @@ const data = [
     "Progreso Post-Proyecto": 4.0,
   },
   {
-    "taste": "Resolución de Problemas",
+    "taste": "Resolución",
     "Diagnóstico Inicial": 1.5,
     "Progreso Post-Proyecto": 4.5,
   },
@@ -37,9 +37,9 @@ const CompetencyRadarChart: React.FC = () => (
     indexBy="taste"
     valueFormat=">-.2f"
     maxValue={5}
-    margin={{ top: 70, right: 80, bottom: 40, left: 80 }}
+    margin={{ top: 70, right: 100, bottom: 40, left: 100 }}
     borderColor={{ from: 'color' }}
-    gridLabelOffset={36}
+    gridLabelOffset={20}
     dotSize={10}
     dotColor={{ theme: 'background' }}
     dotBorderWidth={2}
@@ -50,7 +50,7 @@ const CompetencyRadarChart: React.FC = () => (
       {
         anchor: 'top-left',
         direction: 'column',
-        translateX: -50,
+        translateX: 0,
         translateY: -40,
         itemWidth: 80,
         itemHeight: 20,
