@@ -1,0 +1,78 @@
+{
+  "id_taller": "DEV-TEST",
+  "version": "0.1.0",
+  "schema_version": "0.1",
+  "content_version": "2025-08-20",
+  "titulo": "Demo de pasos avanzados",
+  "metadata": {
+    "grado": "Secundaria",
+    "materia": "Genérico",
+    "competencias": ["Pensamiento crítico", "Resolución de problemas"],
+    "duracion_estimada_min": 10
+  },
+  "pasos": [
+    {
+      "paso_numero": 1,
+      "ref_id": "intro",
+      "tipo_paso": "instruccion",
+      "titulo_paso": "Bienvenida",
+      "instruccion": { "texto": "Explora los nuevos tipos de paso." },
+      "pistas": [ { "id": "p1", "texto": "Lee con atención.", "costo": 0 } ],
+      "bloquea_avance_si_falla": false,
+      "puntaje": 0
+    },
+    {
+      "paso_numero": 2,
+      "ref_id": "obs",
+      "tipo_paso": "observacion",
+      "titulo_paso": "Observa la evidencia",
+      "evidencia_texto": "La solución presentada realiza 2*3 = 5 y luego suma 1 para obtener 6.",
+      "pregunta": "Identifica en una frase el error principal.",
+      "validacion": { "tipo": "palabras_clave", "criterio": ["multiplicación", "incorrecta"] },
+      "pistas": [ { "id": "p1", "texto": "Revisa 2*3.", "costo": 1 } ],
+      "bloquea_avance_si_falla": true,
+      "puntaje": 1
+    },
+    {
+      "paso_numero": 3,
+      "ref_id": "orden",
+      "tipo_paso": "ordenar_pasos",
+      "titulo_paso": "Ordena el procedimiento correcto",
+      "items": [
+        "Plantear la ecuación",
+        "Despejar la variable",
+        "Verificar el resultado"
+      ],
+      "respuesta_correcta": [0, 1, 2],
+      "bloquea_avance_si_falla": true,
+      "puntaje": 2
+    },
+    {
+      "paso_numero": 4,
+      "ref_id": "confianza",
+      "tipo_paso": "confianza_reflexion",
+      "titulo_paso": "Tu confianza",
+      "pregunta": "¿Qué tan seguro estás de tu respuesta anterior?",
+      "escala": 5,
+      "pregunta_reflexion": "¿Qué harías diferente si tuvieras más tiempo?",
+      "bloquea_avance_si_falla": false,
+      "puntaje": 0
+    },
+    {
+      "paso_numero": 5,
+      "ref_id": "bughunt",
+      "tipo_paso": "caza_errores",
+      "titulo_paso": "Caza los errores",
+      "solucion_propuesta": "Se resolvió 2x + 3 = 7 como 2x = 10 y x = 5.",
+      "fallas": [
+        { "id": "f1", "texto": "Se operó mal al pasar el 3: debió restarse." },
+        { "id": "f2", "texto": "Se dividió entre 2 de forma incorrecta." },
+        { "id": "f3", "texto": "No se verificó el resultado." }
+      ],
+      "correctas": ["f1"],
+      "feedback_correcto": "¡Bien! El error está al pasar el 3: debería ser 2x = 4 y x = 2.",
+      "bloquea_avance_si_falla": true,
+      "puntaje": 2
+    }
+  ]
+}

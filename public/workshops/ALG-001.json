@@ -1,0 +1,201 @@
+{
+  "id_taller": "ALG-001",
+  "version": "0.1.0",
+  "schema_version": "0.1",
+  "content_version": "2025-08-20",
+  "titulo": "Ferretería: cotiza con razón unitaria (misión)",
+  "metadata": {
+    "grado": "Secundaria",
+    "materia": "Matemáticas",
+    "competencias": ["razonamiento proporcional", "razón unitaria"],
+    "duracion_estimada_min": 15
+  },
+  "pasos": [
+    {
+      "paso_numero": 1,
+      "ref_id": "intro",
+      "tipo_paso": "instruccion",
+      "titulo_paso": "Caso real (rol y restricciones)",
+      "instruccion": { "texto": "Eres cajero en una ferretería. La caja de 50 tornillos cuesta $120. Un cliente pide 75. Restricciones: hoy no hay descuentos ni mayoreo especial; debes entregar una cotización justa y explicable." },
+      "bloquea_avance_si_falla": false,
+      "puntaje": 0
+    },
+    {
+      "paso_numero": 2,
+      "ref_id": "pred",
+      "tipo_paso": "prediccion",
+      "titulo_paso": "Predice antes de calcular",
+      "pregunta": "Si duplicas la cantidad de tornillos, ¿qué pasa con el precio?",
+      "opciones": [
+        { "id": "a", "texto": "Se duplica (proporcional)" },
+        { "id": "b", "texto": "Aumenta más que el doble" },
+        { "id": "c", "texto": "Aumenta menos que el doble" }
+      ],
+      "requiere_explicacion": true,
+      "placeholder_explicacion": "¿Por qué crees eso?",
+      "pistas": [
+        { "id": "p1", "texto": "Primero halla el precio por 1 tornillo.", "costo": 1 }
+      ],
+      "bloquea_avance_si_falla": false,
+      "puntaje": 1
+    },
+    {
+      "paso_numero": 3,
+      "ref_id": "obs",
+      "tipo_paso": "observacion",
+      "titulo_paso": "Observa datos",
+      "evidencia_texto": "Registros: 50 → $120, 25 → $60, 100 → $240.",
+      "pregunta": "Explica si la relación cantidad-precio es proporcional y calcula la razón unitaria ($ por tornillo).",
+      "validacion": {
+        "tipo": "palabras_clave",
+        "criterio": ["proporc", "razon", "unitaria", "2.4", "2,4", "lineal"],
+        "feedback_correcto": "Correcto: es proporcional con razón unitaria ≈ $2.40 por tornillo.",
+        "feedback_incorrecto": "Incluye 'precio por 1' y verifica 120 ÷ 50 ≈ 2.4."
+      },
+      "pistas": [
+        { "id": "p2", "texto": "120 ÷ 50 = ?, ¿coincide con 60 ÷ 25?", "costo": 1 }
+      ],
+      "bloquea_avance_si_falla": true,
+      "puntaje": 1
+    },
+    {
+      "paso_numero": 4,
+      "ref_id": "bughunt",
+      "tipo_paso": "caza_errores",
+      "titulo_paso": "Detecta errores de razonamiento",
+      "solucion_propuesta": "Selecciona las afirmaciones con error.",
+      "fallas": [
+        { "id": "f1", "texto": "Si 50 cuestan $120, 75 cuestan $180 porque 120×1.5 = 180." },
+        { "id": "f2", "texto": "La relación no es proporcional porque 25 no cuesta $70." },
+        { "id": "f3", "texto": "La razón unitaria es $2.4; entonces 75 cuestan 75×2.4 = $180." },
+        { "id": "f4", "texto": "Para decidir, uso 'precio por 1' y multiplico por la cantidad." },
+        { "id": "f5", "texto": "Al pedir más unidades siempre baja el precio por mayoreo (aplica hoy)." }
+      ],
+      "correctas": ["f2", "f5"],
+      "feedback_correcto": "Correcto: f2 y f5 son afirmaciones con error; hoy no hay mayoreo y la relación es proporcional.",
+      "pistas": [
+        { "id": "p3", "texto": "Revisa la restricción: hoy no hay mayoreo.", "costo": 1 }
+      ],
+      "bloquea_avance_si_falla": true,
+      "puntaje": 1
+    },
+    {
+      "paso_numero": 5,
+      "ref_id": "orden",
+      "tipo_paso": "ordenar_pasos",
+      "titulo_paso": "Ordena el método correcto",
+      "items": [
+        "Calcular el precio por 1 unidad",
+        "Multiplicar por la cantidad solicitada",
+        "Comprobar con otro dato conocido",
+        "Redondear si procede y comunicar"
+      ],
+      "respuesta_correcta": [0, 1, 2, 3],
+      "pistas": [
+        { "id": "p4", "texto": "Primero razón unitaria; luego escala y comprueba.", "costo": 1 }
+      ],
+      "bloquea_avance_si_falla": true,
+      "puntaje": 1
+    },
+    {
+      "paso_numero": 6,
+      "ref_id": "decision",
+      "tipo_paso": "pregunta_abierta_validada",
+      "titulo_paso": "Decisión (artefacto para el cliente)",
+      "pregunta_abierta_validada": {
+        "pregunta": "Indica el precio final para 75 tornillos y explica el método en 1–2 oraciones (sin descuentos).",
+        "validacion": {
+          "tipo": "palabras_clave",
+          "criterio": ["180", "2.4", "razon", "unitaria", "multiplicar", "proporc"],
+          "feedback_correcto": "Usaste razón unitaria (~2.4) y multiplicaste por 75 para llegar a $180.",
+          "feedback_incorrecto": "Incluye 'precio por 1' (≈2.4) y 75×2.4 = 180 sin descuentos."
+        },
+        "rescate": {
+          "explicacion": "Explicación breve: Calcula la razón unitaria 120/50 ≈ 2.4. Luego multiplica por 75 para obtener 180. Hoy no hay descuentos ni mayoreo.",
+          "costo": 1,
+          "desde_intento": 2,
+          "desde_pistas": 1,
+          "titulo": "Rescate: método y resultado"
+        }
+      },
+      "pistas": [
+        { "id": "p5", "texto": "Calcula 120 ÷ 50 y luego × 75.", "costo": 1 }
+      ],
+      "bloquea_avance_si_falla": true,
+      "puntaje": 1
+    },
+    {
+      "paso_numero": 7,
+      "ref_id": "ticket",
+      "tipo_paso": "confianza_reflexion",
+      "titulo_paso": "Ticket de salida",
+      "pregunta": "¿Con qué confianza podrías explicarle el precio al cliente? (1–5)",
+      "escala": 5,
+      "pregunta_reflexion": "Escribe el texto exacto que dirías al cliente para justificar el monto.",
+      "bloquea_avance_si_falla": false,
+      "puntaje": 0
+    },
+    {
+      "paso_numero": 8,
+      "ref_id": "cga_comp_exp",
+      "tipo_paso": "comparacion_experto",
+      "titulo_paso": "Contrasta con un experto",
+      "comparacion_experto": {
+        "texto_experto": "Experto: Para cotizar correctamente, primero calculo la razón unitaria (precio por 1). Luego escalo proporcionalmente a la cantidad solicitada. Finalmente, verifico con un dato adicional si es posible.",
+        "pregunta": "¿Qué coincidencias hay entre tu método y el del experto?",
+        "checklist": [
+          { "id": "c1", "texto": "Calcula el precio por 1 (razón unitaria)" },
+          { "id": "c2", "texto": "Escala multiplicando por la cantidad requerida" },
+          { "id": "c3", "texto": "Comprueba con otro dato conocido" }
+        ],
+        "min_checks": 2
+      },
+      "requiere_explicacion": true,
+      "pistas": [
+        { "id": "px1", "texto": "Pista: el corazón del método es la razón unitaria.", "costo": 1 }
+      ],
+      "bloquea_avance_si_falla": true,
+      "puntaje": 1
+    },
+    {
+      "paso_numero": 9,
+      "ref_id": "cga_reexp",
+      "tipo_paso": "reexplicacion",
+      "titulo_paso": "Enséñaselo a otra persona",
+      "reexplicacion": {
+        "consigna": "Imagina que un compañero nuevo te pregunta cómo cotizaste 75 tornillos. Re-explica el método en tus palabras para que pueda aplicarlo en otro día.",
+        "placeholder": "Escribe tu explicación paso a paso...",
+        "min_palabras": 25
+      },
+      "pistas": [
+        { "id": "px2", "texto": "Sugiérele 2 pasos: razón unitaria + escala a la cantidad.", "costo": 1 }
+      ],
+      "bloquea_avance_si_falla": true,
+      "puntaje": 1
+    },
+    {
+      "paso_numero": 10,
+      "ref_id": "cga_transf",
+      "tipo_paso": "transferencia",
+      "titulo_paso": "Transfiere a un caso nuevo",
+      "transferencia": {
+        "escenario": "Nueva cotización: 8 metros de cable cuestan $72. Un cliente pide 14 metros.",
+        "pregunta": "Elige la mejor respuesta y explica breve si puedes.",
+        "opciones": [
+          { "id": "t1", "texto": "$120.00" },
+          { "id": "t2", "texto": "$126.00" },
+          { "id": "t3", "texto": "$84.00" }
+        ],
+        "respuesta_correcta": "t2",
+        "feedback_correcto": "Correcto: 72/8 = 9 por metro; 14×9 = 126.",
+        "feedback_incorrecto": "Revisa la razón unitaria: precio por 1 y luego multiplica.",
+        "requiere_explicacion": true
+      },
+      "pistas": [
+        { "id": "px3", "texto": "Calcula primero el precio por 1 metro.", "costo": 1 }
+      ],
+      "bloquea_avance_si_falla": true,
+      "puntaje": 1
+    }
+  ]
+}

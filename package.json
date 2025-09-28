@@ -6,7 +6,12 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "echo \"No tests configured\" && exit 0",
+    "lint:workshops": "node ./scripts/workshop-lint.mjs",
+    "evidence:analyze": "node scripts/analyze-ssr-logs.mjs ./docs/evidence/ssr.log > ./docs/evidence/ssr_analyze.txt",
+    "evidence:check": "node -e \"const fs=require('fs');const need=['ssr.log','ssr_analyze.txt','export.csv','rate_limit_csv_429.txt','rate_limit_ingest_429.txt','transparency.json','explain_analyze_teacher.txt','explain_analyze_student.txt'];const miss=need.filter(f=>!fs.existsSync('docs/evidence/'+f));console.log(miss.length?('Faltan: '+miss.join(', ')):'OK');\""
   },
   "dependencies": {
     "@hookform/resolvers": "^5.0.1",

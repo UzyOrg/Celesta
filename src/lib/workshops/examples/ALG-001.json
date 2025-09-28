@@ -1,0 +1,102 @@
+{
+  "id_taller": "ALG-001",
+  "version": "0.1.0",
+  "titulo": "Ecuaciones Lineales: Introducción",
+  "metadata": {
+    "grado": "Secundaria",
+    "materia": "Álgebra",
+    "competencias": ["Resolución de ecuaciones", "Razonamiento algebraico"],
+    "duracion_estimada_min": 20,
+    "pre_requisitos": ["Aritmética básica"]
+  },
+  "pasos": [
+    {
+      "paso_numero": 1,
+      "tipo_paso": "instruccion",
+      "titulo_paso": "¿Qué es una ecuación lineal?",
+      "instruccion": { "texto": "Una ecuación lineal en una variable tiene la forma ax + b = c. El objetivo es despejar x." },
+      "pistas": [
+        { "texto": "Piensa en 'deshacer' operaciones: primero resta/suma, luego divide/multiplica.", "costo": 1 }
+      ]
+    },
+    {
+      "paso_numero": 2,
+      "tipo_paso": "opcion_multiple",
+      "titulo_paso": "Resuelve 2x + 3 = 7",
+      "opcion_multiple": {
+        "pregunta": "¿Cuál es el valor de x?",
+        "opciones": [
+          { "id": "a", "texto": "x = 2" },
+          { "id": "b", "texto": "x = 1" },
+          { "id": "c", "texto": "x = 5" }
+        ],
+        "respuesta_correcta": "a",
+        "feedback_correcto": "Correcto: 2x + 3 = 7 ⇒ 2x = 4 ⇒ x = 2.",
+        "feedback_incorrecto": "Revisa: resta 3 a ambos lados, luego divide por 2.",
+        "requiere_explicacion": true
+      },
+      "pistas": [
+        { "texto": "Empieza restando 3 a ambos lados.", "costo": 1 },
+        { "texto": "Luego divide entre 2.", "costo": 1 }
+      ],
+      "puntaje": 1,
+      "bloquea_avance_si_falla": true
+    },
+    {
+      "paso_numero": 3,
+      "tipo_paso": "pregunta_abierta_validada",
+      "titulo_paso": "Procedimiento general",
+      "pregunta_abierta_validada": {
+        "pregunta": "Describe brevemente cómo despejar x en ax + b = c",
+        "placeholder": "Primero..., luego...",
+        "requiere_explicacion": false,
+        "validacion": {
+          "tipo": "palabras_clave",
+          "criterio": ["restar", "dividir"],
+          "feedback_correcto": "Bien: primero deshaces sumas/restas, luego multiplicaciones/divisiones.",
+          "feedback_incorrecto": "Menciona acciones como 'restar b' y 'dividir por a'."
+        }
+      },
+      "pistas": [
+        { "texto": "Piensa en 'operaciones inversas'.", "costo": 1 }
+      ],
+      "puntaje": 2
+    },
+    {
+      "paso_numero": 4,
+      "tipo_paso": "opcion_multiple",
+      "titulo_paso": "3x - 9 = 0",
+      "opcion_multiple": {
+        "pregunta": "¿x vale...",
+        "opciones": [
+          { "id": "a", "texto": "x = -3" },
+          { "id": "b", "texto": "x = 3" },
+          { "id": "c", "texto": "x = 9" }
+        ],
+        "respuesta_correcta": "b",
+        "feedback_correcto": "Correcto: 3x = 9 ⇒ x = 3.",
+        "feedback_incorrecto": "Suma 9 a ambos lados y divide entre 3.",
+        "requiere_explicacion": false
+      },
+      "puntaje": 1,
+      "pistas": [ { "texto": "Lleva -9 al otro lado.", "costo": 1 } ]
+    },
+    {
+      "paso_numero": 5,
+      "tipo_paso": "pregunta_abierta_validada",
+      "titulo_paso": "Verificación",
+      "pregunta_abierta_validada": {
+        "pregunta": "Para x = 2 en 2x + 3 = 7, escribe la igualdad verificada",
+        "placeholder": "Ej: 2*2 + 3 = 7",
+        "requiere_explicacion": false,
+        "validacion": {
+          "tipo": "regex",
+          "criterio": ["2\\*2\\s*\n?\+\\s*3\\s*=\\s*7", "2\\s*\(2\)\\s*\+\\s*3\\s*=\\s*7"],
+          "feedback_correcto": "Bien: sustituiste y verificaste la igualdad.",
+          "feedback_incorrecto": "Asegúrate de mostrar sustitución y que ambos lados coinciden."
+        }
+      },
+      "puntaje": 2
+    }
+  ]
+}

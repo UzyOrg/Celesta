@@ -6,6 +6,8 @@ import './globals.css';
 import { ModalProvider } from '@/context/ModalContext';
 
 import { Toaster } from 'react-hot-toast';
+import { useEffect } from 'react';
+import { initTracking } from '@/lib/track';
 
 // Static metadata might be problematic with 'use client' at the root.
 // If build errors occur, this might need to be removed or handled differently.
@@ -19,6 +21,15 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  useEffect(() => {
+    initTracking();
+    if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+      // Register service worker for offline support
+      navigator.serviceWorker.register('/sw.js').catch(() => {
+        // no-op
+      });
+    }
+  }, []);
   return (
     <html lang="en">
       <head>
@@ -32,6 +43,14 @@ export default function RootLayout({
               <main className="flex-grow">
                 {children}
               </main>
+              <footer className="border-t border-neutral-800 text-sm text-neutral-400">
+                <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+                  <p> {new Date().getFullYear()} Celesta</p>
+                  <nav className="space-x-4">
+                    <a href="/transparencia-ia" className="hover:text-white">Transparencia de IA</a>
+                  </nav>
+                </div>
+              </footer>
             </div>
           </ThemeProvider>
 

@@ -1,0 +1,90 @@
+{
+    "id_taller": "BIO-001",
+    "version": "0.1.0",
+    "titulo": "Célula: Estructura y Función",
+    "content_version": "2025-08-20",
+    "metadata": {
+      "grado": "Secundaria",
+      "materia": "Biología",
+      "competencias": ["Comprensión de estructuras celulares", "Relación estructura-función"],
+      "duracion_estimada_min": 25
+    },
+    "pasos": [
+      {
+        "paso_numero": 1,
+        "tipo_paso": "instruccion",
+        "titulo_paso": "La célula como unidad de vida",
+        "instruccion": { "texto": "La célula es la unidad estructural y funcional de los seres vivos. Existen células procariotas y eucariotas." },
+        "pistas": [ { "texto": "Procariotas: sin núcleo definido; Eucariotas: con núcleo.", "costo": 1 } ]
+      },
+      {
+        "paso_numero": 2,
+        "tipo_paso": "opcion_multiple",
+        "titulo_paso": "Orgánulo y función",
+        "opcion_multiple": {
+          "pregunta": "¿Qué orgánulo produce energía (ATP) en células eucariotas?",
+          "opciones": [
+            { "id": "a", "texto": "Ribosoma" },
+            { "id": "b", "texto": "Mitocondria" },
+            { "id": "c", "texto": "Aparato de Golgi" }
+          ],
+          "respuesta_correcta": "b",
+          "feedback_correcto": "Correcto: la mitocondria realiza respiración celular para producir ATP.",
+          "feedback_incorrecto": "Pista: piensa en respiración celular.",
+          "requiere_explicacion": false
+        },
+        "puntaje": 1,
+        "bloquea_avance_si_falla": true
+      },
+      {
+        "paso_numero": 3,
+        "tipo_paso": "pregunta_abierta_validada",
+        "titulo_paso": "Membrana plasmática",
+        "pregunta_abierta_validada": {
+          "pregunta": "Explica brevemente la función de la membrana plasmática.",
+          "placeholder": "Regula...",
+          "validacion": {
+            "tipo": "palabras_clave",
+            "criterio": ["regula", "entrada", "salida"],
+            "feedback_correcto": "Bien: regula la entrada y salida de sustancias.",
+            "feedback_incorrecto": "Menciona la regulación del intercambio de sustancias."
+          }
+        },
+        "puntaje": 2
+      },
+      {
+        "paso_numero": 4,
+        "tipo_paso": "opcion_multiple",
+        "titulo_paso": "Síntesis de proteínas",
+        "opcion_multiple": {
+          "pregunta": "¿Dónde ocurre principalmente la síntesis de proteínas?",
+          "opciones": [
+            { "id": "a", "texto": "Ribosomas" },
+            { "id": "b", "texto": "Lisosomas" },
+            { "id": "c", "texto": "Mitocondrias" }
+          ],
+          "respuesta_correcta": "a",
+          "feedback_correcto": "Correcto: los ribosomas son responsables de ensamblar aminoácidos en proteínas.",
+          "feedback_incorrecto": "Piensa en la traducción del ARN mensajero.",
+          "requiere_explicacion": false
+        },
+        "puntaje": 1
+      },
+      {
+        "paso_numero": 5,
+        "tipo_paso": "pregunta_abierta_validada",
+        "titulo_paso": "Cloroplastos (plantas)",
+        "pregunta_abierta_validada": {
+          "pregunta": "Describe qué hacen los cloroplastos.",
+          "validacion": {
+            "tipo": "palabras_clave",
+            "criterio": ["fotosíntesis", "luz", "glucosa"],
+            "feedback_correcto": "Bien: realizan fotosíntesis usando luz para producir glucosa.",
+            "feedback_incorrecto": "Menciona fotosíntesis y producción de glucosa." 
+          }
+        },
+        "puntaje": 2
+      }
+    ]
+  }
+  
