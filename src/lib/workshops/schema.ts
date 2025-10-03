@@ -3,6 +3,21 @@
  * Matches fields used by components and example JSON under public/workshops/.
  */
 
+// ============================================
+// RECURSOS DEL SANTUARIO DEL CONOCIMIENTO
+// ============================================
+
+export type Recurso = {
+  tipo: 'imagen' | 'texto' | 'video_embed';
+  contenido: string;  // URL para imagen/video, markdown para texto
+  descripcion: string;
+  titulo?: string;
+};
+
+// ============================================
+// PISTAS Y METADATA
+// ============================================
+
 export type Pista = {
     id: string;
     texto: string;
@@ -33,6 +48,7 @@ export type Pista = {
       | 'opcion_multiple';
     titulo_paso: string;
     pistas?: Pista[];
+    recursos_del_paso?: Recurso[];  // Nuevo: Santuario del Conocimiento
     bloquea_avance_si_falla?: boolean;
     puntaje?: number;
   };
@@ -91,6 +107,7 @@ export type Pista = {
     tipo_paso: 'pregunta_abierta_validada';
     pregunta_abierta_validada: {
       pregunta: string;
+      placeholder?: string;
       validacion: {
         tipo: 'palabras_clave';
         criterio: string[];
@@ -103,6 +120,26 @@ export type Pista = {
         desde_intento?: number;
         desde_pistas?: number;
         titulo?: string;
+        /** 
+         * ID del Taller de Nivelación a activar cuando el estudiante falla.
+         * Esto redirige al estudiante a un módulo remedial para reforzar conceptos.
+         */
+        activar_pre_taller?: string;
+        /** 
+         * DEPRECADO: Usar pregunta_de_aplicacion en su lugar.
+         * Pregunta de comprensión para el Ciclo de Andamio Progresivo.
+         */
+        pregunta_comprension?: string;
+        /**
+         * Pregunta de aplicación (opción múltiple) para el Ciclo de Andamio Progresivo.
+         * Después de mostrar la respuesta modelo, se presenta esta pregunta
+         * para verificar que el estudiante puede APLICAR el conocimiento.
+         */
+        pregunta_de_aplicacion?: {
+          pregunta: string;
+          opciones: string[];
+          respuesta_correcta: string;
+        };
       };
     };
   };

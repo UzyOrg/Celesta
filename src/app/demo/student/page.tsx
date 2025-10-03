@@ -1,6 +1,6 @@
 import path from 'node:path';
 import { promises as fs } from 'node:fs';
-import WorkshopClient from '@/app/workshop/[id]/Client';
+import WorkshopClientWithShell from './ClientWithShell';
 import AliasGuard from '@/components/join/AliasGuard';
 
 export const runtime = 'nodejs';
@@ -25,7 +25,7 @@ export default async function Page({
   return (
     <>
       <AliasGuard token={classToken} />
-      <WorkshopClient id={id} classToken={classToken} />
+      <WorkshopClientWithShell id={id} classToken={classToken} />
     </>
   );
 }

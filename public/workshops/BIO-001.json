@@ -1,90 +1,136 @@
 {
-    "id_taller": "BIO-001",
-    "version": "0.1.0",
-    "titulo": "Célula: Estructura y Función",
-    "content_version": "2025-08-20",
-    "metadata": {
-      "grado": "Secundaria",
-      "materia": "Biología",
-      "competencias": ["Comprensión de estructuras celulares", "Relación estructura-función"],
-      "duracion_estimada_min": 25
+  "id_taller": "BIO-001",
+  "version": "1.0.0",
+  "schema_version": "2.0",
+  "content_version": "2025-09-30",
+  "titulo": "Célula: El Origen de una Enfermedad Misteriosa",
+  "metadata": {
+    "grado": "Secundaria",
+    "materia": "Biología",
+    "competencias": [
+      "Comprensión de estructuras celulares",
+      "Relación estructura-función",
+      "Pensamiento científico"
+    ],
+    "duracion_estimada_min": 20
+  },
+  "pasos": [
+    {
+      "paso_numero": 1,
+      "tipo_paso": "instruccion",
+      "titulo_paso": "El Caso: Fatiga Extrema",
+      "instruccion": {
+        "texto": "Eres unx biólogx celular en un centro de investigación de vanguardia. Ha llegado a tu laboratorio una muestra de un paciente con una enfermedad desconocida que causa fatiga extrema. Tu misión es analizar las células del paciente para encontrar la causa. La primera hipótesis es que las 'centrales energéticas' de las células están fallando."
+      },
+      "recursos_del_paso": [
+        {
+          "tipo": "imagen",
+          "contenido": "https://placehold.co/600x400/1e293b/a7f3d0?text=Microscopio+Digital",
+          "descripcion": "Tu microscopio digital de alta potencia.",
+          "titulo": "Equipo de Laboratorio"
+        }
+      ],
+      "puntaje": 0
     },
-    "pasos": [
-      {
-        "paso_numero": 1,
-        "tipo_paso": "instruccion",
-        "titulo_paso": "La célula como unidad de vida",
-        "instruccion": { "texto": "La célula es la unidad estructural y funcional de los seres vivos. Existen células procariotas y eucariotas." },
-        "pistas": [ { "texto": "Procariotas: sin núcleo definido; Eucariotas: con núcleo.", "costo": 1 } ]
-      },
-      {
-        "paso_numero": 2,
-        "tipo_paso": "opcion_multiple",
-        "titulo_paso": "Orgánulo y función",
-        "opcion_multiple": {
-          "pregunta": "¿Qué orgánulo produce energía (ATP) en células eucariotas?",
-          "opciones": [
-            { "id": "a", "texto": "Ribosoma" },
-            { "id": "b", "texto": "Mitocondria" },
-            { "id": "c", "texto": "Aparato de Golgi" }
-          ],
-          "respuesta_correcta": "b",
-          "feedback_correcto": "Correcto: la mitocondria realiza respiración celular para producir ATP.",
-          "feedback_incorrecto": "Pista: piensa en respiración celular.",
-          "requiere_explicacion": false
+    {
+      "paso_numero": 2,
+      "tipo_paso": "pregunta_abierta_validada",
+      "titulo_paso": "Hipótesis Inicial",
+      "pregunta_abierta_validada": {
+        "pregunta": "Basado en la hipótesis de que las 'centrales energéticas' están fallando, ¿qué orgánulo específico investigarías primero y por qué?",
+        "placeholder": "Investigaría...",
+        "validacion": {
+          "tipo": "palabras_clave",
+          "criterio": ["mitocondria"],
+          "feedback_correcto": "¡Excelente! La mitocondria es efectivamente la 'central energética' de la célula. Procederemos a analizarla en detalle.",
+          "feedback_incorrecto": "Interesante. Recuerda, estamos buscando la estructura responsable de generar la mayor parte de la energía (ATP) de la célula."
         },
-        "puntaje": 1,
-        "bloquea_avance_si_falla": true
+        "rescate": {
+          "titulo": "¿Necesitas reforzar conceptos básicos?",
+          "explicacion": "Parece que necesitas repasar qué son los orgánulos y sus funciones. Te recomendamos completar un breve módulo de nivelación antes de continuar.",
+          "costo": 1,
+          "desde_intento": 2,
+          "activar_pre_taller": "BIO-001-PRE"
+        }
       },
-      {
-        "paso_numero": 3,
-        "tipo_paso": "pregunta_abierta_validada",
-        "titulo_paso": "Membrana plasmática",
-        "pregunta_abierta_validada": {
-          "pregunta": "Explica brevemente la función de la membrana plasmática.",
-          "placeholder": "Regula...",
-          "validacion": {
-            "tipo": "palabras_clave",
-            "criterio": ["regula", "entrada", "salida"],
-            "feedback_correcto": "Bien: regula la entrada y salida de sustancias.",
-            "feedback_incorrecto": "Menciona la regulación del intercambio de sustancias."
+      "puntaje": 2
+    },
+    {
+      "paso_numero": 3,
+      "tipo_paso": "opcion_multiple",
+      "titulo_paso": "Análisis de la Mitocondria",
+      "opcion_multiple": {
+        "pregunta": "Observas las mitocondrias y notas que la membrana interna tiene pliegues anormales. ¿Cuál es la función principal de estos pliegues (crestas mitocondriales)?",
+        "opciones": [
+          {
+            "id": "a",
+            "texto": "Proteger a la mitocondria"
+          },
+          {
+            "id": "b",
+            "texto": "Aumentar la superficie para la producción de ATP"
+          },
+          {
+            "id": "c",
+            "texto": "Almacenar agua"
           }
-        },
-        "puntaje": 2
+        ],
+        "respuesta_correcta": "b",
+        "feedback_correcto": "¡Correcto! Las crestas mitocondriales aumentan el área superficial donde ocurre la cadena transportadora de electrones, maximizando la producción de ATP.",
+        "feedback_incorrecto": "Piensa en por qué sería útil tener más superficie interna. Pista: más espacio = más producción de energía.",
+        "requiere_explicacion": false
       },
-      {
-        "paso_numero": 4,
-        "tipo_paso": "opcion_multiple",
-        "titulo_paso": "Síntesis de proteínas",
-        "opcion_multiple": {
-          "pregunta": "¿Dónde ocurre principalmente la síntesis de proteínas?",
-          "opciones": [
-            { "id": "a", "texto": "Ribosomas" },
-            { "id": "b", "texto": "Lisosomas" },
-            { "id": "c", "texto": "Mitocondrias" }
-          ],
-          "respuesta_correcta": "a",
-          "feedback_correcto": "Correcto: los ribosomas son responsables de ensamblar aminoácidos en proteínas.",
-          "feedback_incorrecto": "Piensa en la traducción del ARN mensajero.",
-          "requiere_explicacion": false
+      "recursos_del_paso": [
+        {
+          "tipo": "imagen",
+          "contenido": "https://placehold.co/600x400/1e293b/a7f3d0?text=Mitocondria+Estructura",
+          "descripcion": "Diagrama de una mitocondria mostrando las crestas de la membrana interna.",
+          "titulo": "Estructura Mitocondrial"
+        }
+      ],
+      "puntaje": 1,
+      "bloquea_avance_si_falla": false
+    },
+    {
+      "paso_numero": 4,
+      "tipo_paso": "pregunta_abierta_validada",
+      "titulo_paso": "Nueva Hipótesis",
+      "pregunta_abierta_validada": {
+        "pregunta": "Tu colega sugiere que el problema podría no estar en la energía, sino en lo que entra y sale de la célula. ¿Qué estructura celular es la responsable de esta función de 'portero'?",
+        "placeholder": "La estructura responsable es...",
+        "validacion": {
+          "tipo": "palabras_clave",
+          "criterio": ["membrana"],
+          "feedback_correcto": "¡Exacto! La membrana plasmática actúa como 'portero' regulando selectivamente qué entra y sale de la célula.",
+          "feedback_incorrecto": "Piensa en la capa que rodea y protege a toda la célula, controlando lo que pasa a través de ella."
         },
-        "puntaje": 1
-      },
-      {
-        "paso_numero": 5,
-        "tipo_paso": "pregunta_abierta_validada",
-        "titulo_paso": "Cloroplastos (plantas)",
-        "pregunta_abierta_validada": {
-          "pregunta": "Describe qué hacen los cloroplastos.",
-          "validacion": {
-            "tipo": "palabras_clave",
-            "criterio": ["fotosíntesis", "luz", "glucosa"],
-            "feedback_correcto": "Bien: realizan fotosíntesis usando luz para producir glucosa.",
-            "feedback_incorrecto": "Menciona fotosíntesis y producción de glucosa." 
+        "rescate": {
+          "titulo": "Ciclo de Andamio Progresivo",
+          "explicacion": "La membrana plasmática es la estructura responsable de esta función de 'portero'. Su función principal es actuar como una barrera selectiva, regulando cuidadosamente qué sustancias pueden entrar y salir de la célula. Esto es crucial porque permite a la célula mantener un ambiente interno estable (homeostasis), dejar entrar nutrientes necesarios como glucosa y oxígeno, y expulsar desechos tóxicos como el dióxido de carbono. Sin este control, la célula no podría sobrevivir.",
+          "costo": 1,
+          "desde_intento": 2,
+          "pregunta_de_aplicacion": {
+            "pregunta": "Imagina que la membrana plasmática deja de funcionar correctamente. ¿Cuál sería la consecuencia MÁS inmediata para la célula?",
+            "opciones": [
+              "La célula perdería su forma y se desintegraría de inmediato",
+              "Sustancias tóxicas entrarían sin control y nutrientes esenciales saldrían, rompiendo la homeostasis",
+              "La célula dejaría de producir energía completamente",
+              "El ADN se dañaría de forma irreversible"
+            ],
+            "respuesta_correcta": "Sustancias tóxicas entrarían sin control y nutrientes esenciales saldrían, rompiendo la homeostasis"
           }
-        },
-        "puntaje": 2
-      }
-    ]
-  }
-  
+        }
+      },
+      "puntaje": 2
+    },
+    {
+      "paso_numero": 5,
+      "tipo_paso": "confianza_reflexion",
+      "titulo_paso": "Diagnóstico Final",
+      "pregunta": "Has identificado dos posibles culpables: la mitocondria y la membrana. Basado en tu análisis, ¿qué tan segurx estás de tu diagnóstico final?",
+      "escala": 5,
+      "pregunta_reflexion": "En una frase, resume tu principal conclusión para el informe médico.",
+      "puntaje": 1
+    }
+  ]
+}

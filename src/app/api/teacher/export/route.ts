@@ -45,15 +45,14 @@ export async function GET(req: Request) {
       b.count += 1;
       bucket.set(classToken, b);
     }
-
     const fromISO = `${fromParam}T00:00:00.000Z`;
     const toISO = `${toParam}T23:59:59.999Z`;
 
     const supabase = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } });
 
     let query = supabase
-      .from('learning_events_with_alias')
-      .select('student_session_id, actor_sid, class_token, taller_id, paso_id, verbo, result, ts, client_ts, alias')
+      .from('eventos_de_aprendizaje')
+      .select('student_session_id, actor_sid, class_token, taller_id, paso_id, verbo, result, ts, client_ts')
       .eq('class_token', classToken)
       .gte('ts', fromISO)
       .lte('ts', toISO)
@@ -83,22 +82,46 @@ export async function GET(req: Request) {
 
     const encoder = new TextEncoder();
     const rows = data ?? [];
+    const sessionIds = Array.from(new Set(rows.map((r: any) => r?.student_session_id))).filter(Boolean);
+    const aliasMap = new Map<string, string>();
+    if (sessionIds.length > 0) {
+      const { data: aliasRows, error: aliasErr } = await supabase
+        .from('alias_sessions')
+        .select('student_session_id, alias')
+        .eq('class_token', classToken)
+        .in('student_session_id', sessionIds)
+        .limit(5000);
+      if (aliasErr) {
+        console.error('[export] alias_lookup_failed', aliasErr.message);
+      } else {
+        for (const row of aliasRows ?? []) {
+          if (!row) continue;
+          const alias = typeof row.alias === 'string' ? row.alias.trim() : '';
+          if (alias) aliasMap.set(row.student_session_id, alias);
+        }
+      }
+    }
 
     const stream = new ReadableStream({
       start(controller) {
         controller.enqueue(encoder.encode(header));
         for (let i = 0; i < rows.length; i++) {
           const e = rows[i] as any;
+          const canonicalAlias = aliasMap.get(e.student_session_id) ?? '';
           const score = e?.result?.score ?? '';
           const success = e?.result?.success ?? '';
           const hintCost = e?.verbo === 'solicito_pista' ? (e?.result?.costo ?? '') : '';
           const resultJson = (() => {
-            try { return JSON.stringify(e?.result ?? null); } catch { return ''; }
+            try {
+              return JSON.stringify(e?.result ?? null);
+            } catch {
+              return '';
+            }
           })();
 
           const line = [
             csvCell(e.student_session_id),
-            csvCell((e.alias ?? '').trim().length ? e.alias : ''),
+            csvCell(canonicalAlias),
             csvCell(e.class_token),
             csvCell(e.taller_id),
             csvCell(e.paso_id),

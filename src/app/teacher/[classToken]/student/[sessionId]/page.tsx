@@ -36,8 +36,8 @@ export default async function StudentPage({ params, searchParams }: { params: Pr
   const toISO = `${toParam}T23:59:59.999Z`;
 
   let query = supabase
-    .from('learning_events_with_alias')
-    .select('student_session_id, actor_sid, class_token, taller_id, paso_id, verbo, result, ts, client_ts, alias')
+    .from('eventos_de_aprendizaje')
+    .select('student_session_id, actor_sid, class_token, taller_id, paso_id, verbo, result, ts, client_ts')
     .eq('class_token', classToken)
     .eq('student_session_id', sessionId)
     .gte('ts', fromISO)
@@ -73,10 +73,18 @@ export default async function StudentPage({ params, searchParams }: { params: Pr
     result: any;
     ts: string;
     client_ts?: string | null;
-    alias?: string | null;
   }>;
 
-  const alias = events.find((e) => (e.alias ?? '').trim().length > 0)?.alias ?? `anon-${sessionId.slice(0, 6)}`;
+  // Fetch canonical alias
+  const { data: aliasRow } = await supabase
+    .from('alias_sessions')
+    .select('alias')
+    .eq('class_token', classToken)
+    .eq('student_session_id', sessionId)
+    .limit(1);
+  const alias = (Array.isArray(aliasRow) && aliasRow.length > 0 && aliasRow[0]?.alias)
+    ? aliasRow[0].alias
+    : `anon-${sessionId.slice(0, 6)}`;
 
   // Metrics
   const completed = events.filter((e) => e.verbo === 'completo_paso' && e.result?.success === true);

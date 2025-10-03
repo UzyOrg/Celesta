@@ -1,8 +1,8 @@
 // Minimal IndexedDB wrapper (no external deps). Stores: workshops, events, meta, progress.
 // Note: Call getDB() once in client to initialize stores.
 
-const DB_NAME = 'celestea_db_v1';
-const DB_VERSION = 1;
+const DB_NAME = 'celesta_db_v1';
+const DB_VERSION = 2;  // Incrementado para forzar upgrade
 
 export type StoreName = 'workshops' | 'events' | 'meta' | 'progress';
 

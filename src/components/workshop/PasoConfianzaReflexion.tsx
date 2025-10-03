@@ -16,8 +16,14 @@ export default function PasoConfianzaReflexion({ step, onComplete, pistasUsadas 
 
   const onSubmit = () => {
     setSent(true);
-    // Paso diagnóstico: no auto-aprueba. Permite continuar por gating (no bloquea)
-    onComplete({ success: false, score: 0, pistasUsadas, explicacionLongitud: reflexion.length, raw: { nivel, reflexion } });
+    // Paso de reflexión: siempre completa exitosamente
+    onComplete({ 
+      success: true, 
+      score: step.puntaje ?? 1, 
+      pistasUsadas, 
+      explicacionLongitud: reflexion.length, 
+      raw: { nivel_confianza: nivel, reflexion } 
+    });
   };
 
   const marks = Array.from({ length: step.escala }, (_, i) => i + 1);

@@ -1,0 +1,165 @@
+{
+  "tallerId": "BIO-001",
+  "cuestionarioDiagnostico": [
+    {
+      "id": "q1_conocimiento",
+      "tipo": "conocimiento_previo",
+      "pregunta": "¿Qué tanto sabes sobre células y organismos?",
+      "obligatoria": true,
+      "opciones": [
+        {
+          "id": "opt1_bajo",
+          "texto": "Es la primera vez que escucho estos términos",
+          "peso": 10
+        },
+        {
+          "id": "opt1_basico",
+          "texto": "Sé que las células son las unidades básicas de la vida",
+          "peso": 40
+        },
+        {
+          "id": "opt1_intermedio",
+          "texto": "Puedo diferenciar entre células y organismos completos",
+          "peso": 70
+        },
+        {
+          "id": "opt1_avanzado",
+          "texto": "Conozco la teoría celular y sus implicaciones",
+          "peso": 95
+        }
+      ]
+    },
+    {
+      "id": "q2_estilo",
+      "tipo": "estilo_aprendizaje",
+      "pregunta": "¿Cómo prefieres aprender cosas nuevas?",
+      "obligatoria": true,
+      "opciones": [
+        {
+          "id": "opt2_visual",
+          "texto": "Observando imágenes, diagramas y videos",
+          "peso": 50,
+          "tags": ["visual"]
+        },
+        {
+          "id": "opt2_practica",
+          "texto": "Haciendo experimentos y actividades hands-on",
+          "peso": 50,
+          "tags": ["hands-on", "kinestesico"]
+        },
+        {
+          "id": "opt2_conceptual",
+          "texto": "Leyendo explicaciones y razonando sobre conceptos",
+          "peso": 50,
+          "tags": ["conceptual", "teorico"]
+        },
+        {
+          "id": "opt2_discusion",
+          "texto": "Discutiendo y debatiendo ideas con otros",
+          "peso": 50,
+          "tags": ["social", "colaborativo"]
+        }
+      ]
+    },
+    {
+      "id": "q3_autonomia",
+      "tipo": "nivel_autonomia",
+      "pregunta": "Cuando te enfrentas a un reto nuevo, normalmente...",
+      "obligatoria": true,
+      "opciones": [
+        {
+          "id": "opt3_guiado",
+          "texto": "Prefiero que alguien me guíe paso a paso",
+          "peso": 20
+        },
+        {
+          "id": "opt3_mixto",
+          "texto": "Intento resolverlo solo, pero pido ayuda si me atasco",
+          "peso": 50
+        },
+        {
+          "id": "opt3_autonomo",
+          "texto": "Exploro por mi cuenta y aprendo de los errores",
+          "peso": 85
+        }
+      ]
+    },
+    {
+      "id": "q4_contexto",
+      "tipo": "contexto_aplicacion",
+      "pregunta": "¿Dónde te gustaría aplicar lo que aprendas sobre células?",
+      "obligatoria": false,
+      "opciones": [
+        {
+          "id": "opt4_salud",
+          "texto": "Entender cómo funciona mi cuerpo y mantenerme sano",
+          "peso": 50,
+          "tags": ["salud", "medicina"]
+        },
+        {
+          "id": "opt4_ambiente",
+          "texto": "Comprender el medio ambiente y la naturaleza",
+          "peso": 50,
+          "tags": ["ecologia", "ambiental"]
+        },
+        {
+          "id": "opt4_ciencia",
+          "texto": "Preparar mi futuro en ciencias o medicina",
+          "peso": 50,
+          "tags": ["carrera", "vocacional"]
+        },
+        {
+          "id": "opt4_curiosidad",
+          "texto": "Solo por curiosidad y cultura general",
+          "peso": 50,
+          "tags": ["curiosidad", "general"]
+        }
+      ]
+    }
+  ],
+  "reglasAdaptacion": [
+    {
+      "id": "regla_conocimiento_alto",
+      "prioridad": 11,
+      "condicion": {
+        "campo": "conocimientoPrevio",
+        "operador": "mayor_que",
+        "valor": 70
+      },
+      "accion": {
+        "tipo": "cambiar_feedback",
+        "parametros": {
+          "nivel": "minimo",
+          "mensaje": "Te daré feedback conciso para que avances a tu ritmo"
+        }
+      }
+    },
+    {
+      "id": "regla_estilo_visual",
+      "prioridad": 30,
+      "condicion": {
+        "campo": "estiloAprendizaje",
+        "operador": "contiene",
+        "valor": "visual"
+      },
+      "accion": {
+        "tipo": "personalizar_instrucciones",
+        "parametros": {
+          "mensaje": "He preparado observaciones visuales que te ayudarán. ¡Presta especial atención a las imágenes!"
+        }
+      }
+    }
+  ],
+  "umbrales": {
+    "conocimientoAlto": 70,
+    "conocimientoBajo": 30,
+    "autonomiaAlta": 70,
+    "autonomiaBaja": 30
+  },
+  "estrategias": {
+    "pistasAutomaticas": true,
+    "nivelComplejidadInicial": "intermedio",
+    "feedbackPersonalizado": true,
+    "ejemplosContextualizados": true
+  }
+}

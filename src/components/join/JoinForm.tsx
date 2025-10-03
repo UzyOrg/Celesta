@@ -1,5 +1,6 @@
 "use client";
 import React from "react";
+import { getAliasFromLocalStorage, setAliasInLocalStorage } from '@/lib/alias';
 
 type Props = {
   token: string;
@@ -10,8 +11,7 @@ export default function JoinForm({ token }: Props) {
 
   React.useEffect(() => {
     try {
-      const k = `celesta:alias:${token || "__global__"}`;
-      const prev = localStorage.getItem(k);
+      const prev = getAliasFromLocalStorage(token);
       if (prev) setAlias(prev);
     } catch {
       // ignore
@@ -23,7 +23,7 @@ export default function JoinForm({ token }: Props) {
     const trimmed = alias.trim();
     if (!trimmed) return;
     try {
-      localStorage.setItem(`celesta:alias:${token || "__global__"}`, trimmed);
+      setAliasInLocalStorage(token, trimmed);
     } catch {
       // ignore
     }

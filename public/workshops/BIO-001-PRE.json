@@ -1,0 +1,69 @@
+{
+  "id_taller": "BIO-001-PRE",
+  "version": "1.0.0",
+  "schema_version": "2.0",
+  "content_version": "2025-09-30",
+  "titulo": "Refuerzo: ¿Qué es un Orgánulo?",
+  "metadata": {
+    "grado": "Nivelación",
+    "materia": "Biología",
+    "competencias": [
+      "Conceptos celulares básicos",
+      "Vocabulario científico"
+    ],
+    "duracion_estimada_min": 3
+  },
+  "pasos": [
+    {
+      "paso_numero": 1,
+      "tipo_paso": "instruccion",
+      "titulo_paso": "La Célula como Ciudad",
+      "instruccion": {
+        "texto": "¡Reforcemos un concepto clave! Una célula es como una pequeña ciudad. Dentro de ella hay diferentes 'edificios' que realizan trabajos específicos. A estos 'edificios' los llamamos orgánulos."
+      },
+      "recursos_del_paso": [
+        {
+          "tipo": "imagen",
+          "contenido": "https://placehold.co/600x400/1e293b/a7f3d0?text=Diagrama+Celular",
+          "descripcion": "Una célula y sus orgánulos principales.",
+          "titulo": "Mapa de la Célula"
+        },
+        {
+          "tipo": "texto",
+          "contenido": "ANALOGÍA ÚTIL:\n\n🏢 Núcleo = Ayuntamiento (controla todo)\n⚡ Mitocondria = Central eléctrica (genera energía)\n🏭 Ribosomas = Fábricas (producen proteínas)\n🚪 Membrana plasmática = Muralla de la ciudad (controla entrada/salida)",
+          "descripcion": "Comparación célula-ciudad para facilitar la comprensión.",
+          "titulo": "La Ciudad Celular"
+        }
+      ],
+      "puntaje": 0
+    },
+    {
+      "paso_numero": 2,
+      "tipo_paso": "opcion_multiple",
+      "titulo_paso": "Definición de Orgánulo",
+      "opcion_multiple": {
+        "pregunta": "Si la mitocondria es la 'central energética', ¿cuál de estas opciones describe mejor qué es un orgánulo?",
+        "opciones": [
+          {
+            "id": "a",
+            "texto": "El líquido dentro de la célula"
+          },
+          {
+            "id": "b",
+            "texto": "Una parte especializada de la célula con una función específica"
+          },
+          {
+            "id": "c",
+            "texto": "La pared exterior de la célula"
+          }
+        ],
+        "respuesta_correcta": "b",
+        "feedback_correcto": "¡Perfecto! Un orgánulo es una estructura especializada dentro de la célula que realiza una función específica, como los 'edificios' especializados de una ciudad.",
+        "feedback_incorrecto": "Recuerda la analogía de la ciudad: los orgánulos son como los edificios especializados (hospital, central eléctrica, fábrica), no el aire o las murallas.",
+        "requiere_explicacion": false
+      },
+      "puntaje": 1,
+      "bloquea_avance_si_falla": true
+    }
+  ]
+}

@@ -1,11 +1,14 @@
 "use client";
 import { idbAdd, idbClear, idbGetAll } from '@/lib/idb';
+import { getOrCreateSessionId } from '@/lib/session';
+import { getAliasFromLocalStorage } from '@/lib/alias';
 
 type Json = Record<string, unknown> | Array<unknown> | string | number | boolean | null;
 
 export type LearningEvent = {
   actor_sid: string;
   student_session_id: string;
+  student_alias?: string; // ✅ NUEVO: Alias del estudiante (único por class_token)
   class_token?: string;
   taller_id: string;
   paso_id: string; // e.g., `${paso_numero}` or a semantic id
@@ -15,31 +18,6 @@ export type LearningEvent = {
   client_event_id: string; // idempotencia
   client_ts: string; // ISO desde cliente
 };
-
-function getOrCreateSessionId(classToken?: string): string {
-  if (typeof window === 'undefined') return 'server';
-  const key = `celesta:sid:${classToken || '__global__'}`;
-  try {
-    let sid = localStorage.getItem(key);
-    if (!sid) {
-      sid = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2);
-      localStorage.setItem(key, sid);
-    }
-    return sid;
-  } catch {
-    return `${classToken || 'global'}-${Math.random().toString(36).slice(2)}`;
-  }
-}
-
-function getAliasFromStorage(classToken?: string): string | null {
-  if (typeof window === 'undefined') return null;
-  const key = `celesta:alias:${classToken || '__global__'}`;
-  try {
-    return localStorage.getItem(key);
-  } catch {
-    return null;
-  }
-}
 
 async function postEventsBatch(events: LearningEvent[]): Promise<boolean> {
   try {
@@ -138,16 +116,19 @@ export async function trackEvent(
         );
       })()
     : `${sessionId}-${client_ts}-${Math.random().toString(36).slice(2)}`;
+  const alias = getAliasFromLocalStorage(payload.classToken);
+  
   const event: LearningEvent = {
     actor_sid: sessionId,
     student_session_id: sessionId,
+    student_alias: alias || undefined, // ✅ Alias como columna separada
     class_token: payload.classToken,
     taller_id: payload.tallerId,
     paso_id: payload.pasoId,
     verbo,
     result: (() => {
-      const alias = getAliasFromStorage(payload.classToken);
       const base: any = payload.result && typeof payload.result === 'object' ? { ...(payload.result as any) } : {};
+      // Seguir incluyendo alias en result por compatibilidad
       if (alias && base && typeof base === 'object' && base.alias == null) {
         base.alias = alias;
       }

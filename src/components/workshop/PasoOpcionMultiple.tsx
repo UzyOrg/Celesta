@@ -3,6 +3,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import type { Paso } from '@/lib/workshops/schema';
 import type { StepComplete } from './PasoInstruccion';
 import type { StepController } from './types';
+import { motion, AnimatePresence } from 'framer-motion';
+import { CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
 
 type Props = {
   step: Extract<Paso, { tipo_paso: 'opcion_multiple' }>;
@@ -73,53 +75,193 @@ export default function PasoOpcionMultiple({ step, onComplete, pistasUsadas, onH
     });
   }, [exposeController, selected, disabledInputs, pistasUsadas, starsLeft, step]);
 
-  return (
-    <div className="space-y-4">
-      <h2 className="text-2xl font-semibold">{step.titulo_paso}</h2>
-      <p className="text-neutral-200">{step.opcion_multiple.pregunta}</p>
+  const isCorrectAnswer = (optionId: string) => optionId === step.opcion_multiple.respuesta_correcta;
+  const showResult = !!disabledInputs && lastWasCorrect !== null;
 
-      <div className="space-y-2">
-        <div className="grid gap-2">
-          {step.opcion_multiple.opciones.map((op, idx) => (
-            <label key={op.id} className={`border rounded p-3 cursor-pointer ${selected === op.id ? 'border-lime' : 'border-neutral-800'}`}>
-              <input
-                type="radio"
-                name={`op-${step.paso_numero}`}
-                className="mr-2"
-                checked={selected === op.id}
-                onChange={() => setSelected(op.id)}
-                disabled={!!disabledInputs}
-                ref={idx === 0 ? firstRadioRef : undefined}
-              />
-              {op.texto}
-            </label>
-          ))}
-        </div>
+  return (
+    <div className="space-y-6">
+      <div className="space-y-3">
+        <h2 className="text-2xl font-bold text-neutral-100">{step.titulo_paso}</h2>
+        <p className="text-lg text-neutral-300 leading-relaxed">{step.opcion_multiple.pregunta}</p>
+      </div>
+
+      <div className="space-y-3">
+        {step.opcion_multiple.opciones.map((op, idx) => {
+          const isSelected = selected === op.id;
+          const isCorrect = isCorrectAnswer(op.id);
+          const showCorrect = showResult && isCorrect;
+          const showIncorrect = showResult && isSelected && !isCorrect;
+
+          return (
+            <motion.label
+              key={op.id}
+              className={`
+                relative block p-4 rounded-xl border-2 cursor-pointer transition-all
+                backdrop-blur-sm overflow-hidden group
+                ${isSelected && !showResult
+                  ? 'border-turquoise bg-turquoise/10 shadow-lg shadow-turquoise/20'
+                  : showCorrect
+                    ? 'border-green-500 bg-green-900/20 shadow-lg shadow-green-500/20'
+                    : showIncorrect
+                      ? 'border-red-500 bg-red-900/20 shadow-lg shadow-red-500/20'
+                      : 'border-neutral-700/50 bg-neutral-800/30 hover:border-neutral-600 hover:bg-neutral-800/50'
+                }
+                ${disabledInputs ? 'cursor-not-allowed opacity-90' : ''}
+              `}
+              whileHover={!disabledInputs ? { scale: 1.01, y: -2 } : {}}
+              whileTap={!disabledInputs ? { scale: 0.99 } : {}}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: idx * 0.05, duration: 0.3 }}
+            >
+              <div className="flex items-center gap-3">
+                <input
+                  type="radio"
+                  name={`op-${step.paso_numero}`}
+                  className="sr-only"
+                  checked={isSelected}
+                  onChange={() => !disabledInputs && setSelected(op.id)}
+                  disabled={!!disabledInputs}
+                  ref={idx === 0 ? firstRadioRef : undefined}
+                />
+                
+                <div className={`
+                  flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center
+                  transition-all
+                  ${isSelected && !showResult
+                    ? 'border-turquoise bg-turquoise'
+                    : showCorrect
+                      ? 'border-green-500 bg-green-500'
+                      : showIncorrect
+                        ? 'border-red-500 bg-red-500'
+                        : 'border-neutral-600 group-hover:border-neutral-500'
+                  }
+                `}>
+                  {isSelected && !showResult && (
+                    <motion.div
+                      className="w-2 h-2 bg-black rounded-full"
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ duration: 0.2 }}
+                    />
+                  )}
+                  {showCorrect && (
+                    <motion.div
+                      initial={{ scale: 0, rotate: -180 }}
+                      animate={{ scale: 1, rotate: 0 }}
+                      transition={{ type: 'spring', stiffness: 200, damping: 12 }}
+                    >
+                      <CheckCircle2 className="w-5 h-5 text-white" />
+                    </motion.div>
+                  )}
+                  {showIncorrect && (
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: [1, 1.2, 1] }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <XCircle className="w-5 h-5 text-white" />
+                    </motion.div>
+                  )}
+                </div>
+
+                <span className={`flex-1 text-base ${
+                  showCorrect ? 'text-green-100 font-medium' : 
+                  showIncorrect ? 'text-red-100 font-medium' : 
+                  isSelected ? 'text-white font-medium' : 'text-neutral-200'
+                }`}>
+                  {op.texto}
+                </span>
+              </div>
+
+              {/* Efecto de brillo en hover */}
+              {!disabledInputs && (
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+              )}
+            </motion.label>
+          );
+        })}
       </div>
 
       {step.opcion_multiple.requiere_explicacion && (
-        <textarea
-          className="w-full p-2 rounded bg-black/20 border border-neutral-800"
-          placeholder="Explica tu razonamiento"
-          value={explicacion}
-          onChange={(e) => setExplicacion(e.target.value)}
-          disabled={!!disabledInputs}
-          ref={explicacionRef}
-        />
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+        >
+          <textarea
+            className="w-full p-4 rounded-xl bg-neutral-800/40 border-2 border-neutral-700/50 focus:border-turquoise/50 focus:outline-none focus:ring-2 focus:ring-turquoise/20 text-neutral-200 placeholder:text-neutral-500 transition-all min-h-[100px] backdrop-blur-sm"
+            placeholder="Explica tu razonamiento aquí..."
+            value={explicacion}
+            onChange={(e) => setExplicacion(e.target.value)}
+            disabled={!!disabledInputs}
+            ref={explicacionRef}
+          />
+        </motion.div>
       )}
 
-      {feedback && <div className="p-2 rounded bg-black/30 border border-neutral-800">{feedback}</div>}
-      {step.pistas && pistasUsadas > 0 && (
-        <div className="p-2 rounded bg-black/30 border border-neutral-800 space-y-1">
-          {step.pistas.slice(0, pistasUsadas).map((p, i) => (
-            <div key={i} className="text-sm">
-              <strong>Pista {i + 1}:</strong> {p.texto}
+      <AnimatePresence mode="wait">
+        {feedback && (
+          <motion.div 
+            className={`p-4 rounded-xl border-2 backdrop-blur-sm shadow-lg ${
+              lastWasCorrect 
+                ? 'bg-green-900/20 border-green-600/50 text-green-100' 
+                : 'bg-amber-900/20 border-amber-600/50 text-amber-100'
+            }`}
+            initial={{ opacity: 0, scale: 0.95, y: -10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.3, type: 'spring' }}
+          >
+            <div className="flex items-start gap-2">
+              {lastWasCorrect ? (
+                <CheckCircle2 className="w-5 h-5 mt-0.5 flex-shrink-0" />
+              ) : (
+                <AlertCircle className="w-5 h-5 mt-0.5 flex-shrink-0" />
+              )}
+              <p className="leading-relaxed">{feedback}</p>
             </div>
-          ))}
-        </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {step.pistas && pistasUsadas > 0 && (
+        <motion.div 
+          className="p-4 rounded-xl bg-blue-900/10 border-2 border-blue-700/30 backdrop-blur-sm space-y-3"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          <div className="flex items-center gap-2 text-blue-300 font-medium text-sm">
+            <AlertCircle className="w-4 h-4" />
+            <span>Pistas utilizadas:</span>
+          </div>
+          <div className="space-y-2 pl-6">
+            {step.pistas.slice(0, pistasUsadas).map((p, i) => (
+              <motion.div
+                key={i}
+                className="text-sm text-blue-100"
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: i * 0.1 }}
+              >
+                <span className="font-semibold text-blue-200">Pista {i + 1}:</span> {p.texto}
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
       )}
+
       {lastWasCorrect === false && !disabledInputs && (
-        <p className="text-sm text-neutral-300">Ajusta y vuelve a Probar</p>
+        <motion.p 
+          className="flex items-center gap-2 text-sm text-amber-300 font-medium"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3 }}
+        >
+          <AlertCircle className="w-4 h-4" />
+          Revisa tu respuesta y vuelve a intentarlo
+        </motion.p>
       )}
 
       {!immersive && (

@@ -1,10 +1,11 @@
 import { createClient } from '@supabase/supabase-js';
 import { performance } from 'node:perf_hooks';
-import RadarChart from '@/components/teacher/RadarChart';
+import TeacherDashboardWithShell from '@/components/teacher/TeacherDashboardWithShell';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
-export const revalidate = 0;
+// Cache por 30 segundos para reducir latencia en navegaciones frecuentes
+export const revalidate = 30;
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
@@ -46,15 +47,17 @@ export default async function TeacherClassPage({
   const supabase = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } });
 
   let query = supabase
-    .from('learning_events_with_alias')
+    .from('eventos_de_aprendizaje')
     .select(
-      'student_session_id, actor_sid, class_token, taller_id, paso_id, verbo, result, ts, client_ts, alias'
+      'student_session_id, actor_sid, class_token, taller_id, paso_id, verbo, result, ts, client_ts'
     )
     .eq('class_token', classToken)
     .gte('ts', fromISO)
     .lte('ts', toISO)
     .order('ts', { ascending: false })
-    .limit(10000);
+    // Reducido de 10000 a 2000 para mejorar performance
+    // 2000 eventos = ~30 estudiantes x ~70 eventos cada uno
+    .limit(2000);
   if (tallerParam) query = query.eq('taller_id', tallerParam);
 
   const qStart = performance.now();
@@ -87,17 +90,42 @@ export default async function TeacherClassPage({
       result: any;
       ts: string;
       client_ts?: string | null;
-      alias?: string | null;
     }>;
 
-  // Métricas generales
+  // Canonical aliases from alias_sessions
+  const sessionIds = Array.from(new Set(events.map((e) => e.student_session_id))).filter(Boolean);
+  const aliasMap = new Map<string, string>();
+  if (sessionIds.length > 0) {
+    const { data: aliasRows, error: aliasErr } = await supabase
+      .from('alias_sessions')
+      .select('student_session_id, alias')
+      .eq('class_token', classToken)
+      .in('student_session_id', sessionIds)
+      .limit(500); // Reducido: suficiente para ~500 estudiantes
+    if (aliasErr) {
+      console.error('[SSR][teacher] alias_lookup_failed', aliasErr.message);
+    } else {
+      for (const row of aliasRows ?? []) {
+        if (!row) continue;
+        const alias = typeof row.alias === 'string' ? row.alias.trim() : '';
+        if (alias) aliasMap.set(row.student_session_id, alias);
+      }
+    }
+  }
+  // Métricas generales (REFACTORED para eventos agregados)
   const sessions = new Set(events.map((e) => e.student_session_id));
   const completed = events.filter((e) => e.verbo === 'completo_paso' && e.result?.success === true);
   const stepsCompleted = completed.length;
-  const scores = completed.map((e) => Number(e.result?.score ?? 0)).filter((n) => Number.isFinite(n));
-  const avgScore = scores.length ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
-  const hintCosts = events.filter((e) => e.verbo === 'solicito_pista').map((e) => Number(e.result?.costo ?? 1));
-  const totalHintCost = hintCosts.reduce((a, b) => a + b, 0);
+  const scores = completed
+    .map((e) => Number(e.result?.score ?? 0))
+    .filter((n) => Number.isFinite(n)) as number[];
+  const avgScore = scores.length ? scores.reduce((sum, val) => sum + val, 0) / scores.length : 0;
+  
+  // NUEVO: Extraer pistas del evento agregado completo_paso
+  const hintCosts = completed
+    .map((e) => Number(e.result?.pistas_usadas ?? 0))
+    .filter((n) => Number.isFinite(n)) as number[];
+  const totalHintCost = hintCosts.reduce((sum, val) => sum + val, 0);
 
   // Agregado por estudiante
   type StudentAgg = { sessionId: string; alias: string; stepsCompleted: number; lastTs: string };
@@ -105,9 +133,10 @@ export default async function TeacherClassPage({
   for (const e of events) {
     const sid = e.student_session_id;
     if (!perStudent.has(sid)) {
+      const canonical = aliasMap.get(sid);
       perStudent.set(sid, {
         sessionId: sid,
-        alias: (e.alias ?? '').trim().length ? (e.alias as string) : `anon-${sid.slice(0, 6)}`,
+        alias: canonical && canonical.trim().length ? canonical : `anon-${sid.slice(0, 6)}`,
         stepsCompleted: 0,
         lastTs: e.ts,
       });
@@ -118,6 +147,7 @@ export default async function TeacherClassPage({
   }
   const students = Array.from(perStudent.values()).sort((a, b) => b.stepsCompleted - a.stepsCompleted);
   const studentCount = sessions.size;
+
   const pasoNums = events
     .map((e) => parseInt(e.paso_id, 10))
     .filter((n) => Number.isFinite(n) && n > 0) as number[];
@@ -156,100 +186,18 @@ export default async function TeacherClassPage({
   )}${tallerParam ? `&taller=${encodeURIComponent(tallerParam)}` : ''}`;
 
   return (
-    <div className="max-w-6xl mx-auto p-6 space-y-6">
-      <header className="space-y-1">
-        <h1 className="text-3xl font-bold">Panel Docente</h1>
-        <p className="text-neutral-300 text-sm">Grupo: {classToken}</p>
-      </header>
-
-      <section className="p-4 rounded bg-black/20 border border-neutral-800">
-        <form className="flex flex-col md:flex-row gap-3 items-end" method="get">
-          <div className="flex flex-col">
-            <label className="text-xs text-neutral-400">Desde</label>
-            <input type="date" name="from" defaultValue={fromParam} className="bg-neutral-900 border border-neutral-700 rounded p-2" />
-          </div>
-          <div className="flex flex-col">
-            <label className="text-xs text-neutral-400">Hasta</label>
-            <input type="date" name="to" defaultValue={toParam} className="bg-neutral-900 border border-neutral-700 rounded p-2" />
-          </div>
-          <div className="flex flex-col">
-            <label className="text-xs text-neutral-400">Taller</label>
-            <input type="text" name="taller" defaultValue={tallerParam} placeholder="(opcional)" className="bg-neutral-900 border border-neutral-700 rounded p-2" />
-          </div>
-          <button className="px-3 py-2 bg-lime text-black rounded" type="submit">
-            Aplicar
-          </button>
-          <a className="px-3 py-2 bg-neutral-800 text-white rounded" href={`/teacher`}>
-            ← Cambiar grupo
-          </a>
-          <a className="ml-auto px-3 py-2 bg-turquoise text-black rounded" href={`/api/teacher/export?${exportQS}`}>
-            Exportar CSV
-          </a>
-        </form>
-      </section>
-
-      <section className="grid md:grid-cols-4 gap-4">
-        <div className="p-4 rounded bg-black/20 border border-neutral-800">
-          <div className="text-neutral-400 text-sm">Estudiantes</div>
-          <div className="text-3xl font-bold">{sessions.size}</div>
-        </div>
-        <div className="p-4 rounded bg-black/20 border border-neutral-800">
-          <div className="text-neutral-400 text-sm">Pasos completados</div>
-          <div className="text-3xl font-bold">{stepsCompleted}</div>
-        </div>
-        <div className="p-4 rounded bg-black/20 border border-neutral-800">
-          <div className="text-neutral-400 text-sm">Promedio de puntaje</div>
-          <div className="text-3xl font-bold">{avgScore.toFixed(2)}</div>
-        </div>
-        <div className="p-4 rounded bg-black/20 border border-neutral-800">
-          <div className="text-neutral-400 text-sm">Pistas (costo total)</div>
-          <div className="text-3xl font-bold">{totalHintCost}</div>
-        </div>
-      </section>
-
-      <section className="p-4 rounded bg-black/20 border border-neutral-800">
-        <h2 className="text-xl font-semibold mb-2">Indicadores (0–100)</h2>
-        <RadarChart data={radarData} />
-      </section>
-
-      <section className="p-4 rounded bg-black/20 border border-neutral-800">
-        <h2 className="text-xl font-semibold mb-2">Estudiantes</h2>
-        {students.length === 0 ? (
-          <div className="text-neutral-400">Sin eventos en el periodo.</div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="text-left text-neutral-400">
-                <tr>
-                  <th className="py-2 pr-4">Alias</th>
-                  <th className="py-2 pr-4">Session</th>
-                  <th className="py-2 pr-4">Completados</th>
-                  <th className="py-2 pr-4">Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {students.map((s) => (
-                  <tr key={s.sessionId} className="border-t border-neutral-800">
-                    <td className="py-2 pr-4">{s.alias}</td>
-                    <td className="py-2 pr-4 text-neutral-400">{s.sessionId}</td>
-                    <td className="py-2 pr-4">{s.stepsCompleted}</td>
-                    <td className="py-2 pr-4">
-                      <a
-                        className="px-2 py-1 rounded bg-neutral-800"
-                        href={`/teacher/${encodeURIComponent(classToken)}/student/${encodeURIComponent(s.sessionId)}?from=${encodeURIComponent(
-                          fromParam
-                        )}&to=${encodeURIComponent(toParam)}${tallerParam ? `&taller=${encodeURIComponent(tallerParam)}` : ''}`}
-                      >
-                        Ver detalle →
-                      </a>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
-    </div>
+    <TeacherDashboardWithShell
+      classToken={classToken}
+      studentCount={studentCount}
+      stepsCompleted={stepsCompleted}
+      avgScore={avgScore}
+      totalHintCost={totalHintCost}
+      students={students}
+      radarData={radarData}
+      fromParam={fromParam}
+      toParam={toParam}
+      tallerParam={tallerParam}
+      exportQS={exportQS}
+    />
   );
 }
