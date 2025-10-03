@@ -116,7 +116,7 @@ export default function MissionComplete({
                 ¡Misión Completada!
               </h1>
               <p className="text-xl text-neutral-300">
-                Has terminado <span className="font-semibold text-neutral-100">"{workshopTitle}"</span>
+                Has terminado <span className="font-semibold text-neutral-100">&ldquo;{workshopTitle}&rdquo;</span>
               </p>
             </motion.div>
 

@@ -64,7 +64,7 @@ export default function MissionLocked({
                 Misión Ya Completada
               </h1>
               <p className="text-xl text-neutral-300">
-                Ya terminaste <span className="font-semibold text-neutral-100">"{workshopTitle}"</span>
+                Ya terminaste <span className="font-semibold text-neutral-100">&ldquo;{workshopTitle}&rdquo;</span>
               </p>
             </motion.div>
 

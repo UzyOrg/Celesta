@@ -118,7 +118,7 @@ export default function BibliotecaPage() {
                 el conocimiento no se pierde, sino que se organiza, se conecta y evoluciona contigo.
               </p>
               <p className="text-neutral-400 text-sm italic">
-                "El conocimiento no es poder. El conocimiento compartido y organizado es poder."
+                &ldquo;El conocimiento no es poder. El conocimiento compartido y organizado es poder.&rdquo;
               </p>
             </div>
           </div>
