@@ -1,9 +1,8 @@
 import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Sparkles, Play } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 import Container from './Container';
 import Button from './Button';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Script from 'next/script';
 import styles from './Hero.module.css';
@@ -83,14 +82,15 @@ const Hero: React.FC = () => {
                   Únete a la whitelist
                 </Button>
               </div>
-              <div className={styles.buttonWrapper}>
+              {/* Botón de demo piloto deshabilitado temporalmente */}
+              {/* <div className={styles.buttonWrapper}>
                 <Link href="/demo/start" passHref className={styles.buttonLink}>
                   <Button variant="outline" size="lg" className={`${styles.fullWidth} ${styles.exploreButton}`}>
                     <Play className={styles.playIcon} />
                     Probar demo piloto
                   </Button>
                 </Link>
-              </div>
+              </div> */}
             </div>
           </motion.div>
         </div>

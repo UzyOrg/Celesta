@@ -57,7 +57,7 @@ const CTASection: React.FC = () => {
                 >
                   <div className={styles.buttonWrapper}>
                     <Button variant="outline" size="lg" onClick={() => router.push('/questionnaire')}>
-                      Solicita Demo Piloto <ArrowRight className="ml-2 w-4 h-4" />
+                      Únete a la Whitelist <ArrowRight className="ml-2 w-4 h-4" />
                     </Button>
                   </div>
                   
