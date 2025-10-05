@@ -1,6 +1,5 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import AppShell from '@/components/shell/AppShell';
 import PageContainer from '@/components/shell/PageContainer';
 import { Card } from '@/components/shell/Card';
 import { Rocket, ArrowRight, Clock, TrendingUp, CheckCircle2 } from 'lucide-react';
@@ -16,7 +15,6 @@ export default function MissionsPage() {
   }, []);
 
   return (
-    <AppShell userAlias="Estudiante" userRole="student">
       <PageContainer
         title="Misiones"
         subtitle="Explora talleres interactivos de aprendizaje"
@@ -89,6 +87,5 @@ export default function MissionsPage() {
           ))}
         </div>
       </PageContainer>
-    </AppShell>
   );
 }

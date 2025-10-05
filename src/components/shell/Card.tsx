@@ -99,7 +99,7 @@ export function MetricCard({
     <motion.div
       className={`
         bg-gradient-to-br ${colors.bg} backdrop-blur-sm rounded-xl border ${colors.border} 
-        p-6 shadow-lg hover:shadow-xl transition-all
+        p-4 md:p-6 shadow-lg hover:shadow-xl transition-all
         ${className}
       `}
       initial={{ opacity: 0, scale: 0.95 }}
@@ -107,10 +107,10 @@ export function MetricCard({
       whileHover={{ y: -4 }}
       transition={{ duration: 0.3, type: 'spring', stiffness: 200 }}
     >
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex-1 space-y-2">
-          <p className="text-sm font-medium text-neutral-400">{title}</p>
-          <p className="text-3xl font-bold text-white">{value}</p>
+      <div className="flex items-start justify-between gap-3 md:gap-4">
+        <div className="flex-1 space-y-1 md:space-y-2">
+          <p className="text-xs md:text-sm font-medium text-neutral-400">{title}</p>
+          <p className="text-2xl md:text-3xl font-bold text-white">{value}</p>
           {subtitle && <p className="text-xs text-neutral-500">{subtitle}</p>}
           {trend && trendValue && (
             <div className={`inline-flex items-center gap-1 text-xs font-medium ${
@@ -123,8 +123,8 @@ export function MetricCard({
         </div>
         
         {Icon && (
-          <div className={`p-3 rounded-xl ${colors.iconBg}`}>
-            <Icon className={`w-6 h-6 ${colors.icon}`} />
+          <div className={`p-2 md:p-3 rounded-lg md:rounded-xl ${colors.iconBg}`}>
+            <Icon className={`w-5 h-5 md:w-6 md:h-6 ${colors.icon}`} />
           </div>
         )}
       </div>

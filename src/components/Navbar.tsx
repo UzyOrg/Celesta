@@ -60,10 +60,29 @@ const Navbar: React.FC = () => {
             </Link>
           </nav>
 
+          {/* Auth Actions - Desktop */}
+          <div className="hidden md:flex items-center gap-3">
+            <Link 
+              href="/login" 
+              className="px-4 py-2 text-sm font-medium text-neutral-300 hover:text-white transition-colors"
+            >
+              Iniciar Sesión
+            </Link>
+            <Link 
+              href="/signup" 
+              className="px-4 py-2 text-sm font-medium bg-gradient-to-r from-turquoise to-lime text-black rounded-lg hover:from-turquoise-600 hover:to-lime-600 transition-all"
+            >
+              Crear Cuenta
+            </Link>
+          </div>
+
           {/* Mobile Actions */}
           <div className={styles.mobileActions}>
-            <Link href="/questionnaire" className={styles.mobileDemoButton}>
-              Únete a la whitelist
+            <Link href="/login" className="text-sm text-neutral-300 hover:text-white px-3 py-2">
+              Login
+            </Link>
+            <Link href="/signup" className={styles.mobileDemoButton}>
+              Registrarse
             </Link>
           </div>
         </div>
@@ -84,6 +103,13 @@ const Navbar: React.FC = () => {
                 {link.name}
               </Link>
             ))}
+            <div className="border-t border-neutral-800 my-2"></div>
+            <Link href="/login" className={styles.navLink} onClick={closeMenu}>
+              Iniciar Sesión
+            </Link>
+            <Link href="/signup" className={styles.navLink} onClick={closeMenu}>
+              <span className="text-lime font-semibold">Crear Cuenta</span>
+            </Link>
           </motion.div>
         )}
       </AnimatePresence>

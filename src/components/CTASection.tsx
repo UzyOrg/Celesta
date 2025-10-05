@@ -56,11 +56,15 @@ const CTASection: React.FC = () => {
                   className={styles.buttonContainer}
                 >
                   <div className={styles.buttonWrapper}>
-                    <Button variant="outline" size="lg" onClick={() => router.push('/questionnaire')}>
-                      Únete a la Whitelist <ArrowRight className="ml-2 w-4 h-4" />
+                    <Button variant="gradient" size="lg" onClick={() => router.push('/signup')}>
+                      Comenzar Ahora <ArrowRight className="ml-2 w-4 h-4" />
                     </Button>
                   </div>
-                  
+                  <div className={styles.buttonWrapper}>
+                    <Button variant="outline" size="lg" onClick={() => router.push('/login')}>
+                      Iniciar Sesión
+                    </Button>
+                  </div>
                 </motion.div>
               </div>
             </div>

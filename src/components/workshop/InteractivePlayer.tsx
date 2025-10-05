@@ -19,7 +19,7 @@ import PasoTransferencia from './PasoTransferencia';
 import type { StepController } from './types';
 import { getOrCreateSessionId } from '@/lib/session';
 import { useCanonicalAlias } from '@/lib/alias';
-import { BookOpen, GraduationCap, Clock, Target, Sparkles, Lightbulb } from 'lucide-react';
+import { BookOpen, GraduationCap, Clock, Target, Sparkles, Lightbulb, Briefcase, Flag } from 'lucide-react';
 import type { AdaptationResult } from '@/lib/adaptive/schema';
 import KnowledgeSanctuary from './KnowledgeSanctuary';
 import MissionComplete from './MissionComplete';
@@ -115,6 +115,7 @@ export default function InteractivePlayer({ workshop, classToken, adaptacion }: 
   // Estado del Santuario del Conocimiento
   const [sanctuaryOpen, setSanctuaryOpen] = useState(false);
   const [sanctuaryRecursos, setSanctuaryRecursos] = useState<Recurso[]>([]);
+  const [mobileTab, setMobileTab] = useState<'trabajo' | 'mision'>('trabajo'); // Por defecto en la tarea
   
   // Estado de misión completada y bloqueada
   const [showMissionComplete, setShowMissionComplete] = useState(false);
@@ -522,11 +523,43 @@ export default function InteractivePlayer({ workshop, classToken, adaptacion }: 
   }
 
   return (
-    <div className="max-w-7xl mx-auto p-6">
-      <div className="bg-neutral-900/60 backdrop-blur-sm rounded-2xl shadow-2xl border border-neutral-800/50 overflow-hidden">
+    <div className="max-w-7xl mx-auto md:p-6 p-0">
+      <div className="bg-neutral-900/60 backdrop-blur-sm md:rounded-2xl shadow-2xl border-t md:border border-neutral-800/50 overflow-hidden">
+        {/* Pestañas móviles - Solo visible en pantallas pequeñas */}
+        <div className="md:hidden bg-neutral-900/95 border-b border-neutral-800/50 sticky top-0 z-30">
+          <div className="grid grid-cols-2">
+            <button
+              onClick={() => setMobileTab('trabajo')}
+              className={`flex items-center justify-center gap-2 px-4 py-4 font-medium transition-all ${
+                mobileTab === 'trabajo'
+                  ? 'text-turquoise border-b-2 border-turquoise bg-turquoise/5'
+                  : 'text-neutral-400 border-b-2 border-transparent'
+              }`}
+            >
+              <Briefcase className="w-4 h-4" />
+              <span>Tu Trabajo</span>
+            </button>
+            <button
+              onClick={() => setMobileTab('mision')}
+              className={`flex items-center justify-center gap-2 px-4 py-4 font-medium transition-all ${
+                mobileTab === 'mision'
+                  ? 'text-lime border-b-2 border-lime bg-lime/5'
+                  : 'text-neutral-400 border-b-2 border-transparent'
+              }`}
+            >
+              <Flag className="w-4 h-4" />
+              <span>La Misión</span>
+            </button>
+          </div>
+        </div>
+
         <div className="grid md:grid-cols-3 gap-0">
           {/* Panel de contexto (izquierda) - Tarjeta de Misión */}
-          <aside className="md:col-span-1 bg-gradient-to-b from-neutral-900/80 to-neutral-900/40 border-r border-neutral-800/50 p-6 space-y-6">
+          <aside className={`
+            md:col-span-1 bg-gradient-to-b from-neutral-900/80 to-neutral-900/40 
+            md:border-r border-neutral-800/50 p-4 md:p-6 space-y-4 md:space-y-6
+            ${mobileTab === 'mision' ? 'block' : 'hidden md:block'}
+          `}>
               <header className="space-y-4">
                 <div className="space-y-2">
                   <motion.h1 
@@ -629,7 +662,10 @@ export default function InteractivePlayer({ workshop, classToken, adaptacion }: 
           </aside>
 
           {/* Panel de interacción (derecha) - El Espacio de Trabajo */}
-          <section className="md:col-span-2 p-6 space-y-6">
+          <section className={`
+            md:col-span-2 p-4 md:p-6 space-y-4 md:space-y-6
+            ${mobileTab === 'trabajo' ? 'block' : 'hidden md:block'}
+          `}>
             <div className="space-y-1">
               <div className="flex items-center gap-2 text-sm text-neutral-400">
                 <Sparkles className="w-4 h-4" />

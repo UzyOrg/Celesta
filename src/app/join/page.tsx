@@ -8,8 +8,9 @@ export default async function Page({
 }: {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const sp = searchParams ? await searchParams : undefined;
-  const token = typeof sp?.t === 'string' ? sp!.t : '';
+  const sp = searchParams ? await searchParams : {};
+  const token = typeof sp?.t === 'string' ? sp.t : '';
+  const redirectTo = typeof sp?.redirect === 'string' ? sp.redirect : '';
 
-  return <JoinFormModern token={token} />;
+  return <JoinFormModern token={token} redirectTo={redirectTo} />;
 }

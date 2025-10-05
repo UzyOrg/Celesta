@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import type { Paso } from '@/lib/workshops/schema';
 import type { StepComplete } from './PasoInstruccion';
 import type { StepController } from './types';
@@ -75,7 +75,7 @@ export default function PasoObservacion({ step, onComplete, pistasUsadas, onHint
   const [lastWasCorrect, setLastWasCorrect] = useState<boolean | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
-  const onSubmit = () => {
+  const onSubmit = useCallback(() => {
     const ok = validate(answer, step);
     setFeedback(ok ? '¡Bien! Has identificado la evidencia esperada.' : 'Revisa la evidencia y vuelve a intentarlo.');
     setLastWasCorrect(ok);
@@ -83,13 +83,13 @@ export default function PasoObservacion({ step, onComplete, pistasUsadas, onHint
     onComplete(payload as any);
     if (onUiFeedback) onUiFeedback(ok ? '¡Bien! Has identificado la evidencia esperada.' : 'Revisa la evidencia y vuelve a intentarlo.', ok ? 'success' : 'info');
     if (!ok) setTimeout(() => textareaRef.current?.focus(), 0);
-  };
+  }, [answer, step, pistasUsadas, onComplete, onUiFeedback]);
 
-  const askHint = () => {
+  const askHint = useCallback(() => {
     const pista = step.pistas?.[Math.min(pistasUsadas, (step.pistas?.length ?? 1) - 1)];
     const costo = pista?.costo ?? 1;
     onHint?.(costo);
-  };
+  }, [step.pistas, pistasUsadas, onHint]);
 
   const nextHintCost = step.pistas?.[Math.min(pistasUsadas, (step.pistas?.length ?? 1) - 1)]?.costo ?? 1;
   const canAskHint = !!step.pistas && (step.pistas.length > pistasUsadas) && !disabledInputs && (nextHintCost <= (starsLeft ?? 0));
@@ -103,7 +103,7 @@ export default function PasoObservacion({ step, onComplete, pistasUsadas, onHint
       canAskHint: () => canAskHint,
       askHint: () => askHint(),
     });
-  }, [exposeController, onSubmit, disabledInputs, answer, canAskHint]);
+  }, [exposeController, onSubmit, disabledInputs, answer, canAskHint, askHint]);
 
   return (
     <div className="space-y-4">

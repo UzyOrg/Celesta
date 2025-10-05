@@ -4,6 +4,7 @@ import type { Metadata } from 'next'; // Keep for now, might need adjustment wit
 import { ThemeProvider } from '@/context/ThemeContext';
 import './globals.css';
 import { ModalProvider } from '@/context/ModalContext';
+import { AuthProvider } from '@/contexts/AuthContext';
 
 import { Toaster } from 'react-hot-toast';
 import { useEffect } from 'react';
@@ -37,25 +38,27 @@ export default function RootLayout({
         <link rel="icon" href="/Logo_Celestea.png" />
       </head>
       <body className="font-plus-jakarta-sans bg-base text-white antialiased">
-        <ModalProvider>
-          <ThemeProvider>
-            <div className="min-h-screen flex flex-col">
-              <main className="flex-grow">
-                {children}
-              </main>
-              <footer className="border-t border-neutral-800 text-sm text-neutral-400">
-                <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-                  <p> {new Date().getFullYear()} Celesta</p>
-                  <nav className="space-x-4">
-                    <a href="/transparencia-ia" className="hover:text-white">Transparencia de IA</a>
-                  </nav>
-                </div>
-              </footer>
-            </div>
-          </ThemeProvider>
+        <AuthProvider>
+          <ModalProvider>
+            <ThemeProvider>
+              <div className="min-h-screen flex flex-col">
+                <main className="flex-grow">
+                  {children}
+                </main>
+                <footer className="border-t border-neutral-800 text-sm text-neutral-400">
+                  <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+                    <p> {new Date().getFullYear()} Celesta</p>
+                    <nav className="space-x-4">
+                      <a href="/transparencia-ia" className="hover:text-white">Transparencia de IA</a>
+                    </nav>
+                  </div>
+                </footer>
+              </div>
+            </ThemeProvider>
 
-          <Toaster position="bottom-right" />
-        </ModalProvider>
+            <Toaster position="bottom-right" />
+          </ModalProvider>
+        </AuthProvider>
       </body>
     </html>
   );

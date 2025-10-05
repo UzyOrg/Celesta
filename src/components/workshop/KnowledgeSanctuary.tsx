@@ -27,9 +27,9 @@ export default function KnowledgeSanctuary({ isOpen, onClose, recursos, titulo }
             onClick={onClose}
           />
 
-          {/* Panel lateral DERECHO - Diseño minimalista */}
+          {/* Panel lateral DERECHO - Mobile-First: 90% en móvil, fixed width en desktop */}
           <motion.div
-            className="fixed top-0 right-0 bottom-0 z-50 w-full sm:w-[420px] lg:w-[480px] bg-neutral-900 border-l border-neutral-800 shadow-2xl flex flex-col"
+            className="fixed top-0 right-0 bottom-0 z-50 w-[90%] sm:w-[420px] lg:w-[480px] bg-neutral-900 border-l border-neutral-800 shadow-2xl flex flex-col"
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
             exit={{ x: '100%' }}

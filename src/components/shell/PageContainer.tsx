@@ -40,8 +40,8 @@ export default function PageContainer({
   className = '',
 }: PageContainerProps) {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-neutral-950 via-neutral-900 to-neutral-950 py-8 px-6">
-      <div className={`${maxWidthClasses[maxWidth]} mx-auto space-y-6`}>
+    <div className="min-h-screen bg-gradient-to-br from-neutral-950 via-neutral-900 to-neutral-950 py-4 md:py-8 px-4 md:px-6">
+      <div className={`${maxWidthClasses[maxWidth]} mx-auto space-y-4 md:space-y-6`}>
         {/* Header */}
         {(title || backHref || actions) && (
           <motion.header
@@ -61,16 +61,16 @@ export default function PageContainer({
             )}
 
             {(title || actions) && (
-              <div className="flex items-start justify-between gap-4">
+              <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3 md:gap-4">
                 {title && (
                   <div className="space-y-1">
-                    <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-neutral-300 bg-clip-text text-transparent">
+                    <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-white to-neutral-300 bg-clip-text text-transparent">
                       {title}
                     </h1>
-                    {subtitle && <p className="text-neutral-400 text-base">{subtitle}</p>}
+                    {subtitle && <p className="text-neutral-400 text-sm md:text-base">{subtitle}</p>}
                   </div>
                 )}
-                {actions && <div className="flex items-center gap-3">{actions}</div>}
+                {actions && <div className="flex items-center gap-2 md:gap-3">{actions}</div>}
               </div>
             )}
           </motion.header>

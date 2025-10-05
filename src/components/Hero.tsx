@@ -78,19 +78,25 @@ const Hero: React.FC = () => {
             
             <div className={styles.buttonContainer}>
               <div className={styles.buttonWrapper}>
-                <Button variant="gradient" size="lg" className={styles.fullWidth} onClick={() => router.push('/questionnaire')}>
-                  Únete a la whitelist
+                <Button variant="gradient" size="lg" className={styles.fullWidth} onClick={() => router.push('/signup')}>
+                  Comenzar Ahora
                 </Button>
               </div>
-              {/* Botón de demo piloto deshabilitado temporalmente */}
-              {/* <div className={styles.buttonWrapper}>
-                <Link href="/demo/start" passHref className={styles.buttonLink}>
-                  <Button variant="outline" size="lg" className={`${styles.fullWidth} ${styles.exploreButton}`}>
-                    <Play className={styles.playIcon} />
-                    Probar demo piloto
-                  </Button>
-                </Link>
-              </div> */}
+              <div className={styles.buttonWrapper}>
+                <Button variant="outline" size="lg" className={styles.fullWidth} onClick={() => router.push('/login')}>
+                  Iniciar Sesión
+                </Button>
+              </div>
+            </div>
+            
+            {/* Link secundario para whitelist */}
+            <div className="mt-4 text-center">
+              <button
+                onClick={() => router.push('/questionnaire')}
+                className="text-sm text-neutral-400 hover:text-turquoise transition-colors underline"
+              >
+                ¿Buscas unirte a la whitelist?
+              </button>
             </div>
           </motion.div>
         </div>

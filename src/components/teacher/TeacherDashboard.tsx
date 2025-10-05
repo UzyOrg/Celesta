@@ -46,40 +46,42 @@ export default function TeacherDashboard({
   exportQS,
 }: TeacherDashboardProps) {
   const [showFilters, setShowFilters] = useState(false);
+  const [showDetailedAnalysis, setShowDetailedAnalysis] = useState(false);
 
   return (
     <div className="space-y-8">
-      {/* Header with filters */}
-      <div className="flex items-start justify-between gap-4">
+      {/* Header with filters - Responsive */}
+      <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-neutral-300 bg-clip-text text-transparent mb-2">
+          <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-white to-neutral-300 bg-clip-text text-transparent mb-2">
             Panel Docente
           </h1>
-          <p className="text-neutral-400">
+          <p className="text-sm md:text-base text-white">
             Grupo: <span className="text-lime font-medium">{classToken}</span>
           </p>
         </div>
 
-        <div className="flex gap-3">
+        <div className="flex gap-2 md:gap-3">
           <motion.button
             onClick={() => setShowFilters(!showFilters)}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-neutral-800/80 hover:bg-neutral-700 border border-neutral-700/50 rounded-xl text-sm font-medium transition-all"
+            className="flex-1 md:flex-none inline-flex items-center justify-center gap-2 px-3 md:px-4 py-2 bg-neutral-800/80 hover:bg-neutral-700 border border-neutral-700/50 rounded-xl text-xs md:text-sm font-medium transition-all"
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >
             <Filter className="w-4 h-4" />
-            Filtros
+            <span className="md:inline">Filtros</span>
           </motion.button>
 
           <motion.a
             href={`/api/teacher/export?${exportQS}`}
             download
-            className="inline-flex items-center gap-2 px-4 py-2 bg-turquoise/10 hover:bg-turquoise/20 border border-turquoise/30 text-turquoise rounded-xl text-sm font-medium transition-all"
+            className="flex-1 md:flex-none inline-flex items-center justify-center gap-2 px-3 md:px-4 py-2 bg-turquoise/10 hover:bg-turquoise/20 border border-turquoise/30 text-turquoise rounded-xl text-xs md:text-sm font-medium transition-all"
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >
             <Download className="w-4 h-4" />
-            Exportar CSV
+            <span className="hidden md:inline">Exportar CSV</span>
+            <span className="md:hidden">CSV</span>
           </motion.a>
         </div>
       </div>
@@ -135,8 +137,8 @@ export default function TeacherDashboard({
         </motion.div>
       )}
 
-      {/* Metrics Grid */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+      {/* Metrics Grid - 2x2 en móvil, 4 columnas en desktop */}
+      <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
         <MetricCard
           title="Estudiantes Activos"
           value={studentCount}
@@ -167,16 +169,44 @@ export default function TeacherDashboard({
         />
       </div>
 
-      {/* Radar Chart */}
+      {/* Performance Indicators - Mobile-First */}
       <Card className="p-6">
         <div className="space-y-4">
-          <div>
-            <h2 className="text-xl font-bold text-neutral-100">Indicadores de Desempeño</h2>
-            <p className="text-sm text-neutral-400 mt-1">
-              Análisis multidimensional del grupo
-            </p>
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h2 className="text-xl font-bold text-neutral-100">Indicadores de Desempeño</h2>
+              <p className="text-sm text-neutral-400 mt-1">
+                Análisis multidimensional del grupo
+              </p>
+            </div>
+            
+            {/* Botón para mostrar análisis completo en móvil */}
+            <button
+              onClick={() => setShowDetailedAnalysis(!showDetailedAnalysis)}
+              className="md:hidden px-3 py-1.5 bg-turquoise/10 hover:bg-turquoise/20 border border-turquoise/30 text-turquoise rounded-lg text-xs font-medium transition-all"
+            >
+              {showDetailedAnalysis ? 'Ocultar Gráfico' : 'Ver Análisis'}
+            </button>
           </div>
-          <div className="h-[400px]">
+
+          {/* KPIs Simplificados - Móvil por defecto, siempre visibles en desktop */}
+          <div className={`grid grid-cols-2 gap-3 ${showDetailedAnalysis ? 'md:hidden' : ''}`}>
+            {radarData.slice(0, 4).map((item, idx) => (
+              <div key={idx} className="p-4 rounded-xl bg-neutral-800/30 border border-neutral-700/30">
+                <p className="text-xs text-neutral-400 mb-1">{item.metric}</p>
+                <p className="text-2xl font-bold text-lime">{item.valor.toFixed(1)}</p>
+                <div className="mt-2 h-1.5 bg-neutral-700 rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-gradient-to-r from-turquoise to-lime rounded-full transition-all duration-500"
+                    style={{ width: `${(item.valor / 10) * 100}%` }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Radar Chart Completo - Desktop siempre, móvil solo si se expande */}
+          <div className={`${showDetailedAnalysis ? '' : 'hidden md:block'} h-[400px]`}>
             <RadarChart data={radarData} />
           </div>
         </div>
@@ -209,8 +239,9 @@ export default function TeacherDashboard({
                     href={`/teacher/${classToken}/student/${student.sessionId}`}
                     className="block p-4 rounded-xl bg-neutral-800/30 border border-neutral-700/30 hover:border-turquoise/50 hover:bg-neutral-800/50 transition-all group"
                   >
-                    <div className="flex items-center justify-between gap-4">
-                      <div className="flex items-center gap-4 flex-1 min-w-0">
+                    {/* Layout responsive: columna en móvil, fila en desktop */}
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-4">
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
                         <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-lime to-turquoise flex items-center justify-center font-bold text-black text-sm flex-shrink-0">
                           {student.alias.slice(0, 2).toUpperCase()}
                         </div>
@@ -218,21 +249,21 @@ export default function TeacherDashboard({
                           <p className="font-semibold text-white truncate group-hover:text-turquoise transition-colors">
                             {student.alias}
                           </p>
-                          <p className="text-xs text-neutral-500 truncate">
+                          <p className="text-xs text-neutral-500 truncate md:hidden">
                             ID: {student.sessionId.slice(0, 12)}...
                           </p>
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-6">
-                        <div className="text-right">
-                          <p className="text-sm font-medium text-neutral-400">Pasos completados</p>
-                          <p className="text-2xl font-bold text-lime">{student.stepsCompleted}</p>
+                      <div className="flex items-center justify-between md:gap-6">
+                        <div className="flex items-center gap-2">
+                          <p className="text-xs md:text-sm font-medium text-neutral-400">Pasos</p>
+                          <p className="text-xl md:text-2xl font-bold text-lime">{student.stepsCompleted}</p>
                         </div>
 
-                        <div className="flex items-center gap-2 text-turquoise opacity-0 group-hover:opacity-100 transition-opacity">
-                          <Eye className="w-5 h-5" />
-                          <span className="text-sm font-medium">Ver detalle</span>
+                        <div className="flex items-center gap-2 text-turquoise group-hover:opacity-100 md:opacity-0 transition-opacity">
+                          <Eye className="w-4 h-4 md:w-5 md:h-5" />
+                          <span className="text-xs md:text-sm font-medium">Ver</span>
                         </div>
                       </div>
                     </div>

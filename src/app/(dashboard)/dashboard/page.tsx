@@ -1,8 +1,8 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import AppShell from '@/components/shell/AppShell';
 import PageContainer from '@/components/shell/PageContainer';
 import { MetricCard } from '@/components/shell/Card';
+import MetricCardSkeleton from '@/components/skeletons/MetricCardSkeleton';
 import { Target, Trophy, Clock, Zap } from 'lucide-react';
 import { createClient } from '@supabase/supabase-js';
 import { getOrCreateSessionId } from '@/lib/session';
@@ -121,41 +121,51 @@ export default function DashboardPage() {
   }, []);
 
   return (
-    <AppShell userAlias="Estudiante" userRole="student">
       <PageContainer
         title="Dashboard"
         subtitle="Tu progreso y próximas misiones"
         maxWidth="7xl"
       >
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
-          <MetricCard
-            title="Misiones Completadas"
-            value={completedMissions.toString()}
-            icon={Trophy}
-            color="lime"
-            subtitle={completedMissions === 0 ? "Ninguna aún" : `${completedMissions} ${completedMissions === 1 ? 'misión' : 'misiones'}`}
-          />
-          <MetricCard
-            title="Puntos Totales"
-            value={totalPoints.toString()}
-            icon={Target}
-            color="turquoise"
-            subtitle={totalPoints === 0 ? "Comienza tu primera misión" : `${totalPoints} puntos acumulados`}
-          />
-          <MetricCard
-            title="Tiempo Invertido"
-            value={`${totalMinutes} min`}
-            icon={Clock}
-            color="blue"
-            subtitle={totalMinutes === 0 ? "" : `${Math.round(totalMinutes / 60)} horas aproximadamente`}
-          />
-          <MetricCard
-            title="Racha Actual"
-            value={`${currentStreak} ${currentStreak === 1 ? 'día' : 'días'}`}
-            icon={Zap}
-            color="amber"
-            subtitle={currentStreak === 0 ? "Comienza tu racha hoy" : currentStreak === 1 ? "¡Sigue así!" : "¡Increíble consistencia!"}
-          />
+          {loading ? (
+            <>
+              <MetricCardSkeleton />
+              <MetricCardSkeleton />
+              <MetricCardSkeleton />
+              <MetricCardSkeleton />
+            </>
+          ) : (
+            <>
+              <MetricCard
+                title="Misiones Completadas"
+                value={completedMissions.toString()}
+                icon={Trophy}
+                color="lime"
+                subtitle={completedMissions === 0 ? "Ninguna aún" : `${completedMissions} ${completedMissions === 1 ? 'misión' : 'misiones'}`}
+              />
+              <MetricCard
+                title="Puntos Totales"
+                value={totalPoints.toString()}
+                icon={Target}
+                color="turquoise"
+                subtitle={totalPoints === 0 ? "Comienza tu primera misión" : `${totalPoints} puntos acumulados`}
+              />
+              <MetricCard
+                title="Tiempo Invertido"
+                value={`${totalMinutes} min`}
+                icon={Clock}
+                color="blue"
+                subtitle={totalMinutes === 0 ? "" : `${Math.round(totalMinutes / 60)} horas aproximadamente`}
+              />
+              <MetricCard
+                title="Racha Actual"
+                value={`${currentStreak} ${currentStreak === 1 ? 'día' : 'días'}`}
+                icon={Zap}
+                color="amber"
+                subtitle={currentStreak === 0 ? "Comienza tu racha hoy" : currentStreak === 1 ? "¡Sigue así!" : "¡Increíble consistencia!"}
+              />
+            </>
+          )}
         </div>
 
         <div className="bg-neutral-900/60 backdrop-blur-sm rounded-2xl border border-neutral-800/50 p-12 text-center">
@@ -167,6 +177,5 @@ export default function DashboardPage() {
           </p>
         </div>
       </PageContainer>
-    </AppShell>
   );
 }
