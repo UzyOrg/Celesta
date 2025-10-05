@@ -37,15 +37,16 @@ export async function POST(req: Request) {
       auth: { persistSession: false } 
     });
 
-    // 1. Verificar que el class_token existe
-    const { data: classToken, error: tokenError } = await supabase
-      .from('class_tokens')
-      .select('token, teacher_id')
-      .eq('token', parsed.class_token)
-      .single();
+    // 1. Verificar que el class_token existe en class_assignments
+    const { data: classAssignment, error: tokenError } = await supabase
+      .from('class_assignments')
+      .select('class_token, teacher_id')
+      .eq('class_token', parsed.class_token)
+      .eq('is_active', true)
+      .maybeSingle();
 
-    if (tokenError || !classToken) {
-      console.error('[roster/request] Token no encontrado:', parsed.class_token);
+    if (tokenError || !classAssignment) {
+      console.error('[roster/request] Token no encontrado o inactivo:', parsed.class_token, tokenError?.message);
       return NextResponse.json({ error: 'invalid_token' }, { status: 404 });
     }
 
@@ -89,7 +90,7 @@ export async function POST(req: Request) {
       .from('student_roster')
       .insert({
         class_token: parsed.class_token,
-        teacher_id: classToken.teacher_id,
+        teacher_id: classAssignment.teacher_id,
         student_alias: alias,
         status: 'pending',
         student_session_id: null,  // Se asignará después de aprobación
