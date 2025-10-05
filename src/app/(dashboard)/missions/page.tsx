@@ -2,17 +2,70 @@
 import React, { useState, useEffect } from 'react';
 import PageContainer from '@/components/shell/PageContainer';
 import { Card } from '@/components/shell/Card';
-import { Rocket, ArrowRight, Clock, TrendingUp, CheckCircle2 } from 'lucide-react';
+import { Rocket, ArrowRight, Clock, TrendingUp, CheckCircle2, Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function MissionsPage() {
+  const { userState } = useAuth();
   const [isBIO001Completed, setIsBIO001Completed] = useState(false);
+  const [assignedWorkshop, setAssignedWorkshop] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     // Verificar si BIO-001 está completada en localStorage
     const completed = localStorage.getItem('workshop_BIO-001_completed');
     setIsBIO001Completed(completed === 'true');
-  }, []);
+
+    // Obtener el workshop asignado al grupo del estudiante
+    async function fetchAssignedWorkshop() {
+      if (!userState.classToken) {
+        console.error('[missions] No class token available');
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/assignments/get-workshop?class_token=${userState.classToken}`);
+        
+        if (!response.ok) {
+          console.error('[missions] Error fetching workshop assignment');
+          setLoading(false);
+          return;
+        }
+
+        const data = await response.json();
+        setAssignedWorkshop(data.workshop_id);
+        console.log('[missions] Workshop asignado:', data.workshop_id);
+      } catch (error) {
+        console.error('[missions] Error:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchAssignedWorkshop();
+  }, [userState.classToken]);
+
+  // Mostrar loader mientras carga
+  if (loading) {
+    return (
+      <PageContainer
+        title="Misiones"
+        subtitle="Explora talleres interactivos de aprendizaje"
+        maxWidth="7xl"
+      >
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="w-8 h-8 text-turquoise animate-spin" />
+        </div>
+      </PageContainer>
+    );
+  }
+
+  // URL del workshop: usar el classToken del estudiante
+  const workshopUrl = userState.classToken 
+    ? `/demo/student?t=${userState.classToken}`
+    : '/demo/student?t=DEMO-101'; // Fallback
 
   return (
       <PageContainer
@@ -23,7 +76,7 @@ export default function MissionsPage() {
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {/* BIO-001 Mission Card */}
           <Card hover>
-            <Link href="/demo/student?t=DEMO-101" className="block p-6 space-y-4">
+            <Link href={workshopUrl} className="block p-6 space-y-4">
               <div className="flex items-start justify-between">
                 <div className="p-3 rounded-xl bg-gradient-to-br from-turquoise/20 to-lime/10">
                   <Rocket className="w-6 h-6 text-turquoise" />

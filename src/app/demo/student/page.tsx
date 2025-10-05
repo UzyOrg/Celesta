@@ -37,8 +37,8 @@ export default async function Page({
   // Fetch assigned workshop dynamically
   const assignedWorkshopId = await getAssignedWorkshop(classToken);
   
-  // Fallback to cell-mystery if no assignment found
-  const workshopId = assignedWorkshopId || 'cell-mystery';
+  // Fallback to BIO-001 if no assignment found
+  const workshopId = assignedWorkshopId || 'BIO-001';
 
   return (
     <>

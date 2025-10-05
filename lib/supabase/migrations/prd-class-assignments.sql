@@ -33,5 +33,5 @@ comment on column public.class_assignments.is_active is 'Whether this assignment
 -- Insert demo data
 insert into public.class_assignments (class_token, assigned_workshop_id, is_active)
 values 
-  ('DEMO-101', 'cell-mystery', true)
+  ('DEMO-101', 'BIO-001', true)
 on conflict (class_token) do nothing;
