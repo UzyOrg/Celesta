@@ -22,7 +22,6 @@ export async function getCurrentUser(): Promise<User | null> {
         // No es un error real, simplemente no hay sesión
         return null;
       }
-      console.error('[auth] Error getting current user:', error);
       return null;
     }
     
@@ -33,7 +32,6 @@ export async function getCurrentUser(): Promise<User | null> {
     if (err.message?.includes('Auth session missing') || err.name === 'AuthSessionMissingError') {
       return null;
     }
-    console.error('[auth] Exception getting current user:', e);
     return null;
   }
 }
@@ -46,7 +44,6 @@ export async function getCurrentSession(): Promise<Session | null> {
       if (error.message?.includes('Auth session missing')) {
         return null;
       }
-      console.error('[auth] Error getting session:', error);
       return null;
     }
     
@@ -56,7 +53,6 @@ export async function getCurrentSession(): Promise<Session | null> {
     if (err.message?.includes('Auth session missing') || err.name === 'AuthSessionMissingError') {
       return null;
     }
-    console.error('[auth] Exception getting session:', e);
     return null;
   }
 }
@@ -95,7 +91,6 @@ export async function signUpTeacher(data: SignUpData): Promise<SignUpResult> {
     });
 
     if (error) {
-      console.error('[signUpTeacher] Error:', error);
       return {
         success: false,
         error: error.message || 'Error al crear cuenta',
@@ -121,7 +116,6 @@ export async function signUpTeacher(data: SignUpData): Promise<SignUpResult> {
       needsEmailConfirmation: needsConfirmation,
     };
   } catch (e) {
-    console.error('[signUpTeacher] Exception:', e);
     return {
       success: false,
       error: (e as Error)?.message || 'Error inesperado',
@@ -138,15 +132,12 @@ export interface SignInResult {
 
 export async function signInTeacher(email: string, password: string): Promise<SignInResult> {
   try {
-    console.log('[signInTeacher] Attempting login for:', email);
-    
     const { data, error } = await supabaseClient.auth.signInWithPassword({
       email,
       password,
     });
 
     if (error) {
-      console.error('[signInTeacher] ❌ Login error:', error.message);
       return {
         success: false,
         error: error.message || 'Credenciales inválidas',
@@ -154,21 +145,11 @@ export async function signInTeacher(email: string, password: string): Promise<Si
     }
 
     if (!data.user || !data.session) {
-      console.error('[signInTeacher] ❌ No user or session returned');
       return {
         success: false,
         error: 'No se pudo iniciar sesión',
       };
     }
-
-    console.log('[signInTeacher] ✅ Login successful for:', data.user.email);
-    console.log('[signInTeacher] Session expires at:', data.session.expires_at);
-    
-    // Verificar que las cookies se guardaron
-    setTimeout(() => {
-      const cookies = document.cookie.split(';').filter(c => c.includes('supabase'));
-      console.log('[signInTeacher] Cookies after login:', cookies.length, 'cookies');
-    }, 100);
 
     return {
       success: true,
@@ -176,7 +157,6 @@ export async function signInTeacher(email: string, password: string): Promise<Si
       session: data.session,
     };
   } catch (e) {
-    console.error('[signInTeacher] ❌ Exception:', e);
     return {
       success: false,
       error: (e as Error)?.message || 'Error inesperado',
@@ -193,7 +173,6 @@ export async function signInTeacher(email: string, password: string): Promise<Si
  * 2. Client-side state cleanup (localStorage)
  */
 export async function signOut(): Promise<void> {
-  console.warn('[signOut] DEPRECATED: Use logout() from @/lib/session for secure logout');
   const { logout } = await import('./session');
   return logout();
 }
@@ -218,13 +197,11 @@ export async function getTeacherProfile(userId: string): Promise<TeacherProfile 
       .single();
 
     if (error) {
-      console.error('[getTeacherProfile] Error:', error);
       return null;
     }
 
     return data;
   } catch (e) {
-    console.error('[getTeacherProfile] Exception:', e);
     return null;
   }
 }
@@ -240,13 +217,11 @@ export async function updateTeacherProfile(
       .eq('id', userId);
 
     if (error) {
-      console.error('[updateTeacherProfile] Error:', error);
       return false;
     }
 
     return true;
   } catch (e) {
-    console.error('[updateTeacherProfile] Exception:', e);
     return false;
   }
 }
@@ -258,7 +233,6 @@ export async function updateTeacherProfile(
 export function onAuthStateChange(callback: (user: User | null) => void) {
   const { data: { subscription } } = supabaseClient.auth.onAuthStateChange(
     (event, session) => {
-      console.log('[auth] State change:', event, session?.user?.email);
       callback(session?.user || null);
     }
   );

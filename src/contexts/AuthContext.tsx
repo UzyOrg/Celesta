@@ -56,7 +56,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // PASO 1: Verificar autenticación de Supabase (DOCENTE)
     const supabaseUser = await getCurrentUser();
     if (supabaseUser) {
-      console.log('[AuthContext] ✅ DOCENTE detectado:', supabaseUser.email);
       return {
         role: 'docente',
         user: supabaseUser,
@@ -80,8 +79,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           // Por ahora, verificamos si tiene session_id guardado (legacy compatibility)
           const sessionId = localStorage.getItem(`celesta:sid:${classToken}`);
           
-          console.log('[AuthContext] ✅ ESTUDIANTE detectado:', alias, 'en', classToken);
-          
           // NOTA: La verificación de aprobación se hace en EstudianteGuard
           // para no bloquear la carga inicial de la app
           return {
@@ -95,7 +92,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     // PASO 3: No hay nada (INVITADO)
-    console.log('[AuthContext] ℹ️ INVITADO detectado (sin credenciales)');
     return {
       role: 'invitado',
       user: null,
@@ -109,14 +105,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     determineUserState().then(state => {
       setUserState(state);
       setLoading(false);
-      console.log('[AuthContext] Estado inicial:', state.role);
     });
 
     // Escuchar cambios de autenticación (solo afecta a DOCENTES)
     const subscription = onAuthStateChange((newUser) => {
       if (newUser) {
         // Usuario se autenticó → DOCENTE
-        console.log('[AuthContext] 🔄 Usuario autenticado → DOCENTE:', newUser.email);
         setUserState({
           role: 'docente',
           user: newUser,
@@ -125,7 +119,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         });
       } else {
         // Usuario cerró sesión → Re-determinar (podría ser ESTUDIANTE o INVITADO)
-        console.log('[AuthContext] 🔄 Sesión cerrada, re-determinando rol...');
         determineUserState().then(setUserState);
       }
     });
