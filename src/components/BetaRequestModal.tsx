@@ -92,7 +92,7 @@ const BetaRequestModal: React.FC<BetaRequestModalProps> = ({ isOpen, onClose }) 
                   <X className="w-4 h-4 sm:w-5 sm:h-5" />
                 </button>
                 <h2 className="text-xl sm:text-2xl font-bold text-white mb-1 sm:mb-2">
-                  Solicitar Acceso a la Beta
+                  Solicitar acceso
                 </h2>
                 <p className="text-xs sm:text-sm text-neutral-400">
                   Únete a los pioneros transformando la educación
