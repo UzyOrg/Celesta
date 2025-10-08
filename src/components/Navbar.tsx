@@ -71,7 +71,7 @@ const Navbar: React.FC = () => {
               className="px-4 py-2 text-sm font-medium bg-gradient-to-r from-crystal-blue to-crystal-lavender text-black rounded-lg hover:opacity-90 transition-all flex items-center gap-2"
             >
               <Rocket className="w-4 h-4" />
-              Solicitar Acceso
+              Contáctanos
             </button>
           </div>
 
@@ -81,7 +81,7 @@ const Navbar: React.FC = () => {
               onClick={openBetaModal}
               className={styles.mobileDemoButton}
             >
-              Acceso
+              Contáctanos
             </button>
           </div>
         </div>
@@ -109,7 +109,7 @@ const Navbar: React.FC = () => {
             >
               <span className="text-crystal-blue font-semibold flex items-center gap-2">
                 <Rocket className="w-4 h-4" />
-                Solicitar Acceso
+                Contáctanos
               </span>
             </button>
           </motion.div>

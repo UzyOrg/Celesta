@@ -181,10 +181,16 @@
     margin-right: auto;
   }
 
-  /* On mobile, hide the video and show the placeholder image */
-  .featureVideo,
+  /* On mobile, show images with adjusted size */
+  .featureVideo {
+    max-width: 270px;
+    width: 100%;
+    height: auto;
+    margin: 0 auto;
+  }
+
   .videoGlow {
-    display: none;
+    display: block;
   }
 
   .featureImage {

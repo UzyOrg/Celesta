@@ -87,7 +87,7 @@ const Hero: React.FC = () => {
                   onClick={() => setIsBetaModalOpen(true)}
                 >
                   <Rocket className="hidden md:inline w-4 h-4 md:mr-2" />
-                  Solicitar Acceso
+                  Probar Ahora
                 </Button>
               </div>
             </div>
