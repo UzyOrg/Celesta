@@ -33,10 +33,7 @@ export default function AuthGuard({ children, redirectTo = '/login' }: AuthGuard
     // Solo redirigir si auth ya cargó y no hay usuario
     if (!loading && !user) {
       const returnUrl = encodeURIComponent(pathname || '/grupos');
-      console.log('[AuthGuard] No user found, redirecting to login');
       router.replace(`${redirectTo}?redirect=${returnUrl}`);
-    } else if (!loading && user) {
-      console.log('[AuthGuard] ✅ User authenticated:', user.email);
     }
   }, [user, loading, router, pathname, redirectTo]);
 

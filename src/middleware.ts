@@ -1,5 +1,6 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { generateCsrfToken } from '@/lib/csrf'
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({
@@ -7,6 +8,18 @@ export async function middleware(request: NextRequest) {
       headers: request.headers,
     },
   })
+
+  // SECURITY: Establecer CSRF token si no existe
+  if (!request.cookies.get('csrf-token')) {
+    const csrfToken = generateCsrfToken();
+    response.cookies.set('csrf-token', csrfToken, {
+      httpOnly: false, // Debe ser accesible desde JS
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 60 * 60 * 24 // 24 horas
+    });
+  }
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

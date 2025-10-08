@@ -53,10 +53,10 @@ export default function TeacherDashboard({
       {/* Header with filters - Responsive */}
       <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-white to-neutral-300 bg-clip-text text-transparent mb-2">
+          <h1 className="text-xl md:text-2xl font-bold bg-gradient-to-r from-white to-neutral-300 bg-clip-text text-transparent mb-2">
             Panel Docente
           </h1>
-          <p className="text-sm md:text-base text-white">
+          <p className="text-sm md:text-base !text-white">
             Grupo: <span className="text-lime font-medium">{classToken}</span>
           </p>
         </div>

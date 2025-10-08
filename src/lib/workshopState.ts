@@ -87,56 +87,53 @@ export function clearWorkshopProgress(sessionId: string, tallerId: string): void
 
 /**
  * Verifica si un workshop ya fue completado
- * PRIMARIO: Supabase (source of truth)
- * FALLBACK: localStorage (offline)
+ * ÚNICA FUENTE DE VERDAD: Supabase
+ * 
+ * @deprecated Use direct Supabase queries instead
  */
 export async function isWorkshopCompletedAsync(
   sessionId: string, 
   tallerId: string,
   supabaseUrl?: string,
-  supabaseKey?: string
+  supabaseKey?: string,
+  alias?: string,
+  classToken?: string
 ): Promise<boolean> {
+  if (!supabaseUrl || !supabaseKey) return false;
+  
   try {
-    // 1. PRIMARIO: Verificar en Supabase
-    if (supabaseUrl && supabaseKey) {
-      const { createClient } = await import('@supabase/supabase-js');
-      const supabase = createClient(supabaseUrl, supabaseKey);
-      
+    const { createClient } = await import('@supabase/supabase-js');
+    const supabase = createClient(supabaseUrl, supabaseKey);
+    
+    // PRIMARIO: Buscar por alias (más confiable)
+    if (alias && alias.trim().length > 0) {
       const { data, error } = await supabase
         .from('eventos_de_aprendizaje')
         .select('id')
-        .eq('student_session_id', sessionId)
         .eq('taller_id', tallerId)
         .eq('verbo', 'taller_completado')
-        .limit(1);
+        .eq('result->>alias', alias)
+        .limit(1)
+        .single();
       
-      if (!error && data && data.length > 0) {
-        console.log('[workshopState] Workshop completado (verificado en Supabase)');
-        return true;
-      }
-    }
-  } catch (error) {
-    console.log('[workshopState] Supabase no disponible, usando localStorage');
-  }
-  
-  // 2. FALLBACK: localStorage (offline)
-  try {
-    const localCompleted = localStorage.getItem(`workshop_${tallerId}_completed`);
-    if (localCompleted === 'true') {
-      console.log('[workshopState] Workshop completado (verificado en localStorage)');
-      return true;
+      if (!error && data) return true;
     }
     
-    const progress = loadWorkshopProgress(sessionId, tallerId);
-    if (progress?.completado) {
-      console.log('[workshopState] Workshop completado (verificado en progreso local)');
-      return true;
-    }
+    // FALLBACK: Buscar por student_session_id
+    const { data, error } = await supabase
+      .from('eventos_de_aprendizaje')
+      .select('id')
+      .eq('student_session_id', sessionId)
+      .eq('taller_id', tallerId)
+      .eq('verbo', 'taller_completado')
+      .limit(1)
+      .single();
+    
+    return !error && !!data;
   } catch (error) {
-    console.error('[workshopState] Error verificando localStorage:', error);
+    console.error('[workshopState] Error checking completion:', error);
+    return false;
   }
-  
-  return false;
 }
 
 /**

@@ -16,8 +16,6 @@ import { motion } from 'framer-motion';
 export default function BibliotecaPage() {
   const { userState, isDocente, isEstudiante, loading } = useAuth();
 
-  console.log('[BibliotecaPage] Role:', userState.role, '| Loading:', loading);
-
   // Mostrar loader mientras determina el rol
   if (loading) {
     return (

@@ -1,14 +1,16 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowRight, Mail } from 'lucide-react';
+import { ArrowRight, Mail, Rocket } from 'lucide-react';
 import Container from './Container';
 import Button from './Button';
+import BetaRequestModal from './BetaRequestModal';
 import { headingStyles, textStyles } from '../styles/typography';
 import { useRouter } from 'next/navigation';
 import styles from './CTASection.module.css'; // Import the CSS module
 
 const CTASection: React.FC = () => {
   const router = useRouter();
+  const [isBetaModalOpen, setIsBetaModalOpen] = useState(false);
   return (
     <>
       <section id="cta" className={styles.ctaSection}>
@@ -56,13 +58,14 @@ const CTASection: React.FC = () => {
                   className={styles.buttonContainer}
                 >
                   <div className={styles.buttonWrapper}>
-                    <Button variant="gradient" size="lg" onClick={() => router.push('/signup')}>
-                      Comenzar Ahora <ArrowRight className="ml-2 w-4 h-4" />
-                    </Button>
-                  </div>
-                  <div className={styles.buttonWrapper}>
-                    <Button variant="outline" size="lg" onClick={() => router.push('/login')}>
-                      Iniciar Sesión
+                    <Button
+                      variant="gradient"
+                      size="lg"
+                      onClick={() => setIsBetaModalOpen(true)}
+                    >
+                      <Rocket className="mr-2 w-5 h-5" />
+                      Solicitar Acceso a la Beta
+                      <ArrowRight className="ml-2 w-4 h-4" />
                     </Button>
                   </div>
                 </motion.div>
@@ -71,6 +74,12 @@ const CTASection: React.FC = () => {
           </div>
         </Container>
       </section>
+      
+      {/* Beta Request Modal */}
+      <BetaRequestModal
+        isOpen={isBetaModalOpen}
+        onClose={() => setIsBetaModalOpen(false)}
+      />
     </>
   );
 };

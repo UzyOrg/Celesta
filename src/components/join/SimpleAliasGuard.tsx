@@ -23,7 +23,6 @@ export default function SimpleAliasGuard() {
       for (const key of priorityKeys) {
         const alias = localStorage.getItem(key);
         if (alias && alias.trim().length > 0) {
-          console.log(`[SimpleAliasGuard] Found alias: "${alias}" in ${key}`);
           hasAlias = true;
           break;
         }
@@ -35,7 +34,6 @@ export default function SimpleAliasGuard() {
         for (const key of allKeys) {
           const alias = localStorage.getItem(key);
           if (alias && alias.trim().length > 0) {
-            console.log(`[SimpleAliasGuard] Found alias: "${alias}" in ${key}`);
             hasAlias = true;
             break;
           }
@@ -44,7 +42,6 @@ export default function SimpleAliasGuard() {
       
       // Si no hay alias, redirigir a /join
       if (!hasAlias) {
-        console.log('[SimpleAliasGuard] No alias found, redirecting to /join');
         const currentUrl = window.location.pathname + window.location.search;
         const redirectParam = encodeURIComponent(currentUrl);
         window.location.replace(`/join?redirect=${redirectParam}`);

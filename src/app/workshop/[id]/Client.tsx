@@ -4,15 +4,13 @@ import { useWorkshop } from '@/lib/workshops/useWorkshop';
 import InteractivePlayer from '@/components/workshop/InteractivePlayer';
 import { motion } from 'framer-motion';
 import { AlertCircle, Loader2 } from 'lucide-react';
-import type { AdaptationResult } from '@/lib/adaptive/schema';
 
 type Props = {
   id: string;
   classToken?: string;
-  adaptacion?: AdaptationResult | null;
 };
 
-export default function WorkshopClient({ id, classToken, adaptacion }: Props) {
+export default function WorkshopClient({ id, classToken }: Props) {
   const { data, loading, error } = useWorkshop(id);
 
   if (loading) {
@@ -65,5 +63,5 @@ export default function WorkshopClient({ id, classToken, adaptacion }: Props) {
     );
   }
 
-  return <InteractivePlayer workshop={data} classToken={classToken} adaptacion={adaptacion} />;
+  return <InteractivePlayer workshop={data} classToken={classToken} />;
 }

@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const sessionIdsParam = searchParams.get('sessionIds');
   const alias = searchParams.get('alias');
-  const classToken = searchParams.get('classToken');
+  const classToken = searchParams.get('classToken') || searchParams.get('class_token');
   
   // Opción 1: Por session IDs (primario)
   if (sessionIdsParam) {
@@ -87,25 +87,50 @@ async function getBySessionIds(sessionIds: string[]) {
     );
     
     // Calcular racha (días consecutivos con actividad)
+    // Incluir eventos de taller_completado también
+    const { data: allEventsForStreak } = await supabase
+      .from('eventos_de_aprendizaje')
+      .select('ts')
+      .in('student_session_id', sessionIds)
+      .in('verbo', ['completo_paso', 'taller_completado']);
+    
     const uniqueDates = new Set(
-      stepsData?.map(e => e.ts?.split('T')[0]) ?? []
+      allEventsForStreak?.map(e => e.ts?.split('T')[0]).filter(Boolean) ?? []
     );
     const sortedDates = Array.from(uniqueDates).sort().reverse();
     
     let racha = 0;
     if (sortedDates.length > 0) {
       const today = new Date().toISOString().split('T')[0];
-      let currentDate = new Date(today);
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayStr = yesterday.toISOString().split('T')[0];
       
-      for (const dateStr of sortedDates) {
-        const eventDate = dateStr ?? '';
-        const compareDate = currentDate.toISOString().split('T')[0];
+      // Determinar desde cuándo empezar a contar
+      let startDate: Date | null = null;
+      if (sortedDates.includes(today)) {
+        // Tiene actividad hoy, empezar desde hoy
+        startDate = new Date(today);
+        racha = 1;
+      } else if (sortedDates.includes(yesterdayStr)) {
+        // No tiene hoy pero sí ayer, empezar desde ayer
+        startDate = yesterday;
+        racha = 1;
+      }
+      
+      // Continuar contando días consecutivos hacia atrás
+      if (startDate && racha > 0) {
+        let currentDate = new Date(startDate);
+        currentDate.setDate(currentDate.getDate() - 1);
         
-        if (eventDate === compareDate) {
-          racha++;
-          currentDate.setDate(currentDate.getDate() - 1);
-        } else {
-          break;
+        for (let i = 1; i < sortedDates.length; i++) {
+          const compareDate = currentDate.toISOString().split('T')[0];
+          if (sortedDates.includes(compareDate)) {
+            racha++;
+            currentDate.setDate(currentDate.getDate() - 1);
+          } else {
+            break;
+          }
         }
       }
     }
@@ -137,31 +162,79 @@ async function getByAliasAndToken(alias: string, classToken: string) {
       auth: { persistSession: false }
     });
     
-    // 1. Talleres completados (buscar por columna student_alias)
-    const { data: completedData, error: completedError } = await supabase
+    // 1. Obtener student_session_id desde el roster
+    const { data: rosterEntry, error: rosterError } = await supabase
+      .from('student_roster')
+      .select('student_session_id')
+      .eq('class_token', classToken)
+      .eq('student_alias', alias)
+      .eq('status', 'approved')
+      .single();
+
+    if (rosterError || !rosterEntry?.student_session_id) {
+      console.error('[API][completed-missions] Student not found in roster');
+      return NextResponse.json({ 
+        completedMissions: 0,
+        workshops: [],
+        totalStepsCompleted: 0,
+        totalPoints: 0,
+        totalMinutes: 0
+      });
+    }
+
+    const studentSessionId = rosterEntry.student_session_id;
+
+    // 2. Talleres completados (buscar por student_session_id)
+    let { data: completedData, error: completedError } = await supabase
       .from('eventos_de_aprendizaje')
       .select('taller_id')
-      .eq('class_token', classToken)
-      .eq('verbo', 'taller_completado')
-      .eq('student_alias', alias);  // ✅ Buscar por columna directa
+      .eq('student_session_id', studentSessionId)
+      .eq('verbo', 'taller_completado');
+
+    // FALLBACK: Buscar por alias en result si no hay eventos
+    if (!completedData || completedData.length === 0) {
+      const { data: byAlias } = await supabase
+        .from('eventos_de_aprendizaje')
+        .select('taller_id')
+        .eq('class_token', classToken)
+        .eq('verbo', 'taller_completado')
+        .eq('result->>alias', alias);
+      
+      if (byAlias && byAlias.length > 0) {
+        completedData = byAlias;
+      }
+    }
     
     if (completedError) {
-      console.error('[API][completed-missions] Error talleres por alias:', completedError);
+      console.error('[API][completed-missions] Error talleres:', completedError);
       return NextResponse.json({ error: completedError.message }, { status: 500 });
     }
     
     const uniqueWorkshops = Array.from(new Set(completedData?.map(e => e.taller_id) ?? []));
     
-    // 2. Pasos completados (para métricas)
-    const { data: stepsData, error: stepsError } = await supabase
+    // 3. Pasos completados (para métricas)
+    let { data: stepsData, error: stepsError } = await supabase
       .from('eventos_de_aprendizaje')
       .select('result, ts')
-      .eq('class_token', classToken)
-      .eq('verbo', 'completo_paso')
-      .eq('student_alias', alias);  // ✅ Buscar por columna directa
+      .eq('student_session_id', studentSessionId)
+      .eq('verbo', 'completo_paso');
+
+    // FALLBACK: Buscar por alias en result
+    if (!stepsData || stepsData.length === 0) {
+      const { data: stepsByAlias } = await supabase
+        .from('eventos_de_aprendizaje')
+        .select('result, ts')
+        .eq('class_token', classToken)
+        .eq('verbo', 'completo_paso')
+        .eq('result->>alias', alias);
+      
+      if (stepsByAlias && stepsByAlias.length > 0) {
+        stepsData = stepsByAlias;
+      }
+    }
     
     if (stepsError) {
-      console.error('[API][completed-missions] Error pasos por alias:', stepsError);
+      console.error('[API][completed-missions] Error pasos:', stepsError);
     }
     
     // Calcular métricas (igual que antes)
@@ -181,25 +254,48 @@ async function getByAliasAndToken(alias: string, classToken: string) {
       }, 0) ?? 0) / 60
     );
     
+    // Calcular racha: incluir eventos de taller_completado también
+    const { data: allEventsForStreak } = await supabase
+      .from('eventos_de_aprendizaje')
+      .select('ts')
+      .or(`student_session_id.eq.${studentSessionId},and(class_token.eq.${classToken},result->>alias.eq.${alias})`)
+      .in('verbo', ['completo_paso', 'taller_completado']);
+    
     const uniqueDates = new Set(
-      stepsData?.map(e => e.ts?.split('T')[0]) ?? []
+      allEventsForStreak?.map(e => e.ts?.split('T')[0]).filter(Boolean) ?? []
     );
     const sortedDates = Array.from(uniqueDates).sort().reverse();
     
     let racha = 0;
     if (sortedDates.length > 0) {
       const today = new Date().toISOString().split('T')[0];
-      let currentDate = new Date(today);
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayStr = yesterday.toISOString().split('T')[0];
       
-      for (const dateStr of sortedDates) {
-        const eventDate = dateStr ?? '';
-        const compareDate = currentDate.toISOString().split('T')[0];
+      // Determinar desde cuándo empezar a contar
+      let startDate: Date | null = null;
+      if (sortedDates.includes(today)) {
+        startDate = new Date(today);
+        racha = 1;
+      } else if (sortedDates.includes(yesterdayStr)) {
+        startDate = yesterday;
+        racha = 1;
+      }
+      
+      // Continuar contando días consecutivos hacia atrás
+      if (startDate && racha > 0) {
+        let currentDate = new Date(startDate);
+        currentDate.setDate(currentDate.getDate() - 1);
         
-        if (eventDate === compareDate) {
-          racha++;
-          currentDate.setDate(currentDate.getDate() - 1);
-        } else {
-          break;
+        for (let i = 1; i < sortedDates.length; i++) {
+          const compareDate = currentDate.toISOString().split('T')[0];
+          if (sortedDates.includes(compareDate)) {
+            racha++;
+            currentDate.setDate(currentDate.getDate() - 1);
+          } else {
+            break;
+          }
         }
       }
     }

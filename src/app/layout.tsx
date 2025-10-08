@@ -24,6 +24,7 @@ export default function RootLayout({
 }) {
   useEffect(() => {
     initTracking();
+    
     if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
       // Register service worker for offline support
       navigator.serviceWorker.register('/sw.js').catch(() => {
@@ -41,19 +42,7 @@ export default function RootLayout({
         <AuthProvider>
           <ModalProvider>
             <ThemeProvider>
-              <div className="min-h-screen flex flex-col">
-                <main className="flex-grow">
-                  {children}
-                </main>
-                <footer className="border-t border-neutral-800 text-sm text-neutral-400">
-                  <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-                    <p> {new Date().getFullYear()} Celesta</p>
-                    <nav className="space-x-4">
-                      <a href="/transparencia-ia" className="hover:text-white">Transparencia de IA</a>
-                    </nav>
-                  </div>
-                </footer>
-              </div>
+              {children}
             </ThemeProvider>
 
             <Toaster position="bottom-right" />

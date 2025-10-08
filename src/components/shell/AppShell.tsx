@@ -205,13 +205,13 @@ export default function AppShell({ children, userAlias, userRole, className = ''
           </button>
           
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-turquoise to-lime flex items-center justify-center">
+            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-crystal-blue to-crystal-lavender flex items-center justify-center">
               <Sparkles className="w-4 h-4 text-black" />
             </div>
             <span className="text-sm font-bold text-white">Celestea</span>
           </div>
           
-          <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-lime to-turquoise flex items-center justify-center">
+          <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-crystal-lavender to-crystal-blue flex items-center justify-center">
             <User className="w-5 h-5 text-black" />
           </div>
         </div>
@@ -252,7 +252,7 @@ export default function AppShell({ children, userAlias, userRole, className = ''
         <div className="flex items-center justify-between p-6 border-b border-neutral-800/50">
           {!collapsed ? (
             <div className="flex items-center gap-2 transition-opacity duration-200">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-turquoise to-lime flex items-center justify-center">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-crystal-blue to-crystal-lavender flex items-center justify-center">
                 <Sparkles className="w-5 h-5 text-black" />
               </div>
               <div>
@@ -263,7 +263,7 @@ export default function AppShell({ children, userAlias, userRole, className = ''
               </div>
             </div>
           ) : (
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-turquoise to-lime flex items-center justify-center mx-auto">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-crystal-blue to-crystal-lavender flex items-center justify-center mx-auto">
               <Sparkles className="w-5 h-5 text-black" />
             </div>
           )}
@@ -285,7 +285,7 @@ export default function AppShell({ children, userAlias, userRole, className = ''
                   ${isDisabled 
                     ? 'opacity-40 cursor-not-allowed' 
                     : isActive
-                      ? 'bg-gradient-to-r from-turquoise/20 to-lime/10 text-white shadow-lg shadow-turquoise/10'
+                      ? 'bg-gradient-to-r from-crystal-blue/20 to-crystal-lavender/10 text-white shadow-lg shadow-crystal-blue/10'
                       : 'text-neutral-400 hover:text-white hover:bg-neutral-800/50'
                   }
                 `}
@@ -293,10 +293,10 @@ export default function AppShell({ children, userAlias, userRole, className = ''
               >
                 {/* Indicador de activo - Sin animación para mejor performance */}
                 {isActive && (
-                  <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-turquoise/20 to-lime/10 border border-turquoise/30" />
+                  <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-crystal-blue/20 to-crystal-lavender/10 border border-crystal-blue/30" />
                 )}
                 
-                <Icon className={`w-5 h-5 flex-shrink-0 relative z-10 ${isActive ? 'text-turquoise' : ''}`} />
+                <Icon className={`w-5 h-5 flex-shrink-0 relative z-10 ${isActive ? 'text-crystal-blue' : ''}`} />
                 
                 {!collapsed && (
                   <span className="relative z-10 font-medium text-sm transition-opacity duration-200">
@@ -305,7 +305,7 @@ export default function AppShell({ children, userAlias, userRole, className = ''
                 )}
 
                 {item.badge && !collapsed && (
-                  <span className="ml-auto px-2 py-0.5 text-[10px] font-semibold bg-lime/20 text-lime rounded-full relative z-10">
+                  <span className="ml-auto px-2 py-0.5 text-[10px] font-semibold bg-crystal-lavender/20 text-crystal-lavender rounded-full relative z-10">
                     {item.badge}
                   </span>
                 )}
@@ -324,7 +324,7 @@ export default function AppShell({ children, userAlias, userRole, className = ''
             onClick={() => setProfileMenuOpen(!profileMenuOpen)}
             className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl bg-neutral-800/50 hover:bg-neutral-700/50 transition-colors ${collapsed ? 'justify-center' : ''}`}
           >
-            <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-lime to-turquoise flex items-center justify-center flex-shrink-0">
+            <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-crystal-lavender to-crystal-blue flex items-center justify-center flex-shrink-0">
               <User className="w-5 h-5 text-black" />
             </div>
             {!collapsed && userAlias && (

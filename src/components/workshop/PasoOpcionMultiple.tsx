@@ -82,7 +82,7 @@ export default function PasoOpcionMultiple({ step, onComplete, pistasUsadas, onH
     <div className="space-y-6">
       <div className="space-y-3">
         <h2 className="text-2xl font-bold text-neutral-100">{step.titulo_paso}</h2>
-        <p className="text-lg text-neutral-300 leading-relaxed">{step.opcion_multiple.pregunta}</p>
+        <p className="text-sm md:text-base text-neutral-300 leading-relaxed">{step.opcion_multiple.pregunta}</p>
       </div>
 
       <div className="space-y-3">
@@ -165,7 +165,7 @@ export default function PasoOpcionMultiple({ step, onComplete, pistasUsadas, onH
                   )}
                 </div>
 
-                <span className={`flex-1 text-base ${
+                <span className={`flex-1 text-sm ${
                   showCorrect ? 'text-green-100 font-medium' : 
                   showIncorrect ? 'text-red-100 font-medium' : 
                   isSelected ? 'text-white font-medium' : 'text-neutral-200'

@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createClient } from '@supabase/supabase-js';
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
+import { sanitizeAlias, sanitizeClassToken } from '@/lib/sanitize';
 
 export const runtime = 'nodejs';
 export const revalidate = 0;
@@ -19,16 +21,33 @@ const CheckSchema = z.object({
  * Verifica el estado de la solicitud de un estudiante.
  * Retorna: 'approved', 'pending', 'rejected', o 'not_found'.
  * 
- * Esta API NO requiere autenticación (estudiantes anónimos).
+ * SECURITY:
+ * - Rate limit: 10 checks per minute per IP
+ * - Alias sanitization
+ * - No CSRF (public endpoint)
  */
 export async function POST(req: Request) {
   if (!supabaseUrl || !serviceRoleKey) {
     return NextResponse.json({ error: 'Server misconfigured' }, { status: 500 });
   }
 
+  // SECURITY: Rate limiting (10/min)
+  const clientIp = getClientIp(req);
+  const { allowed } = checkRateLimit(`roster:check:${clientIp}`, 10, 60_000);
+  if (!allowed) {
+    return NextResponse.json(
+      { error: 'rate_limited', message: 'Demasiadas consultas. Espera un momento.' },
+      { status: 429 }
+    );
+  }
+
   try {
     const body = await req.json();
     const parsed = CheckSchema.parse(body);
+    
+    // SECURITY: Sanitizar inputs
+    const alias = sanitizeAlias(parsed.student_alias);
+    const classToken = sanitizeClassToken(parsed.class_token);
 
     const supabase = createClient(supabaseUrl, serviceRoleKey, {
       auth: { persistSession: false }
@@ -38,13 +57,16 @@ export async function POST(req: Request) {
     const { data, error } = await supabase
       .from('student_roster')
       .select('status, student_session_id, approved_at, rejected_at')
-      .eq('class_token', parsed.class_token)
-      .eq('student_alias', parsed.student_alias)
+      .eq('class_token', classToken)
+      .eq('student_alias', alias)
       .maybeSingle();
 
     if (error) {
-      console.error('[roster/check-status] Error:', error);
-      return NextResponse.json({ error: 'check_failed' }, { status: 500 });
+      console.error('[roster/check-status] Query failed:', error.code);
+      return NextResponse.json({ 
+        error: 'service_error',
+        message: 'No se pudo verificar el estado. Intenta de nuevo.'
+      }, { status: 500 });
     }
 
     if (!data) {

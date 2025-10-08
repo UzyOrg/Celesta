@@ -72,7 +72,7 @@ export default function PasoPrediccion({ step, onComplete, pistasUsadas, onHint,
     <div className="space-y-6">
       <div className="space-y-3">
         <h2 className="text-2xl font-bold text-neutral-100">{step.titulo_paso}</h2>
-        <p className="text-lg text-neutral-300 leading-relaxed">{step.pregunta}</p>
+        <p className="text-sm md:text-base text-neutral-300 leading-relaxed">{step.pregunta}</p>
       </div>
 
       <div className="space-y-3">
@@ -126,7 +126,7 @@ export default function PasoPrediccion({ step, onComplete, pistasUsadas, onHint,
                   )}
                 </div>
 
-                <span className={`flex-1 text-base ${
+                <span className={`flex-1 text-sm ${
                   isSelected ? 'text-white font-medium' : 'text-neutral-200'
                 }`}>
                   {op.texto}

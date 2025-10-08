@@ -24,7 +24,6 @@ export default function AliasGuard({ token }: { token: string }) {
         // Si encontramos alias global, copiarlo al token específico para futuras consultas
         if (alias && alias.trim().length > 0) {
           localStorage.setItem(tokenKey, alias);
-          console.log(`[AliasGuard] Copied global alias "${alias}" to token ${t}`);
           return; // Alias encontrado, no redirigir
         }
       }
@@ -37,14 +36,10 @@ export default function AliasGuard({ token }: { token: string }) {
         const url = new URL(window.location.href);
         const currentT = url.searchParams.get("t") || t || "DEMO-101";
         
-        console.log(`[AliasGuard] No alias found, redirecting to /join?t=${currentT}`);
-        
         // Redirigir a /join con token y URL de retorno
         window.location.replace(
           `/join?t=${encodeURIComponent(currentT)}&redirect=${redirectParam}`
         );
-      } else {
-        console.log(`[AliasGuard] Alias found: "${alias}" for token: ${t || "__global__"}`);
       }
     } catch (e) {
       console.error('[AliasGuard] Error:', e);

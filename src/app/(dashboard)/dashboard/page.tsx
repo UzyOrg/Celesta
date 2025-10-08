@@ -6,8 +6,10 @@ import MetricCardSkeleton from '@/components/skeletons/MetricCardSkeleton';
 import { Target, Trophy, Clock, Zap } from 'lucide-react';
 import { createClient } from '@supabase/supabase-js';
 import { getOrCreateSessionId } from '@/lib/session';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function DashboardPage() {
+  const { userState } = useAuth();
   const [completedMissions, setCompletedMissions] = useState(0);
   const [totalPoints, setTotalPoints] = useState(0);
   const [totalMinutes, setTotalMinutes] = useState(0);
@@ -18,84 +20,53 @@ export default function DashboardPage() {
     async function loadCompletedMissions() {
       if (typeof window === 'undefined') return;
       
-      // Recolectar TODOS los session IDs de localStorage
-      const sessionIds: string[] = [];
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key?.startsWith('celesta:sid:')) {
-          const sid = localStorage.getItem(key);
-          if (sid) sessionIds.push(sid);
+      // 1. PRIMARIO: Usar alias + classToken del contexto de Auth
+      if (userState.alias && userState.classToken) {
+        try {
+          const response = await fetch(
+            `/api/student/completed-missions?alias=${encodeURIComponent(userState.alias)}&class_token=${encodeURIComponent(userState.classToken)}`
+          );
+          
+          if (response.ok) {
+            const result = await response.json();
+            
+            setCompletedMissions(result.completedMissions || 0);
+            setTotalPoints(result.totalPoints || 0);
+            setTotalMinutes(result.totalMinutes || 0);
+            setCurrentStreak(result.currentStreak || 0);
+            setLoading(false);
+            return;
+          } else {
+            console.error('[Dashboard] Error API:', response.status);
+          }
+        } catch (error) {
+          console.error('[Dashboard] Exception:', error);
         }
       }
       
-      console.log('[Dashboard] Session IDs encontrados:', sessionIds);
-      
-      // 1. PRIMARIO: Usar API con SESSION IDs
+      // 2. FALLBACK: Buscar por session IDs de localStorage
       try {
+        const sessionIds: string[] = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key?.startsWith('celesta:sid:')) {
+            const sid = localStorage.getItem(key);
+            if (sid) sessionIds.push(sid);
+          }
+        }
+        
         if (sessionIds.length > 0) {
-          console.log('[Dashboard] Consultando API por session IDs...');
           const response = await fetch(`/api/student/completed-missions?sessionIds=${sessionIds.join(',')}`);
           
           if (response.ok) {
             const result = await response.json();
-            console.log('[Dashboard] Respuesta API:', result);
-            console.log('[Dashboard] Métricas:', {
-              misiones: result.completedMissions,
-              puntos: result.totalPoints,
-              minutos: result.totalMinutes,
-              racha: result.currentStreak
-            });
-            
-            setCompletedMissions(result.completedMissions);
-            setTotalPoints(result.totalPoints);
-            setTotalMinutes(result.totalMinutes);
-            setCurrentStreak(result.currentStreak);
-            setLoading(false);
-            return;
-          } else {
-            console.error('[Dashboard] Error de API:', response.status, response.statusText);
-          }
-        }
-      } catch (error) {
-        console.error('[Dashboard] Excepción al consultar API por session:', error);
-      }
-      
-      // 2. FALLBACK: Recuperar por ALIAS (si se borró localStorage)
-      try {
-        // Buscar alias en localStorage (cualquier classToken)
-        let aliasFound = null;
-        let tokenFound = null;
-        
-        for (let i = 0; i < localStorage.length; i++) {
-          const key = localStorage.key(i);
-          if (key?.startsWith('celesta:alias:')) {
-            const alias = localStorage.getItem(key);
-            const token = key.replace('celesta:alias:', '');
-            if (alias && token !== '__global__') {
-              aliasFound = alias;
-              tokenFound = token;
-              break;
-            }
-          }
-        }
-        
-        if (aliasFound && tokenFound) {
-          console.log('[Dashboard] Intentando recuperar por alias:', aliasFound, 'token:', tokenFound);
-          const response = await fetch(`/api/student/completed-missions?alias=${encodeURIComponent(aliasFound)}&classToken=${encodeURIComponent(tokenFound)}`);
-          
-          if (response.ok) {
-            const result = await response.json();
-            console.log('[Dashboard] ✅ Datos recuperados por alias:', result);
-            
-            setCompletedMissions(result.completedMissions);
-            setTotalPoints(result.totalPoints);
-            setTotalMinutes(result.totalMinutes);
-            setCurrentStreak(result.currentStreak);
+            setCompletedMissions(result.completedMissions || 0);
+            setTotalPoints(result.totalPoints || 0);
+            setTotalMinutes(result.totalMinutes || 0);
+            setCurrentStreak(result.currentStreak || 0);
             setLoading(false);
             return;
           }
-        } else {
-          console.warn('[Dashboard] No se encontró alias para recuperar datos');
         }
       } catch (error) {
         console.error('[Dashboard] Excepción al consultar por alias:', error);
@@ -118,7 +89,7 @@ export default function DashboardPage() {
     }
     
     loadCompletedMissions();
-  }, []);
+  }, [userState.alias, userState.classToken]);
 
   return (
       <PageContainer
@@ -126,7 +97,7 @@ export default function DashboardPage() {
         subtitle="Tu progreso y próximas misiones"
         maxWidth="7xl"
       >
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
+        <div className="grid gap-3 md:gap-4 lg:gap-6 grid-cols-2 lg:grid-cols-4 mb-6 md:mb-8">
           {loading ? (
             <>
               <MetricCardSkeleton />
@@ -168,12 +139,12 @@ export default function DashboardPage() {
           )}
         </div>
 
-        <div className="bg-neutral-900/60 backdrop-blur-sm rounded-2xl border border-neutral-800/50 p-12 text-center">
-          <h2 className="text-2xl font-bold text-neutral-300 mb-4">
+        <div className="bg-neutral-900/60 backdrop-blur-sm rounded-xl md:rounded-2xl border border-neutral-800/50 p-6 md:p-12 text-center">
+          <h2 className="text-lg md:text-2xl font-bold text-neutral-300 mb-3 md:mb-4">
             ¡Bienvenido a Celesta OS!
           </h2>
-          <p className="text-neutral-400">
-            Tu dashboard personal estará disponible próximamente. Por ahora, dirígete a <strong className="text-turquoise">Misiones</strong> para comenzar tu primera experiencia de aprendizaje.
+          <p className="text-xs md:text-sm text-neutral-400">
+            Tu dashboard personal estará disponible próximamente. Por ahora, dirígete a <strong className="text-crystal-blue">Misiones</strong> para comenzar tu primera experiencia de aprendizaje.
           </p>
         </div>
       </PageContainer>

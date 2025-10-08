@@ -20,8 +20,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const { userState, displayName, isDocente, isEstudiante, loading } = useAuth();
   const pathname = usePathname();
 
-  console.log('[DashboardLayout] Role:', userState.role, '| Path:', pathname, '| Loading:', loading);
-
   // Determinar qué guard aplicar según la ruta
   const isRutaDocente = pathname?.startsWith('/grupos');
   const isRutaEstudiante = pathname?.startsWith('/dashboard') || pathname?.startsWith('/missions');
@@ -31,7 +29,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   if (isRutaDocente) {
     return (
       <DocenteGuard>
-        <AppShell userAlias={displayName} userRole="teacher">
+        <AppShell key="teacher-shell" userAlias={displayName} userRole="teacher">
           {children}
         </AppShell>
       </DocenteGuard>
@@ -42,7 +40,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   if (isRutaEstudiante) {
     return (
       <EstudianteGuard>
-        <AppShell userAlias={displayName} userRole="student">
+        <AppShell key="student-shell" userAlias={displayName} userRole="student">
           {children}
         </AppShell>
       </EstudianteGuard>
@@ -55,18 +53,20 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     // Docentes ven vista de docente
     if (isDocente) {
       return (
-        <AppShell userAlias={displayName} userRole="teacher">
+        <AppShell key="teacher-shell" userAlias={displayName} userRole="teacher">
           {children}
         </AppShell>
       );
     }
     
-    // Estudiantes ven vista de estudiante (protegida)
+    // Estudiantes ven vista de estudiante (protegida con mismo guard que otras rutas)
     if (isEstudiante) {
       return (
-        <AppShell userAlias={displayName} userRole="student">
-          {children}
-        </AppShell>
+        <EstudianteGuard>
+          <AppShell key="student-shell" userAlias={displayName} userRole="student">
+            {children}
+          </AppShell>
+        </EstudianteGuard>
       );
     }
 

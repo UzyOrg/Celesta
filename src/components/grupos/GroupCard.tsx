@@ -1,6 +1,6 @@
 'use client';
 import { motion } from 'framer-motion';
-import { MoreVertical, ExternalLink, Archive, Trash2, CheckCircle2, XCircle, Bell } from 'lucide-react';
+import { MoreVertical, Archive, Trash2, CheckCircle2, XCircle, Bell } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
@@ -64,12 +64,8 @@ export default function GroupCard({
     }
   };
 
-  const handleViewDashboard = () => {
-    router.push(`/teacher/${classToken}`);
-  };
-
   const handleCardClick = () => {
-    // Ir a la página de detalle del grupo
+    // Ir a la página de detalle del grupo (con pestaña Dashboard integrada)
     router.push(`/grupos/${classToken}`);
   };
 
@@ -131,17 +127,6 @@ export default function GroupCard({
               onClick={(e) => e.stopPropagation()} // Prevenir click en la card
               className="absolute right-0 top-full mt-2 w-56 bg-neutral-800 border border-neutral-700 rounded-lg shadow-xl overflow-hidden z-10"
             >
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleViewDashboard();
-                }}
-                className="w-full flex items-center gap-3 px-4 py-3 hover:bg-neutral-700 transition-colors text-left"
-              >
-                <ExternalLink className="w-4 h-4 text-turquoise" />
-                <span className="text-sm text-white">Ver Dashboard</span>
-              </button>
-
               <button
                 onClick={(e) => {
                   e.stopPropagation();

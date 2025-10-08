@@ -40,22 +40,34 @@ type MetricCardProps = {
   subtitle?: string;
   trend?: 'up' | 'down' | 'neutral';
   trendValue?: string;
-  color?: 'turquoise' | 'lime' | 'amber' | 'red' | 'blue' | 'neutral';
+  color?: 'turquoise' | 'lime' | 'amber' | 'red' | 'blue' | 'neutral' | 'crystal-blue' | 'crystal-lavender';
   className?: string;
 };
 
 const colorClasses = {
   turquoise: {
-    bg: 'from-turquoise/20 to-turquoise/5',
-    border: 'border-turquoise/30',
-    icon: 'text-turquoise',
-    iconBg: 'bg-turquoise/10',
+    bg: 'from-crystal-blue/20 to-crystal-blue/5',
+    border: 'border-crystal-blue/30',
+    icon: 'text-crystal-blue',
+    iconBg: 'bg-crystal-blue/10',
   },
   lime: {
-    bg: 'from-lime/20 to-lime/5',
-    border: 'border-lime/30',
-    icon: 'text-lime',
-    iconBg: 'bg-lime/10',
+    bg: 'from-crystal-lavender/20 to-crystal-lavender/5',
+    border: 'border-crystal-lavender/30',
+    icon: 'text-crystal-lavender',
+    iconBg: 'bg-crystal-lavender/10',
+  },
+  'crystal-blue': {
+    bg: 'from-crystal-blue/20 to-crystal-blue/5',
+    border: 'border-crystal-blue/30',
+    icon: 'text-crystal-blue',
+    iconBg: 'bg-crystal-blue/10',
+  },
+  'crystal-lavender': {
+    bg: 'from-crystal-lavender/20 to-crystal-lavender/5',
+    border: 'border-crystal-lavender/30',
+    icon: 'text-crystal-lavender',
+    iconBg: 'bg-crystal-lavender/10',
   },
   amber: {
     bg: 'from-amber-500/20 to-amber-500/5',

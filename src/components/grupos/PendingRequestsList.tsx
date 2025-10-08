@@ -12,12 +12,12 @@ interface PendingRequestsListProps {
 export default function PendingRequestsList({ requests, onApprove, onReject }: PendingRequestsListProps) {
   if (requests.length === 0) {
     return (
-      <div className="text-center py-20">
-        <Clock className="w-16 h-16 text-neutral-600 mx-auto mb-4" />
-        <h3 className="text-xl font-semibold text-neutral-300 mb-2">
+      <div className="text-center py-12 md:py-20 px-4">
+        <Clock className="w-12 h-12 md:w-16 md:h-16 text-neutral-600 mx-auto mb-3 md:mb-4" />
+        <h3 className="text-base md:text-lg font-semibold text-neutral-300 mb-2">
           No hay solicitudes pendientes
         </h3>
-        <p className="text-neutral-500">
+        <p className="text-xs md:text-sm text-neutral-500">
           Comparte el enlace de invitación para que los estudiantes soliciten unirse.
         </p>
       </div>
@@ -25,26 +25,26 @@ export default function PendingRequestsList({ requests, onApprove, onReject }: P
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2 md:space-y-3">
       {requests.map((request, index) => (
         <motion.div
           key={request.id}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: index * 0.05 }}
-          className="bg-neutral-900/50 backdrop-blur-sm border border-amber-800/30 rounded-xl p-6 hover:border-amber-700/50 transition-colors"
+          className="bg-neutral-900/50 backdrop-blur-sm border border-amber-800/30 rounded-lg md:rounded-xl p-4 md:p-6 hover:border-amber-700/50 transition-colors"
         >
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-4">
             {/* Student Info */}
-            <div className="flex items-center gap-4 flex-1">
-              <div className="w-12 h-12 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center flex-shrink-0">
-                <User className="w-6 h-6 text-amber-400" />
+            <div className="flex items-center gap-3 md:gap-4 flex-1">
+              <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center flex-shrink-0">
+                <User className="w-5 h-5 md:w-6 md:h-6 text-amber-400" />
               </div>
               <div className="flex-1 min-w-0">
-                <h4 className="text-lg font-bold text-white mb-1 truncate">
+                <h4 className="text-sm md:text-base font-bold !text-white mb-0.5 md:mb-1 truncate">
                   {request.student_alias}
                 </h4>
-                <p className="text-sm text-neutral-400">
+                <p className="text-[10px] md:text-xs !text-neutral-400 truncate">
                   Solicitó el {new Date(request.created_at).toLocaleDateString('es-ES', {
                     year: 'numeric',
                     month: 'long',
@@ -60,17 +60,17 @@ export default function PendingRequestsList({ requests, onApprove, onReject }: P
             <div className="flex items-center gap-2 flex-shrink-0">
               <button
                 onClick={() => onApprove(request.id)}
-                className="flex items-center gap-2 px-4 py-2 bg-lime/10 hover:bg-lime/20 border border-lime/30 hover:border-lime/50 text-lime rounded-lg transition-all font-medium"
+                className="flex-1 md:flex-initial flex items-center justify-center gap-1.5 md:gap-2 px-4 md:px-5 min-h-[48px] bg-crystal-lavender/10 hover:bg-crystal-lavender/20 border border-crystal-lavender/30 hover:border-crystal-lavender/50 text-crystal-lavender rounded-lg transition-all text-xs md:text-sm font-medium"
               >
                 <Check className="w-4 h-4" />
-                <span className="hidden sm:inline">Aceptar</span>
+                <span>Aceptar</span>
               </button>
               <button
                 onClick={() => onReject(request.id)}
-                className="flex items-center gap-2 px-4 py-2 bg-red-900/10 hover:bg-red-900/20 border border-red-800/30 hover:border-red-800/50 text-red-400 rounded-lg transition-all font-medium"
+                className="flex-1 md:flex-initial flex items-center justify-center gap-1.5 md:gap-2 px-4 md:px-5 min-h-[48px] bg-red-900/10 hover:bg-red-900/20 border border-red-800/30 hover:border-red-800/50 text-red-400 rounded-lg transition-all text-xs md:text-sm font-medium"
               >
                 <X className="w-4 h-4" />
-                <span className="hidden sm:inline">Rechazar</span>
+                <span>Rechazar</span>
               </button>
             </div>
           </div>

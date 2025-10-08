@@ -83,13 +83,13 @@ export default function SignUpPage() {
               <CheckCircle2 className="w-8 h-8 text-lime" />
             </div>
             
-            <h2 className="text-2xl font-bold text-white mb-3">
+            <h2 className="text-xl md:text-2xl font-bold !text-white mb-3">
               {needsEmailConfirmation ? '¡Cuenta creada!' : '¡Bienvenido a Celesta!'}
             </h2>
             
             {needsEmailConfirmation ? (
               <>
-                <p className="text-neutral-400 mb-6">
+                <p className="text-sm md:text-base !text-neutral-400 mb-6">
                   Hemos enviado un correo de confirmación a <strong className="text-turquoise">{email}</strong>
                 </p>
                 <p className="text-sm text-neutral-500 mb-6">
@@ -132,10 +132,10 @@ export default function SignUpPage() {
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-turquoise to-lime flex items-center justify-center">
               <GraduationCap className="w-7 h-7 text-black" />
             </div>
-            <span className="text-2xl font-bold text-white">Celesta</span>
+            <span className="text-xl md:text-2xl font-bold !text-white">Celesta</span>
           </Link>
-          <h1 className="text-3xl font-bold text-white mb-2">Crea tu cuenta</h1>
-          <p className="text-neutral-400">Únete como docente a Celesta OS</p>
+          <h1 className="text-xl md:text-2xl font-bold !text-white mb-2">Crea tu cuenta</h1>
+          <p className="text-sm md:text-base !text-neutral-400">Únete como docente a Celesta OS</p>
         </div>
 
         {/* Sign Up Form */}
@@ -166,7 +166,7 @@ export default function SignUpPage() {
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 placeholder="Ej: María García"
-                className="w-full bg-neutral-950 border border-neutral-700 rounded-xl px-4 py-3 text-white placeholder:text-neutral-500 focus:outline-none focus:ring-2 focus:ring-turquoise focus:border-transparent transition-all"
+                className="w-full min-h-[48px] bg-neutral-950 border border-neutral-700 rounded-xl px-4 py-3 text-sm md:text-base !text-white placeholder:text-neutral-500 focus:outline-none focus:ring-2 focus:ring-turquoise focus:border-transparent transition-all"
                 required
                 disabled={isLoading}
                 autoComplete="name"
@@ -185,7 +185,7 @@ export default function SignUpPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="tu@email.com"
-                className="w-full bg-neutral-950 border border-neutral-700 rounded-xl px-4 py-3 text-white placeholder:text-neutral-500 focus:outline-none focus:ring-2 focus:ring-lime focus:border-transparent transition-all"
+                className="w-full min-h-[48px] bg-neutral-950 border border-neutral-700 rounded-xl px-4 py-3 text-sm md:text-base !text-white placeholder:text-neutral-500 focus:outline-none focus:ring-2 focus:ring-lime focus:border-transparent transition-all"
                 required
                 disabled={isLoading}
                 autoComplete="email"
@@ -203,7 +203,7 @@ export default function SignUpPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Mínimo 6 caracteres"
-                className="w-full bg-neutral-950 border border-neutral-700 rounded-xl px-4 py-3 text-white placeholder:text-neutral-500 focus:outline-none focus:ring-2 focus:ring-turquoise focus:border-transparent transition-all"
+                className="w-full min-h-[48px] bg-neutral-950 border border-neutral-700 rounded-xl px-4 py-3 text-sm md:text-base !text-white placeholder:text-neutral-500 focus:outline-none focus:ring-2 focus:ring-turquoise focus:border-transparent transition-all"
                 required
                 disabled={isLoading}
                 autoComplete="new-password"
@@ -222,7 +222,7 @@ export default function SignUpPage() {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="Repite tu contraseña"
-                className="w-full bg-neutral-950 border border-neutral-700 rounded-xl px-4 py-3 text-white placeholder:text-neutral-500 focus:outline-none focus:ring-2 focus:ring-lime focus:border-transparent transition-all"
+                className="w-full min-h-[48px] bg-neutral-950 border border-neutral-700 rounded-xl px-4 py-3 text-sm md:text-base !text-white placeholder:text-neutral-500 focus:outline-none focus:ring-2 focus:ring-lime focus:border-transparent transition-all"
                 required
                 disabled={isLoading}
                 autoComplete="new-password"
@@ -234,7 +234,7 @@ export default function SignUpPage() {
             <button
               type="submit"
               disabled={isLoading || !fullName || !email || !password || !confirmPassword}
-              className="w-full bg-gradient-to-r from-turquoise to-lime text-black font-bold py-4 px-6 rounded-xl hover:from-turquoise-600 hover:to-lime-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2 group"
+              className="w-full min-h-[48px] bg-gradient-to-r from-turquoise to-lime text-black text-sm md:text-base font-bold py-3 md:py-4 px-6 rounded-xl hover:from-turquoise-600 hover:to-lime-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2 group"
             >
               {isLoading ? (
                 <>
@@ -277,7 +277,7 @@ export default function SignUpPage() {
           {/* Login Link */}
           <Link
             href="/login"
-            className="block w-full text-center py-3 px-6 rounded-xl border-2 border-neutral-700 text-neutral-300 font-medium hover:border-lime hover:text-lime transition-all"
+            className="block w-full min-h-[48px] text-center py-3 px-6 rounded-xl border-2 border-neutral-700 text-sm md:text-base !text-neutral-300 font-medium hover:border-lime hover:text-lime transition-all flex items-center justify-center"
           >
             Iniciar sesión
           </Link>

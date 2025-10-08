@@ -16,8 +16,15 @@ const config: Config = {
           100: '#F7F9FA',
           200: '#E3E8EE',
         },
-        turquoise: '#05F7FF',
-        lime: '#B6FF6D',
+        // Crystal theme colors (matching landing page)
+        crystal: {
+          blue: '#a7d8f5',
+          lavender: '#d9d2f7',
+          white: '#f0f4f8',
+        },
+        // Legacy aliases for compatibility (will be removed gradually)
+        turquoise: '#a7d8f5', // Now maps to crystal-blue
+        lime: '#d9d2f7',      // Now maps to crystal-lavender
       },
       fontFamily: {
         'clash': ['"Clash Display"', 'sans-serif'],

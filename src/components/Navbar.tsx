@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Menu, X, Sun, Moon, Sparkles } from 'lucide-react';
+import { Menu, X, Sun, Moon, Sparkles, Rocket } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '../context/ThemeContext';
 import Container from './Container';
 import Button from './Button';
+import BetaRequestModal from './BetaRequestModal';
 import styles from './Navbar.module.css';
 
 const navLinks = [
@@ -18,6 +19,7 @@ const navLinks = [
 const Navbar: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isBetaModalOpen, setIsBetaModalOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
 
   useEffect(() => {
@@ -29,6 +31,11 @@ const Navbar: React.FC = () => {
   }, []);
 
   const closeMenu = () => setIsMenuOpen(false);
+  
+  const openBetaModal = () => {
+    setIsBetaModalOpen(true);
+    closeMenu();
+  };
 
   return (
     <header className={`${styles.header} ${isScrolled ? styles.headerScrolled : ''}`}>
@@ -55,35 +62,27 @@ const Navbar: React.FC = () => {
                 {link.name}
               </Link>
             ))}
-            <Link href="/questionnaire" className={styles.navLink}>
-              <span className={styles.whitelistText}>Únete a la whitelist</span>
-            </Link>
           </nav>
 
-          {/* Auth Actions - Desktop */}
+          {/* Beta Access CTA - Desktop */}
           <div className="hidden md:flex items-center gap-3">
-            <Link 
-              href="/login" 
-              className="px-4 py-2 text-sm font-medium text-neutral-300 hover:text-white transition-colors"
+            <button
+              onClick={openBetaModal}
+              className="px-4 py-2 text-sm font-medium bg-gradient-to-r from-crystal-blue to-crystal-lavender text-black rounded-lg hover:opacity-90 transition-all flex items-center gap-2"
             >
-              Iniciar Sesión
-            </Link>
-            <Link 
-              href="/signup" 
-              className="px-4 py-2 text-sm font-medium bg-gradient-to-r from-turquoise to-lime text-black rounded-lg hover:from-turquoise-600 hover:to-lime-600 transition-all"
-            >
-              Crear Cuenta
-            </Link>
+              <Rocket className="w-4 h-4" />
+              Solicitar Acceso
+            </button>
           </div>
 
           {/* Mobile Actions */}
           <div className={styles.mobileActions}>
-            <Link href="/login" className="text-sm text-neutral-300 hover:text-white px-3 py-2">
-              Login
-            </Link>
-            <Link href="/signup" className={styles.mobileDemoButton}>
-              Registrarse
-            </Link>
+            <button
+              onClick={openBetaModal}
+              className={styles.mobileDemoButton}
+            >
+              Acceso
+            </button>
           </div>
         </div>
       </Container>
@@ -104,15 +103,24 @@ const Navbar: React.FC = () => {
               </Link>
             ))}
             <div className="border-t border-neutral-800 my-2"></div>
-            <Link href="/login" className={styles.navLink} onClick={closeMenu}>
-              Iniciar Sesión
-            </Link>
-            <Link href="/signup" className={styles.navLink} onClick={closeMenu}>
-              <span className="text-lime font-semibold">Crear Cuenta</span>
-            </Link>
+            <button
+              onClick={openBetaModal}
+              className={`${styles.navLink} w-full text-left`}
+            >
+              <span className="text-crystal-blue font-semibold flex items-center gap-2">
+                <Rocket className="w-4 h-4" />
+                Solicitar Acceso
+              </span>
+            </button>
           </motion.div>
         )}
       </AnimatePresence>
+      
+      {/* Beta Request Modal */}
+      <BetaRequestModal
+        isOpen={isBetaModalOpen}
+        onClose={() => setIsBetaModalOpen(false)}
+      />
     </header>
   );
 };

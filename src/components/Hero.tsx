@@ -1,8 +1,9 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, Rocket } from 'lucide-react';
 import Container from './Container';
 import Button from './Button';
+import BetaRequestModal from './BetaRequestModal';
 import { useRouter } from 'next/navigation';
 import Script from 'next/script';
 import styles from './Hero.module.css';
@@ -15,6 +16,7 @@ declare global {
 
 const Hero: React.FC = () => {
   const router = useRouter();
+  const [isBetaModalOpen, setIsBetaModalOpen] = useState(false);
 
   useEffect(() => {
     if (typeof window.UnicornStudio !== 'undefined') {
@@ -78,31 +80,26 @@ const Hero: React.FC = () => {
             
             <div className={styles.buttonContainer}>
               <div className={styles.buttonWrapper}>
-                <Button variant="gradient" size="lg" className={styles.fullWidth} onClick={() => router.push('/signup')}>
-                  Comenzar Ahora
+                <Button
+                  variant="gradient"
+                  size="md"
+                  className={`${styles.fullWidth} md:max-w-xs md:mx-auto md:px-6`}
+                  onClick={() => setIsBetaModalOpen(true)}
+                >
+                  <Rocket className="hidden md:inline w-4 h-4 md:mr-2" />
+                  Solicitar Acceso
                 </Button>
               </div>
-              <div className={styles.buttonWrapper}>
-                <Button variant="outline" size="lg" className={styles.fullWidth} onClick={() => router.push('/login')}>
-                  Iniciar Sesión
-                </Button>
-              </div>
-            </div>
-            
-            {/* Link secundario para whitelist */}
-            <div className="mt-4 text-center">
-              <button
-                onClick={() => router.push('/questionnaire')}
-                className="text-sm text-neutral-400 hover:text-turquoise transition-colors underline"
-              >
-                ¿Buscas unirte a la whitelist?
-              </button>
             </div>
           </motion.div>
         </div>
       </Container>
     </section>
     
+    <BetaRequestModal
+      isOpen={isBetaModalOpen}
+      onClose={() => setIsBetaModalOpen(false)}
+    />
     </>
   );
 };

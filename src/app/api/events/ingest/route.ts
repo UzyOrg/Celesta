@@ -10,6 +10,7 @@ const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const EventSchema = z.object({
   actor_sid: z.string().min(1),
   student_session_id: z.string().min(1).optional(),
+  student_alias: z.string().optional(), // ✅ Alias del estudiante
   class_token: z.string().min(1).optional(),
   taller_id: z.string().min(1),
   paso_id: z.string().min(1),
@@ -102,6 +103,7 @@ export async function POST(req: Request) {
           client_event_id: e.client_event_id,
           actor_sid: e.actor_sid,
           student_session_id: e.student_session_id ?? e.actor_sid,
+          student_alias: (e as any).student_alias ?? null, // ✅ Guardar alias
           class_token: e.class_token ?? null,
           taller_id: e.taller_id,
           paso_id: e.paso_id,

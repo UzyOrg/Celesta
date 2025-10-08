@@ -2,11 +2,9 @@
 import React from 'react';
 import AppShell from '@/components/shell/AppShell';
 import WorkshopClient from '@/app/workshop/[id]/Client';
-import DiagnosticQuestionnaire from '@/components/adaptive/DiagnosticQuestionnaire';
 import { useSearchParams } from 'next/navigation';
 import { useCanonicalAlias } from '@/lib/alias';
 import { getOrCreateSessionId } from '@/lib/session';
-import { useAdaptiveWorkshop } from '@/lib/adaptive/useAdaptiveWorkshop';
 import { motion } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
 
@@ -21,18 +19,8 @@ export default function WorkshopClientWithShell({ id, classToken }: Props) {
   const sessionId = getOrCreateSessionId(token);
   const { alias, loading: aliasLoading } = useCanonicalAlias(token, sessionId);
 
-  // Hook de adaptación (ahora SIEMPRE asigna 3 estrellas, sin importar las respuestas)
-  const {
-    necesitaDiagnostico,
-    configDiagnostico,
-    loadingConfig,
-    perfil,
-    adaptacion,
-    completarDiagnostico,
-  } = useAdaptiveWorkshop(id, sessionId, token);
-
   // Loading state
-  if (loadingConfig || aliasLoading) {
+  if (aliasLoading) {
     return (
       <AppShell userAlias="Cargando..." userRole="student">
         <div className="min-h-screen bg-gradient-to-br from-neutral-950 via-neutral-900 to-neutral-950 flex items-center justify-center">
@@ -49,28 +37,13 @@ export default function WorkshopClientWithShell({ id, classToken }: Props) {
     );
   }
 
-  // Mostrar diagnóstico si es necesario
-  // El diagnóstico ahora SOLO personaliza la experiencia (perfil, mensajes)
-  // pero NO afecta las estrellas iniciales (siempre 3)
-  if (necesitaDiagnostico && configDiagnostico) {
-    return (
-      <DiagnosticQuestionnaire
-        preguntas={configDiagnostico.cuestionarioDiagnostico}
-        onComplete={completarDiagnostico}
-        tallerId={id}
-        tituloTaller="La Célula como Unidad de Vida"
-      />
-    );
-  }
-
-  // Renderizar taller con adaptación
+  // Ir directo al taller - Sin diagnóstico previo
   return (
     <AppShell userAlias={alias || 'Estudiante'} userRole="student">
       <div className="min-h-screen bg-gradient-to-br from-neutral-950 via-neutral-900 to-neutral-950">
         <WorkshopClient 
           id={id} 
           classToken={token}
-          adaptacion={adaptacion}
         />
       </div>
     </AppShell>

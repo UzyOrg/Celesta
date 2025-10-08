@@ -372,7 +372,7 @@ export default function PasoPreguntaAbierta({ step, onComplete, pistasUsadas, on
             🪜 Ciclo de Andamio Progresivo
           </div>
           <h2 className="text-2xl font-bold text-neutral-100">Pregunta de Aplicación</h2>
-          <p className="text-lg text-neutral-300 leading-relaxed">{aplicacion.pregunta}</p>
+          <p className="text-sm md:text-base text-neutral-300 leading-relaxed">{aplicacion.pregunta}</p>
           <div className="p-3 rounded-lg bg-turquoise/10 border border-turquoise/30 text-sm text-turquoise/90">
             💡 Consulta el <strong>Santuario del Conocimiento</strong> (botón flotante abajo a la derecha) para revisar el concepto.
           </div>
@@ -398,7 +398,7 @@ export default function PasoPreguntaAbierta({ step, onComplete, pistasUsadas, on
                 ) : (
                   <XCircle className="w-5 h-5 mt-0.5 flex-shrink-0" />
                 )}
-                <p className="leading-relaxed">{feedback}</p>
+                <p className="text-sm leading-relaxed">{feedback}</p>
               </div>
             </motion.div>
           )}
@@ -456,7 +456,7 @@ export default function PasoPreguntaAbierta({ step, onComplete, pistasUsadas, on
             Ciclo de Andamio Progresivo
           </div>
           <h2 className="text-2xl font-bold text-neutral-100">Pregunta de Comprensión</h2>
-          <p className="text-lg text-neutral-300 leading-relaxed">{rescate.pregunta_comprension}</p>
+          <p className="text-sm md:text-base text-neutral-300 leading-relaxed">{rescate.pregunta_comprension}</p>
           <div className="p-3 rounded-lg bg-turquoise/10 border border-turquoise/30 text-sm text-turquoise/90">
             💡 Consulta el <strong>Santuario del Conocimiento</strong> (botón flotante abajo a la derecha) para ver la respuesta modelo.
           </div>
@@ -494,7 +494,7 @@ export default function PasoPreguntaAbierta({ step, onComplete, pistasUsadas, on
     <div className="space-y-6">
       <div className="space-y-3">
         <h2 className="text-2xl font-bold text-neutral-100">{step.titulo_paso}</h2>
-        <p className="text-lg text-neutral-300 leading-relaxed">{cfg.pregunta}</p>
+        <p className="text-sm md:text-base text-neutral-300 leading-relaxed">{cfg.pregunta}</p>
       </div>
 
       <motion.div

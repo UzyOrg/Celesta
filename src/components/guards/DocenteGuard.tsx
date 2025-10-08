@@ -32,11 +32,7 @@ export default function DocenteGuard({ children }: DocenteGuardProps) {
     if (!isDocente) {
       // BLOQUEO: No es docente
       const returnUrl = encodeURIComponent(pathname || '/grupos');
-      console.log('[DocenteGuard] 🚫 ACCESO DENEGADO - Role:', userRole);
-      console.log('[DocenteGuard] Redirigiendo a /login');
       router.replace(`/login?redirect=${returnUrl}`);
-    } else {
-      console.log('[DocenteGuard] ✅ ACCESO PERMITIDO - Docente:', userEmail);
     }
   }, [loading, isDocente, userRole, userEmail, router, pathname]);
 

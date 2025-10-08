@@ -3,6 +3,8 @@ import { z } from 'zod';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { createClient } from '@supabase/supabase-js';
+import { validateCsrfForMutation } from '@/lib/csrf';
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 
 export const runtime = 'nodejs';
 export const revalidate = 0;
@@ -21,8 +23,27 @@ const ApproveSchema = z.object({
  * 
  * Docente aprueba una solicitud de estudiante.
  * Cambia status de 'pending' a 'approved'.
+ * 
+ * SECURITY:
+ * - CSRF protection
+ * - Rate limit: 20 approvals per minute per teacher
+ * - Auth required (teacher only)
  */
 export async function POST(req: Request) {
+  // SECURITY: Validar CSRF token
+  const csrfError = validateCsrfForMutation(req);
+  if (csrfError) return csrfError;
+
+  // SECURITY: Rate limiting (20 approvals/min)
+  const clientIp = getClientIp(req);
+  const { allowed } = checkRateLimit(`roster:approve:${clientIp}`, 20, 60_000);
+  if (!allowed) {
+    return NextResponse.json(
+      { error: 'rate_limited', message: 'Demasiadas solicitudes. Espera un momento.' },
+      { status: 429 }
+    );
+  }
+
   try {
     // 1. Verificar autenticación del docente
     const cookieStore = await cookies();
@@ -58,8 +79,12 @@ export async function POST(req: Request) {
       .single();
 
     if (fetchError || !request) {
-      console.error('[roster/approve] Solicitud no encontrada:', fetchError);
-      return NextResponse.json({ error: 'request_not_found' }, { status: 404 });
+      // SECURITY: Log código de error, mensaje genérico al cliente
+      console.error('[roster/approve] Request fetch failed:', fetchError?.code || 'not_found');
+      return NextResponse.json({ 
+        error: 'invalid_request',
+        message: 'No se pudo procesar la solicitud.'
+      }, { status: 400 });
     }
 
     if (request.status === 'approved') {
@@ -85,8 +110,11 @@ export async function POST(req: Request) {
       .single();
 
     if (updateError) {
-      console.error('[roster/approve] Error aprobando:', updateError);
-      return NextResponse.json({ error: 'update_failed' }, { status: 500 });
+      console.error('[roster/approve] Update failed:', updateError.code);
+      return NextResponse.json({ 
+        error: 'operation_failed',
+        message: 'No se pudo aprobar la solicitud. Intenta de nuevo.'
+      }, { status: 500 });
     }
 
     // 7. También crear/actualizar en alias_sessions para compatibilidad

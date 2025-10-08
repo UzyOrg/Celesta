@@ -24,10 +24,22 @@ type RosterStatus = 'checking' | 'approved' | 'pending' | 'rejected' | 'not_foun
  * - rejected: ❌ Solicitud rechazada
  * - not_found: ❓ No hay solicitud
  */
+// Cache global de verificación (persiste entre navegaciones)
+const verificationCache = new Map<string, { status: RosterStatus; message: string; timestamp: number }>();
+const CACHE_TTL = 60000; // 1 minuto
+
 export default function EstudianteGuard({ children }: EstudianteGuardProps) {
   const router = useRouter();
   const { userState, loading: authLoading, isEstudiante } = useAuth();
-  const [rosterStatus, setRosterStatus] = useState<RosterStatus>('checking');
+  const [rosterStatus, setRosterStatus] = useState<RosterStatus>(() => {
+    // Verificar cache inicial para evitar loading innecesario
+    const cacheKey = `${userState.classToken}:${userState.alias}`;
+    const cached = verificationCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+      return cached.status;
+    }
+    return 'checking';
+  });
   const [statusMessage, setStatusMessage] = useState('');
 
   // Extraer valores específicos para evitar dependencias de objetos completos
@@ -42,7 +54,6 @@ export default function EstudianteGuard({ children }: EstudianteGuardProps) {
 
       // Si no es estudiante, bloquear
       if (!isEstudiante) {
-        console.log('[EstudianteGuard] 🚫 No es estudiante - Role:', userRole);
         
         if (userRole === 'docente') {
           router.replace('/grupos');
@@ -52,9 +63,17 @@ export default function EstudianteGuard({ children }: EstudianteGuardProps) {
         return;
       }
 
-      // Verificar aprobación en roster
-      console.log('[EstudianteGuard] 🔍 Verificando aprobación para:', userAlias, 'en', userClassToken);
+      // Verificar cache antes de hacer request
+      const cacheKey = `${userClassToken}:${userAlias}`;
+      const cached = verificationCache.get(cacheKey);
+      
+      if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+        setRosterStatus(cached.status);
+        setStatusMessage(cached.message);
+        return;
+      }
 
+      // Verificar aprobación en roster
       try {
         const response = await fetch('/api/roster/check-status', {
           method: 'POST',
@@ -72,10 +91,16 @@ export default function EstudianteGuard({ children }: EstudianteGuardProps) {
         }
 
         const data = await response.json();
-        console.log('[EstudianteGuard] Estado del roster:', data.status);
 
         setRosterStatus(data.status);
         setStatusMessage(data.message || '');
+
+        // Guardar en cache
+        verificationCache.set(cacheKey, {
+          status: data.status,
+          message: data.message || '',
+          timestamp: Date.now(),
+        });
 
         // Si fue aprobado, guardar session_id en localStorage
         if (data.status === 'approved' && data.student_session_id) {
@@ -90,7 +115,7 @@ export default function EstudianteGuard({ children }: EstudianteGuardProps) {
     }
 
     checkRosterApproval();
-  }, [authLoading, isEstudiante, userRole, userAlias, userClassToken, router]);
+  }, [authLoading, isEstudiante, userRole, userAlias, userClassToken, router, userState.classToken]);
 
   // Loading: Verificando auth
   if (authLoading || rosterStatus === 'checking') {
@@ -197,7 +222,6 @@ export default function EstudianteGuard({ children }: EstudianteGuardProps) {
 
   // Estado: Aprobado ✅
   if (rosterStatus === 'approved') {
-    console.log('[EstudianteGuard] ✅ ACCESO PERMITIDO - Estudiante aprobado:', userState.alias);
     return <>{children}</>;
   }
 

@@ -64,10 +64,10 @@ export default function PageContainer({
               <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3 md:gap-4">
                 {title && (
                   <div className="space-y-1">
-                    <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-white to-neutral-300 bg-clip-text text-transparent">
+                    <h1 className="text-xl md:text-2xl font-bold bg-gradient-to-r from-white to-neutral-300 bg-clip-text text-transparent">
                       {title}
                     </h1>
-                    {subtitle && <p className="text-neutral-400 text-sm md:text-base">{subtitle}</p>}
+                    {subtitle && <p className="text-neutral-200 text-sm md:text-base">{subtitle}</p>}
                   </div>
                 )}
                 {actions && <div className="flex items-center gap-2 md:gap-3">{actions}</div>}

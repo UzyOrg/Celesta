@@ -20,7 +20,6 @@ import type { StepController } from './types';
 import { getOrCreateSessionId } from '@/lib/session';
 import { useCanonicalAlias } from '@/lib/alias';
 import { BookOpen, GraduationCap, Clock, Target, Sparkles, Lightbulb, Briefcase, Flag } from 'lucide-react';
-import type { AdaptationResult } from '@/lib/adaptive/schema';
 import KnowledgeSanctuary from './KnowledgeSanctuary';
 import MissionComplete from './MissionComplete';
 import MissionLocked from './MissionLocked';
@@ -38,18 +37,17 @@ import {
 type Props = {
   workshop: Workshop;
   classToken?: string;
-  adaptacion?: AdaptationResult | null;
 };
 
-export default function InteractivePlayer({ workshop, classToken, adaptacion }: Props) {
+export default function InteractivePlayer({ workshop, classToken }: Props) {
   const steps = workshop.pasos ?? [];
   const tallerId = workshop.id_taller;
   const checksum = workshop.checksum;
   const [sessionId] = useState<string>(() => getOrCreateSessionId(classToken));
   const { alias: canonicalAlias, loading: aliasLoading } = useCanonicalAlias(classToken, sessionId);
   
-  // Usar estrellas iniciales de la adaptación si existe, sino default 3
-  const estrellasIniciales = adaptacion?.ajustes.pistasIniciales ?? 3;
+  // Estrellas iniciales universales: todos empiezan con 3
+  const estrellasIniciales = 3;
   
   // Estado local-first: Rehidratar desde localStorage o inicializar
   const [progress, setProgress] = useState<WorkshopProgress>(() => {
@@ -69,7 +67,6 @@ export default function InteractivePlayer({ workshop, classToken, adaptacion }: 
     
     const saved = loadWorkshopProgress(sessionId, tallerId);
     if (saved) {
-      console.log('[InteractivePlayer] Rehidratando progreso desde localStorage:', saved);
       return saved;
     }
     
@@ -138,39 +135,43 @@ export default function InteractivePlayer({ workshop, classToken, adaptacion }: 
   }, []);
 
   // FASE 2: Verificar si la misión está bloqueada (ya completada)
-  // PRIMARIO: Supabase | FALLBACK: localStorage
+  // ÚNICA FUENTE DE VERDAD: Supabase
   useEffect(() => {
     async function checkIfLocked() {
       if (typeof window === 'undefined') return;
+      if (classToken && aliasLoading) return;
+      if (!canonicalAlias) return; // Necesitamos el alias para verificar
       
       const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
       const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
       
-      const { isWorkshopCompletedAsync } = await import('@/lib/workshopState');
-      const completed = await isWorkshopCompletedAsync(
-        sessionId, 
-        tallerId,
-        supabaseUrl,
-        supabaseKey
-      );
+      if (!supabaseUrl || !supabaseKey) return;
       
-      if (completed) {
-        console.log('[InteractivePlayer] Misión ya completada - bloqueando acceso');
-        
-        // Obtener datos de completado
-        const completedAt = localStorage.getItem(`workshop_${tallerId}_completedAt`);
-        const stars = localStorage.getItem(`workshop_${tallerId}_stars`);
-        
+      const { createClient } = await import('@supabase/supabase-js');
+      const supabase = createClient(supabaseUrl, supabaseKey);
+      
+      // Query directa: verificar si existe evento de taller_completado
+      const { data, error } = await supabase
+        .from('eventos_de_aprendizaje')
+        .select('ts, result')
+        .eq('taller_id', tallerId)
+        .eq('verbo', 'taller_completado')
+        .eq('result->>alias', canonicalAlias)
+        .order('ts', { ascending: false })
+        .limit(1)
+        .single();
+      
+      if (!error && data) {
         setLockedData({
-          completedAt: completedAt || undefined,
-          stars: stars ? parseInt(stars, 10) : undefined,
+          completedAt: data.ts,
+          stars: data.result?.estrellas_finales,
         });
         setIsLocked(true);
       }
     }
     
     checkIfLocked();
-  }, [sessionId, tallerId]);
+  }, [sessionId, tallerId, canonicalAlias, aliasLoading, classToken]);
 
   // Persistencia automática: Guardar progreso en localStorage en cada cambio
   useEffect(() => {
@@ -530,7 +531,7 @@ export default function InteractivePlayer({ workshop, classToken, adaptacion }: 
           <div className="grid grid-cols-2">
             <button
               onClick={() => setMobileTab('trabajo')}
-              className={`flex items-center justify-center gap-2 px-4 py-4 font-medium transition-all ${
+              className={`flex items-center justify-center gap-2 px-4 py-4 text-sm font-medium transition-all ${
                 mobileTab === 'trabajo'
                   ? 'text-turquoise border-b-2 border-turquoise bg-turquoise/5'
                   : 'text-neutral-400 border-b-2 border-transparent'
@@ -541,7 +542,7 @@ export default function InteractivePlayer({ workshop, classToken, adaptacion }: 
             </button>
             <button
               onClick={() => setMobileTab('mision')}
-              className={`flex items-center justify-center gap-2 px-4 py-4 font-medium transition-all ${
+              className={`flex items-center justify-center gap-2 px-4 py-4 text-sm font-medium transition-all ${
                 mobileTab === 'mision'
                   ? 'text-lime border-b-2 border-lime bg-lime/5'
                   : 'text-neutral-400 border-b-2 border-transparent'
@@ -563,7 +564,7 @@ export default function InteractivePlayer({ workshop, classToken, adaptacion }: 
               <header className="space-y-4">
                 <div className="space-y-2">
                   <motion.h1 
-                    className="text-3xl font-bold bg-gradient-to-r from-white to-neutral-300 bg-clip-text text-transparent leading-tight"
+                    className="text-xl md:text-2xl font-bold bg-gradient-to-r from-white to-neutral-300 bg-clip-text text-transparent leading-tight"
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.4 }}
@@ -619,24 +620,6 @@ export default function InteractivePlayer({ workshop, classToken, adaptacion }: 
               </header>
 
               <MissionProgress totalSteps={totalSteps} completedSteps={completedCount} starsLeft={starsLeft} />
-
-              {/* Banner de personalización si existe adaptación */}
-              {adaptacion?.ajustes.contextoPersonalizado && (
-                <motion.div
-                  className="p-4 rounded-xl bg-gradient-to-br from-turquoise/20 to-lime/10 border-2 border-turquoise/30 backdrop-blur-sm space-y-2"
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.4, delay: 0.2 }}
-                >
-                  <div className="flex items-center gap-2 text-turquoise font-semibold text-sm">
-                    <Sparkles className="w-4 h-4" />
-                    <span>Personalizado para ti</span>
-                  </div>
-                  <p className="text-sm text-neutral-200 leading-relaxed">
-                    {adaptacion.ajustes.contextoPersonalizado}
-                  </p>
-                </motion.div>
-              )}
 
               {firstInstruction && (
                 <motion.div 

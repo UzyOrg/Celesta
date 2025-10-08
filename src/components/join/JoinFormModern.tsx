@@ -32,8 +32,8 @@ export default function JoinFormModern({ token, redirectTo }: Props) {
           animate={{ opacity: 1, scale: 1 }}
         >
           <AlertCircle className="w-16 h-16 text-red-400 mx-auto mb-6" />
-          <h2 className="text-2xl font-bold text-white mb-3">Código Inválido</h2>
-          <p className="text-neutral-300 mb-6">
+          <h2 className="text-xl md:text-2xl font-bold !text-white mb-3">Código Inválido</h2>
+          <p className="text-sm md:text-base !text-neutral-300 mb-6">
             No se proporcionó un código de grupo válido. Solicita el enlace de invitación a tu docente.
           </p>
         </motion.div>
@@ -51,8 +51,6 @@ export default function JoinFormModern({ token, redirectTo }: Props) {
     
     try {
       // Enviar solicitud al roster
-      console.log(`[JoinForm] Enviando solicitud para "${trimmed}" en grupo: ${token}`);
-      
       const response = await fetch('/api/roster/request', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -78,7 +76,6 @@ export default function JoinFormModern({ token, redirectTo }: Props) {
       }
 
       // Solicitud exitosa
-      console.log('[JoinForm] Solicitud enviada:', data.status);
 
       // Guardar alias en localStorage para identificación posterior
       localStorage.setItem(`celesta:alias:${token}`, trimmed);
@@ -123,10 +120,10 @@ export default function JoinFormModern({ token, redirectTo }: Props) {
           <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-gradient-to-br from-lime/20 to-turquoise/20 border border-lime/30 mb-6">
             <Rocket className="w-12 h-12 text-lime" />
           </div>
-          <h2 className="text-3xl font-bold text-neutral-100 mb-3">
+          <h2 className="text-xl md:text-2xl font-bold !text-white mb-3">
             Solicita Unirte al Grupo
           </h2>
-          <p className="text-lg text-neutral-400 max-w-2xl mx-auto">
+          <p className="text-sm md:text-base !text-neutral-400 max-w-2xl mx-auto">
             Envía una solicitud con tu alias. El docente debe aprobarla para que puedas acceder.
           </p>
         </div>
@@ -138,8 +135,8 @@ export default function JoinFormModern({ token, redirectTo }: Props) {
               <Shield className="w-5 h-5 text-turquoise" />
             </div>
             <div>
-              <p className="text-sm text-neutral-400">Grupo de clase</p>
-              <p className="font-mono font-semibold text-turquoise">{token}</p>
+              <p className="text-xs md:text-sm !text-neutral-400">Grupo de clase</p>
+              <p className="font-mono text-sm md:text-base font-semibold !text-turquoise">{token}</p>
             </div>
           </div>
         </div>
@@ -169,8 +166,8 @@ export default function JoinFormModern({ token, redirectTo }: Props) {
             className="max-w-xl mx-auto bg-neutral-900/60 backdrop-blur-sm border border-neutral-800/50 rounded-2xl p-8 text-center"
           >
             <Clock className="w-16 h-16 text-amber-400 mx-auto mb-6" />
-            <h3 className="text-2xl font-bold text-white mb-3">¡Solicitud Enviada!</h3>
-            <p className="text-neutral-300 mb-6">{successMessage}</p>
+            <h3 className="text-xl md:text-2xl font-bold !text-white mb-3">¡Solicitud Enviada!</h3>
+            <p className="text-sm md:text-base !text-neutral-300 mb-6">{successMessage}</p>
             <div className="bg-neutral-800/50 rounded-lg p-4">
               <p className="text-sm text-neutral-400">
                 Tu solicitud con el alias <strong className="text-turquoise">{alias}</strong> está 
@@ -194,8 +191,8 @@ export default function JoinFormModern({ token, redirectTo }: Props) {
             className="max-w-xl mx-auto bg-neutral-900/60 backdrop-blur-sm border border-lime/30 rounded-2xl p-8 text-center"
           >
             <CheckCircle2 className="w-16 h-16 text-lime mx-auto mb-6" />
-            <h3 className="text-2xl font-bold text-white mb-3">¡Aprobado!</h3>
-            <p className="text-neutral-300 mb-6">{successMessage}</p>
+            <h3 className="text-xl md:text-2xl font-bold !text-white mb-3">¡Aprobado!</h3>
+            <p className="text-sm md:text-base !text-neutral-300 mb-6">{successMessage}</p>
             <div className="flex items-center justify-center gap-2 text-turquoise">
               <div className="w-2 h-2 bg-turquoise rounded-full animate-pulse" />
               <span className="text-sm">Redirigiendo a tus misiones...</span>
@@ -217,7 +214,7 @@ export default function JoinFormModern({ token, redirectTo }: Props) {
                   value={alias}
                   onChange={(e) => setAlias(e.target.value)}
                   placeholder="Ej: AlexR, BioCientífica23, ProfeJuan..."
-                  className="w-full bg-neutral-950 border border-neutral-700 rounded-xl px-4 py-3 text-white placeholder:text-neutral-500 focus:outline-none focus:ring-2 focus:ring-lime focus:border-transparent transition-all"
+                  className="w-full min-h-[48px] bg-neutral-950 border border-neutral-700 rounded-xl px-4 py-3 text-sm md:text-base !text-white placeholder:text-neutral-500 focus:outline-none focus:ring-2 focus:ring-lime focus:border-transparent transition-all"
                   maxLength={40}
                   disabled={isLoading}
                   autoFocus
@@ -230,7 +227,7 @@ export default function JoinFormModern({ token, redirectTo }: Props) {
               <button
                 type="submit"
                 disabled={!alias.trim() || isLoading}
-                className="w-full bg-gradient-to-r from-lime to-lime-600 text-black font-bold py-4 px-6 rounded-xl hover:from-lime-600 hover:to-lime-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2 group"
+                className="w-full min-h-[48px] bg-gradient-to-r from-lime to-lime-600 text-black text-sm md:text-base font-bold py-3 md:py-4 px-6 rounded-xl hover:from-lime-600 hover:to-lime-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2 group"
               >
                 {isLoading ? (
                   <>
@@ -254,8 +251,8 @@ export default function JoinFormModern({ token, redirectTo }: Props) {
             <div className="w-12 h-12 rounded-lg bg-lime/10 border border-lime/30 flex items-center justify-center mx-auto mb-3">
               <Shield className="w-6 h-6 text-lime" />
             </div>
-            <h3 className="font-semibold text-neutral-200 mb-2">Privacidad Total</h3>
-            <p className="text-sm text-neutral-400">
+            <h3 className="text-sm md:text-base font-semibold !text-white mb-2">Privacidad Total</h3>
+            <p className="text-xs md:text-sm !text-neutral-400">
               No recolectamos datos personales. Tu alias es anónimo.
             </p>
           </div>
@@ -264,8 +261,8 @@ export default function JoinFormModern({ token, redirectTo }: Props) {
             <div className="w-12 h-12 rounded-lg bg-turquoise/10 border border-turquoise/30 flex items-center justify-center mx-auto mb-3">
               <Rocket className="w-6 h-6 text-turquoise" />
             </div>
-            <h3 className="font-semibold text-neutral-200 mb-2">Progreso Guardado</h3>
-            <p className="text-sm text-neutral-400">
+            <h3 className="text-sm md:text-base font-semibold !text-white mb-2">Progreso Guardado</h3>
+            <p className="text-xs md:text-sm !text-neutral-400">
               Tu avance se guarda automáticamente en tu dispositivo.
             </p>
           </div>
@@ -274,8 +271,8 @@ export default function JoinFormModern({ token, redirectTo }: Props) {
             <div className="w-12 h-12 rounded-lg bg-amber/10 border border-amber/30 flex items-center justify-center mx-auto mb-3">
               <User className="w-6 h-6 text-amber" />
             </div>
-            <h3 className="font-semibold text-neutral-200 mb-2">Único y Tuyo</h3>
-            <p className="text-sm text-neutral-400">
+            <h3 className="text-sm md:text-base font-semibold !text-white mb-2">Único y Tuyo</h3>
+            <p className="text-xs md:text-sm !text-neutral-400">
               Tu alias te representa en todas las misiones.
             </p>
           </div>

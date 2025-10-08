@@ -1,19 +1,120 @@
 "use client";
 import { supabaseClient } from './auth';
 
+/**
+ * SECURITY: Estructura de sesión con expiración
+ * Previene session hijacking persistente
+ */
+interface SessionData {
+  sid: string;
+  createdAt: number;
+  expiresAt: number;
+}
+
+// Duración de sesión: 7 días
+const SESSION_DURATION_MS = 7 * 24 * 60 * 60 * 1000;
+
+/**
+ * Obtiene o crea un session ID con expiración automática
+ * 
+ * SECURITY: Las sesiones expiran después de 7 días para prevenir:
+ * - Session hijacking persistente
+ * - Acceso no autorizado en dispositivos compartidos
+ * - Impersonación indefinida si se roba el localStorage
+ * 
+ * @param classToken - Token del grupo (opcional)
+ * @returns Session ID válido o crea uno nuevo si expiró
+ */
 export function getOrCreateSessionId(classToken?: string): string {
   if (typeof window === 'undefined') return 'server';
+  
   const key = `celesta:sid:${classToken || '__global__'}`;
+  
   try {
-    let sid = localStorage.getItem(key);
-    if (!sid) {
-      sid = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2);
-      localStorage.setItem(key, sid);
+    const stored = localStorage.getItem(key);
+    
+    if (stored) {
+      try {
+        const data: SessionData = JSON.parse(stored);
+        const now = Date.now();
+        
+        // Verificar si la sesión aún es válida
+        if (now < data.expiresAt) {
+          return data.sid; // Sesión válida, retornarla
+        }
+        
+        // Sesión expirada, eliminarla
+        console.log('[session] Session expired, creating new one');
+        localStorage.removeItem(key);
+      } catch (parseError) {
+        // Formato antiguo (string simple), migrar a nuevo formato
+        console.log('[session] Migrating legacy session format');
+        localStorage.removeItem(key);
+      }
     }
+    
+    // Crear nueva sesión con expiración
+    const sid = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2);
+    const now = Date.now();
+    
+    const sessionData: SessionData = {
+      sid,
+      createdAt: now,
+      expiresAt: now + SESSION_DURATION_MS
+    };
+    
+    localStorage.setItem(key, JSON.stringify(sessionData));
+    console.log('[session] New session created, expires in 7 days');
+    
     return sid;
-  } catch {
+    
+  } catch (error) {
+    // Fallback si falla localStorage
+    console.error('[session] Error managing session:', error);
     return `${classToken || 'global'}-${Math.random().toString(36).slice(2)}`;
   }
+}
+
+/**
+ * Renueva la expiración de una sesión (sliding window)
+ * Llamar en cada interacción significativa del usuario
+ * 
+ * @param classToken - Token del grupo (opcional)
+ */
+export function renewSession(classToken?: string): void {
+  if (typeof window === 'undefined') return;
+  
+  const key = `celesta:sid:${classToken || '__global__'}`;
+  
+  try {
+    const stored = localStorage.getItem(key);
+    if (!stored) return;
+    
+    const data: SessionData = JSON.parse(stored);
+    const now = Date.now();
+    
+    // Solo renovar si aún no expiró
+    if (now < data.expiresAt) {
+      data.expiresAt = now + SESSION_DURATION_MS; // Extender 7 días más
+      localStorage.setItem(key, JSON.stringify(data));
+      console.log('[session] Session renewed');
+    }
+  } catch (error) {
+    console.error('[session] Error renewing session:', error);
+  }
+}
+
+/**
+ * Invalida manualmente una sesión
+ * 
+ * @param classToken - Token del grupo (opcional)
+ */
+export function invalidateSession(classToken?: string): void {
+  if (typeof window === 'undefined') return;
+  
+  const key = `celesta:sid:${classToken || '__global__'}`;
+  localStorage.removeItem(key);
+  console.log('[session] Session invalidated');
 }
 
 /**

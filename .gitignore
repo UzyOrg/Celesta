@@ -13,3 +13,6 @@ build
 coverage
 *.log
 .turbo
+
+# Supabase migrations (ejecutar manualmente en cada instancia)
+lib/supabase/migrations/

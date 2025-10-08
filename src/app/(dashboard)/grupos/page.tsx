@@ -49,7 +49,6 @@ export default function GruposPage() {
     );
 
     setPendingCounts(counts);
-    console.log('[fetchPendingCounts] Pending counts:', counts);
   }, []);
 
   const fetchGroups = useCallback(async () => {
@@ -57,9 +56,7 @@ export default function GruposPage() {
       setLoading(true);
       setError(null);
       
-      console.log('[fetchGroups] Iniciando petición a /api/groups/list');
       const response = await fetch('/api/groups/list');
-      console.log('[fetchGroups] Response status:', response.status, response.statusText);
       
       // Manejar diferentes códigos de error
       if (!response.ok) {
@@ -78,7 +75,6 @@ export default function GruposPage() {
       }
 
       const data = await response.json();
-      console.log('[fetchGroups] Success! Groups received:', data.groups?.length || 0);
       
       // Si la respuesta es exitosa pero no hay grupos, NO es un error
       const fetchedGroups = data.groups || [];
@@ -98,11 +94,8 @@ export default function GruposPage() {
   }, [fetchPendingCounts]);
 
   useEffect(() => {
-    console.log('[GruposPage] 🔄 Component mounted - Role:', userState.role);
-    
     // Solo cargar grupos cuando auth esté listo y sea docente
     if (!authLoading && userState.role === 'docente') {
-      console.log('[GruposPage] 📡 Fetching groups...');
       fetchGroups();
     }
   }, [authLoading, userState.role, fetchGroups]);
@@ -167,8 +160,7 @@ export default function GruposPage() {
         throw new Error('Failed to send request');
       }
 
-      const data = await response.json();
-      console.log('[handleRequestGroup] ✅ Request sent:', data);
+      await response.json();
 
       // Mostrar éxito
       setRequestSuccess(true);
@@ -198,19 +190,19 @@ export default function GruposPage() {
   return (
     <>
     <div className="min-h-screen bg-gradient-to-br from-neutral-950 via-neutral-900 to-neutral-950">
-        <div className="max-w-6xl mx-auto px-4 md:px-6 py-6 md:py-12">
+        <div className="max-w-6xl mx-auto px-4 md:px-6 py-4 md:py-8">
           
           {/* Header */}
-          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-8">
+          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3 md:gap-4 mb-6 md:mb-8">
             <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-lime/10 border border-lime/30 text-lime text-xs md:text-sm font-medium mb-3">
-                <Users className="w-4 h-4" />
+              <div className="inline-flex items-center gap-1.5 md:gap-2 px-2.5 md:px-3 py-1 md:py-1.5 rounded-full bg-crystal-lavender/10 border border-crystal-lavender/30 text-crystal-lavender text-[10px] md:text-xs font-medium mb-2 md:mb-3">
+                <Users className="w-3 h-3 md:w-4 md:h-4" />
                 Centro de Grupos
               </div>
-              <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-white via-neutral-200 to-neutral-400 bg-clip-text text-transparent mb-2">
+              <h1 className="text-xl md:text-3xl font-bold bg-gradient-to-r from-white via-neutral-200 to-neutral-400 bg-clip-text text-transparent mb-1 md:mb-2">
                 Gestiona tus Grupos
               </h1>
-              <p className="text-sm md:text-base text-neutral-400">
+              <p className="text-xs md:text-sm text-neutral-400">
                 Administra tus clases y monitorea el progreso de tus estudiantes.
               </p>
             </div>
@@ -218,24 +210,24 @@ export default function GruposPage() {
             {/* Botón Crear Grupo */}
             <button
               onClick={() => setShowRequestModal(true)}
-              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-turquoise hover:bg-turquoise/90 text-black font-medium rounded-xl transition-colors"
+              className="inline-flex items-center justify-center gap-1.5 md:gap-2 px-4 md:px-5 min-h-[48px] bg-crystal-blue hover:bg-crystal-blue/90 text-black text-xs md:text-sm font-medium rounded-lg md:rounded-xl transition-colors"
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="w-4 h-4 md:w-5 md:h-5" />
               <span className="hidden md:inline">Crear Nuevo Grupo</span>
               <span className="md:hidden">Nuevo</span>
             </button>
           </div>
 
           {/* Search Bar */}
-          <div className="mb-6">
+          <div className="mb-4 md:mb-6">
             <div className="relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-500" />
+              <Search className="absolute left-3 md:left-4 top-1/2 -translate-y-1/2 w-4 h-4 md:w-5 md:h-5 text-neutral-400" />
               <input
                 type="text"
                 placeholder="Buscar por código o taller..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-12 pr-4 py-3 bg-neutral-900/50 border border-neutral-800 rounded-xl text-white placeholder:text-neutral-500 focus:outline-none focus:border-turquoise/50 transition-colors"
+                className="w-full h-12 pl-10 md:pl-12 pr-3 md:pr-4 bg-neutral-900/50 border border-neutral-800 rounded-lg md:rounded-xl text-sm md:text-base text-white placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-crystal-blue/50 focus:border-transparent transition-colors"
               />
             </div>
           </div>
@@ -243,8 +235,8 @@ export default function GruposPage() {
           {/* Loading State - Skeletons */}
           {loading && (
             <div>
-              <div className="h-6 bg-neutral-800 rounded w-40 mb-4 animate-pulse"></div>
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="h-5 md:h-6 bg-neutral-800 rounded w-32 md:w-40 mb-3 md:mb-4 animate-pulse"></div>
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
                 <GroupCardSkeleton />
                 <GroupCardSkeleton />
                 <GroupCardSkeleton />
@@ -254,21 +246,21 @@ export default function GruposPage() {
 
           {/* Error State */}
           {error && !loading && (
-            <div className="bg-red-900/20 border border-red-500/30 rounded-xl p-6 text-center">
-              <p className="text-red-400">{error}</p>
+            <div className="bg-red-900/20 border border-red-500/30 rounded-lg md:rounded-xl p-4 md:p-6 text-center">
+              <p className="text-xs md:text-sm text-red-400">{error}</p>
             </div>
           )}
 
           {/* Empty State - Sin grupos */}
           {!loading && !error && groups.length === 0 && (
-            <div className="text-center py-20">
-              <Users className="w-16 h-16 text-neutral-600 mx-auto mb-6" />
-              <p className="text-lg text-neutral-400 mb-8">
+            <div className="text-center py-12 md:py-20">
+              <Users className="w-12 h-12 md:w-16 md:h-16 text-neutral-600 mx-auto mb-4 md:mb-6" />
+              <p className="text-sm md:text-base text-neutral-400 mb-6 md:mb-8">
                 Aún no tienes grupos creados
               </p>
               <button
                 onClick={() => setShowRequestModal(true)}
-                className="inline-flex items-center gap-2 px-6 py-3 bg-turquoise hover:bg-turquoise/90 text-black font-medium rounded-xl transition-colors"
+                className="inline-flex items-center gap-2 px-6 py-3 min-h-[48px] bg-crystal-blue hover:bg-crystal-blue/90 text-black text-xs md:text-sm font-medium rounded-lg md:rounded-xl transition-colors"
               >
                 <Plus className="w-4 h-4" />
                 Crear tu Primer Grupo
@@ -278,11 +270,11 @@ export default function GruposPage() {
 
           {/* Active Groups */}
           {!loading && !error && activeGroups.length > 0 && (
-            <div className="mb-8">
-              <h2 className="text-xl font-bold text-white mb-4">
+            <div className="mb-6 md:mb-8">
+              <h2 className="text-base md:text-lg font-bold text-white mb-3 md:mb-4">
                 Grupos Activos ({activeGroups.length})
               </h2>
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
                 {activeGroups.map((group) => (
                   <GroupCard
                     key={group.id}
@@ -302,10 +294,10 @@ export default function GruposPage() {
           {/* Archived Groups */}
           {!loading && !error && archivedGroups.length > 0 && (
             <div>
-              <h2 className="text-xl font-bold text-neutral-400 mb-4">
+              <h2 className="text-base md:text-lg font-bold text-neutral-400 mb-3 md:mb-4">
                 Grupos Archivados ({archivedGroups.length})
               </h2>
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
                 {archivedGroups.map((group) => (
                   <GroupCard
                     key={group.id}
@@ -328,39 +320,39 @@ export default function GruposPage() {
       {showRequestModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 px-4">
           <motion.div
-            className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 md:p-8 max-w-md w-full"
+            className="bg-neutral-900 border border-neutral-800 rounded-xl md:rounded-2xl p-5 md:p-8 max-w-md w-full"
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
           >
             {requestSuccess ? (
               // Estado de éxito
               <div className="text-center py-4">
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-lime/20 border border-lime/30 mb-4">
-                  <svg className="w-8 h-8 text-lime" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="inline-flex items-center justify-center w-14 h-14 md:w-16 md:h-16 rounded-full bg-crystal-lavender/20 border border-crystal-lavender/30 mb-3 md:mb-4">
+                  <svg className="w-7 h-7 md:w-8 md:h-8 text-crystal-lavender" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
-                <h3 className="text-2xl font-bold text-white mb-2">¡Solicitud Enviada!</h3>
-                <p className="text-neutral-400">
+                <h3 className="text-lg md:text-xl font-bold text-white mb-2">¡Solicitud Enviada!</h3>
+                <p className="text-xs md:text-sm text-neutral-400">
                   Te notificaremos cuando tu grupo esté listo.
                 </p>
               </div>
             ) : (
               // Formulario
               <form onSubmit={handleRequestGroup}>
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="p-2 rounded-lg bg-turquoise/20">
-                    <Plus className="w-6 h-6 text-turquoise" />
+                <div className="flex items-center gap-2 md:gap-3 mb-3 md:mb-4">
+                  <div className="p-2 rounded-lg bg-crystal-blue/20">
+                    <Plus className="w-5 h-5 md:w-6 md:h-6 text-crystal-blue" />
                   </div>
-                  <h3 className="text-xl font-bold text-white">Solicitar Nuevo Grupo</h3>
+                  <h3 className="text-base md:text-lg font-bold text-white">Solicitar Nuevo Grupo</h3>
                 </div>
                 
-                <p className="text-neutral-300 mb-6">
+                <p className="text-xs md:text-sm text-neutral-300 mb-4 md:mb-6">
                   Ingresa el nombre de tu grupo y te notificaremos cuando esté listo para usar.
                 </p>
 
-                <div className="mb-6">
-                  <label className="block text-sm font-medium text-neutral-300 mb-2">
+                <div className="mb-5 md:mb-6">
+                  <label className="block text-xs md:text-sm font-medium text-neutral-300 mb-2">
                     Nombre del Grupo
                   </label>
                   <input
@@ -368,14 +360,13 @@ export default function GruposPage() {
                     value={groupName}
                     onChange={(e) => setGroupName(e.target.value)}
                     placeholder="Ej: Programación 101"
-                    className="w-full bg-neutral-950 border border-neutral-700 rounded-xl px-4 py-3 text-white placeholder:text-neutral-500 focus:outline-none focus:ring-2 focus:ring-turquoise focus:border-transparent transition-all"
+                    className="w-full h-12 bg-neutral-950 border border-neutral-700 rounded-lg md:rounded-xl px-3 md:px-4 text-sm md:text-base text-white placeholder:text-neutral-500 focus:outline-none focus:ring-2 focus:ring-crystal-blue focus:border-transparent transition-all"
                     required
                     disabled={requestLoading}
                     autoFocus
                   />
                 </div>
-
-                <div className="flex gap-3">
+                <div className="flex gap-2 md:gap-3">
                   <button
                     type="button"
                     onClick={() => {
@@ -383,19 +374,19 @@ export default function GruposPage() {
                       setGroupName('');
                     }}
                     disabled={requestLoading}
-                    className="flex-1 px-4 py-3 bg-neutral-800 hover:bg-neutral-700 disabled:opacity-50 text-white font-medium rounded-xl transition-colors"
+                    className="flex-1 min-h-[48px] px-4 bg-neutral-800 hover:bg-neutral-700 disabled:opacity-50 text-white text-xs md:text-sm font-medium rounded-lg md:rounded-xl transition-colors"
                   >
                     Cancelar
                   </button>
                   <button
                     type="submit"
                     disabled={requestLoading || !groupName.trim()}
-                    className="flex-1 px-4 py-3 bg-turquoise hover:bg-turquoise/90 disabled:opacity-50 disabled:cursor-not-allowed text-black font-medium rounded-xl transition-colors inline-flex items-center justify-center gap-2"
+                    className="flex-1 min-h-[48px] px-4 bg-crystal-blue hover:bg-crystal-blue/90 disabled:opacity-50 disabled:cursor-not-allowed text-black text-xs md:text-sm font-medium rounded-lg md:rounded-xl transition-colors inline-flex items-center justify-center gap-2"
                   >
                     {requestLoading ? (
                       <>
                         <Loader2 className="w-4 h-4 animate-spin" />
-                        Enviando...
+                        <span>Enviando...</span>
                       </>
                     ) : (
                       'Enviar Solicitud'
