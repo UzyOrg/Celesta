@@ -44,11 +44,9 @@ export function getOrCreateSessionId(classToken?: string): string {
         }
         
         // Sesión expirada, eliminarla
-        console.log('[session] Session expired, creating new one');
         localStorage.removeItem(key);
       } catch (parseError) {
         // Formato antiguo (string simple), migrar a nuevo formato
-        console.log('[session] Migrating legacy session format');
         localStorage.removeItem(key);
       }
     }
@@ -64,13 +62,10 @@ export function getOrCreateSessionId(classToken?: string): string {
     };
     
     localStorage.setItem(key, JSON.stringify(sessionData));
-    console.log('[session] New session created, expires in 7 days');
-    
     return sid;
     
   } catch (error) {
     // Fallback si falla localStorage
-    console.error('[session] Error managing session:', error);
     return `${classToken || 'global'}-${Math.random().toString(36).slice(2)}`;
   }
 }
@@ -97,10 +92,9 @@ export function renewSession(classToken?: string): void {
     if (now < data.expiresAt) {
       data.expiresAt = now + SESSION_DURATION_MS; // Extender 7 días más
       localStorage.setItem(key, JSON.stringify(data));
-      console.log('[session] Session renewed');
     }
   } catch (error) {
-    console.error('[session] Error renewing session:', error);
+    // Silent fail - no action needed
   }
 }
 
@@ -114,7 +108,6 @@ export function invalidateSession(classToken?: string): void {
   
   const key = `celesta:sid:${classToken || '__global__'}`;
   localStorage.removeItem(key);
-  console.log('[session] Session invalidated');
 }
 
 /**
@@ -139,34 +132,19 @@ export function invalidateSession(classToken?: string): void {
 export async function logout(): Promise<void> {
   if (typeof window === 'undefined') return;
   
-  console.log('[logout] 🔒 Starting secure logout sequence...');
-  
   // ============================================================================
   // FASE 1: LOGOUT DEL SERVIDOR (CRÍTICO PARA SEGURIDAD)
   // ============================================================================
   try {
-    console.log('[logout] Phase 1: Invalidating server session...');
-    const { error } = await supabaseClient.auth.signOut();
-    
-    if (error) {
-      console.error('[logout] ⚠️ Server logout failed:', error.message);
-      console.error('[logout] ⚠️ Continuing with client cleanup for safety...');
-      // NO retornamos aquí - continuamos con limpieza del cliente
-    } else {
-      console.log('[logout] ✅ Server session invalidated successfully');
-    }
+    await supabaseClient.auth.signOut();
   } catch (e) {
-    console.error('[logout] ❌ Exception during server logout:', e);
-    console.error('[logout] ⚠️ Continuing with client cleanup for safety...');
-    // NO retornamos aquí - continuamos con limpieza del cliente
+    // Continue with client cleanup regardless of server result
   }
   
   // ============================================================================
   // FASE 2: LOGOUT DEL CLIENTE (AISLAMIENTO TOTAL)
   // ============================================================================
   try {
-    console.log('[logout] Phase 2: Clearing client state...');
-    
     // AISLAMIENTO TOTAL: Borrar TODO el localStorage
     // Esto incluye:
     // - Sesiones de Supabase (sb-*-auth-token)
@@ -176,44 +154,31 @@ export async function logout(): Promise<void> {
     // - workshop_*_completed (progreso de talleres)
     // - Cualquier otro estado de la aplicación
     
-    const totalKeys = localStorage.length;
-    console.log(`[logout] Clearing ALL localStorage (${totalKeys} keys)...`);
-    
     // Estrategia 1: localStorage.clear() (más agresivo y seguro)
     try {
       localStorage.clear();
-      console.log(`[logout] ✅ Successfully cleared all ${totalKeys} keys`);
     } catch (clearError) {
       // Estrategia 2 (fallback): Eliminar clave por clave
-      console.warn('[logout] localStorage.clear() failed, using fallback method');
       const keysToDelete: string[] = [];
       for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key) {
-          keysToDelete.push(key);
-        }
+        const keyName = localStorage.key(i);
+        if (keyName) keysToDelete.push(keyName);
       }
       
-      keysToDelete.forEach(key => {
+      keysToDelete.forEach((keyName) => {
         try {
-          localStorage.removeItem(key);
+          localStorage.removeItem(keyName);
         } catch (e) {
-          console.error(`[logout] Failed to remove key: ${key}`, e);
+          // Silent fail
         }
       });
-      
-      console.log(`[logout] ✅ Cleared ${keysToDelete.length} keys using fallback`);
     }
   } catch (e) {
-    console.error('[logout] ❌ CRITICAL: Failed to clear localStorage', e);
-    // Aún así intentar redirigir para prevenir acceso no autorizado
+    // Continue to redirect even if localStorage fails
   }
   
   // ============================================================================
   // REDIRECCIÓN FINAL
-  // ============================================================================
-  console.log('[logout] 🔒 Secure logout complete. Redirecting to login...');
-  
   // Forzar recarga completa y redirigir al login
   // Esto asegura que:
   // 1. Cualquier estado en memoria se limpia

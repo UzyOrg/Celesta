@@ -71,17 +71,43 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  isolation: isolate; /* Crea un nuevo contexto de stacking */
 }
 
 .videoGlow {
   position: absolute;
-  width: 120%;
-  height: 120%;
-  background-image: radial-gradient(circle at 50% 50%, rgba(var(--color-crystal-blue-rgb), 0.3), transparent 60%);
-  filter: blur(100px);
-  opacity: 0.5;
-  z-index: -1;
-  transform: translateZ(0); /* Promotes to new layer */
+  width: 150%;
+  height: 150%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: 
+    radial-gradient(
+      ellipse at 30% 40%, 
+      rgba(167, 243, 208, 0.2), 
+      transparent 50%
+    ),
+    radial-gradient(
+      ellipse at 70% 60%, 
+      rgba(196, 181, 253, 0.2), 
+      transparent 50%
+    );
+  filter: blur(60px);
+  opacity: 1;
+  z-index: 0;
+  pointer-events: none;
+  animation: crystalPulse 6s ease-in-out infinite;
+}
+
+@keyframes crystalPulse {
+  0%, 100% {
+    opacity: 0.8;
+    filter: blur(60px);
+  }
+  50% {
+    opacity: 0.6;
+    filter: blur(70px);
+  }
 }
 
 .featureVideo {
@@ -92,6 +118,8 @@
   border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
   object-fit: cover;
+  position: relative;
+  z-index: 1;
 }
 
 .featureImage {

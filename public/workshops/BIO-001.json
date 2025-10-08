@@ -20,7 +20,7 @@
       "tipo_paso": "instruccion",
       "titulo_paso": "El Caso: Fatiga Extrema",
       "instruccion": {
-        "texto": "Eres unx biólogx celular en un centro de investigación de vanguardia. Ha llegado a tu laboratorio una muestra de un paciente con una enfermedad desconocida que causa fatiga extrema. Tu misión es analizar las células del paciente para encontrar la causa. La primera hipótesis es que las 'centrales energéticas' de las células están fallando."
+        "texto": "Eres especialista en biología celular en un centro de investigación de vanguardia. Ha llegado a tu laboratorio una muestra de un paciente con una enfermedad desconocida que causa fatiga extrema. Tu misión es analizar las células del paciente para encontrar la causa. La primera hipótesis es que las 'centrales energéticas' de las células están fallando."
       },
       "recursos_del_paso": [
         {

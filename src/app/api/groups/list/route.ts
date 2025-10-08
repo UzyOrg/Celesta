@@ -34,18 +34,10 @@ export async function GET(request: Request) {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     
     if (authError || !user) {
-      console.error('[list_groups] Auth error:', authError?.message || 'No user');
-      console.error('[list_groups] Cookies present:', cookieStore.getAll().map(c => c.name));
       return NextResponse.json({ 
-        error: 'Unauthorized',
-        debug: process.env.NODE_ENV === 'development' ? {
-          message: authError?.message || 'No user found',
-          cookiesCount: cookieStore.getAll().length
-        } : undefined
+        error: 'Unauthorized'
       }, { status: 401 });
     }
-    
-    console.log('[list_groups] Fetching groups for teacher:', user.email);
     
     // Fetch groups filtered by teacher_id
     // RLS policy will also enforce this, but we add explicit filter
@@ -56,14 +48,11 @@ export async function GET(request: Request) {
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('[list_groups] Database error:', error.message);
       return NextResponse.json({ error: 'Database error' }, { status: 500 });
     }
 
-    console.log(`[list_groups] Found ${data?.length || 0} groups for teacher ${user.email}`);
     return NextResponse.json({ groups: data || [] });
   } catch (error) {
-    console.error('[list_groups] Unexpected error:', (error as Error)?.message ?? error);
     return NextResponse.json({ error: 'Unexpected error' }, { status: 500 });
   }
 }

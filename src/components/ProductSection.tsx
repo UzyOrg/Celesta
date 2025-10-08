@@ -9,8 +9,7 @@ interface FeatureProps {
   icon: React.ReactNode;
   title: string;
   description: string;
-  videoSrc: string;
-  mobileImageSrc: string;
+  imageSrc: string;
   delay: number;
 }
 
@@ -18,18 +17,16 @@ const ProductSection: React.FC = () => {
   const features: FeatureProps[] = [
     {
       icon: <Bot className={styles.icon} />,
-      title: "Taller del Estudiante: El Gimnasio Cognitivo",
-      description: "Un espacio donde los estudiantes no buscan respuestas, las construyen. Nuestro andamio de IA socrática guía su razonamiento en laboratorios de habilidades y fomenta el pensamiento crítico dentro de proyectos auténticos.",
-      videoSrc: "/Video_Estudiante.mp4",
-      mobileImageSrc: "/ph_student.png",
+      title: "Taller del Estudiante: Aprende Haciendo",
+      description: "Talleres interactivos donde la IA socrática acompaña cada paso del estudiante. Resuelve casos reales, analiza situaciones y construye conocimiento con retroalimentación inteligente en tiempo real.",
+      imageSrc: "/student_workshop.png",
       delay: 0
     },
     {
       icon: <Laptop3 className={styles.icon} />,
-      title: "Estudio del Docente: El Copiloto Pedagógico",
-      description: "Deja de gestionar tareas y empieza a orquestar el aprendizaje. Diseña Proyectos de Aprendizaje impactantes, genera rúbricas y da feedback con una IA que es tu socia estratégica, no solo una asistente.",
-      videoSrc: "/Video_Profesor.mp4",
-      mobileImageSrc: "/ph_teacher.png",
+      title: "Panel del Docente: Visibilidad Total",
+      description: "Monitorea el progreso en tiempo real, identifica patrones de aprendizaje y toma decisiones pedagógicas basadas en datos. Gestiona tus grupos y visualiza métricas de autonomía y participación desde un solo lugar.",
+      imageSrc: "/teacher_dashboard.png",
       delay: 0.1
     },
   ];
@@ -58,7 +55,7 @@ const ProductSection: React.FC = () => {
               </div>
             );
 
-            const videoContent = (
+            const imageContent = (
               <div className={styles.videoContainer}>
                 <div className={styles.videoGlow} />
                 <motion.div
@@ -66,23 +63,15 @@ const ProductSection: React.FC = () => {
                   whileInView={{ opacity: 1, scale: 1 }}
                   viewport={{ once: true, amount: 0.5 }}
                   transition={{ duration: 0.7, delay: 0.2 }}
+                  style={{ position: 'relative', zIndex: 1 }}
                 >
-                  <video 
-                    className={styles.featureVideo}
-                    autoPlay 
-                    loop 
-                    muted 
-                    playsInline
-                    key={feature.videoSrc}
-                  >
-                    <source src={feature.videoSrc} type="video/mp4" />
-                  </video>
                   <Image
-                    src={feature.mobileImageSrc}
+                    src={feature.imageSrc}
                     alt={feature.title}
-                    width={500}
-                    height={500}
-                    className={styles.featureImage}
+                    width={1200}
+                    height={800}
+                    className={styles.featureVideo}
+                    priority={index === 0}
                   />
                 </motion.div>
               </div>
@@ -100,11 +89,11 @@ const ProductSection: React.FC = () => {
                 {index % 2 === 0 ? (
                   <>
                     {textContent}
-                    {videoContent}
+                    {imageContent}
                   </>
                 ) : (
                   <>
-                    {videoContent}
+                    {imageContent}
                     {textContent}
                   </>
                 )}

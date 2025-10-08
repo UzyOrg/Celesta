@@ -16,3 +16,35 @@ coverage
 
 # Supabase migrations (ejecutar manualmente en cada instancia)
 lib/supabase/migrations/
+
+# Documentación temporal (desarrollo, cleanup, refactors)
+PRODUCTION_*.md
+REFACTOR*.md
+HOTFIX*.md
+BUGFIX*.md
+FEATURE-*.md
+FEAT_*.md
+FIX_*.md
+FIXES-*.md
+MOBILE*.md
+PERF_*.md
+SECURITY*.md
+DEPLOYMENT*.md
+TESTING*.md
+GUIA_*.md
+CHANGELOG*.md
+PR_*.md
+PILOT_*.md
+PRIVATE_*.md
+MANAGED-*.md
+MISSION-*.md
+IDENTIFIERS-*.md
+UPGRADE_*.md
+ZERO-*.md
+ONBOARDING_*.md
+THEME-*.md
+ARCHITECTURE_*.md
+CELESTA_*.md
+FASE*.md
+TEACHER_*.md
+!README.md

@@ -152,10 +152,6 @@ Responde a ${email} para dar acceso al piloto.
     const emailApiKey = process.env.EMAIL_API_KEY || process.env.RESEND_API_KEY;
 
     if (!emailServiceUrl || !emailApiKey) {
-      console.warn('[Beta Request] Email service not configured. Logging request instead:');
-      console.log(JSON.stringify({ fullName, email, schoolName, timestamp: new Date().toISOString() }, null, 2));
-      
-      // En desarrollo, solo logueamos
       if (process.env.NODE_ENV === 'development') {
         return NextResponse.json({
           success: true,
@@ -186,23 +182,14 @@ Responde a ${email} para dar acceso al piloto.
     });
 
     if (!emailResponse.ok) {
-      const errorData = await emailResponse.text();
-      console.error('[Beta Request] Email send failed:', errorData);
-      
-      // Loguear de todas formas para no perder la solicitud
-      console.log('[Beta Request] Logged request:', JSON.stringify({ fullName, email, schoolName }, null, 2));
-      
       throw new Error('Error al enviar notificación por email');
     }
-
-    console.log(`[Beta Request] ✅ Solicitud enviada: ${email} (${schoolName})`);
 
     return NextResponse.json({
       success: true,
       message: 'Solicitud enviada exitosamente',
     });
   } catch (error) {
-    console.error('[Beta Request] Error:', error);
     return NextResponse.json(
       { error: 'Error al procesar la solicitud' },
       { status: 500 }
