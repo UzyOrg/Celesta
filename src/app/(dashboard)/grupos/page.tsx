@@ -253,7 +253,7 @@ export default function GruposPage() {
                 Aún no tienes grupos creados
               </p>
               <p className="text-xs md:text-sm text-neutral-300 mt-2">
-                Usa el botón "Crear Nuevo Grupo" para comenzar
+                Usa el botón &quot;Crear Nuevo Grupo&quot; para comenzar
               </p>
             </div>
           )}

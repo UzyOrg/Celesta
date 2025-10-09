@@ -55,7 +55,7 @@ export default function WorkshopList({ workshops, groupId }: WorkshopListProps) 
           No hay talleres asignados a este grupo
         </p>
         <p className="text-neutral-500 text-xs mt-1">
-          Usa el botón "Añadir Taller" para comenzar
+          Usa el botón &quot;Añadir Taller&quot; para comenzar
         </p>
       </div>
     );
