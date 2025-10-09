@@ -23,7 +23,7 @@ export default function TeacherLibrary() {
             <h1 className="text-xl md:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-crystal-lavender via-crystal-blue to-crystal-lavender bg-clip-text text-transparent leading-tight px-4">
               Centro de Gestión Pedagógica en Construcción
             </h1>
-            <p className="text-sm md:text-base text-neutral-400 max-w-2xl mx-auto px-4">
+            <p className="text-sm text-neutral-400 max-w-2xl mx-auto px-4">
               Tu centro de comando para crear experiencias de aprendizaje extraordinarias
             </p>
           </div>
@@ -54,7 +54,7 @@ export default function TeacherLibrary() {
             <div className="p-2 rounded-lg bg-crystal-lavender/20 flex-shrink-0">
               <GraduationCap className="w-4 h-4 md:w-5 md:h-5 text-crystal-lavender" />
             </div>
-            <h3 className="text-sm md:text-base font-semibold text-neutral-100">Próximamente en tu Centro de Gestión</h3>
+            <h3 className="text-sm font-semibold text-neutral-100">Próximamente en tu Centro de Gestión</h3>
           </div>
           <ul className="space-y-2 md:space-y-3 text-xs md:text-sm text-neutral-300">
             <li className="flex items-start gap-2">

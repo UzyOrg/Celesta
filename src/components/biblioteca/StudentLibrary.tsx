@@ -22,7 +22,7 @@ export default function StudentLibrary() {
             <h1 className="text-xl md:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-crystal-blue via-crystal-lavender to-crystal-blue bg-clip-text text-transparent leading-tight px-4">
               Tu Segundo Cerebro está en Construcción
             </h1>
-            <p className="text-sm md:text-base text-neutral-400 max-w-2xl mx-auto px-4">
+            <p className="text-sm text-neutral-400 max-w-2xl mx-auto px-4">
               Estamos construyendo algo especial para ti
             </p>
           </div>
@@ -53,7 +53,7 @@ export default function StudentLibrary() {
             <div className="p-2 rounded-lg bg-crystal-blue/20 flex-shrink-0">
               <Brain className="w-4 h-4 md:w-5 md:h-5 text-crystal-blue" />
             </div>
-            <h3 className="text-sm md:text-base font-semibold text-neutral-100">Próximamente en tu Biblioteca</h3>
+            <h3 className="text-sm font-semibold text-neutral-100">Próximamente en tu Biblioteca</h3>
           </div>
           <ul className="space-y-2 md:space-y-3 text-xs md:text-sm text-neutral-300">
             <li className="flex items-start gap-2">

@@ -122,7 +122,8 @@ async function sendNotification(data: {
   // - Una entrada en una tabla de "pending_requests" en Supabase
 
   const emailBody = `
-Nueva Solicitud de Grupo - Celesta
+====================================
+NUEVA SOLICITUD DE GRUPO - CELESTA
 ====================================
 
 DOCENTE:
@@ -130,17 +131,19 @@ DOCENTE:
 - Email: ${teacherEmail}
 - ID: ${teacherId}
 
-DETALLES DEL GRUPO:
-- Nombre del Grupo: ${groupName}
-- Taller Asignado: ${workshopId}
-- Notas: ${notes}
+GRUPO SOLICITADO:
+- Nombre: ${groupName}
+- Taller deseado: ${workshopId}
 
-ACCIÓN REQUERIDA:
-1. Crear el grupo en Supabase:
-   INSERT INTO public.class_assignments (class_token, assigned_workshop_id, teacher_id, is_active)
-   VALUES ('GENERAR-TOKEN', '${workshopId}', '${teacherId}', true);
+NOTAS ADICIONALES:
+${notes}
 
-2. Notificar al docente que su grupo está listo.
+====================================
+⚡ ACCIÓN REQUERIDA:
+====================================
+1. Crear el grupo en Supabase con un token único
+2. Asignar talleres desde la biblioteca del docente
+3. Notificar al docente que su grupo está listo
 
 ====================================
 Generado automáticamente por Celesta
@@ -148,7 +151,6 @@ Generado automáticamente por Celesta
 
   console.log('[request_group] 📧 Notification to send:');
   console.log(emailBody);
-
   // TODO: Integrar con servicio de email real o Slack webhook
   // Por ahora, solo loguear. El equipo recibirá esto en los logs de Vercel.
 

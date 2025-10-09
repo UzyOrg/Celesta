@@ -185,5 +185,5 @@ export async function logout(): Promise<void> {
   // 2. Supabase revalida la sesión (detectará que es inválida)
   // 3. Usuario ve un estado 100% limpio
   // 4. Usuario puede volver a iniciar sesión inmediatamente
-  window.location.href = '/login';
+  window.location.href = '/pilot-login';
 }

@@ -2,18 +2,20 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Loader2, ArrowLeft, Check, LinkIcon as Link } from 'lucide-react';
+import { Loader2, ArrowLeft, Check, LinkIcon as Link, Plus } from 'lucide-react';
 import PageContainer from '@/components/shell/PageContainer';
 import { getCsrfTokenFromBrowser } from '@/lib/csrf';
 import PendingRequestsList from '@/components/grupos/PendingRequestsList';
 import ApprovedStudentsList from '@/components/grupos/ApprovedStudentsList';
 import StudentInsightModal from '@/components/insights/StudentInsightModal';
 import AnalyticsDashboardWrapper from '@/components/grupos/AnalyticsDashboardWrapper';
+import AssignWorkshopsModal from '@/components/grupos/AssignWorkshopsModal';
+import WorkshopList from './_components/WorkshopList';
 import type { StudentRosterEntry, RosterStats, ApprovedStudent } from '@/types/roster';
 
 const LinkIcon = Link;
 
-type Tab = 'approved' | 'pending' | 'dashboard';
+type Tab = 'approved' | 'pending' | 'dashboard' | 'talleres';
 
 export default function GrupoDetailPage() {
   const router = useRouter();
@@ -30,31 +32,56 @@ export default function GrupoDetailPage() {
   // Student Insight Modal state
   const [selectedStudent, setSelectedStudent] = useState<ApprovedStudent | null>(null);
   const [isInsightModalOpen, setIsInsightModalOpen] = useState(false);
+  
+  // Talleres state
+  const [workshops, setWorkshops] = useState<any[]>([]);
+  const [groupId, setGroupId] = useState<string | null>(null);
+  const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
 
-  // Fetch roster data
+  // Fetch roster data and group info
   useEffect(() => {
     if (!classToken) return;
 
-    async function fetchRoster() {
+    async function fetchData() {
       try {
-        const response = await fetch(`/api/roster/${classToken}`);
-        if (!response.ok) {
-          console.error('Error fetching roster:', response.statusText);
-          return;
+        // Fetch roster
+        const rosterResponse = await fetch(`/api/roster/${classToken}`);
+        if (rosterResponse.ok) {
+          const data = await rosterResponse.json();
+          setApprovedStudents(data.approved || []);
+          setpendingRequests(data.pending || []);
+          setStats(data.stats || { total_approved: 0, total_pending: 0, total_rejected: 0 });
         }
 
-        const data = await response.json();
-        setApprovedStudents(data.approved || []);
-        setpendingRequests(data.pending || []);
-        setStats(data.stats || { total_approved: 0, total_pending: 0, total_rejected: 0 });
+        // Fetch group info to get group_id
+        const groupResponse = await fetch(`/api/groups/by-token?token=${classToken}`);
+        console.log('[GrupoDetail] Group response:', groupResponse.status);
+        
+        if (groupResponse.ok) {
+          const groupData = await groupResponse.json();
+          console.log('[GrupoDetail] Group data:', groupData);
+          setGroupId(groupData.group.id);
+          
+          // Fetch workshops for this group
+          const workshopsResponse = await fetch(`/api/groups/${groupData.group.id}/talleres`);
+          console.log('[GrupoDetail] Workshops response:', workshopsResponse.status);
+          
+          if (workshopsResponse.ok) {
+            const workshopsData = await workshopsResponse.json();
+            console.log('[GrupoDetail] Workshops data:', workshopsData);
+            setWorkshops(workshopsData.talleres || []);
+          }
+        } else {
+          console.error('[GrupoDetail] Failed to fetch group:', await groupResponse.text());
+        }
       } catch (error) {
-        console.error('Error fetching roster:', error);
+        console.error('Error fetching data:', error);
       } finally {
         setLoading(false);
       }
     }
 
-    fetchRoster();
+    fetchData();
   }, [classToken]);
 
   const handleCopyInviteLink = () => {
@@ -254,6 +281,22 @@ export default function GrupoDetailPage() {
             />
           )}
         </button>
+        <button
+          onClick={() => setActiveTab('talleres')}
+          className={`px-4 md:px-6 py-2.5 md:py-3 text-xs md:text-sm font-medium transition-all relative whitespace-nowrap ${
+            activeTab === 'talleres'
+              ? 'text-white'
+              : 'text-neutral-500 hover:text-neutral-300'
+          }`}
+        >
+          Talleres ({workshops.length})
+          {activeTab === 'talleres' && (
+            <motion.div
+              layoutId="tab-indicator"
+              className="absolute bottom-0 left-0 right-0 h-0.5 bg-crystal-blue"
+            />
+          )}
+        </button>
       </div>
 
       {/* Content */}
@@ -271,6 +314,26 @@ export default function GrupoDetailPage() {
             onReject={handleReject}
           />
         )}
+        {activeTab === 'talleres' && groupId && (
+          <div>
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h3 className="text-lg font-bold text-white">Talleres Asignados</h3>
+                <p className="text-sm text-neutral-400 mt-1">
+                  Gestiona los talleres pedagógicos de este grupo
+                </p>
+              </div>
+              <button
+                onClick={() => setIsAssignModalOpen(true)}
+                className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-turquoise to-lime text-black font-semibold rounded-lg hover:opacity-90 transition-all"
+              >
+                <Plus className="w-4 h-4" />
+                Añadir Taller
+              </button>
+            </div>
+            <WorkshopList workshops={workshops} groupId={groupId} />
+          </div>
+        )}
         {activeTab === 'dashboard' && (
           <AnalyticsDashboardWrapper classToken={classToken} />
         )}
@@ -283,6 +346,23 @@ export default function GrupoDetailPage() {
           onClose={handleCloseInsightModal}
           studentAlias={selectedStudent.student_alias}
           classToken={classToken}
+        />
+      )}
+
+      {/* Assign Workshops Modal */}
+      {groupId && (
+        <AssignWorkshopsModal
+          isOpen={isAssignModalOpen}
+          onClose={() => setIsAssignModalOpen(false)}
+          groupId={groupId}
+          assignedTallerIds={workshops.map(w => w.taller_id)}
+          onSuccess={() => {
+            // Refresh workshops
+            fetch(`/api/groups/${groupId}/talleres`)
+              .then(res => res.json())
+              .then(data => setWorkshops(data.talleres || []))
+              .catch(console.error);
+          }}
         />
       )}
     </PageContainer>

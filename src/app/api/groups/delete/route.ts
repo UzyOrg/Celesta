@@ -1,32 +1,32 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { z } from 'zod';
 
 export const runtime = 'nodejs';
 export const revalidate = 0;
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
 const RequestSchema = z.object({
   class_token: z.string().min(1),
 });
 
 export async function DELETE(req: Request) {
-  if (!supabaseUrl || !supabaseAnonKey) {
-    return NextResponse.json({ error: 'Server misconfigured' }, { status: 500 });
-  }
-
   try {
     const body = await req.json();
     const { class_token } = RequestSchema.parse(body);
 
     // Create Supabase client with user's session
     const cookieStore = await cookies();
-    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-      global: {
-        headers: { Cookie: cookieStore.toString() },
+    const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
+      cookies: {
+        get(name: string) {
+          return cookieStore.get(name)?.value;
+        },
+        set() {},
+        remove() {},
       },
     });
     

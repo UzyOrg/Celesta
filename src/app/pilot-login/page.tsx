@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Mail, Lock, LogIn, AlertCircle, Loader2, GraduationCap } from 'lucide-react';
 import { signInTeacher, getCurrentUser } from '@/lib/auth';
+import Input from '@/components/ui/Input';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -76,42 +77,32 @@ export default function LoginPage() {
             )}
 
             {/* Email Field */}
-            <div>
-              <label className="flex items-center gap-1.5 md:gap-2 text-xs md:text-sm font-medium text-neutral-300 mb-2 md:mb-3">
-                <Mail className="w-3.5 h-3.5 md:w-4 md:h-4 text-crystal-blue" />
-                Correo Electrónico
-              </label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="tu@email.com"
-                className="w-full h-12 bg-neutral-950 border border-neutral-700 rounded-lg md:rounded-xl px-3 md:px-4 text-sm md:text-base text-white placeholder:text-neutral-500 focus:outline-none focus:ring-2 focus:ring-crystal-blue focus:border-transparent transition-all"
-                required
-                disabled={isLoading}
-                autoComplete="email"
-                autoFocus
-              />
-            </div>
+            <Input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="tu@email.com"
+              label="Correo Electrónico"
+              icon={<Mail className="w-4 h-4 text-crystal-blue" />}
+              required
+              disabled={isLoading}
+              autoComplete="email"
+              autoFocus
+            />
 
             {/* Password Field */}
-            <div>
-              <label className="flex items-center gap-1.5 md:gap-2 text-xs md:text-sm font-medium text-neutral-300 mb-2 md:mb-3">
-                <Lock className="w-3.5 h-3.5 md:w-4 md:h-4 text-crystal-lavender" />
-                Contraseña
-              </label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                className="w-full h-12 bg-neutral-950 border border-neutral-700 rounded-lg md:rounded-xl px-3 md:px-4 text-sm md:text-base text-white placeholder:text-neutral-500 focus:outline-none focus:ring-2 focus:ring-crystal-lavender focus:border-transparent transition-all"
-                required
-                disabled={isLoading}
-                autoComplete="current-password"
-                minLength={6}
-              />
-            </div>
+            <Input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              label="Contraseña"
+              icon={<Lock className="w-4 h-4 text-crystal-lavender" />}
+              required
+              disabled={isLoading}
+              autoComplete="current-password"
+              minLength={6}
+            />
 
             {/* Submit Button */}
             <button

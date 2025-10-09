@@ -112,7 +112,7 @@ export default function StudentInsightModal({
                     </div>
                     <div>
                       <h2 className="text-base md:text-xl font-bold !text-white mb-0.5 md:mb-1">{studentAlias}</h2>
-                      <p className="text-[10px] md:text-xs !text-neutral-400">Panel de Insights del Estudiante</p>
+                      <p className="text-[10px] !text-neutral-400">Panel de Insights del Estudiante</p>
                     </div>
                   </div>
                   

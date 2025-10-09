@@ -2,19 +2,21 @@
 import { Users, Plus, Search, Mail, Loader2 } from 'lucide-react';
 import GroupCard from '@/components/grupos/GroupCard';
 import GroupCardSkeleton from '@/components/skeletons/GroupCardSkeleton';
+import CreateGroupButton from '@/app/(dashboard)/_components/CreateGroupButton';
 import { useEffect, useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
+import Input from '@/components/ui/Input';
 import type { User } from '@supabase/supabase-js';
 
 type Group = {
   id: string;
   class_token: string;
-  assigned_workshop_id: string;
   is_active: boolean;
   created_at: string;
   updated_at: string;
   teacher_id?: string;
+  talleres_count?: number; // Número de talleres asignados
 };
 
 export default function GruposPage() {
@@ -180,8 +182,7 @@ export default function GruposPage() {
   }
 
   const filteredGroups = groups.filter(g =>
-    g.class_token.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    g.assigned_workshop_id.toLowerCase().includes(searchQuery.toLowerCase())
+    g.class_token.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const activeGroups = filteredGroups.filter(g => g.is_active);
@@ -208,14 +209,7 @@ export default function GruposPage() {
             </div>
 
             {/* Botón Crear Grupo */}
-            <button
-              onClick={() => setShowRequestModal(true)}
-              className="inline-flex items-center justify-center gap-1.5 md:gap-2 px-4 md:px-5 min-h-[48px] bg-crystal-blue hover:bg-crystal-blue/90 text-black text-xs md:text-sm font-medium rounded-lg md:rounded-xl transition-colors"
-            >
-              <Plus className="w-4 h-4 md:w-5 md:h-5" />
-              <span className="hidden md:inline">Crear Nuevo Grupo</span>
-              <span className="md:hidden">Nuevo</span>
-            </button>
+            <CreateGroupButton />
           </div>
 
           {/* Search Bar */}
@@ -251,20 +245,16 @@ export default function GruposPage() {
             </div>
           )}
 
-          {/* Empty State - Sin grupos */}
+          {/* Empty State */}
           {!loading && !error && groups.length === 0 && (
             <div className="text-center py-12 md:py-20">
               <Users className="w-12 h-12 md:w-16 md:h-16 text-neutral-600 mx-auto mb-4 md:mb-6" />
-              <p className="text-sm md:text-base text-neutral-400 mb-6 md:mb-8">
+              <p className="text-sm md:text-base text-white font-medium">
                 Aún no tienes grupos creados
               </p>
-              <button
-                onClick={() => setShowRequestModal(true)}
-                className="inline-flex items-center gap-2 px-6 py-3 min-h-[48px] bg-crystal-blue hover:bg-crystal-blue/90 text-black text-xs md:text-sm font-medium rounded-lg md:rounded-xl transition-colors"
-              >
-                <Plus className="w-4 h-4" />
-                Crear tu Primer Grupo
-              </button>
+              <p className="text-xs md:text-sm text-neutral-300 mt-2">
+                Usa el botón "Crear Nuevo Grupo" para comenzar
+              </p>
             </div>
           )}
 
@@ -279,7 +269,7 @@ export default function GruposPage() {
                   <GroupCard
                     key={group.id}
                     classToken={group.class_token}
-                    workshopId={group.assigned_workshop_id}
+                    talleresCount={group.talleres_count || 0}
                     isActive={group.is_active}
                     createdAt={group.created_at}
                     pendingCount={pendingCounts[group.class_token] || 0}
@@ -302,7 +292,7 @@ export default function GruposPage() {
                   <GroupCard
                     key={group.id}
                     classToken={group.class_token}
-                    workshopId={group.assigned_workshop_id}
+                    talleresCount={group.talleres_count || 0}
                     isActive={group.is_active}
                     createdAt={group.created_at}
                     pendingCount={pendingCounts[group.class_token] || 0}
@@ -352,15 +342,12 @@ export default function GruposPage() {
                 </p>
 
                 <div className="mb-5 md:mb-6">
-                  <label className="block text-xs md:text-sm font-medium text-neutral-300 mb-2">
-                    Nombre del Grupo
-                  </label>
-                  <input
+                  <Input
                     type="text"
                     value={groupName}
                     onChange={(e) => setGroupName(e.target.value)}
                     placeholder="Ej: Programación 101"
-                    className="w-full h-12 bg-neutral-950 border border-neutral-700 rounded-lg md:rounded-xl px-3 md:px-4 text-sm md:text-base text-white placeholder:text-neutral-500 focus:outline-none focus:ring-2 focus:ring-crystal-blue focus:border-transparent transition-all"
+                    label="Nombre del Grupo"
                     required
                     disabled={requestLoading}
                     autoFocus

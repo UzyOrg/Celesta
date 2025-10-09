@@ -3,10 +3,11 @@ import { motion } from 'framer-motion';
 import { MoreVertical, Archive, Trash2, CheckCircle2, XCircle, Bell } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
 
 type GroupCardProps = {
   classToken: string;
-  workshopId: string;
+  talleresCount?: number; // Número de talleres asignados
   isActive: boolean;
   createdAt: string;
   pendingCount?: number;  // Nuevo: número de solicitudes pendientes
@@ -16,7 +17,7 @@ type GroupCardProps = {
 
 export default function GroupCard({
   classToken,
-  workshopId,
+  talleresCount = 0,
   isActive,
   createdAt,
   pendingCount = 0,
@@ -25,6 +26,7 @@ export default function GroupCard({
 }: GroupCardProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
@@ -51,12 +53,13 @@ export default function GroupCard({
     }
   };
 
-  const handleDelete = async () => {
-    if (!confirm(`¿Estás seguro de que deseas eliminar el grupo "${classToken}"? Esta acción no se puede deshacer.`)) {
-      return;
-    }
-    setLoading(true);
+  const handleDeleteClick = () => {
     setMenuOpen(false);
+    setShowDeleteConfirm(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    setLoading(true);
     try {
       await onDelete(classToken);
     } finally {
@@ -143,7 +146,7 @@ export default function GroupCard({
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleDelete();
+                  handleDeleteClick();
                 }}
                 className="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-900/30 transition-colors text-left border-t border-neutral-700"
               >
@@ -155,10 +158,12 @@ export default function GroupCard({
         </div>
       </div>
 
-      {/* Workshop Info */}
+      {/* Talleres Info */}
       <div className="mb-4 p-3 bg-neutral-800/30 rounded-lg">
-        <p className="text-xs text-neutral-500 mb-1">Taller Asignado</p>
-        <p className="text-sm font-medium text-turquoise">{workshopId}</p>
+        <p className="text-xs text-neutral-500 mb-1">Talleres Asignados</p>
+        <p className="text-sm font-medium text-turquoise">
+          {talleresCount === 0 ? 'Sin talleres' : `${talleresCount} taller${talleresCount !== 1 ? 'es' : ''}`}
+        </p>
       </div>
 
       {/* Status Badge */}
@@ -181,6 +186,18 @@ export default function GroupCard({
           <div className="w-6 h-6 border-2 border-turquoise border-t-transparent rounded-full animate-spin" />
         </div>
       )}
+
+      {/* Confirm Delete Dialog */}
+      <ConfirmDialog
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={handleDeleteConfirm}
+        title="Eliminar Grupo"
+        message={`¿Estás seguro de que deseas eliminar el grupo "${classToken}"? Esta acción no se puede deshacer.`}
+        confirmText="Eliminar"
+        cancelText="Cancelar"
+        variant="danger"
+      />
     </motion.div>
   );
 }

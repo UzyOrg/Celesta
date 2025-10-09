@@ -96,7 +96,7 @@ export default function SignUpPage() {
                   Por favor, revisa tu bandeja de entrada y haz clic en el enlace de verificación para activar tu cuenta.
                 </p>
                 <Link
-                  href="/login"
+                  href="/pilot-login"
                   className="inline-block px-6 py-3 bg-gradient-to-r from-turquoise to-lime text-black font-bold rounded-xl hover:from-turquoise-600 hover:to-lime-600 transition-all"
                 >
                   Ir al inicio de sesión
@@ -276,7 +276,7 @@ export default function SignUpPage() {
 
           {/* Login Link */}
           <Link
-            href="/login"
+            href="/pilot-login"
             className="block w-full min-h-[48px] text-center py-3 px-6 rounded-xl border-2 border-neutral-700 text-sm md:text-base !text-neutral-300 font-medium hover:border-lime hover:text-lime transition-all flex items-center justify-center"
           >
             Iniciar sesión

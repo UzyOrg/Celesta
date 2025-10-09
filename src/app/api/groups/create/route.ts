@@ -26,51 +26,48 @@ export async function POST(req: Request) {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     
     if (authError || !user) {
-      console.error('[create_group] Not authenticated:', authError);
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     
     // Parse request body
     const body = await req.json();
-    const { class_token, assigned_workshop_id } = body;
+    const { class_token } = body;
     
-    if (!class_token || !assigned_workshop_id) {
+    if (!class_token) {
       return NextResponse.json({ 
-        error: 'Missing required fields: class_token, assigned_workshop_id' 
+        error: 'Missing required field: class_token' 
       }, { status: 400 });
     }
     
     console.log('[create_group] Creating group for teacher:', user.email, {
       class_token,
-      assigned_workshop_id,
     });
     
-    // Insert new group
-    const { data, error } = await supabase
+    // Insert new group (sin assigned_workshop_id)
+    const { data: newGroup, error: insertError } = await supabase
       .from('class_assignments')
       .insert({
         class_token,
-        assigned_workshop_id,
         teacher_id: user.id,
         is_active: true,
       })
       .select()
       .single();
-
-    if (error) {
-      if (error.code === '23505') {
+    
+    if (insertError) {
+      if (insertError.code === '23505') {
         // Unique constraint violation
         return NextResponse.json({ 
           error: 'Este código de grupo ya existe. Por favor, usa uno diferente.' 
         }, { status: 409 });
       }
       
-      console.error('[create_group] Database error:', error.message);
+      console.error('[create_group] Database error:', insertError.message);
       return NextResponse.json({ error: 'Database error' }, { status: 500 });
     }
 
     console.log('[create_group] ✅ Group created successfully:', class_token);
-    return NextResponse.json({ group: data }, { status: 201 });
+    return NextResponse.json({ group: newGroup }, { status: 201 });
   } catch (error) {
     console.error('[create_group] Unexpected error:', (error as Error)?.message ?? error);
     return NextResponse.json({ error: 'Unexpected error' }, { status: 500 });

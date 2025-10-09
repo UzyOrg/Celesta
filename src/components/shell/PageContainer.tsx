@@ -67,7 +67,7 @@ export default function PageContainer({
                     <h1 className="text-xl md:text-2xl font-bold bg-gradient-to-r from-white to-neutral-300 bg-clip-text text-transparent">
                       {title}
                     </h1>
-                    {subtitle && <p className="text-neutral-200 text-sm md:text-base">{subtitle}</p>}
+                    {subtitle && <p className="text-white text-sm">{subtitle}</p>}
                   </div>
                 )}
                 {actions && <div className="flex items-center gap-2 md:gap-3">{actions}</div>}

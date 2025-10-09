@@ -43,7 +43,7 @@ export async function GET(request: Request) {
     // RLS policy will also enforce this, but we add explicit filter
     const { data, error } = await supabase
       .from('class_assignments')
-      .select('id, class_token, assigned_workshop_id, is_active, created_at, updated_at, teacher_id')
+      .select('id, class_token, is_active, created_at, updated_at, teacher_id')
       .eq('teacher_id', user.id)
       .order('created_at', { ascending: false });
 
@@ -51,7 +51,22 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Database error' }, { status: 500 });
     }
 
-    return NextResponse.json({ groups: data || [] });
+    // Enriquecer con conteo de talleres asignados
+    const groupsWithCounts = await Promise.all(
+      (data || []).map(async (group) => {
+        const { count } = await supabase
+          .from('grupo_talleres')
+          .select('*', { count: 'exact', head: true })
+          .eq('group_id', group.id);
+        
+        return {
+          ...group,
+          talleres_count: count || 0,
+        };
+      })
+    );
+
+    return NextResponse.json({ groups: groupsWithCounts });
   } catch (error) {
     return NextResponse.json({ error: 'Unexpected error' }, { status: 500 });
   }
