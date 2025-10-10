@@ -3,6 +3,14 @@ import { useEffect, useState } from 'react';
 import { idbGet, idbPut } from '@/lib/idb';
 import { validateWorkshopJson, Workshop } from './schema';
 
+/**
+ * Hook para cargar talleres con arquitectura híbrida:
+ * 
+ * 1. TALLERES OFICIALES: Cargados desde /workshops/*.json (archivos estáticos)
+ * 2. TALLERES PERSONALIZADOS: Cargados desde API /api/talleres/[id]
+ * 
+ * La distinción se hace automáticamente en el backend.
+ */
 export function useWorkshop(id: string) {
   const [data, setData] = useState<Workshop | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -12,6 +20,7 @@ export function useWorkshop(id: string) {
     let cancelled = false;
     const normalizeId = (raw: string) => raw.replace(/\.json$/i, '');
     const normalizedId = normalizeId(id);
+    
     async function sha256Hex(text: string): Promise<string | null> {
       try {
         if (!('crypto' in window) || !('subtle' in window.crypto)) return null;
@@ -23,45 +32,46 @@ export function useWorkshop(id: string) {
         return null;
       }
     }
+    
     async function load() {
       setLoading(true);
       setError(null);
       const cacheKey = `workshop:${normalizedId}`;
-      // Leer posible caché previa
+      
+      // 1. Intentar cargar desde caché
       const cached = await idbGet<Workshop>('workshops', cacheKey);
-      // Determinar content_version desde index.json, con fallback a caché o 'dev'
-      let cv = cached?.content_version ?? 'dev';
+      
+      // 2. Intentar cargar desde API unificada (maneja ambos tipos)
       try {
-        const idxRes = await fetch('/workshops/index.json', { cache: 'no-store' });
-        if (idxRes.ok) {
-          const list = await idxRes.json();
-          if (Array.isArray(list)) {
-            const entry = list.find((w: any) => w && (w.id_taller === normalizedId || w.id === normalizedId));
-            if (entry?.content_version) cv = String(entry.content_version);
-          }
+        const res = await fetch(`/api/talleres/${normalizedId}`, { cache: 'no-store' });
+        
+        if (!res.ok) {
+          throw new Error(`API error ${res.status}`);
         }
-      } catch {
-        // Ignorar y usar fallback de caché
-      }
-      const url = `/workshops/${normalizedId}.json?v=${encodeURIComponent(cv)}`;
-
-      // Try network first (con versión), luego fallback a caché
-      try {
-        const res = await fetch(url, { cache: 'no-store' });
-        if (!res.ok) throw new Error(`Network ${res.status}`);
-        const text = await res.text();
-        const hash = await sha256Hex(text);
-        const json = JSON.parse(text);
-        if (hash && !json.checksum) json.checksum = hash;
-        const valid = validateWorkshopJson(json);
+        
+        const { contenido } = await res.json();
+        
+        if (!contenido) {
+          throw new Error('No content in response');
+        }
+        
+        // Validar y cachear
+        const hash = await sha256Hex(JSON.stringify(contenido));
+        if (hash && !contenido.checksum) contenido.checksum = hash;
+        
+        const valid = validateWorkshopJson(contenido);
         await idbPut('workshops', cacheKey, valid);
+        
         if (!cancelled) {
           setData(valid);
           setLoading(false);
         }
         return;
+        
       } catch (e) {
-        // Fallback to cache
+        console.error(`[useWorkshop] Error loading ${normalizedId}:`, e);
+        
+        // 3. Fallback a caché si existe
         if (cached) {
           if (!cancelled) {
             setData(cached);
@@ -69,13 +79,17 @@ export function useWorkshop(id: string) {
           }
           return;
         }
+        
+        // 4. Si no hay caché, mostrar error
         if (!cancelled) {
           setError((e as Error).message || 'Error loading workshop');
           setLoading(false);
         }
       }
     }
+    
     load();
+    
     return () => {
       cancelled = true;
     };

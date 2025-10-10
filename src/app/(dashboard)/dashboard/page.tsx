@@ -138,15 +138,6 @@ export default function DashboardPage() {
             </>
           )}
         </div>
-
-        <div className="bg-neutral-900/60 backdrop-blur-sm rounded-xl md:rounded-2xl border border-neutral-800/50 p-6 md:p-12 text-center">
-          <h2 className="text-lg md:text-2xl font-bold text-neutral-300 mb-3 md:mb-4">
-            ¡Bienvenido a Celesta OS!
-          </h2>
-          <p className="text-xs md:text-sm text-neutral-400">
-            Tu dashboard personal estará disponible próximamente. Por ahora, dirígete a <strong className="text-crystal-blue">Misiones</strong> para comenzar tu primera experiencia de aprendizaje.
-          </p>
-        </div>
       </PageContainer>
   );
 }

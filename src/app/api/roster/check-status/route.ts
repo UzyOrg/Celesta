@@ -70,11 +70,14 @@ export async function POST(req: Request) {
     }
 
     if (!data) {
+      console.log(`[roster/check-status] NOT_FOUND: token="${classToken}", alias="${alias}"`);
       return NextResponse.json({ 
         status: 'not_found',
         message: 'No hay solicitud para este alias en este grupo.' 
       });
     }
+    
+    console.log(`[roster/check-status] FOUND: token="${classToken}", alias="${alias}", status="${data.status}"`);
 
     // Retornar el status
     const response: any = {

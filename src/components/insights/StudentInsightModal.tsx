@@ -209,7 +209,7 @@ export default function StudentInsightModal({
                 {!loading && !error && data?.events && (
                   <div className="space-y-3 md:space-y-4">
                     <div className="mb-4 md:mb-6">
-                      <h3 className="text-sm md:text-base font-bold text-white mb-1.5 md:mb-2">
+                      <h3 className="text-sm font-bold text-white mb-1.5 md:mb-2">
                         Viaje de Aprendizaje Paso a Paso
                       </h3>
                       <p className="text-[10px] md:text-xs text-neutral-300">

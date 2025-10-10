@@ -206,15 +206,41 @@ export default function EstudianteGuard({ children }: EstudianteGuardProps) {
         >
           <ShieldAlert className="w-16 h-16 text-neutral-400 mx-auto mb-6" />
           <h2 className="text-2xl font-bold text-white mb-3">Sin Solicitud</h2>
-          <p className="text-neutral-300 mb-6">
+          <p className="text-neutral-300 mb-4">
             No encontramos una solicitud para este alias en este grupo.
           </p>
-          <button
-            onClick={() => router.replace(`/join?t=${userState.classToken}`)}
-            className="px-6 py-3 bg-turquoise text-black font-semibold rounded-lg hover:bg-turquoise/90 transition"
-          >
-            Solicitar Acceso
-          </button>
+          <div className="bg-neutral-800/50 rounded-lg p-4 mb-6 text-left">
+            <p className="text-xs text-neutral-500 mb-2">Información de acceso:</p>
+            <p className="text-sm text-neutral-300">
+              <strong className="text-turquoise">Alias:</strong> {userState.alias}
+            </p>
+            <p className="text-sm text-neutral-300">
+              <strong className="text-turquoise">Grupo:</strong> {userState.classToken}
+            </p>
+            <p className="text-xs text-neutral-500 mt-3">
+              Si este alias fue aprobado para otro grupo, limpia tu sesión e ingresa nuevamente con el código correcto.
+            </p>
+          </div>
+          <div className="flex flex-col gap-2">
+            <button
+              onClick={() => router.replace(`/join?t=${userState.classToken}`)}
+              className="px-6 py-3 bg-turquoise text-black font-semibold rounded-lg hover:bg-turquoise/90 transition"
+            >
+              Solicitar Acceso
+            </button>
+            <button
+              onClick={() => {
+                // Limpiar TODO el localStorage y redirigir
+                Object.keys(localStorage)
+                  .filter(k => k.startsWith('celesta:'))
+                  .forEach(k => localStorage.removeItem(k));
+                router.replace('/');
+              }}
+              className="px-6 py-2 text-sm text-neutral-400 hover:text-white transition"
+            >
+              Limpiar sesión y volver al inicio
+            </button>
+          </div>
         </motion.div>
       </div>
     );
