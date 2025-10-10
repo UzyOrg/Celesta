@@ -55,24 +55,18 @@ export default function GrupoDetailPage() {
 
         // Fetch group info to get group_id
         const groupResponse = await fetch(`/api/groups/by-token?token=${classToken}`);
-        console.log('[GrupoDetail] Group response:', groupResponse.status);
         
         if (groupResponse.ok) {
           const groupData = await groupResponse.json();
-          console.log('[GrupoDetail] Group data:', groupData);
           setGroupId(groupData.group.id);
           
           // Fetch workshops for this group
           const workshopsResponse = await fetch(`/api/groups/${groupData.group.id}/talleres`);
-          console.log('[GrupoDetail] Workshops response:', workshopsResponse.status);
           
           if (workshopsResponse.ok) {
             const workshopsData = await workshopsResponse.json();
-            console.log('[GrupoDetail] Workshops data:', workshopsData);
             setWorkshops(workshopsData.talleres || []);
           }
-        } else {
-          console.error('[GrupoDetail] Failed to fetch group:', await groupResponse.text());
         }
       } catch (error) {
         console.error('Error fetching data:', error);
