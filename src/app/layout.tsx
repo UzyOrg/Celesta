@@ -38,8 +38,8 @@ export default function RootLayout({
       <head>
         {/* Font imports are now handled in globals.css */}
         <link rel="icon" href="/Logo_Celestea.png" />
-      </head>{styles.layout}
-      <body className="font-plus-jakarta-sans bg-base text-white antialiased">
+      </head>
+      <body className={styles.layout}>
         <AuthProvider>
           <ModalProvider>
             <ThemeProvider>
