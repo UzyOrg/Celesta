@@ -74,6 +74,12 @@ export interface SignUpResult {
   needsEmailConfirmation?: boolean;
 }
 
+/**
+ * @deprecated Celesta ahora usa un modelo "Invite-Only" (Puente Levadizo 3.0).
+ * Los docentes deben ser invitados mediante el script de administrador.
+ * Usar: `pnpm run invite:teacher <email@docente.com>`
+ * Esta función se mantiene solo para compatibilidad con código legacy.
+ */
 export async function signUpTeacher(data: SignUpData): Promise<SignUpResult> {
   try {
     const { email, password, fullName } = data;

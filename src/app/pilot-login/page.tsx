@@ -123,26 +123,6 @@ export default function LoginPage() {
               )}
             </button>
           </form>
-
-          {/* Divider */}
-          <div className="relative my-4 md:my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-neutral-800"></div>
-            </div>
-            <div className="relative flex justify-center text-xs md:text-sm">
-              <span className="px-3 md:px-4 bg-neutral-900/60 text-neutral-500">
-                ¿No tienes cuenta?
-              </span>
-            </div>
-          </div>
-
-          {/* Sign Up Link */}
-          <Link
-            href="/signup"
-            className="block w-full min-h-[48px] text-center py-3 px-4 md:px-6 rounded-lg md:rounded-xl border-2 border-neutral-700 text-neutral-300 text-xs md:text-sm font-medium hover:border-crystal-blue hover:text-crystal-blue transition-all flex items-center justify-center"
-          >
-            Crear cuenta de docente
-          </Link>
         </div>
 
         {/* Back to Home */}

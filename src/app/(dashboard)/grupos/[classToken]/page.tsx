@@ -95,6 +95,23 @@ export default function GrupoDetailPage() {
     setSelectedStudent(null);
   };
 
+  const refreshWorkshops = async () => {
+    if (!groupId) return;
+    
+    try {
+      const response = await fetch(`/api/groups/${groupId}/talleres`, {
+        cache: 'no-store',
+      });
+      
+      if (response.ok) {
+        const { talleres = [] } = await response.json();
+        setWorkshops(talleres);
+      }
+    } catch (error) {
+      console.error('Error refreshing workshops:', error);
+    }
+  };
+
   const handleApprove = async (requestId: number) => {
     try {
       // Obtener CSRF token de la cookie
@@ -325,7 +342,11 @@ export default function GrupoDetailPage() {
                 Añadir Taller
               </button>
             </div>
-            <WorkshopList workshops={workshops} groupId={groupId} />
+            <WorkshopList 
+              workshops={workshops} 
+              groupId={groupId} 
+              onWorkshopRemoved={refreshWorkshops}
+            />
           </div>
         )}
         {activeTab === 'dashboard' && (
@@ -351,11 +372,8 @@ export default function GrupoDetailPage() {
           groupId={groupId}
           assignedTallerIds={workshops.map(w => w.taller_id)}
           onSuccess={() => {
-            // Refresh workshops
-            fetch(`/api/groups/${groupId}/talleres`)
-              .then(res => res.json())
-              .then(data => setWorkshops(data.talleres || []))
-              .catch(console.error);
+            refreshWorkshops();
+            setIsAssignModalOpen(false);
           }}
         />
       )}

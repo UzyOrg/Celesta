@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Trash2, Loader2, BookOpen } from 'lucide-react';
 import { unassignWorkshopAction } from '../../[groupId]/actions';
+import RemoveWorkshopModal from '@/components/grupos/RemoveWorkshopModal';
 
 interface Workshop {
   id: string;
@@ -20,28 +21,27 @@ interface Workshop {
 interface WorkshopListProps {
   workshops: Workshop[];
   groupId: string;
+  onWorkshopRemoved?: (tallerId: string) => void;
 }
 
-export default function WorkshopList({ workshops, groupId }: WorkshopListProps) {
+export default function WorkshopList({ workshops, groupId, onWorkshopRemoved }: WorkshopListProps) {
   const [removingId, setRemovingId] = useState<string | null>(null);
+  const [workshopToRemove, setWorkshopToRemove] = useState<Workshop | null>(null);
 
-  const handleRemove = async (tallerId: string) => {
-    if (!confirm('¿Estás seguro de que deseas remover este taller del grupo?')) {
-      return;
-    }
-
+  const handleConfirmRemove = async () => {
+    if (!workshopToRemove) return;
+    
+    const tallerId = workshopToRemove.taller_id;
     setRemovingId(tallerId);
+    setWorkshopToRemove(null);
     
     try {
       const result = await unassignWorkshopAction(groupId, tallerId);
-      
-      if (!result.success) {
-        alert(result.error || 'Error al remover taller');
+      if (result.success) {
+        await onWorkshopRemoved?.(tallerId);
       }
-      // La página se revalidará automáticamente
     } catch (error) {
-      console.error('[WorkshopList] Error:', error);
-      alert('Error al remover taller');
+      console.error('Error removing workshop:', error);
     } finally {
       setRemovingId(null);
     }
@@ -88,7 +88,7 @@ export default function WorkshopList({ workshops, groupId }: WorkshopListProps) 
                 </p>
               )}
               
-              {workshop.talleres.etiquetas && workshop.talleres.etiquetas.length > 0 && (
+              {workshop.talleres.etiquetas?.length > 0 && (
                 <div className="flex flex-wrap gap-1">
                   {workshop.talleres.etiquetas.slice(0, 3).map((tag, i) => (
                     <span
@@ -103,7 +103,7 @@ export default function WorkshopList({ workshops, groupId }: WorkshopListProps) 
             </div>
 
             <button
-              onClick={() => handleRemove(workshop.taller_id)}
+              onClick={() => setWorkshopToRemove(workshop)}
               disabled={removingId === workshop.taller_id}
               className="flex items-center justify-center w-9 h-9 rounded-lg bg-red-900/20 hover:bg-red-900/30 text-red-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               title="Remover taller"
@@ -117,6 +117,13 @@ export default function WorkshopList({ workshops, groupId }: WorkshopListProps) 
           </div>
         </motion.div>
       ))}
+      
+      <RemoveWorkshopModal
+        isOpen={!!workshopToRemove}
+        onClose={() => setWorkshopToRemove(null)}
+        onConfirm={handleConfirmRemove}
+        workshopName={workshopToRemove?.talleres.nombre ?? ''}
+      />
     </div>
   );
 }

@@ -1,0 +1,7 @@
+.layout {
+  background-color: var(--bg-deep-dark);
+  color: var(--color-star-white);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}

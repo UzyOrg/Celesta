@@ -5,7 +5,14 @@
   --color-crystal-blue: #a7d8f5;
   --color-crystal-lavender: #d9d2f7;
   --color-star-white: #f0f4f8;
-
+  
+  /* Deep Dark Mode Background */
+  --bg-deep-dark: #0D1117;
+  
+  /* Neutral Text Colors */
+  --text-neutral-100: #F7F9FA;
+  --text-neutral-200: #E3E8EE;
+  
   /* RGB versions for opacity */
   --color-crystal-blue-rgb: 167, 216, 245;
   --color-crystal-lavender-rgb: 217, 210, 247;

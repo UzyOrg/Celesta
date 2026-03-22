@@ -9,6 +9,7 @@ import { AuthProvider } from '@/contexts/AuthContext';
 import { Toaster } from 'react-hot-toast';
 import { useEffect } from 'react';
 import { initTracking } from '@/lib/track';
+import styles from './layout.module.css';
 
 // Static metadata might be problematic with 'use client' at the root.
 // If build errors occur, this might need to be removed or handled differently.
@@ -37,7 +38,7 @@ export default function RootLayout({
       <head>
         {/* Font imports are now handled in globals.css */}
         <link rel="icon" href="/Logo_Celestea.png" />
-      </head>
+      </head>{sye.lyou}
       <body className="font-plus-jakarta-sans bg-base text-white antialiased">
         <AuthProvider>
           <ModalProvider>
