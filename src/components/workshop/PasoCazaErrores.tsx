@@ -9,10 +9,9 @@ type Props = {
   pistasUsadas: number;
   onHint: (costo: number) => void;
   disabledInputs?: boolean;
-  starsLeft?: number;
 };
 
-export default function PasoCazaErrores({ step, onComplete, pistasUsadas, onHint, disabledInputs, starsLeft }: Props) {
+export default function PasoCazaErrores({ step, onComplete, pistasUsadas, onHint, disabledInputs }: Props) {
   const [selected, setSelected] = useState<Record<string, boolean>>({});
   const [feedback, setFeedback] = useState<string | null>(null);
   const [lastWasCorrect, setLastWasCorrect] = useState<boolean | null>(null);
@@ -96,12 +95,9 @@ export default function PasoCazaErrores({ step, onComplete, pistasUsadas, onHint
             type="button"
             className="px-4 py-2 bg-neutral-800 text-white rounded hover:opacity-90"
             onClick={askHint}
-            disabled={!!disabledInputs || ((step.pistas?.[Math.min(pistasUsadas, (step.pistas?.length ?? 1) - 1)]?.costo ?? 1) > (starsLeft ?? 0)) || ((step.pistas?.length ?? 0) <= pistasUsadas)}
+            disabled={!!disabledInputs || ((step.pistas?.length ?? 0) <= pistasUsadas)}
           >
-            {(() => {
-              const costo = step.pistas?.[Math.min(pistasUsadas, (step.pistas?.length ?? 1) - 1)]?.costo ?? 1;
-              return `Pedir pista (-${costo}⭐)`;
-            })()}
+            Pedir pista
           </button>
         )}
       </div>

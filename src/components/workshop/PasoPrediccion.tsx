@@ -12,13 +12,12 @@ type Props = {
   pistasUsadas: number;
   onHint?: (costo: number) => void;
   disabledInputs?: boolean;
-  starsLeft?: number;
   immersive?: boolean;
   exposeController?: (ctrl: StepController) => void;
   onUiFeedback?: (text: string, kind: 'success' | 'info' | 'error') => void;
 };
 
-export default function PasoPrediccion({ step, onComplete, pistasUsadas, onHint, disabledInputs, starsLeft, immersive, exposeController, onUiFeedback }: Props) {
+export default function PasoPrediccion({ step, onComplete, pistasUsadas, onHint, disabledInputs, immersive, exposeController, onUiFeedback }: Props) {
   const [choice, setChoice] = useState<string>('');
   const [exp, setExp] = useState('');
   const [msg, setMsg] = useState<string | null>(null);
@@ -49,13 +48,11 @@ export default function PasoPrediccion({ step, onComplete, pistasUsadas, onHint,
     onHint?.(costo);
   };
 
-  const nextHintCost = step.pistas?.[Math.min(pistasUsadas, (step.pistas?.length ?? 1) - 1)]?.costo ?? 1;
   const canAskHint =
     !!step.pistas &&
     step.pistas.length > 0 &&
     !disabledInputs &&
-    (step.pistas.length > pistasUsadas) &&
-    (nextHintCost <= (starsLeft ?? 0));
+    step.pistas.length > pistasUsadas;
 
   // Expose controller for immersive CTA
   useEffect(() => {
@@ -220,7 +217,7 @@ export default function PasoPrediccion({ step, onComplete, pistasUsadas, onHint,
               whileTap={canAskHint ? { scale: 0.98 } : {}}
             >
               <Lightbulb className="w-4 h-4" />
-              <span>{`Pedir pista (-${nextHintCost}⭐)`}</span>
+              <span>Pedir pista</span>
             </motion.button>
           )}
         </div>

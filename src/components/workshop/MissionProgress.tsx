@@ -1,17 +1,16 @@
 "use client";
 import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Star, TrendingUp } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { TrendingUp } from 'lucide-react';
 
 type Props = {
   totalSteps: number;
   completedSteps: number;
-  starsLeft: number; // 0..3
 };
 
-export default function MissionProgress({ totalSteps, completedSteps, starsLeft }: Props) {
+export default function MissionProgress({ totalSteps, completedSteps }: Props) {
   const pct = totalSteps > 0 ? Math.min(100, Math.round((completedSteps / totalSteps) * 100)) : 0;
-  
+
   return (
     <motion.div 
       className="flex flex-col gap-4 p-4 rounded-xl bg-gradient-to-br from-neutral-800/40 to-neutral-800/20 border border-neutral-700/50 backdrop-blur-sm"
@@ -51,41 +50,6 @@ export default function MissionProgress({ totalSteps, completedSteps, starsLeft 
         </div>
       </div>
 
-      {/* Autonomía */}
-      <div className="flex items-center justify-between">
-        <span className="text-sm text-neutral-300 font-medium">Autonomía</span>
-        <div className="flex gap-1.5">
-          <AnimatePresence mode="popLayout">
-            {Array.from({ length: 3 }, (_, i) => (
-              <motion.div
-                key={i}
-                layout
-                initial={{ scale: 0, rotate: -180 }}
-                animate={{ 
-                  scale: i < starsLeft ? 1 : 0.7, 
-                  rotate: 0,
-                  opacity: i < starsLeft ? 1 : 0.3 
-                }}
-                exit={{ scale: 0, rotate: 180, opacity: 0 }}
-                transition={{ 
-                  type: 'spring', 
-                  stiffness: 200, 
-                  damping: 15,
-                  delay: i * 0.05 
-                }}
-              >
-                <Star 
-                  className={`w-6 h-6 ${
-                    i < starsLeft 
-                      ? 'fill-yellow-400 text-yellow-400' 
-                      : 'fill-neutral-700 text-neutral-700'
-                  }`}
-                />
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        </div>
-      </div>
     </motion.div>
   );
 }

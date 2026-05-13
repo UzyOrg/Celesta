@@ -9,14 +9,13 @@ type Props = {
   pistasUsadas: number;
   onHint?: (costo: number) => void;
   disabledInputs?: boolean;
-  starsLeft?: number;
 };
 
 function wordCount(s: string): number {
   return s.trim().split(/\s+/).filter(Boolean).length;
 }
 
-export default function PasoReexplicacion({ step, onComplete, pistasUsadas, onHint, disabledInputs, starsLeft }: Props) {
+export default function PasoReexplicacion({ step, onComplete, pistasUsadas, onHint, disabledInputs }: Props) {
   const cfg = step.reexplicacion;
   const [text, setText] = useState('');
   const [feedback, setFeedback] = useState<string | null>(null);
@@ -46,13 +45,11 @@ export default function PasoReexplicacion({ step, onComplete, pistasUsadas, onHi
     onHint?.(costo);
   };
 
-  const nextHintCost = step.pistas?.[Math.min(pistasUsadas, (step.pistas?.length ?? 1) - 1)]?.costo ?? 1;
   const canAskHint =
     !!step.pistas &&
     step.pistas.length > 0 &&
     !disabledInputs &&
-    (step.pistas.length > pistasUsadas) &&
-    (nextHintCost <= (starsLeft ?? 0));
+    step.pistas.length > pistasUsadas;
 
   return (
     <div className="space-y-4">
@@ -97,7 +94,7 @@ export default function PasoReexplicacion({ step, onComplete, pistasUsadas, onHi
             onClick={askHint}
             disabled={!canAskHint}
           >
-            {`Pedir pista (-${nextHintCost}⭐)`}
+            Pedir pista
           </button>
         )}
       </div>

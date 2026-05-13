@@ -12,7 +12,6 @@ type Props = {
   pistasUsadas: number;
   onHint?: (costo: number) => void;
   disabledInputs?: boolean;
-  starsLeft?: number;
   immersive?: boolean;
   exposeController?: (ctrl: StepController) => void;
   onUiFeedback?: (text: string, kind: 'success' | 'info' | 'error') => void;
@@ -139,7 +138,7 @@ function calculateSimilarity(text1: string, text2: string): number {
   return 1 - (distance / maxLength);
 }
 
-export default function PasoPreguntaAbierta({ step, onComplete, pistasUsadas, onHint, disabledInputs, starsLeft, immersive, exposeController, onUiFeedback }: Props) {
+export default function PasoPreguntaAbierta({ step, onComplete, pistasUsadas, onHint, disabledInputs, immersive, exposeController, onUiFeedback }: Props) {
   const cfg = step.pregunta_abierta_validada;
   const [answer, setAnswer] = useState('');
   const [attempts, setAttempts] = useState(0);
@@ -187,13 +186,11 @@ export default function PasoPreguntaAbierta({ step, onComplete, pistasUsadas, on
     onHint?.(costo);
   };
 
-  const nextHintCost = step.pistas?.[Math.min(pistasUsadas, (step.pistas?.length ?? 1) - 1)]?.costo ?? 1;
   const canAskHint =
     !!step.pistas &&
     step.pistas.length > 0 &&
     !disabledInputs &&
-    (step.pistas.length > pistasUsadas) &&
-    (nextHintCost <= (starsLeft ?? 0));
+    step.pistas.length > pistasUsadas;
 
   const rescate = cfg.rescate;
 
@@ -254,8 +251,7 @@ export default function PasoPreguntaAbierta({ step, onComplete, pistasUsadas, on
 
   const onAcceptRescue = () => {
     if (!rescate) return;
-    if ((starsLeft ?? 0) < (rescate.costo ?? 1)) return;
-    onHint?.(rescate.costo ?? 1);
+    onHint?.(1);
     setRescueShown(true);
 
     // Caso 1: Activar pre-taller de nivelación
@@ -631,7 +627,7 @@ export default function PasoPreguntaAbierta({ step, onComplete, pistasUsadas, on
               whileTap={canAskHint ? { scale: 0.98 } : {}}
             >
               <Lightbulb className="w-4 h-4" />
-              <span>{`Pedir pista (-${nextHintCost}⭐)`}</span>
+              <span>Pedir pista</span>
             </motion.button>
           )}
         </div>
@@ -644,7 +640,6 @@ export default function PasoPreguntaAbierta({ step, onComplete, pistasUsadas, on
             type="button"
             className="inline-flex items-center gap-2 px-5 py-3 bg-amber-500/20 hover:bg-amber-500/30 border-2 border-amber-500/50 text-amber-100 font-semibold rounded-xl disabled:opacity-50 transition-all"
             onClick={onAcceptRescue}
-            disabled={((rescate.costo ?? 1) > (starsLeft ?? 0))}
             whileHover={{ scale: 1.02, y: -1 }}
             whileTap={{ scale: 0.98 }}
             initial={{ opacity: 0, y: 10 }}
@@ -653,13 +648,13 @@ export default function PasoPreguntaAbierta({ step, onComplete, pistasUsadas, on
           >
             <LifeBuoy className="w-4 h-4" />
             <span>
-              {rescate.activar_pre_taller 
-                ? `Ir a Nivelación (-${rescate.costo ?? 1}⭐)`
+              {rescate.activar_pre_taller
+                ? 'Ir a Nivelación'
                 : rescate.pregunta_de_aplicacion || rescate.pregunta_comprension
-                  ? `Ver Ejemplo (-${rescate.costo ?? 1}⭐)`
-                  : rescate.titulo 
-                    ? `${rescate.titulo} (-${rescate.costo ?? 1}⭐)` 
-                    : `Rescate (-${rescate.costo ?? 1}⭐)`}
+                  ? 'Ver Ejemplo'
+                  : rescate.titulo
+                    ? rescate.titulo
+                    : 'Rescate'}
             </span>
           </motion.button>
         </div>

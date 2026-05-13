@@ -10,7 +10,6 @@ type Props = {
   pistasUsadas: number;
   onHint?: (costo: number) => void;
   disabledInputs?: boolean;
-  starsLeft?: number;
   immersive?: boolean;
   exposeController?: (ctrl: StepController) => void;
   onUiFeedback?: (text: string, kind: 'success' | 'info' | 'error') => void;
@@ -69,7 +68,7 @@ function validate(text: string, step: Props['step']): boolean {
   return true;
 }
 
-export default function PasoObservacion({ step, onComplete, pistasUsadas, onHint, disabledInputs, starsLeft, immersive, exposeController, onUiFeedback }: Props) {
+export default function PasoObservacion({ step, onComplete, pistasUsadas, onHint, disabledInputs, immersive, exposeController, onUiFeedback }: Props) {
   const [answer, setAnswer] = useState('');
   const [feedback, setFeedback] = useState<string | null>(null);
   const [lastWasCorrect, setLastWasCorrect] = useState<boolean | null>(null);
@@ -91,8 +90,7 @@ export default function PasoObservacion({ step, onComplete, pistasUsadas, onHint
     onHint?.(costo);
   }, [step.pistas, pistasUsadas, onHint]);
 
-  const nextHintCost = step.pistas?.[Math.min(pistasUsadas, (step.pistas?.length ?? 1) - 1)]?.costo ?? 1;
-  const canAskHint = !!step.pistas && (step.pistas.length > pistasUsadas) && !disabledInputs && (nextHintCost <= (starsLeft ?? 0));
+  const canAskHint = !!step.pistas && (step.pistas.length > pistasUsadas) && !disabledInputs;
 
   // Expose controller for immersive CTA
   useEffect(() => {
@@ -150,7 +148,7 @@ export default function PasoObservacion({ step, onComplete, pistasUsadas, onHint
               onClick={askHint}
               disabled={!canAskHint}
             >
-              {`Pedir pista (-${nextHintCost}⭐)`}
+              Pedir pista
             </button>
           )}
         </div>

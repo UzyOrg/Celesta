@@ -12,13 +12,12 @@ type Props = {
   pistasUsadas: number;
   onHint: (costo: number) => void;
   disabledInputs?: boolean;
-  starsLeft?: number;
   immersive?: boolean;
   exposeController?: (ctrl: StepController) => void;
   onUiFeedback?: (text: string, kind: 'success' | 'info' | 'error') => void;
 };
 
-export default function PasoOpcionMultiple({ step, onComplete, pistasUsadas, onHint, disabledInputs, starsLeft, immersive, exposeController, onUiFeedback }: Props) {
+export default function PasoOpcionMultiple({ step, onComplete, pistasUsadas, onHint, disabledInputs, immersive, exposeController, onUiFeedback }: Props) {
   const [selected, setSelected] = useState<string | null>(null);
   const [explicacion, setExplicacion] = useState('');
   const [feedback, setFeedback] = useState<string | null>(null);
@@ -65,15 +64,14 @@ export default function PasoOpcionMultiple({ step, onComplete, pistasUsadas, onH
   // Expose imperative controller for immersive layout
   useEffect(() => {
     if (!exposeController) return;
-    const nextHintCost = step.pistas?.[Math.min(pistasUsadas, (step.pistas?.length ?? 1) - 1)]?.costo ?? 1;
-    const canAsk = !!step.pistas && (step.pistas.length > pistasUsadas) && (nextHintCost <= (starsLeft ?? 0)) && !disabledInputs;
+    const canAsk = !!step.pistas && (step.pistas.length > pistasUsadas) && !disabledInputs;
     exposeController({
       submit: onSubmit,
       canSubmit: () => Boolean(selected) && !disabledInputs,
       canAskHint: () => canAsk,
       askHint: () => askHint(),
     });
-  }, [exposeController, selected, disabledInputs, pistasUsadas, starsLeft, step]);
+  }, [exposeController, selected, disabledInputs, pistasUsadas, step]);
 
   const isCorrectAnswer = (optionId: string) => optionId === step.opcion_multiple.respuesta_correcta;
   const showResult = !!disabledInputs && lastWasCorrect !== null;
@@ -278,12 +276,9 @@ export default function PasoOpcionMultiple({ step, onComplete, pistasUsadas, onH
               type="button"
               className="px-4 py-2 bg-neutral-800 text-white rounded hover:opacity-90"
               onClick={askHint}
-              disabled={!!disabledInputs || ((step.pistas?.[Math.min(pistasUsadas, (step.pistas?.length ?? 1) - 1)]?.costo ?? 1) > (starsLeft ?? 0)) || ((step.pistas?.length ?? 0) <= pistasUsadas)}
+              disabled={!!disabledInputs || ((step.pistas?.length ?? 0) <= pistasUsadas)}
             >
-              {(() => {
-                const costo = step.pistas?.[Math.min(pistasUsadas, (step.pistas?.length ?? 1) - 1)]?.costo ?? 1;
-                return `Pedir pista (-${costo}⭐)`;
-              })()}
+              Pedir pista
             </button>
           )}
         </div>

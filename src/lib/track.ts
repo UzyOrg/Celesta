@@ -12,7 +12,7 @@ export type LearningEvent = {
   class_token?: string;
   taller_id: string;
   paso_id: string; // e.g., `${paso_numero}` or a semantic id
-  verbo: 'inicio_taller' | 'envio_respuesta' | 'solicito_pista' | 'completo_paso' | 'taller_completado' | 'abandono_taller';
+  verbo: 'inicio_taller' | 'envio_respuesta' | 'solicito_pista' | 'completo_paso' | 'taller_completado' | 'abandono_taller' | 'telemetria_crisol';
   result?: Json;
   ts: string; // ISO
   client_event_id: string; // idempotencia

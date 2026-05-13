@@ -9,10 +9,9 @@ type Props = {
   pistasUsadas: number;
   onHint: (costo: number) => void;
   disabledInputs?: boolean;
-  starsLeft?: number;
 };
 
-export default function PasoOrdenarPasos({ step, onComplete, pistasUsadas, onHint, disabledInputs, starsLeft }: Props) {
+export default function PasoOrdenarPasos({ step, onComplete, pistasUsadas, onHint, disabledInputs }: Props) {
   // Represent order as indices into step.items
   const [order, setOrder] = useState<number[]>(step.items.map((_, i) => i));
   const [feedback, setFeedback] = useState<string | null>(null);
@@ -110,12 +109,9 @@ export default function PasoOrdenarPasos({ step, onComplete, pistasUsadas, onHin
             type="button"
             className="px-4 py-2 bg-neutral-800 text-white rounded hover:opacity-90"
             onClick={askHint}
-            disabled={!!disabledInputs || ((((step as any).pistas?.[Math.min(pistasUsadas, (((step as any).pistas?.length ?? 1) - 1))]?.costo ?? 1) > (starsLeft ?? 0)) || (((step as any).pistas?.length ?? 0) <= pistasUsadas))}
+            disabled={disabledInputs || ((step as any).pistas?.length ?? 0) <= pistasUsadas}
           >
-            {(() => {
-              const costo = (step as any).pistas?.[Math.min(pistasUsadas, (((step as any).pistas?.length ?? 1) - 1))]?.costo ?? 1;
-              return `Pedir pista (-${costo}⭐)`;
-            })()}
+            Pedir pista
           </button>
         )}
       </div>

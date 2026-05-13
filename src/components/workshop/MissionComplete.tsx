@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { CheckCircle2, Star, Trophy, TrendingUp } from 'lucide-react';
+import { CheckCircle2, Trophy, TrendingUp, FileText, Sparkles } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 type Props = {
@@ -9,21 +9,24 @@ type Props = {
   workshopId?: string; // ID del workshop (ej: BIO-001)
   totalSteps: number;
   completedSteps: number;
-  finalStars: number;
-  maxStars: number;
+  /**
+   * Total de pistas aceptadas durante el taller.
+   * Reemplaza al antiguo `finalStars`/`maxStars`. La autonomía ahora se
+   * narra cualitativamente (no se penaliza con un score visible).
+   */
+  totalHintsAccepted: number;
   autoRedirect?: boolean;
   redirectDelay?: number;
 };
 
-export default function MissionComplete({ 
-  workshopTitle, 
+export default function MissionComplete({
+  workshopTitle,
   workshopId,
-  totalSteps, 
-  completedSteps, 
-  finalStars, 
-  maxStars,
+  totalSteps,
+  completedSteps,
+  totalHintsAccepted,
   autoRedirect = true,
-  redirectDelay = 4000 
+  redirectDelay = 4000,
 }: Props) {
   const router = useRouter();
 
@@ -31,10 +34,10 @@ export default function MissionComplete({
   useEffect(() => {
     if (workshopId) {
       localStorage.setItem(`workshop_${workshopId}_completed`, 'true');
-      localStorage.setItem(`workshop_${workshopId}_stars`, String(finalStars));
+      localStorage.setItem(`workshop_${workshopId}_hintsAccepted`, String(totalHintsAccepted));
       localStorage.setItem(`workshop_${workshopId}_completedAt`, new Date().toISOString());
     }
-  }, [workshopId, finalStars]);
+  }, [workshopId, totalHintsAccepted]);
 
   useEffect(() => {
     if (autoRedirect) {
@@ -47,7 +50,41 @@ export default function MissionComplete({
   }, [autoRedirect, redirectDelay, router]);
 
   const completionPercentage = Math.round((completedSteps / totalSteps) * 100);
-  const starPercentage = Math.round((finalStars / maxStars) * 100);
+
+  // Narrativa cualitativa de autonomía (sin score punitivo):
+  //   0 pistas       → "Autónomo" (verde)
+  //   1-2 pistas     → "Con apoyo puntual" (turquesa)
+  //   3+ pistas      → "Con andamiaje" (ámbar)
+  // Tailwind no genera clases dinámicas, así que las mapeamos estáticamente.
+  const autonomyTones = {
+    lime: {
+      container: 'bg-gradient-to-br from-lime-900/20 via-neutral-800/50 to-neutral-800/50 border-lime-500/30',
+      icon: 'text-lime-400',
+      label: 'text-lime-200',
+      detail: 'text-lime-200/70',
+    },
+    turquoise: {
+      container: 'bg-gradient-to-br from-turquoise-900/20 via-neutral-800/50 to-neutral-800/50 border-turquoise-500/30',
+      icon: 'text-turquoise',
+      label: 'text-turquoise',
+      detail: 'text-turquoise/70',
+    },
+    amber: {
+      container: 'bg-gradient-to-br from-amber-900/20 via-neutral-800/50 to-neutral-800/50 border-amber-500/30',
+      icon: 'text-amber-400',
+      label: 'text-amber-200',
+      detail: 'text-amber-200/70',
+    },
+  } as const;
+
+  const autonomyNarrative =
+    totalHintsAccepted === 0
+      ? { label: 'Autónomo', detail: 'Lo lograste sin pedir pistas.', tone: 'lime' as const }
+      : totalHintsAccepted <= 2
+        ? { label: 'Con apoyo puntual', detail: `Aceptaste ${totalHintsAccepted} pista${totalHintsAccepted === 1 ? '' : 's'} cuando lo necesitaste.`, tone: 'turquoise' as const }
+        : { label: 'Con andamiaje', detail: `Aceptaste ${totalHintsAccepted} pistas. La próxima vez te será más fácil.`, tone: 'amber' as const };
+
+  const toneClasses = autonomyTones[autonomyNarrative.tone];
 
   return (
     <div className="min-h-[600px] flex items-center justify-center p-6">
@@ -141,51 +178,46 @@ export default function MissionComplete({
                 </div>
               </div>
 
-              {/* Autonomía final - PROMINENTE */}
-              <div className="bg-gradient-to-br from-amber-900/20 via-neutral-800/50 to-neutral-800/50 backdrop-blur-sm rounded-xl p-5 border-2 border-amber-500/30 shadow-lg shadow-amber-500/10">
+              {/* Autonomía final - narrativa cualitativa, no punitiva */}
+              <div className={`backdrop-blur-sm rounded-xl p-5 border-2 shadow-lg ${toneClasses.container}`}>
                 <div className="flex items-center justify-center gap-2 mb-3">
-                  <Star className="w-6 h-6 text-amber-400 fill-amber-400" />
-                  <span className="text-sm font-semibold text-amber-200">Tu Viaje de Esfuerzo</span>
+                  <Sparkles className={`w-5 h-5 ${toneClasses.icon}`} />
+                  <span className={`text-sm font-semibold ${toneClasses.label}`}>Aprendiste:</span>
                 </div>
-                <div className="flex items-center justify-center gap-1 text-4xl font-extrabold text-amber-300 mb-2">
-                  {finalStars}
-                  <span className="text-xl text-amber-500/70">/ {maxStars}</span>
+                <div className={`text-2xl font-extrabold text-center mb-2 ${toneClasses.label}`}>
+                  {autonomyNarrative.label}
                 </div>
-                <div className="flex items-center justify-center gap-1 mb-2">
-                  {[...Array(maxStars)].map((_, i) => (
-                    <Star
-                      key={i}
-                      className={`w-5 h-5 ${i < finalStars ? 'text-amber-400 fill-amber-400' : 'text-neutral-600'}`}
-                    />
-                  ))}
-                </div>
-                <p className="text-xs text-center text-amber-200/70">
-                  {finalStars === maxStars 
-                    ? '¡No necesitaste ayuda!' 
-                    : finalStars > 0
-                      ? 'Completaste con autonomía'
-                      : 'Usaste todos los recursos disponibles'}
+                <p className={`text-xs text-center ${toneClasses.detail}`}>
+                  {autonomyNarrative.detail}
                 </p>
               </div>
             </motion.div>
 
-            {/* Mensaje motivacional */}
+            {/* Mensaje motivacional + framing IRD */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.6 }}
-              className="space-y-2"
+              className="space-y-3"
             >
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-lime/10 border border-lime/30 text-lime text-sm font-medium">
                 <TrendingUp className="w-4 h-4" />
-                <span>
-                  {starPercentage === 100 
-                    ? '¡Autonomía perfecta!' 
-                    : starPercentage >= 66 
-                      ? '¡Excelente trabajo!' 
-                      : '¡Sigue aprendiendo!'}
-                </span>
+                <span>Tu evidencia está lista</span>
               </div>
+              <p className="text-sm text-neutral-400 max-w-md mx-auto leading-relaxed">
+                En 21 días te enviaremos un breve transfer-test para medir cuánto de esto
+                sigue siendo tuyo. Esa es la verdadera medida del aprendizaje.
+              </p>
+              {workshopId && (
+                <button
+                  type="button"
+                  onClick={() => router.push(`/missions/${workshopId}/evidence`)}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-neutral-800/80 hover:bg-neutral-700 border border-neutral-700/50 text-neutral-200 text-sm transition-all"
+                >
+                  <FileText className="w-4 h-4" />
+                  <span>Ver mi reporte de evidencia</span>
+                </button>
+              )}
             </motion.div>
 
             {/* Redirección */}

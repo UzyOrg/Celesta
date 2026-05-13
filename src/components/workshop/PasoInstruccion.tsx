@@ -15,7 +15,6 @@ type Props = {
   onComplete: (res: StepComplete) => void;
   pistasUsadas: number;
   disabledInputs?: boolean;
-  starsLeft?: number;
   compact?: boolean; // when true, hides long instruction text (used in immersive layout)
   hideAction?: boolean; // when true, hides the internal Continuar button (external CTA handles it)
 };

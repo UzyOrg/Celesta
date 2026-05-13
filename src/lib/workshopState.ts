@@ -16,8 +16,6 @@ export type WorkshopProgress = {
   taller_id: string;
   student_session_id: string;
   paso_actual: number; // índice (0-based)
-  estrellas_actuales: number;
-  estrellas_iniciales: number;
   paso_states: Record<number, StepState>; // por índice de paso
   ultima_actualizacion: number; // timestamp
   completado: boolean;

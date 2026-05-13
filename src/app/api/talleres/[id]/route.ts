@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getTallerContent } from '@/lib/supabase/talleres';
+import fs from 'fs';
+import path from 'path';
 
 export const runtime = 'nodejs';
 export const revalidate = 0;
@@ -29,6 +31,22 @@ export async function GET(
     const { data, error } = await getTallerContent(id);
     
     if (error || !data) {
+      // Fallback: intentar cargar desde src/lib/workshops/examples/{id}.json (dev)
+      try {
+        const localPath = path.join(process.cwd(), 'src', 'lib', 'workshops', 'examples', `${id}.json`);
+        if (fs.existsSync(localPath)) {
+          const contenido = JSON.parse(fs.readFileSync(localPath, 'utf-8'));
+          return NextResponse.json({
+            id,
+            nombre: contenido.titulo ?? id,
+            descripcion: null,
+            etiquetas: [],
+            contenido,
+          });
+        }
+      } catch (localErr) {
+        console.error('[GET /api/talleres/[id]] Local fallback failed:', localErr);
+      }
       console.error('[GET /api/talleres/[id]] Error:', error);
       return NextResponse.json(
         { error: 'Taller no encontrado' },

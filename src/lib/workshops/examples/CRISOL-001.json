@@ -1,0 +1,104 @@
+{
+  "id_taller": "CRISOL-001",
+  "version": "0.1.0",
+  "schema_version": "2",
+  "content_version": "dev-1",
+  "titulo": "El Crisol: Demo de Herramientas Cognitivas",
+  "metadata": {
+    "grado": "Secundaria / Preparatoria",
+    "materia": "Pensamiento Crítico",
+    "competencias": [
+      "Escritura argumentativa",
+      "Ordenamiento lógico",
+      "Defensa oral de ideas"
+    ],
+    "duracion_estimada_min": 15
+  },
+  "pasos": [
+    {
+      "paso_numero": 1,
+      "tipo_paso": "instruccion",
+      "titulo_paso": "Bienvenido al Crisol",
+      "instruccion": {
+        "texto": "Este taller pone a prueba tres habilidades cognitivas clave:\n\n1. Tu capacidad de escribir sin ayuda externa (TerminalCanvas)\n2. Tu habilidad para ordenar ideas con lógica (LogicScaffold)\n3. Tu destreza para defender tu razonamiento en voz propia (Diálogo Socrático)\n\nNo hay respuestas correctas únicas — hay evidencia de que pensaste. El sistema registra el proceso, no solo el producto.\n\nPresiona Comenzar cuando estés listo."
+      }
+    },
+    {
+      "paso_numero": 2,
+      "tipo_paso": "terminal_canvas",
+      "ref_id": "tc-argumentacion",
+      "titulo_paso": "Terminal de Escritura: Argumenta tu postura",
+      "puntaje": 2,
+      "terminal_canvas": {
+        "instruccion": "Lee el siguiente enunciado y escribe tu argumento en el espacio de abajo. Debes escribir con tus propias palabras — no puedes pegar texto de ninguna fuente.\n\n→ Enunciado: «El uso de inteligencia artificial en la educación reduce el pensamiento crítico de los estudiantes».\n\nEscribe si estás de acuerdo, en desacuerdo, o propones una postura matizada. Justifica con al menos 2 razones concretas.",
+        "placeholder": "Escribe tu argumentación aquí...",
+        "min_palabras": 40,
+        "criterio_palabras_clave": [
+          "porque",
+          "sin embargo",
+          "argumento",
+          "evidencia",
+          "considera",
+          "depende",
+          "problema",
+          "beneficio"
+        ]
+      },
+      "pistas": [
+        {
+          "id": "pista-tc-1",
+          "texto": "Empieza con tu postura principal en una sola oración. Luego, da dos razones que la soporten.",
+          "costo": 1
+        }
+      ]
+    },
+    {
+      "paso_numero": 3,
+      "tipo_paso": "logic_scaffold",
+      "ref_id": "ls-metodologia",
+      "titulo_paso": "Andamio Lógico: Ordena los pasos del método científico",
+      "puntaje": 2,
+      "logic_scaffold": {
+        "instruccion": "Arrastra y suelta las tarjetas para ordenar los pasos del método científico en la secuencia correcta. Cuando estés seguro de tu orden, presiona «Confirmar Orden».",
+        "nodos": [
+          { "id": "a", "content": "Formular una hipótesis comprobable" },
+          { "id": "b", "content": "Observar el fenómeno y formular una pregunta" },
+          { "id": "c", "content": "Diseñar y ejecutar el experimento" },
+          { "id": "d", "content": "Analizar los datos y sacar conclusiones" },
+          { "id": "e", "content": "Comunicar los resultados a la comunidad" }
+        ],
+        "orden_correcto": ["b", "a", "c", "d", "e"]
+      },
+      "pistas": [
+        {
+          "id": "pista-ls-1",
+          "texto": "Todo proceso científico comienza con algo que observas o te preguntas en el mundo real.",
+          "costo": 1
+        },
+        {
+          "id": "pista-ls-2",
+          "texto": "La hipótesis siempre va antes del experimento — es la predicción que el experimento busca verificar.",
+          "costo": 1
+        }
+      ]
+    },
+    {
+      "paso_numero": 4,
+      "tipo_paso": "socratico_chat",
+      "ref_id": "sc-defensa",
+      "titulo_paso": "Diálogo Socrático: Defiende tu razonamiento",
+      "puntaje": 3,
+      "socratico_chat": {
+        "instruccion": "Ahora defiende tu postura del paso 2 en un breve intercambio. El sistema te hará preguntas para profundizar tu razonamiento. Responde con tus propias palabras.",
+        "mensaje_inicial": "He revisado tu argumento sobre la IA y el pensamiento crítico. Me interesa entender mejor tu postura. ¿Puedes darme un ejemplo concreto de la vida real que respalde tu punto principal?",
+        "script": [
+          "Interesante. Ahora, juega al abogado del diablo: ¿qué diría alguien que NO está de acuerdo contigo? ¿Cuál sería su argumento más fuerte?",
+          "Bien. ¿Cómo respondería tú a ese contraargumento? ¿Tiene algún punto válido que puedas incorporar a tu postura original?",
+          "Me parece que estás refinando tu idea. Para cerrar: si tuvieras que resumir tu argumento en una sola oración que alguien más recordara mañana, ¿cuál sería?",
+          "Excelente. Has demostrado que puedes sostener tu postura bajo cuestionamiento. Eso es pensamiento crítico en acción."
+        ],
+        "min_turnos": 3
+      }
+    }
+  ]
+}

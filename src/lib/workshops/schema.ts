@@ -21,6 +21,12 @@ export type Recurso = {
 export type Pista = {
     id: string;
     texto: string;
+    /**
+     * @deprecated El sistema de estrellas-costo fue eliminado. Las pistas
+     * ahora se OFRECEN proactivamente cuando el sistema detecta fricción
+     * (ver `useFrictionDetector`). El campo se conserva para retro-compat
+     * con JSONs existentes pero ya no afecta la UI ni el progreso.
+     */
     costo?: number;
   };
   
@@ -45,7 +51,10 @@ export type Pista = {
       | 'comparacion_experto'
       | 'reexplicacion'
       | 'transferencia'
-      | 'opcion_multiple';
+      | 'opcion_multiple'
+      | 'terminal_canvas'
+      | 'logic_scaffold'
+      | 'socratico_chat';
     titulo_paso: string;
     pistas?: Pista[];
     recursos_del_paso?: Recurso[];  // Nuevo: Santuario del Conocimiento
@@ -189,7 +198,36 @@ export type Pista = {
       requiere_explicacion?: boolean;
     };
   };
-  
+
+  export type PasoTerminalCanvas = PasoBase & {
+    tipo_paso: 'terminal_canvas';
+    terminal_canvas: {
+      instruccion: string;
+      placeholder?: string;
+      min_palabras?: number;
+      criterio_palabras_clave?: string[];
+    };
+  };
+
+  export type PasoLogicScaffold = PasoBase & {
+    tipo_paso: 'logic_scaffold';
+    logic_scaffold: {
+      instruccion: string;
+      nodos: { id: string; content: string }[];
+      orden_correcto?: string[];
+    };
+  };
+
+  export type PasoSocraticoCht = PasoBase & {
+    tipo_paso: 'socratico_chat';
+    socratico_chat: {
+      instruccion: string;
+      mensaje_inicial: string;
+      script: string[];
+      min_turnos?: number;
+    };
+  };
+
   export type Paso =
     | PasoInstruccion
     | PasoObservacion
@@ -201,7 +239,10 @@ export type Pista = {
     | PasoComparacionExperto
     | PasoReexplicacion
     | PasoTransferencia
-    | PasoOpcionMultiple;
+    | PasoOpcionMultiple
+    | PasoTerminalCanvas
+    | PasoLogicScaffold
+    | PasoSocraticoCht;
   
   export type Workshop = {
     id_taller: string;

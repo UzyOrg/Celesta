@@ -16,10 +16,14 @@ import { AnimatePresence, motion } from 'framer-motion';
 import PasoComparacionExperto from './PasoComparacionExperto';
 import PasoReexplicacion from './PasoReexplicacion';
 import PasoTransferencia from './PasoTransferencia';
+import PasoTerminalCanvas from './PasoTerminalCanvas';
+import PasoLogicScaffold from './PasoLogicScaffold';
+import PasoSocraticoCht from './PasoSocraticoCht';
 import type { StepController } from './types';
 import { getOrCreateSessionId } from '@/lib/session';
 import { useCanonicalAlias } from '@/lib/alias';
-import { BookOpen, GraduationCap, Clock, Target, Sparkles, Lightbulb, Briefcase, Flag } from 'lucide-react';
+import { BookOpen, GraduationCap, Clock, Target, Sparkles, Lightbulb, Briefcase, Flag, X as XIcon } from 'lucide-react';
+import { useFrictionDetector, frictionSignalToCopy } from '@/hooks/useFrictionDetector';
 import KnowledgeSanctuary from './KnowledgeSanctuary';
 import MissionComplete from './MissionComplete';
 import MissionLocked from './MissionLocked';
@@ -45,10 +49,7 @@ export default function InteractivePlayer({ workshop, classToken }: Props) {
   const checksum = workshop.checksum;
   const [sessionId] = useState<string>(() => getOrCreateSessionId(classToken));
   const { alias: canonicalAlias, loading: aliasLoading } = useCanonicalAlias(classToken, sessionId);
-  
-  // Estrellas iniciales universales: todos empiezan con 3
-  const estrellasIniciales = 3;
-  
+
   // Estado local-first: Rehidratar desde localStorage o inicializar
   const [progress, setProgress] = useState<WorkshopProgress>(() => {
     if (typeof window === 'undefined') {
@@ -57,26 +58,22 @@ export default function InteractivePlayer({ workshop, classToken }: Props) {
         taller_id: tallerId,
         student_session_id: sessionId,
         paso_actual: 0,
-        estrellas_actuales: estrellasIniciales,
-        estrellas_iniciales: estrellasIniciales,
         paso_states: {},
         ultima_actualizacion: Date.now(),
         completado: false,
       };
     }
-    
+
     const saved = loadWorkshopProgress(sessionId, tallerId);
     if (saved) {
       return saved;
     }
-    
+
     // Nuevo progreso
     return {
       taller_id: tallerId,
       student_session_id: sessionId,
       paso_actual: 0,
-      estrellas_actuales: estrellasIniciales,
-      estrellas_iniciales: estrellasIniciales,
       paso_states: {},
       ultima_actualizacion: Date.now(),
       completado: false,
@@ -85,7 +82,6 @@ export default function InteractivePlayer({ workshop, classToken }: Props) {
   
   // Estados derivados del progreso
   const [idx, setIdx] = useState(progress.paso_actual);
-  const [starsLeft, setStarsLeft] = useState(progress.estrellas_actuales);
   const [pistasUsadas, setPistasUsadas] = useState<Record<number, number>>(
     () => {
       const map: Record<number, number> = {};
@@ -179,12 +175,11 @@ export default function InteractivePlayer({ workshop, classToken }: Props) {
       const updatedProgress: WorkshopProgress = {
         ...progress,
         paso_actual: idx,
-        estrellas_actuales: starsLeft,
         ultima_actualizacion: Date.now(),
       };
       saveWorkshopProgress(updatedProgress);
     }
-  }, [idx, starsLeft, progress, tallerId, sessionId, isLocked]);
+  }, [idx, progress, tallerId, sessionId, isLocked]);
 
   useEffect(() => {
     if (hasTrackedStart) return;
@@ -217,6 +212,10 @@ export default function InteractivePlayer({ workshop, classToken }: Props) {
     }
   }, [idx, progress.paso_states]);
 
+  const totalSteps = steps.length;
+  const current = steps[idx];
+  const completedCount = useMemo(() => Object.values(completed).filter(Boolean).length, [completed]);
+
   // Actualizar recursos del Santuario cuando cambia el paso
   useEffect(() => {
     if (current?.recursos_del_paso) {
@@ -225,9 +224,16 @@ export default function InteractivePlayer({ workshop, classToken }: Props) {
     }
   }, [idx, steps]);
 
-  const totalSteps = steps.length;
-  const current = steps[idx];
-  const completedCount = useMemo(() => Object.values(completed).filter(Boolean).length, [completed]);
+  // Friction detector: observa intentos fallidos, tiempo y emite señales
+  // que disparan un offer de pista en la UI (sin costo de estrellas).
+  const currentStepState = progress.paso_states[idx];
+  const frictionDetector = useFrictionDetector({
+    stepType: current?.tipo_paso ?? 'instruccion',
+    stepKey: `${tallerId}:${idx}`,
+    failedAttempts: currentStepState?.intentos_fallidos ?? 0,
+    startedAt: currentStepState?.tiempo_inicio,
+  });
+
   function goNext() {
     const next = Math.min(idx + 1, totalSteps - 1);
     setIdx(next);
@@ -238,17 +244,13 @@ export default function InteractivePlayer({ workshop, classToken }: Props) {
     setIdx(prev);
   }
 
-  // REFACTORED: Solo actualizar estado local, NO enviar evento individual
-  const handleHint = useCallback((cost: number) => {
-    // Guard rails
-    if (cost <= 0) return;
-    if (starsLeft <= 0) return;
-    if (starsLeft < cost) return;
-    
-    // Actualizar estrellas
-    setStarsLeft((s) => Math.max(0, s - cost));
+  // REFACTORED: Sin sistema de costo. Solo registramos que se aceptaron pistas
+  // (la fricción se detecta automáticamente y se ofrece la pista; el alumno decide).
+  // El argumento `cost` se ignora; se mantiene en la firma por backward-compat con
+  // los Paso* que aún lo pasan.
+  const handleHint = useCallback((_cost?: number) => {
     setPistasUsadas((m) => ({ ...m, [idx]: (m[idx] ?? 0) + 1 }));
-    
+
     // Actualizar estado local del paso
     setProgress((prev) => {
       const stepState = prev.paso_states[idx] || createStepState();
@@ -257,9 +259,9 @@ export default function InteractivePlayer({ workshop, classToken }: Props) {
         pistas_usadas: stepState.pistas_usadas + 1,
       });
     });
-    
+
     // NO enviar evento 'solicito_pista' - se incluirá en el evento agregado al completar
-  }, [idx, starsLeft]);
+  }, [idx]);
 
   async function onStepComplete(res: StepComplete) {
     const pasoId = current ? String(current.paso_numero ?? idx + 1) : String(idx + 1);
@@ -321,13 +323,19 @@ export default function InteractivePlayer({ workshop, classToken }: Props) {
     
     // Si es el último paso, completar taller
     if (idx === totalSteps - 1) {
+      // Calcular pistas totales aceptadas a lo largo del taller (autonomía inversa)
+      const pistasTotalesAceptadas = Object.values(
+        // mezcla de estado actual + el paso recién completado
+        { ...progress.paso_states, [idx]: updatedStepState },
+      ).reduce((sum, s) => sum + (s?.pistas_usadas ?? 0), 0);
+
       await trackEvent('taller_completado', {
         tallerId,
         pasoId,
         classToken,
-        result: { 
-          estrellas_finales: starsLeft,
-          pasos_completados: totalSteps 
+        result: {
+          pistas_aceptadas_total: pistasTotalesAceptadas,
+          pasos_completados: totalSteps,
         },
         checksum,
         sid: sessionId,
@@ -351,7 +359,6 @@ export default function InteractivePlayer({ workshop, classToken }: Props) {
       onComplete: onStepComplete,
       pistasUsadas: pistasUsadas[idx] ?? 0,
       disabledInputs: completed[idx] ?? false,
-      starsLeft,
     } as const;
 
     switch (current.tipo_paso) {
@@ -427,6 +434,35 @@ export default function InteractivePlayer({ workshop, classToken }: Props) {
             onUiFeedback={(text: string, kind: 'success' | 'info' | 'error') => setToast({ text, kind })}
           />
         );
+      case 'terminal_canvas':
+        return (
+          <PasoTerminalCanvas
+            step={current}
+            {...commonProps}
+            onHint={handleHint}
+            classToken={classToken}
+            tallerId={tallerId}
+          />
+        );
+      case 'logic_scaffold':
+        return (
+          <PasoLogicScaffold
+            step={current}
+            {...commonProps}
+            onHint={handleHint}
+            classToken={classToken}
+            tallerId={tallerId}
+          />
+        );
+      case 'socratico_chat':
+        return (
+          <PasoSocraticoCht
+            step={current}
+            {...commonProps}
+            classToken={classToken}
+            tallerId={tallerId}
+          />
+        );
       default:
         {
           const c: any = current; // avoid 'never' narrowing on exhaustive switch
@@ -447,7 +483,7 @@ export default function InteractivePlayer({ workshop, classToken }: Props) {
         }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [idx, current, pistasUsadas, starsLeft, completed]);
+  }, [idx, current, pistasUsadas, completed]);
 
   // Panel izquierdo persistente y panel derecho dinámico (layout inmersivo)
   const firstInstruction = steps.find((p) => p.tipo_paso === 'instruccion') as Extract<Paso, { tipo_paso: 'instruccion' }> | undefined;
@@ -490,9 +526,6 @@ export default function InteractivePlayer({ workshop, classToken }: Props) {
     if (idx < totalSteps - 1) goNext();
   }
 
-  const used = pistasUsadas[idx] ?? 0;
-  const nextPista = (current as any)?.pistas?.[Math.min(used, (((current as any)?.pistas?.length ?? 1) - 1))];
-  const nextCost = nextPista?.costo ?? 1;
   const canAskHint = supportsGlobalCTA && !isInstruction && !isCompleted && (ctrl?.canAskHint?.() ?? false);
 
   // FASE 2: Si la misión está bloqueada (ya completada anteriormente), mostrar pantalla de bloqueo
@@ -509,14 +542,17 @@ export default function InteractivePlayer({ workshop, classToken }: Props) {
 
   // Si la misión acaba de completarse, mostrar pantalla de felicitación
   if (showMissionComplete) {
+    const totalHintsAccepted = Object.values(progress.paso_states).reduce(
+      (sum, s) => sum + (s?.pistas_usadas ?? 0),
+      0,
+    );
     return (
       <MissionComplete
         workshopTitle={workshop.titulo || 'Taller'}
         workshopId={workshop.id_taller}
         totalSteps={totalSteps}
         completedSteps={totalSteps}
-        finalStars={starsLeft}
-        maxStars={estrellasIniciales}
+        totalHintsAccepted={totalHintsAccepted}
         autoRedirect={true}
         redirectDelay={4000}
       />
@@ -619,7 +655,7 @@ export default function InteractivePlayer({ workshop, classToken }: Props) {
                 </div>
               </header>
 
-              <MissionProgress totalSteps={totalSteps} completedSteps={completedCount} starsLeft={starsLeft} />
+              <MissionProgress totalSteps={totalSteps} completedSteps={completedCount} />
 
               {firstInstruction && (
                 <motion.div 
@@ -700,21 +736,69 @@ export default function InteractivePlayer({ workshop, classToken }: Props) {
                   <motion.button
                     type="button"
                     className="inline-flex items-center gap-2 px-5 py-3 bg-neutral-800/80 text-white rounded-xl hover:bg-neutral-700 disabled:opacity-50 border border-neutral-700/50 backdrop-blur-sm transition-all shadow-sm"
-                    onClick={() => ctrl?.askHint?.()}
+                    onClick={() => {
+                      ctrl?.askHint?.();
+                      frictionDetector.reset();
+                    }}
                     whileHover={{ scale: 1.02, y: -1 }}
                     whileTap={{ scale: 0.98 }}
                   >
                     <Lightbulb className="w-4 h-4" />
-                    <span>{`Pedir pista (-${nextCost}⭐)`}</span>
+                    <span>Pedir pista</span>
                   </motion.button>
                 )}
-
-                <div className="ml-auto flex items-center gap-2 text-sm font-medium">
-                  <span className="text-neutral-400">Autonomía:</span>
-                  <span className="text-lime">{starsLeft}/3 ⭐</span>
-                </div>
               </div>
             )}
+
+            {/* Friction detector: ofrece pista proactivamente cuando hay señal de fricción */}
+            <AnimatePresence>
+              {frictionDetector.latestSignal && canAskHint && supportsGlobalCTA && (
+                <motion.div
+                  key={`friction-${frictionDetector.latestSignal.detectedAt}`}
+                  initial={{ opacity: 0, y: -8, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                  className="flex items-start gap-3 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-100 shadow-sm"
+                  role="status"
+                  aria-live="polite"
+                >
+                  <Lightbulb className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1 text-sm space-y-2">
+                    <p className="leading-relaxed">
+                      {frictionSignalToCopy(frictionDetector.latestSignal)}
+                    </p>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          ctrl?.askHint?.();
+                          frictionDetector.reset();
+                        }}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-100 font-medium text-xs transition-all"
+                      >
+                        Sí, dame una pista
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => frictionDetector.reset()}
+                        className="text-xs text-amber-200/70 hover:text-amber-100 underline-offset-2 hover:underline transition-colors"
+                      >
+                        Sigo intentando
+                      </button>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => frictionDetector.reset()}
+                    className="text-amber-200/60 hover:text-amber-100 transition-colors"
+                    aria-label="Cerrar"
+                  >
+                    <XIcon className="w-4 h-4" />
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             {toast && (
               <motion.div

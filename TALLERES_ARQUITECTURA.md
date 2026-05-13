@@ -1,4 +1,4 @@
-# 📚 Arquitectura de Talleres - Explicación Simple
+v  # 📚 Arquitectura de Talleres - Explicación Simple
 
 ## ¿Qué se implementó?
 

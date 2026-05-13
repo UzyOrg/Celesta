@@ -9,10 +9,9 @@ type Props = {
   pistasUsadas: number;
   onHint?: (costo: number) => void;
   disabledInputs?: boolean;
-  starsLeft?: number;
 };
 
-export default function PasoComparacionExperto({ step, onComplete, pistasUsadas, onHint, disabledInputs, starsLeft }: Props) {
+export default function PasoComparacionExperto({ step, onComplete, pistasUsadas, onHint, disabledInputs }: Props) {
   const cfg = step.comparacion_experto;
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [exp, setExp] = useState('');
@@ -55,13 +54,11 @@ export default function PasoComparacionExperto({ step, onComplete, pistasUsadas,
     onHint?.(costo);
   };
 
-  const nextHintCost = step.pistas?.[Math.min(pistasUsadas, (step.pistas?.length ?? 1) - 1)]?.costo ?? 1;
   const canAskHint =
     !!step.pistas &&
     step.pistas.length > 0 &&
     !disabledInputs &&
-    (step.pistas.length > pistasUsadas) &&
-    (nextHintCost <= (starsLeft ?? 0));
+    step.pistas.length > pistasUsadas;
 
   return (
     <div className="space-y-4">
@@ -124,7 +121,7 @@ export default function PasoComparacionExperto({ step, onComplete, pistasUsadas,
             onClick={askHint}
             disabled={!canAskHint}
           >
-            {`Pedir pista (-${nextHintCost}⭐)`}
+            Pedir pista
           </button>
         )}
       </div>

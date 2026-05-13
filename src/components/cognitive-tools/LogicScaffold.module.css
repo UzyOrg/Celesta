@@ -1,0 +1,79 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  gap: 20px;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+.instruction {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-neutral-200);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  line-height: 1.5;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  /* Glass-morphic dark panel */
+  background-color: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  color: var(--color-star-white);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  /* Subtle transition for border on hover */
+  transition: border-color 0.2s, background-color 0.2s;
+}
+
+.item:active {
+  cursor: grabbing;
+}
+
+.item:hover {
+  background-color: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.dragHandle {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex-shrink: 0;
+  opacity: 0.35;
+  transition: opacity 0.2s;
+}
+
+.item:hover .dragHandle {
+  opacity: 0.7;
+}
+
+.handleDot {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background-color: var(--text-neutral-200);
+}
+
+.content {
+  flex: 1;
+}
