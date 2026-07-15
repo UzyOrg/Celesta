@@ -17,6 +17,7 @@
   "pasos": [
     {
       "paso_numero": 1,
+      "ref_id": "caso-fatiga-extrema",
       "tipo_paso": "instruccion",
       "titulo_paso": "El Caso: Fatiga Extrema",
       "instruccion": {
@@ -34,6 +35,7 @@
     },
     {
       "paso_numero": 2,
+      "ref_id": "hipotesis-inicial",
       "tipo_paso": "pregunta_abierta_validada",
       "titulo_paso": "Hipótesis Inicial",
       "pregunta_abierta_validada": {
@@ -57,6 +59,7 @@
     },
     {
       "paso_numero": 3,
+      "ref_id": "analisis-mitocondria",
       "tipo_paso": "opcion_multiple",
       "titulo_paso": "Análisis de la Mitocondria",
       "opcion_multiple": {
@@ -93,6 +96,7 @@
     },
     {
       "paso_numero": 4,
+      "ref_id": "nueva-hipotesis",
       "tipo_paso": "pregunta_abierta_validada",
       "titulo_paso": "Nueva Hipótesis",
       "pregunta_abierta_validada": {
@@ -125,6 +129,7 @@
     },
     {
       "paso_numero": 5,
+      "ref_id": "diagnostico-final",
       "tipo_paso": "confianza_reflexion",
       "titulo_paso": "Diagnóstico Final",
       "pregunta": "Has identificado dos posibles culpables: la mitocondria y la membrana. Basado en tu análisis, ¿qué tan segurx estás de tu diagnóstico final?",

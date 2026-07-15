@@ -1,4 +1,4 @@
-const CACHE_NAME = 'celesta-sw-v1';
+const CACHE_NAME = 'celesta-sw-v2';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
@@ -19,7 +19,9 @@ self.addEventListener('activate', (event) => {
 function shouldCache(request) {
   const url = new URL(request.url);
   if (request.method !== 'GET') return false;
+  if (request.mode === 'navigate' && url.pathname.startsWith('/crear')) return true;
   if (url.pathname.startsWith('/workshops/')) return true;
+  if (url.pathname.startsWith('/audio/')) return true;
   if (url.pathname.startsWith('/_next/static/')) return true;
   if (request.destination && ['style', 'script', 'image', 'font'].includes(request.destination)) return true;
   return false;

@@ -1,5 +1,5 @@
 "use client";
-import { idbAdd, idbClear, idbGetAll } from '@/lib/idb';
+import { idbAdd, idbDelete, idbGetAllEntries } from '@/lib/idb';
 import { getOrCreateSessionId } from '@/lib/session';
 import { getAliasFromLocalStorage } from '@/lib/alias';
 
@@ -34,10 +34,28 @@ async function postEventsBatch(events: LearningEvent[]): Promise<boolean> {
 
 let backoffMs = 1000;
 const MAX_BACKOFF_MS = 60_000;
+let flushScheduled = false;
+let flushInFlight: Promise<void> | null = null;
+let flushRequested = false;
+let retryTimer: number | null = null;
 
-export async function flushEventQueue(): Promise<void> {
+function scheduleQueueFlush(): void {
+  if (typeof window === 'undefined' || flushScheduled || retryTimer !== null || !navigator.onLine) return;
+  if (flushInFlight) {
+    flushRequested = true;
+    return;
+  }
+  flushScheduled = true;
+  window.setTimeout(() => {
+    flushScheduled = false;
+    void flushEventQueue();
+  }, 350);
+}
+
+async function flushEventQueueOnce(): Promise<void> {
   if (typeof window === 'undefined') return;
-  const queued = await idbGetAll<LearningEvent>('events');
+  const entries = await idbGetAllEntries<LearningEvent>('events');
+  const queued = entries.map((entry) => entry.value);
   if (queued.length === 0) return;
   if (!navigator.onLine) return;
   // Chunk by payload size (target < 64KB) and a sane max items per batch
@@ -71,15 +89,33 @@ export async function flushEventQueue(): Promise<void> {
     }
   }
   if (allOk) {
-    await idbClear('events');
+    await Promise.all(entries.map((entry) => idbDelete('events', entry.key)));
     backoffMs = 1000;
   } else {
-    // Reintento exponencial simple
-    setTimeout(() => {
-      flushEventQueue();
-    }, backoffMs);
+    if (retryTimer !== null) return;
+    const delay = backoffMs;
+    retryTimer = window.setTimeout(() => {
+      retryTimer = null;
+      void flushEventQueue();
+    }, delay);
     backoffMs = Math.min(backoffMs * 2, MAX_BACKOFF_MS);
   }
+}
+
+export function flushEventQueue(): Promise<void> {
+  if (flushInFlight) {
+    flushRequested = true;
+    return flushInFlight;
+  }
+
+  flushInFlight = flushEventQueueOnce().finally(() => {
+    flushInFlight = null;
+    if (flushRequested) {
+      flushRequested = false;
+      scheduleQueueFlush();
+    }
+  });
+  return flushInFlight;
 }
 
 export async function trackEvent(
@@ -142,19 +178,25 @@ export async function trackEvent(
     client_ts,
   };
 
-  // Try online first
-  const sent = navigator.onLine ? await postEventsBatch([event]) : false;
-  if (!sent) {
+  // Persist first so navigation never waits on the network. The existing
+  // idempotent client_event_id makes background retries safe.
+  try {
     await idbAdd('events', event);
+    scheduleQueueFlush();
+  } catch {
+    // IndexedDB can be unavailable in private/restricted contexts. Preserve
+    // the previous direct-send fallback instead of dropping the event.
+    if (navigator.onLine) {
+      await postEventsBatch([event]);
+    }
   }
 }
 
 export function initTracking() {
   if (typeof window === 'undefined') return;
   window.addEventListener('online', () => {
-    flushEventQueue();
+    scheduleQueueFlush();
   });
   // Attempt flush on init
-  flushEventQueue();
+  scheduleQueueFlush();
 }
-

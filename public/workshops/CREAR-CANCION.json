@@ -1,0 +1,560 @@
+{
+  "id_taller": "CREAR-CANCION",
+  "version": "0.1.0",
+  "schema_version": "0.1",
+  "content_version": "2026-06-29",
+  "titulo": "Por qué una canción se te queda pegada",
+  "metadata": {
+    "grado": "Prepa",
+    "materia": "Música y memoria",
+    "competencias": [
+      "descubrimiento",
+      "transferencia",
+      "análisis cultural"
+    ],
+    "duracion_estimada_min": 8
+  },
+  "pasos": [
+    {
+      "paso_numero": 1,
+      "ref_id": "intro",
+      "tipo_paso": "instruccion",
+      "titulo_paso": "Bienvenida",
+      "instruccion": {
+        "texto": "En unos minutos vas a entender algo que casi nadie nota: por qué lo que te gusta está hecho para atraparte. No vas a memorizar nada; lo vas a descubrir tú. ¿Comenzamos?"
+      },
+      "bloquea_avance_si_falla": false,
+      "puntaje": 0,
+      "crear": {
+        "fase": "practica",
+        "audio": {
+          "src": "/audio/crear/cancion/intro.wav",
+          "text": "En unos minutos vas a entender algo que casi nadie nota: por qué lo que te gusta está hecho para atraparte. No vas a memorizar nada; lo vas a descubrir tú. ¿Comenzamos?"
+        },
+        "input": "none",
+        "nextRefId": "hipotesis"
+      }
+    },
+    {
+      "paso_numero": 2,
+      "ref_id": "hipotesis",
+      "tipo_paso": "pregunta_abierta_validada",
+      "titulo_paso": "Tu hipótesis",
+      "pregunta_abierta_validada": {
+        "pregunta": "¿Qué canción se te queda pegada últimamente? ¿Qué parte es la que se te pega?",
+        "placeholder": "Escribe la canción y la parte que se te queda.",
+        "validacion": {
+          "tipo": "palabras_clave",
+          "criterio": [
+            "canción",
+            "coro",
+            "parte"
+          ],
+          "feedback_correcto": "Bien. Veamos por qué.",
+          "feedback_incorrecto": "Escribe cualquier canción y la parte que tarareas."
+        }
+      },
+      "bloquea_avance_si_falla": false,
+      "puntaje": 1,
+      "crear": {
+        "fase": "pre_check",
+        "audio": {
+          "src": "/audio/crear/cancion/hipotesis.wav",
+          "text": "¿Qué canción se te queda pegada últimamente? ¿Qué parte es la que se te pega?"
+        },
+        "input": "text",
+        "classifier": {
+          "fallbackRama": "no_claro",
+          "minConfianza": 0.5,
+          "ramas": [
+            {
+              "rama": "clara",
+              "descripcion": "Menciona una canción o una parte que recuerda.",
+              "ejemplos": [
+                "el coro",
+                "la parte que dice",
+                "una frase",
+                "el ritmo"
+              ],
+              "keywords": [
+                "coro",
+                "parte",
+                "frase",
+                "ritmo",
+                "canción",
+                "tarareo"
+              ],
+              "correcto": true,
+              "score": 1
+            },
+            {
+              "rama": "no_claro",
+              "descripcion": "No identifica una canción o parte concreta.",
+              "ejemplos": [
+                "no sé",
+                "ninguna",
+                "todas"
+              ],
+              "keywords": [
+                "no sé",
+                "ninguna",
+                "todas"
+              ],
+              "correcto": false,
+              "score": 0
+            }
+          ]
+        },
+        "nextRefId": "hipotesis_feedback"
+      }
+    },
+    {
+      "paso_numero": 3,
+      "ref_id": "hipotesis_feedback",
+      "tipo_paso": "instruccion",
+      "titulo_paso": "Veamos por qué",
+      "instruccion": {
+        "texto": "Bien. Veamos por qué."
+      },
+      "bloquea_avance_si_falla": false,
+      "puntaje": 0,
+      "crear": {
+        "fase": "practica",
+        "audio": {
+          "src": "/audio/crear/cancion/hipotesis-feedback.wav",
+          "text": "Bien. Veamos por qué."
+        },
+        "input": "none",
+        "nextRefId": "concepto"
+      }
+    },
+    {
+      "paso_numero": 4,
+      "ref_id": "concepto",
+      "tipo_paso": "instruccion",
+      "titulo_paso": "El gancho",
+      "instruccion": {
+        "texto": "Se llama gancho: una parte corta que se repite hasta quedarse en tu cabeza. No es la canción entera, son unos segundos que vuelven. Tu cerebro recuerda lo que se repite."
+      },
+      "bloquea_avance_si_falla": false,
+      "puntaje": 0,
+      "crear": {
+        "fase": "practica",
+        "audio": {
+          "src": "/audio/crear/cancion/concepto.wav",
+          "text": "Se llama gancho: una parte corta que se repite hasta quedarse en tu cabeza. No es la canción entera, son unos segundos que vuelven. Tu cerebro recuerda lo que se repite."
+        },
+        "input": "none",
+        "nextRefId": "microcheck"
+      }
+    },
+    {
+      "paso_numero": 5,
+      "ref_id": "microcheck",
+      "tipo_paso": "opcion_multiple",
+      "titulo_paso": "Microcheck",
+      "opcion_multiple": {
+        "pregunta": "¿Qué se te pega más?",
+        "opciones": [
+          {
+            "id": "una_vez",
+            "texto": "una parte que suena una vez"
+          },
+          {
+            "id": "repite",
+            "texto": "una que se repite"
+          }
+        ],
+        "respuesta_correcta": "repite",
+        "feedback_correcto": "Sí: la repetición deja huella.",
+        "feedback_incorrecto": "El gancho funciona porque vuelve varias veces."
+      },
+      "bloquea_avance_si_falla": false,
+      "puntaje": 1,
+      "crear": {
+        "fase": "practica",
+        "audio": {
+          "src": "/audio/crear/cancion/microcheck.wav",
+          "text": "¿Qué se te pega más? una parte que suena una vez, o una que se repite."
+        },
+        "input": "choice",
+        "nextRefId": "reto"
+      }
+    },
+    {
+      "paso_numero": 6,
+      "ref_id": "reto",
+      "tipo_paso": "pregunta_abierta_validada",
+      "titulo_paso": "Reto",
+      "pregunta_abierta_validada": {
+        "pregunta": "En esa canción, ¿cuál es el gancho: la parte que tarareas sin pensar?",
+        "placeholder": "Escribe el gancho o describe esa parte.",
+        "validacion": {
+          "tipo": "palabras_clave",
+          "criterio": [
+            "coro",
+            "repite",
+            "frase",
+            "tarareo"
+          ],
+          "feedback_correcto": "Encontraste el gancho.",
+          "feedback_incorrecto": "Busca la parte que se repite y se queda."
+        }
+      },
+      "bloquea_avance_si_falla": false,
+      "puntaje": 1,
+      "crear": {
+        "fase": "practica",
+        "audio": {
+          "src": "/audio/crear/cancion/reto.wav",
+          "text": "En esa canción, ¿cuál es el gancho: la parte que tarareas sin pensar?"
+        },
+        "input": "text",
+        "classifier": {
+          "fallbackRama": "vaga",
+          "minConfianza": 0.55,
+          "ramas": [
+            {
+              "rama": "solida",
+              "descripcion": "Identifica una parte repetida o tarareable de la canción.",
+              "ejemplos": [
+                "el coro",
+                "la frase que se repite",
+                "el ritmo del inicio",
+                "la parte que tarareo"
+              ],
+              "keywords": [
+                "coro",
+                "repite",
+                "frase",
+                "ritmo",
+                "tarareo",
+                "pegada"
+              ],
+              "correcto": true,
+              "score": 1
+            },
+            {
+              "rama": "vaga",
+              "descripcion": "Menciona la canción, pero no la parte que funciona como gancho.",
+              "ejemplos": [
+                "toda la canción",
+                "me gusta toda",
+                "la parte bonita"
+              ],
+              "keywords": [
+                "toda",
+                "bonita",
+                "me gusta",
+                "canción"
+              ],
+              "correcto": false,
+              "score": 0.35,
+              "pista": true
+            },
+            {
+              "rama": "fuera",
+              "descripcion": "Menciona una parte que no sé repite o no corresponde al gancho.",
+              "ejemplos": [
+                "la estrofa larga",
+                "el final",
+                "la letra completa"
+              ],
+              "keywords": [
+                "estrofa",
+                "final",
+                "completa",
+                "larga"
+              ],
+              "correcto": false,
+              "score": 0
+            }
+          ]
+        },
+        "branchRules": [
+          {
+            "rule": {
+              "==": [
+                {
+                  "var": "rama"
+                },
+                "solida"
+              ]
+            },
+            "nextRefId": "reto_solida"
+          },
+          {
+            "rule": {
+              "==": [
+                {
+                  "var": "rama"
+                },
+                "vaga"
+              ]
+            },
+            "nextRefId": "reto_vaga"
+          },
+          {
+            "rule": {
+              "==": [
+                {
+                  "var": "rama"
+                },
+                "fuera"
+              ]
+            },
+            "nextRefId": "reto_fuera"
+          }
+        ]
+      }
+    },
+    {
+      "paso_numero": 7,
+      "ref_id": "reto_solida",
+      "tipo_paso": "instruccion",
+      "titulo_paso": "Por qué esa parte",
+      "instruccion": {
+        "texto": "¿Por qué ESA parte y no otra?"
+      },
+      "bloquea_avance_si_falla": false,
+      "puntaje": 0,
+      "crear": {
+        "fase": "practica",
+        "audio": {
+          "src": "/audio/crear/cancion/reto-solida.wav",
+          "text": "¿Por qué ESA parte y no otra?"
+        },
+        "input": "none",
+        "nextRefId": "reto_final"
+      }
+    },
+    {
+      "paso_numero": 8,
+      "ref_id": "reto_vaga",
+      "tipo_paso": "instruccion",
+      "titulo_paso": "Pista",
+      "instruccion": {
+        "texto": "Pista: la que cantarías si te la pusiera ahorita, normalmente el coro."
+      },
+      "bloquea_avance_si_falla": false,
+      "puntaje": 0,
+      "crear": {
+        "fase": "practica",
+        "audio": {
+          "src": "/audio/crear/cancion/reto-vaga.wav",
+          "text": "Pista: la que cantarías si te la pusiera ahorita, normalmente el coro."
+        },
+        "input": "none",
+        "nextRefId": "reto_final"
+      }
+    },
+    {
+      "paso_numero": 9,
+      "ref_id": "reto_fuera",
+      "tipo_paso": "instruccion",
+      "titulo_paso": "Ajuste",
+      "instruccion": {
+        "texto": "Eso es la estrofa; el gancho es lo que se repite y se queda."
+      },
+      "bloquea_avance_si_falla": false,
+      "puntaje": 0,
+      "crear": {
+        "fase": "practica",
+        "audio": {
+          "src": "/audio/crear/cancion/reto-fuera.wav",
+          "text": "Eso es la estrofa; el gancho es lo que se repite y se queda."
+        },
+        "input": "none",
+        "nextRefId": "reto_final"
+      }
+    },
+    {
+      "paso_numero": 10,
+      "ref_id": "reto_final",
+      "tipo_paso": "pregunta_abierta_validada",
+      "titulo_paso": "Cierre del reto",
+      "pregunta_abierta_validada": {
+        "pregunta": "Si quitaran esa repetición, ¿se te quedaría igual?",
+        "placeholder": "Contesta con una razón breve.",
+        "validacion": {
+          "tipo": "palabras_clave",
+          "criterio": [
+            "si",
+            "no",
+            "repetición",
+            "igual"
+          ],
+          "feedback_correcto": "Listo: ya conectaste repetición con memoria.",
+          "feedback_incorrecto": "Piensa si la repetición cambia lo que recuerdas."
+        }
+      },
+      "bloquea_avance_si_falla": false,
+      "puntaje": 1,
+      "crear": {
+        "fase": "practica",
+        "audio": {
+          "src": "/audio/crear/cancion/reto-final.wav",
+          "text": "Si quitaran esa repetición, ¿se te quedaría igual?"
+        },
+        "input": "text",
+        "nextRefId": "tarjeta"
+      }
+    },
+    {
+      "paso_numero": 11,
+      "ref_id": "tarjeta",
+      "tipo_paso": "pregunta_abierta_validada",
+      "titulo_paso": "Tarjeta de veredicto",
+      "pregunta_abierta_validada": {
+        "pregunta": "Tarjeta: Canción · El gancho · Por qué se te pega",
+        "placeholder": "Explica por qué ese gancho se te queda.",
+        "validacion": {
+          "tipo": "palabras_clave",
+          "criterio": [
+            "repite",
+            "coro",
+            "gancho",
+            "pega"
+          ],
+          "feedback_correcto": "Tu tarjeta queda guardada.",
+          "feedback_incorrecto": "Agrega una razón breve sobre la repetición."
+        }
+      },
+      "bloquea_avance_si_falla": false,
+      "puntaje": 1,
+      "crear": {
+        "fase": "post",
+        "audio": {
+          "src": "/audio/crear/cancion/tarjeta.wav",
+          "text": "Tarjeta: canción, el gancho, y por qué se te pega."
+        },
+        "input": "verdict",
+        "verdictOptions": [
+          {
+            "id": "se_repite",
+            "label": "Se repite"
+          },
+          {
+            "id": "es_corto",
+            "label": "Es corto"
+          },
+          {
+            "id": "las_dos",
+            "label": "Las dos"
+          }
+        ],
+        "nextRefId": "transferencia"
+      }
+    },
+    {
+      "paso_numero": 12,
+      "ref_id": "transferencia",
+      "tipo_paso": "transferencia",
+      "titulo_paso": "Transferencia",
+      "transferencia": {
+        "escenario": "¿En qué OTRA cosa —fuera de la música— alguien usa la repetición para que algo se te quede pegado?",
+        "pregunta": "Escribe otro caso donde la repetición busque quedarse en tu cabeza.",
+        "opciones": [],
+        "respuesta_correcta": "aplico",
+        "feedback_correcto": "Transferiste el concepto a un caso nuevo.",
+        "feedback_incorrecto": "Busca un caso fuera de la música donde algo se repita para que lo recuerdes.",
+        "requiere_explicacion": true
+      },
+      "bloquea_avance_si_falla": false,
+      "puntaje": 2,
+      "crear": {
+        "fase": "transfer",
+        "audio": {
+          "src": "/audio/crear/cancion/transferencia.wav",
+          "text": "¿En qué OTRA cosa —fuera de la música— alguien usa la repetición para que algo se te quede pegado?"
+        },
+        "input": "text",
+        "classifier": {
+          "fallbackRama": "parcial",
+          "minConfianza": 0.55,
+          "ramas": [
+            {
+              "rama": "aplico",
+              "descripcion": "Aplica el gancho o repetición a publicidad, marcas, frases, clases u otro caso no músical.",
+              "ejemplos": [
+                "comerciales",
+                "slogans",
+                "frases de marca",
+                "anuncios",
+                "memes que repiten una frase"
+              ],
+              "keywords": [
+                "comercial",
+                "slogan",
+                "marca",
+                "anuncio",
+                "meme",
+                "frase",
+                "publicidad",
+                "clase"
+              ],
+              "correcto": true,
+              "score": 1
+            },
+            {
+              "rama": "parcial",
+              "descripcion": "Menciona un caso nuevo, pero explica poco la repetición.",
+              "ejemplos": [
+                "TikTok",
+                "un anuncio",
+                "una frase",
+                "la escuela"
+              ],
+              "keywords": [
+                "tiktok",
+                "anuncio",
+                "frase",
+                "escuela",
+                "video"
+              ],
+              "correcto": false,
+              "score": 0.5
+            },
+            {
+              "rama": "no",
+              "descripcion": "No transfiere o se queda en una canción.",
+              "ejemplos": [
+                "otra canción",
+                "no sé",
+                "ninguna"
+              ],
+              "keywords": [
+                "canción",
+                "música",
+                "no sé",
+                "ninguna"
+              ],
+              "correcto": false,
+              "score": 0
+            }
+          ]
+        },
+        "nextRefId": "cierre"
+      }
+    },
+    {
+      "paso_numero": 13,
+      "ref_id": "cierre",
+      "tipo_paso": "instruccion",
+      "titulo_paso": "Cierre",
+      "instruccion": {
+        "texto": "Analizaste una canción como un productor musical. El mismo truco lo usan los comerciales. La próxima puedes ver uno."
+      },
+      "bloquea_avance_si_falla": false,
+      "puntaje": 0,
+      "crear": {
+        "fase": "transfer",
+        "audio": {
+          "src": "/audio/crear/cancion/cierre.wav",
+          "text": "Analizaste una canción como un productor musical. El mismo truco lo usan los comerciales. La próxima puedes ver uno."
+        },
+        "input": "none"
+      }
+    }
+  ]
+}

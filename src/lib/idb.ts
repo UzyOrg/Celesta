@@ -77,6 +77,27 @@ export async function idbGetAll<T = unknown>(store: StoreName): Promise<T[]> {
   });
 }
 
+export async function idbGetAllEntries<T = unknown>(
+  store: StoreName
+): Promise<Array<{ key: IDBValidKey; value: T }>> {
+  const db = await getDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(store, 'readonly');
+    const entries: Array<{ key: IDBValidKey; value: T }> = [];
+    const req = tx.objectStore(store).openCursor();
+    req.onsuccess = () => {
+      const cursor = req.result;
+      if (!cursor) {
+        resolve(entries);
+        return;
+      }
+      entries.push({ key: cursor.primaryKey, value: cursor.value as T });
+      cursor.continue();
+    };
+    req.onerror = () => reject(req.error);
+  });
+}
+
 export async function idbClear(store: StoreName): Promise<void> {
   const db = await getDB();
   return new Promise((resolve, reject) => {

@@ -1,0 +1,900 @@
+{
+  "id_taller": "CREAR-ENGLISH-DEDUCTION-V1",
+  "version": "1.0.0",
+  "schema_version": "0.1",
+  "content_version": "2026-07-13",
+  "titulo": "The Vanished File",
+  "metadata": {
+    "grado": "Prepa",
+    "materia": "English B1+/B2",
+    "competencias": [
+      "past modals of deduction",
+      "evidence calibration",
+      "transfer",
+      "durable retest"
+    ],
+    "duracion_estimada_min": 8
+  },
+  "pasos": [
+    {
+      "paso_numero": 1,
+      "ref_id": "arrival",
+      "tipo_paso": "instruccion",
+      "titulo_paso": "Llegada",
+      "instruccion": {
+        "texto": "At 11:58 p.m., your team's scholarship video vanished. You have two minutes before the deadline, and only three clues."
+      },
+      "bloquea_avance_si_falla": false,
+      "puntaje": 0,
+      "crear": {
+        "fase": "practica",
+        "stage": "descubre",
+        "scene": "arrival",
+        "display": {
+          "eyebrow": "ENGLISH LAB · B1+/B2 · 8 MIN",
+          "headline": "Can you sound certain without pretending you know?",
+          "body": "Lee la evidencia, calibra tu conclusión y llévala a un caso completamente nuevo."
+        },
+        "evidence": [
+          {
+            "id": "sync",
+            "label": "Cloud log · 11:58 PM",
+            "value": "SYNC CONFLICT — local copy replaced."
+          },
+          {
+            "id": "diego",
+            "label": "Folder access · 11:57 PM",
+            "value": "Diego opened the folder. His activity after that is unknown."
+          },
+          {
+            "id": "nerea",
+            "label": "Permissions",
+            "value": "Nerea's account had no permission to edit the folder."
+          }
+        ],
+        "audio": {
+          "src": "/audio/crear/english-deduction/arrival.wav",
+          "text": "At eleven fifty-eight p.m., your team's scholarship video vanished. You have two minutes before the deadline, and only three clues.",
+          "lang": "en-US",
+          "label": "Celestea · Case 01"
+        },
+        "input": "none",
+        "nextRefId": "precheck"
+      }
+    },
+    {
+      "paso_numero": 2,
+      "ref_id": "precheck",
+      "tipo_paso": "pregunta_abierta_validada",
+      "titulo_paso": "Respuesta en frío",
+      "pregunta_abierta_validada": {
+        "pregunta": "Write three short conclusions: what almost certainly happened, what possibly happened, and what could not have happened.",
+        "placeholder": "Strong conclusion…\nOpen possibility…\nRuled out…",
+        "validacion": {
+          "tipo": "palabras_clave",
+          "criterio": ["must have", "might have", "can't have"],
+          "feedback_correcto": "Your certainty matches the evidence.",
+          "feedback_incorrecto": "This is only a baseline. We will reconstruct it together."
+        }
+      },
+      "bloquea_avance_si_falla": false,
+      "puntaje": 6,
+      "crear": {
+        "fase": "pre_check",
+        "stage": "descubre",
+        "scene": "signal",
+        "display": {
+          "eyebrow": "ANTES DE EXPLICAR NADA",
+          "headline": "Reconstruct the past.",
+          "body": "No buscamos perfección. Queremos ver cómo calibras la evidencia antes de practicar."
+        },
+        "evidence": [
+          {
+            "id": "sync",
+            "label": "Strong evidence",
+            "value": "The cloud log says the local copy was replaced."
+          },
+          {
+            "id": "diego",
+            "label": "Open possibility",
+            "value": "Diego had access, but his activity is unknown."
+          },
+          {
+            "id": "nerea",
+            "label": "Ruled out",
+            "value": "Nerea had no permission to edit."
+          }
+        ],
+        "audio": {
+          "src": "/audio/crear/english-deduction/precheck.wav",
+          "text": "Before I explain anything, reconstruct the past. Write what almost certainly happened, what possibly happened, and what could not have happened.",
+          "lang": "en-US"
+        },
+        "input": "text",
+        "minChars": 28,
+        "revealFeedback": false,
+        "classifier": {
+          "fallbackRama": "no_claro",
+          "minConfianza": 0.5,
+          "ramas": [
+            {
+              "rama": "correcto",
+              "descripcion": "Uses all three past modal levels and assigns them consistently to the clues.",
+              "ejemplos": [
+                "The cloud must have replaced the file. Diego might have moved it. Nerea can't have deleted it."
+              ],
+              "keywords": ["cloud", "diego", "nerea"],
+              "match": {
+                "allGroups": [
+                  ["cloud must have", "sync conflict must have", "local copy must have"],
+                  ["diego might have", "diego may have", "diego could have"],
+                  ["nerea can't have", "nerea cannot have", "nerea couldn't have"]
+                ],
+                "none": ["diego must have", "nerea might have", "nerea must have", "cloud can't have"]
+              },
+              "correcto": true,
+              "score": 6,
+              "feedback": {
+                "title": "Three levels are already visible",
+                "body": "You separate strong evidence, possibility, and impossibility."
+              }
+            },
+            {
+              "rama": "misconcepcion_certeza",
+              "descripcion": "Uses deduction language but assigns a confidence level that the evidence does not support.",
+              "ejemplos": ["Diego must have moved it", "Nerea might have deleted it"],
+              "match": {
+                "any": ["diego must have", "nerea might have", "nerea must have", "cloud can't have"]
+              },
+              "correcto": false,
+              "score": 2,
+              "feedback": {
+                "title": "The forms are not the whole case",
+                "body": "Each clue earns a different level of confidence."
+              }
+            },
+            {
+              "rama": "misconcepcion_forma",
+              "descripcion": "The reasoning is visible, but modal + have + participle is malformed.",
+              "ejemplos": ["must replaced", "might moved", "can't deleted", "must has replaced"],
+              "match": {
+                "any": ["must replaced", "might moved", "could moved", "can't deleted", "cannot deleted", "must has", "might has"]
+              },
+              "correcto": false,
+              "score": 2,
+              "feedback": {
+                "title": "Your reasoning has the right shape",
+                "body": "English needs one bridge between the modal and the action."
+              }
+            },
+            {
+              "rama": "parcial",
+              "descripcion": "Uses one or two appropriate deduction structures but not the complete three-level response.",
+              "ejemplos": ["The cloud must have replaced it", "Diego might have moved it"],
+              "match": {
+                "any": ["must have", "might have", "may have", "could have", "can't have", "cannot have", "couldn't have"]
+              },
+              "correcto": false,
+              "score": 3,
+              "feedback": {
+                "title": "Part of the ladder is already there",
+                "body": "Listen for the structure that makes each level precise."
+              }
+            },
+            {
+              "rama": "no_claro",
+              "descripcion": "Too short, unrelated, copied clues, or no conclusion in English.",
+              "ejemplos": ["I don't know", "the file vanished"],
+              "keywords": ["don't know", "no sé"],
+              "correcto": false,
+              "score": 0,
+              "feedback": {
+                "title": "A first hypothesis is enough",
+                "body": "We will reconstruct the three levels together."
+              }
+            }
+          ]
+        },
+        "nextRefId": "contrast"
+      }
+    },
+    {
+      "paso_numero": 3,
+      "ref_id": "contrast",
+      "tipo_paso": "opcion_multiple",
+      "titulo_paso": "Descubre la diferencia",
+      "opcion_multiple": {
+        "pregunta": "What changes in sentence B?",
+        "opciones": [
+          { "id": "fact", "texto": "It reports a witnessed fact." },
+          { "id": "inference", "texto": "It shows a strong conclusion from evidence." },
+          { "id": "obligation", "texto": "It gives the cloud an obligation." }
+        ],
+        "respuesta_correcta": "inference",
+        "feedback_correcto": "Exactly. Sentence A reports; sentence B reconstructs the event from clues.",
+        "feedback_incorrecto": "No one witnessed the event, and no one is giving an order. Sentence B is a conclusion built from evidence."
+      },
+      "bloquea_avance_si_falla": false,
+      "puntaje": 1,
+      "crear": {
+        "fase": "practica",
+        "stage": "descubre",
+        "scene": "contrast",
+        "display": {
+          "eyebrow": "SAME EVENT · DIFFERENT KNOWLEDGE",
+          "headline": "What does the speaker actually know?",
+          "body": "Las dos frases apuntan al mismo evento, pero no hacen la misma afirmación."
+        },
+        "comparison": {
+          "leftLabel": "Sentence A",
+          "left": "The cloud replaced the file.",
+          "rightLabel": "Sentence B",
+          "right": "The cloud must have replaced the file."
+        },
+        "audio": {
+          "src": "/audio/crear/english-deduction/contrast.wav",
+          "text": "These sentences describe the same event, but the speaker knows something different. What changes in sentence B?",
+          "lang": "en-US"
+        },
+        "input": "choice",
+        "allowRetry": true,
+        "maxAttempts": 2,
+        "nextRefId": "prism"
+      }
+    },
+    {
+      "paso_numero": 4,
+      "ref_id": "prism",
+      "tipo_paso": "instruccion",
+      "titulo_paso": "Prisma de certeza",
+      "instruccion": {
+        "texto": "Must marks a strong deduction. Might or could leaves a possibility open. Can't rules it out. To aim the deduction at the past, add have, then the past participle."
+      },
+      "bloquea_avance_si_falla": false,
+      "puntaje": 0,
+      "crear": {
+        "fase": "practica",
+        "stage": "descubre",
+        "scene": "prism",
+        "display": {
+          "eyebrow": "THE CERTAINTY PRISM",
+          "headline": "One past. Three levels of confidence.",
+          "body": "El modal calibra tu certeza. HAVE mueve esa deducción hacia un hecho pasado."
+        },
+        "concepts": [
+          {
+            "id": "must",
+            "term": "MUST HAVE",
+            "meaning": "Strong evidence",
+            "example": "The cloud must have replaced it.",
+            "strength": "strong"
+          },
+          {
+            "id": "might",
+            "term": "MIGHT HAVE",
+            "meaning": "Open possibility",
+            "example": "Diego might have moved it.",
+            "strength": "open"
+          },
+          {
+            "id": "cant",
+            "term": "CAN'T HAVE",
+            "meaning": "Ruled out by evidence",
+            "example": "Nerea can't have deleted it.",
+            "strength": "ruled_out"
+          }
+        ],
+        "formula": ["MODAL", "HAVE", "PAST PARTICIPLE"],
+        "audio": {
+          "src": "/audio/crear/english-deduction/prism.wav",
+          "text": "Must marks a strong deduction. Might or could leaves a possibility open. Can't rules it out. To aim the deduction at the past, add have, then the past participle.",
+          "lang": "en-US"
+        },
+        "input": "none",
+        "nextRefId": "practice-strong"
+      }
+    },
+    {
+      "paso_numero": 5,
+      "ref_id": "practice-strong",
+      "tipo_paso": "opcion_multiple",
+      "titulo_paso": "Evidencia fuerte",
+      "opcion_multiple": {
+        "pregunta": "The edit log names Camila as the author. Camila ___ changed the title.",
+        "opciones": [
+          { "id": "must", "texto": "must have" },
+          { "id": "might", "texto": "might have" },
+          { "id": "cant", "texto": "can't have" }
+        ],
+        "respuesta_correcta": "must",
+        "feedback_correcto": "The log names her. The evidence supports the strongest deduction: must have.",
+        "feedback_incorrecto": "The log directly names Camila. Use the strongest deduction the clue earns."
+      },
+      "bloquea_avance_si_falla": false,
+      "puntaje": 1,
+      "crear": {
+        "fase": "practica",
+        "stage": "practica",
+        "scene": "practice",
+        "display": {
+          "eyebrow": "CALIBRATE · 01",
+          "headline": "How strong is the evidence?",
+          "body": "No elijas la forma más segura: elige la fuerza que la pista realmente permite."
+        },
+        "evidence": [
+          { "id": "log", "label": "Edit log", "value": "Author: Camila · 6:59 PM" }
+        ],
+        "audio": {
+          "src": "/audio/crear/english-deduction/practice-strong.wav",
+          "text": "The edit log names Camila as the author. Camila blank changed the title.",
+          "lang": "en-US"
+        },
+        "input": "choice",
+        "allowRetry": true,
+        "maxAttempts": 2,
+        "nextRefId": "practice-open"
+      }
+    },
+    {
+      "paso_numero": 6,
+      "ref_id": "practice-open",
+      "tipo_paso": "opcion_multiple",
+      "titulo_paso": "Posibilidad abierta",
+      "opcion_multiple": {
+        "pregunta": "Mateo had access, but no activity was recorded. Mateo ___ opened the folder.",
+        "opciones": [
+          { "id": "must", "texto": "must have" },
+          { "id": "might", "texto": "might have" },
+          { "id": "cant", "texto": "can't have" }
+        ],
+        "respuesta_correcta": "might",
+        "feedback_correcto": "Access leaves a possibility open, but it is not proof: might have.",
+        "feedback_incorrecto": "Access makes the action possible, not certain and not impossible. Keep the possibility open."
+      },
+      "bloquea_avance_si_falla": false,
+      "puntaje": 1,
+      "crear": {
+        "fase": "practica",
+        "stage": "practica",
+        "scene": "practice",
+        "display": {
+          "eyebrow": "CALIBRATE · 02",
+          "headline": "Possible is not the same as proven.",
+          "body": "Tener acceso abre una posibilidad; no la convierte en un hecho."
+        },
+        "evidence": [
+          { "id": "access", "label": "Access record", "value": "Mateo had access. No activity was recorded." }
+        ],
+        "audio": {
+          "src": "/audio/crear/english-deduction/practice-open.wav",
+          "text": "Mateo had access, but no activity was recorded. Mateo blank opened the folder.",
+          "lang": "en-US"
+        },
+        "input": "choice",
+        "allowRetry": true,
+        "maxAttempts": 2,
+        "nextRefId": "practice-impossible"
+      }
+    },
+    {
+      "paso_numero": 7,
+      "ref_id": "practice-impossible",
+      "tipo_paso": "opcion_multiple",
+      "titulo_paso": "Evidencia que descarta",
+      "opcion_multiple": {
+        "pregunta": "Iker's account was disabled. Iker ___ changed the file.",
+        "opciones": [
+          { "id": "must", "texto": "must have" },
+          { "id": "might", "texto": "might have" },
+          { "id": "cant", "texto": "can't have" }
+        ],
+        "respuesta_correcta": "cant",
+        "feedback_correcto": "Disabled access rules him out: can't have.",
+        "feedback_incorrecto": "Disabled access does not weaken the possibility. It rules the action out."
+      },
+      "bloquea_avance_si_falla": false,
+      "puntaje": 1,
+      "crear": {
+        "fase": "practica",
+        "stage": "practica",
+        "scene": "practice",
+        "display": {
+          "eyebrow": "CALIBRATE · 03",
+          "headline": "Some evidence closes the door.",
+          "body": "Cuando la evidencia descarta una acción, tu inglés también debe descartarla."
+        },
+        "evidence": [
+          { "id": "disabled", "label": "Account status", "value": "Iker · DISABLED before the edit" }
+        ],
+        "audio": {
+          "src": "/audio/crear/english-deduction/practice-impossible.wav",
+          "text": "Iker's account was disabled. Iker blank changed the file.",
+          "lang": "en-US"
+        },
+        "input": "choice",
+        "allowRetry": true,
+        "maxAttempts": 2,
+        "nextRefId": "calibrate"
+      }
+    },
+    {
+      "paso_numero": 8,
+      "ref_id": "calibrate",
+      "tipo_paso": "pregunta_abierta_validada",
+      "titulo_paso": "Resiste la sobreconfianza",
+      "pregunta_abierta_validada": {
+        "pregunta": "Write the most careful deduction about Diego.",
+        "placeholder": "Diego … renamed the file.",
+        "validacion": {
+          "tipo": "palabras_clave",
+          "criterio": ["Diego", "might have", "renamed"],
+          "feedback_correcto": "A pattern makes the action possible, not certain.",
+          "feedback_incorrecto": "Past behavior is a clue, not proof."
+        }
+      },
+      "bloquea_avance_si_falla": false,
+      "puntaje": 1,
+      "crear": {
+        "fase": "practica",
+        "stage": "practica",
+        "scene": "practice",
+        "display": {
+          "eyebrow": "PRODUCE · NO STEMS",
+          "headline": "Resist overconfidence.",
+          "body": "Ahora construye la deducción completa. La pista sugiere; no demuestra."
+        },
+        "evidence": [
+          { "id": "habit", "label": "Known pattern", "value": "Diego often renames files before exporting." },
+          { "id": "missing-log", "label": "Missing evidence", "value": "The log does not show who renamed this file." }
+        ],
+        "audio": {
+          "src": "/audio/crear/english-deduction/calibrate.wav",
+          "text": "Diego often renames files before exporting, but the log does not show who renamed this one. Write the most careful deduction about Diego.",
+          "lang": "en-US"
+        },
+        "input": "text",
+        "minChars": 18,
+        "allowRetry": true,
+        "maxAttempts": 2,
+        "classifier": {
+          "fallbackRama": "no_claro",
+          "minConfianza": 0.5,
+          "ramas": [
+            {
+              "rama": "correcto",
+              "descripcion": "Uses might/may/could have to leave the possibility open.",
+              "ejemplos": ["Diego might have renamed the file."],
+              "match": {
+                "allGroups": [["diego might have", "diego may have", "diego could have"]],
+                "any": ["rename", "renamed", "changed", "moved"]
+              },
+              "correcto": true,
+              "score": 1,
+              "feedback": {
+                "title": "Careful, not vague",
+                "body": "A known pattern makes Diego possible, not certain."
+              }
+            },
+            {
+              "rama": "misconcepcion_certeza",
+              "descripcion": "Uses must have even though the evidence is only a prior habit.",
+              "match": { "any": ["diego must have"] },
+              "correcto": false,
+              "score": 0,
+              "pista": true,
+              "feedback": {
+                "title": "A habit is not proof",
+                "body": "Keep the possibility open instead of turning it into certainty."
+              }
+            },
+            {
+              "rama": "misconcepcion_hecho",
+              "descripcion": "Reports the action as a fact without deduction language.",
+              "match": { "any": ["diego renamed", "diego changed", "diego moved"] },
+              "correcto": false,
+              "score": 0,
+              "pista": true,
+              "feedback": {
+                "title": "The evidence does not give you a fact",
+                "body": "Show that this is a possible reconstruction, not something witnessed."
+              }
+            },
+            {
+              "rama": "misconcepcion_forma",
+              "descripcion": "Attempts an open modal but omits have or malforms the action.",
+              "match": { "any": ["might renamed", "may renamed", "could renamed", "might has", "could has"] },
+              "correcto": false,
+              "score": 0,
+              "pista": true,
+              "feedback": {
+                "title": "Keep the idea; repair the bridge",
+                "body": "Use modal + have + past participle."
+              }
+            },
+            {
+              "rama": "no_claro",
+              "descripcion": "Does not produce a usable evidence-based deduction.",
+              "ejemplos": ["I don't know", "Diego maybe"],
+              "keywords": ["don't know", "no sé"],
+              "correcto": false,
+              "score": 0,
+              "pista": true,
+              "feedback": {
+                "title": "Start with the confidence level",
+                "body": "Try: Diego might have…"
+              }
+            }
+          ]
+        },
+        "nextRefId": "postcheck"
+      }
+    },
+    {
+      "paso_numero": 9,
+      "ref_id": "postcheck",
+      "tipo_paso": "pregunta_abierta_validada",
+      "titulo_paso": "Nueva evidencia",
+      "pregunta_abierta_validada": {
+        "pregunta": "Write one strong deduction, one open possibility, and one impossible conclusion.",
+        "placeholder": "The system…\nCamila…\nOmar…",
+        "validacion": {
+          "tipo": "palabras_clave",
+          "criterio": ["must have", "might have", "can't have"],
+          "feedback_correcto": "Your confidence matches the new evidence.",
+          "feedback_incorrecto": "Check which clue proves, permits, or rules out."
+        }
+      },
+      "bloquea_avance_si_falla": false,
+      "puntaje": 6,
+      "crear": {
+        "fase": "post",
+        "stage": "practica",
+        "scene": "signal",
+        "display": {
+          "eyebrow": "POST-CHECK · FIRST ATTEMPT COUNTS",
+          "headline": "New file. New evidence.",
+          "body": "Sin pista y sin reintento: calibra las tres conclusiones con el patrón que acabas de descubrir."
+        },
+        "evidence": [
+          { "id": "auto", "label": "Log · 6:59 PM", "value": "AUTOMATIC RENAME" },
+          { "id": "camila", "label": "Access", "value": "Camila had access. Her activity is unknown." },
+          { "id": "omar", "label": "Account", "value": "Omar's account was locked all day." }
+        ],
+        "audio": {
+          "src": "/audio/crear/english-deduction/postcheck.wav",
+          "text": "New file, new evidence. Write one strong deduction, one open possibility, and one impossible conclusion.",
+          "lang": "en-US"
+        },
+        "input": "text",
+        "minChars": 34,
+        "classifier": {
+          "fallbackRama": "no_claro",
+          "minConfianza": 0.5,
+          "ramas": [
+            {
+              "rama": "correcto",
+              "descripcion": "All three past modal forms and confidence assignments match the new clues.",
+              "ejemplos": ["The system must have renamed it. Camila might have edited it. Omar can't have changed it."],
+              "match": {
+                "allGroups": [
+                  ["system must have", "automatic process must have", "file must have been"],
+                  ["camila might have", "camila may have", "camila could have"],
+                  ["omar can't have", "omar cannot have", "omar couldn't have"]
+                ],
+                "none": ["camila must have", "omar might have", "system might have"]
+              },
+              "correcto": true,
+              "score": 6,
+              "feedback": {
+                "title": "Your confidence matches the evidence",
+                "body": "You rebuilt all three levels without a stem."
+              }
+            },
+            {
+              "rama": "misconcepcion_certeza",
+              "descripcion": "Valid modal forms, but one or more confidence levels are assigned to the wrong clue.",
+              "match": { "any": ["camila must have", "omar might have", "omar must have", "system might have", "system can't have"] },
+              "correcto": false,
+              "score": 2,
+              "feedback": {
+                "title": "The structures work; the confidence does not",
+                "body": "One clue explains, one permits, and one rules out."
+              }
+            },
+            {
+              "rama": "misconcepcion_forma",
+              "descripcion": "Reasoning is present but one or more modal past structures are malformed.",
+              "match": { "any": ["must renamed", "might edited", "can't changed", "must has", "might has", "can't has"] },
+              "correcto": false,
+              "score": 2,
+              "feedback": {
+                "title": "The reasoning improved; the structure slipped",
+                "body": "The repair is modal + have + past participle."
+              }
+            },
+            {
+              "rama": "parcial",
+              "descripcion": "One or two correct evidence-based deductions, but not the full three-level response.",
+              "match": { "any": ["must have", "might have", "may have", "could have", "can't have", "cannot have", "couldn't have"] },
+              "correcto": false,
+              "score": 3,
+              "feedback": {
+                "title": "Part of the ladder is right",
+                "body": "Check which clue proves, permits, or rules out."
+              }
+            },
+            {
+              "rama": "no_claro",
+              "descripcion": "No usable three-level response.",
+              "keywords": ["don't know", "no sé"],
+              "correcto": false,
+              "score": 0,
+              "feedback": {
+                "title": "The three evidence levels are not visible yet",
+                "body": "Strongly supported, still possible, ruled out."
+              }
+            }
+          ]
+        },
+        "nextRefId": "transfer"
+      }
+    },
+    {
+      "paso_numero": 10,
+      "ref_id": "transfer",
+      "tipo_paso": "transferencia",
+      "titulo_paso": "Transferencia",
+      "transferencia": {
+        "escenario": "At midnight, a band's new track appeared online.",
+        "pregunta": "Reconstruct what happened. Write what must have happened, what might have happened, and what can't have happened.",
+        "opciones": [],
+        "respuesta_correcta": "The label must have scheduled the release. Leo might have edited the caption. Mara can't have uploaded the track at noon.",
+        "feedback_correcto": "You carried the pattern into a new domain.",
+        "feedback_incorrecto": "The clues do not earn equal confidence.",
+        "requiere_explicacion": true
+      },
+      "bloquea_avance_si_falla": false,
+      "puntaje": 6,
+      "crear": {
+        "fase": "transfer",
+        "stage": "aplica",
+        "scene": "transfer",
+        "display": {
+          "eyebrow": "UNSEEN DOMAIN · NO HINTS",
+          "headline": "Different world. Same kind of evidence.",
+          "body": "Ya no hay etiquetas gramaticales. Lleva el patrón del archivo perdido a un lanzamiento musical."
+        },
+        "evidence": [
+          { "id": "schedule", "label": "Label dashboard · 12:00", "value": "SCHEDULED RELEASE" },
+          { "id": "leo", "label": "Caption access", "value": "Leo had access. The edit log is incomplete." },
+          { "id": "mara", "label": "Flight mode · 11:00–1:00", "value": "Mara had no internet connection." }
+        ],
+        "audio": {
+          "src": "/audio/crear/english-deduction/transfer.wav",
+          "text": "Different world, same kind of evidence. Reconstruct what happened. Write what must have happened, what might have happened, and what can't have happened.",
+          "lang": "en-US"
+        },
+        "input": "text",
+        "minChars": 38,
+        "classifier": {
+          "fallbackRama": "no_claro",
+          "minConfianza": 0.5,
+          "ramas": [
+            {
+              "rama": "correcto",
+              "descripcion": "Transfers all three confidence levels and past modal forms to the music-release scenario.",
+              "ejemplos": ["The label must have scheduled it. Leo might have edited the caption. Mara can't have uploaded it."],
+              "match": {
+                "allGroups": [
+                  ["label must have", "release must have been scheduled", "dashboard must have"],
+                  ["leo might have", "leo may have", "leo could have"],
+                  ["mara can't have", "mara cannot have", "mara couldn't have"]
+                ],
+                "none": ["leo must have", "mara might have", "label might have"]
+              },
+              "correcto": true,
+              "score": 6,
+              "feedback": {
+                "title": "You carried the pattern into a new case",
+                "body": "The schedule supports certainty, Leo remains possible, and no internet rules Mara out.",
+                "actionLabel": "Ver mi evidencia"
+              }
+            },
+            {
+              "rama": "misconcepcion_certeza",
+              "descripcion": "Uses deduction forms but maps confidence to the wrong music clue.",
+              "match": { "any": ["leo must have", "mara might have", "mara must have", "label might have", "label can't have"] },
+              "correcto": false,
+              "score": 2,
+              "feedback": {
+                "title": "The clues do not earn equal confidence",
+                "body": "One schedules, one leaves a possibility, and one makes the action impossible.",
+                "actionLabel": "Guardar intento"
+              }
+            },
+            {
+              "rama": "misconcepcion_forma",
+              "descripcion": "The evidence reasoning transfers, but the past modal construction is malformed.",
+              "match": { "any": ["must scheduled", "might edited", "can't uploaded", "must has", "might has", "can't has"] },
+              "correcto": false,
+              "score": 2,
+              "feedback": {
+                "title": "Your reasoning transferred; the structure slipped",
+                "body": "The missing bridge is modal + have + past participle.",
+                "actionLabel": "Guardar intento"
+              }
+            },
+            {
+              "rama": "parcial",
+              "descripcion": "Transfers one or two of the three deductions correctly.",
+              "match": { "any": ["must have", "might have", "may have", "could have", "can't have", "cannot have", "couldn't have"] },
+              "correcto": false,
+              "score": 3,
+              "feedback": {
+                "title": "Part of the pattern transferred",
+                "body": "Your first attempt contains at least one calibrated conclusion, but not all three yet.",
+                "actionLabel": "Guardar intento"
+              }
+            },
+            {
+              "rama": "no_claro",
+              "descripcion": "No usable transfer response in the new domain.",
+              "keywords": ["don't know", "no sé"],
+              "correcto": false,
+              "score": 0,
+              "feedback": {
+                "title": "Transfer is not demonstrated yet",
+                "body": "We saved the attempt without turning it into a success claim.",
+                "actionLabel": "Guardar intento"
+              }
+            }
+          ]
+        },
+        "nextRefId": "close"
+      }
+    },
+    {
+      "paso_numero": 11,
+      "ref_id": "close",
+      "tipo_paso": "instruccion",
+      "titulo_paso": "Evidencia de hoy",
+      "instruccion": {
+      "texto": "Your first attempt is saved. In seven days, a completely new case will tell us what stayed with you."
+      },
+      "bloquea_avance_si_falla": false,
+      "puntaje": 0,
+      "crear": {
+        "fase": "transfer",
+        "stage": "aplica",
+        "scene": "closure",
+        "display": {
+        "eyebrow": "FIRST ATTEMPT SAVED · DURABILITY PENDING",
+        "headline": "One attempt is a signal. Seven days tests what stayed.",
+          "body": "Tu intento quedó guardado. No afirmaremos dominio hasta verte resolver un caso nuevo sin repasar."
+        },
+        "audio": {
+          "src": "/audio/crear/english-deduction/close.wav",
+        "text": "Your first attempt is saved. In seven days, a completely new case will tell us what stayed with you.",
+          "lang": "en-US"
+        },
+        "input": "none",
+        "nextRefId": "retest"
+      }
+    },
+    {
+      "paso_numero": 12,
+      "ref_id": "retest",
+      "tipo_paso": "pregunta_abierta_validada",
+      "titulo_paso": "Revisión durable",
+      "pregunta_abierta_validada": {
+        "pregunta": "Write three evidence-based deductions in English. Do not use the lesson notes.",
+        "placeholder": "Strong conclusion…\nOpen possibility…\nRuled out…",
+        "validacion": {
+          "tipo": "palabras_clave",
+          "criterio": ["must have", "might have", "can't have"],
+          "feedback_correcto": "The pattern stayed available in a new case.",
+          "feedback_incorrecto": "This is useful evidence about what needs another cycle."
+        }
+      },
+      "bloquea_avance_si_falla": false,
+      "puntaje": 6,
+      "crear": {
+        "fase": "post",
+        "stage": "recuerda",
+        "scene": "retest",
+        "display": {
+          "eyebrow": "D7 · NO REVIEW · FIRST ATTEMPT COUNTS",
+          "headline": "¿Sigue contigo?",
+          "body": "Un caso nuevo, sin explicación ni pistas. Esta vez medimos lo que permaneció."
+        },
+        "evidence": [
+          { "id": "automatic", "label": "Platform log · 7:59", "value": "AUTOMATIC UPDATE" },
+          { "id": "ren", "label": "Commit access", "value": "Ren had access. No author was recorded." },
+          { "id": "emi", "label": "Account status", "value": "Emi's account had been disabled the previous day." }
+        ],
+        "audio": {
+          "src": "/audio/crear/english-deduction/retest.wav",
+          "text": "A new case. Write three evidence-based deductions in English. Do not use the lesson notes.",
+          "lang": "en-US"
+        },
+        "input": "text",
+        "minChars": 38,
+        "retestDelayHours": 168,
+        "classifier": {
+          "fallbackRama": "d7_no_claro",
+          "minConfianza": 0.5,
+          "ramas": [
+            {
+              "rama": "d7_correcto",
+              "descripcion": "All three confidence levels and past modal forms remain available in a novel robotics scenario.",
+              "ejemplos": ["The platform must have applied the update. Ren might have edited the code. Emi can't have pushed the change."],
+              "match": {
+                "allGroups": [
+                  ["platform must have", "update must have been", "system must have"],
+                  ["ren might have", "ren may have", "ren could have"],
+                  ["emi can't have", "emi cannot have", "emi couldn't have"]
+                ],
+                "none": ["ren must have", "emi might have", "platform might have"]
+              },
+              "correcto": true,
+              "score": 6,
+              "feedback": {
+                "title": "The pattern stayed available",
+                "body": "You calibrated strong evidence, possibility, and impossibility without reteaching.",
+                "actionLabel": "Cerrar revisión"
+              }
+            },
+            {
+              "rama": "d7_misconcepcion_certeza",
+              "descripcion": "Past modal forms are present, but confidence no longer matches the D7 clues.",
+              "match": { "any": ["ren must have", "emi might have", "emi must have", "platform might have", "platform can't have"] },
+              "correcto": false,
+              "score": 2,
+              "feedback": {
+                "title": "The forms remained; the calibration moved",
+                "body": "That distinction tells us exactly what needs another learning cycle.",
+                "actionLabel": "Cerrar revisión"
+              }
+            },
+            {
+              "rama": "d7_misconcepcion_forma",
+              "descripcion": "Evidence reasoning remains but past modal structure is malformed at D7.",
+              "match": { "any": ["must applied", "might edited", "can't pushed", "must has", "might has", "can't has"] },
+              "correcto": false,
+              "score": 2,
+              "feedback": {
+                "title": "The reasoning stayed; the form faded",
+                "body": "This is useful evidence, not failure. The next cycle should reinforce the bridge after the modal.",
+                "actionLabel": "Cerrar revisión"
+              }
+            },
+            {
+              "rama": "d7_parcial",
+              "descripcion": "One or two correct deductions remain, but not all three levels.",
+              "match": { "any": ["must have", "might have", "may have", "could have", "can't have", "cannot have", "couldn't have"] },
+              "correcto": false,
+              "score": 3,
+              "feedback": {
+                "title": "Part of the pattern remained",
+                "body": "The durable evidence is partial. We know what to strengthen next.",
+                "actionLabel": "Cerrar revisión"
+              }
+            },
+            {
+              "rama": "d7_no_claro",
+              "descripcion": "No usable evidence-based deduction is available at D7.",
+              "keywords": ["don't know", "no sé"],
+              "correcto": false,
+              "score": 0,
+              "feedback": {
+                "title": "The pattern was not available today",
+                "body": "That is honest evidence for redesigning the practice, not a judgment about you.",
+                "actionLabel": "Cerrar revisión"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ]
+}
