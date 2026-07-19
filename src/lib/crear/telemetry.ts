@@ -1,7 +1,7 @@
 "use client";
 
 import { trackEvent } from '@/lib/track';
-import type { CrearFase, CrearTelemetryResult } from './types';
+import type { CrearFase, CrearResponsePartAnswer, CrearTelemetryResult } from './types';
 
 interface TrackCrearAnswerInput {
   tallerId: string;
@@ -10,9 +10,11 @@ interface TrackCrearAnswerInput {
   correcto: boolean;
   rama: string;
   texto?: string;
+  partes?: CrearResponsePartAnswer[];
   score?: number;
   checksum?: string;
   intento?: number;
+  attempt?: number;
   studyId?: string;
 }
 
@@ -30,16 +32,30 @@ export async function trackCrearAnswer(input: TrackCrearAnswerInput): Promise<vo
     rama: input.rama,
   };
 
-  if (input.texto && input.texto.trim().length > 0) {
-    result.texto = input.texto.trim();
+  const partes = input.partes
+    ?.map((part) => ({
+      ...part,
+      texto: part.texto.trim(),
+    }))
+    .filter((part) => part.texto.length > 0);
+  const texto = input.texto?.trim() || partes?.map((part) => part.texto).join('\n');
+
+  if (texto) {
+    result.texto = texto;
+  }
+
+  if (partes && partes.length > 0) {
+    result.partes = partes;
   }
 
   if (typeof input.score === 'number') {
     result.score = input.score;
   }
 
-  if (typeof input.intento === 'number') {
-    result.intento = input.intento;
+  const attempt = input.attempt ?? input.intento;
+  if (typeof attempt === 'number') {
+    result.attempt = attempt;
+    result.intento = attempt;
   }
 
   if (input.studyId) {

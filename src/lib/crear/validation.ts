@@ -1,10 +1,21 @@
 import { validateWorkshopJson } from '@/lib/workshops/schema';
-import type { CrearClassifierBranch, CrearStepMeta, CrearWorkshop } from './types';
+import type {
+  CrearClassifierBranch,
+  CrearResponseCategory,
+  CrearStepMeta,
+  CrearWorkshop,
+} from './types';
 
 const INPUT_MODES = new Set(['none', 'text', 'choice', 'verdict']);
 const FASES = new Set(['pre_check', 'practica', 'post', 'transfer', 'teach_back']);
 const STAGES = new Set(['descubre', 'practica', 'aplica', 'recuerda']);
 const SCENES = new Set(['arrival', 'signal', 'contrast', 'prism', 'practice', 'transfer', 'closure', 'retest']);
+const RESPONSE_CATEGORIES: readonly CrearResponseCategory[] = [
+  'casi_seguro',
+  'posible',
+  'imposible',
+];
+const RESPONSE_CATEGORY_SET = new Set<CrearResponseCategory>(RESPONSE_CATEGORIES);
 
 function assertStringArray(value: unknown, label: string): void {
   if (value === undefined) return;
@@ -73,6 +84,64 @@ function validateMeta(meta: CrearStepMeta, refId: string): void {
   ) {
     throw new Error(`CREAR JSON: ${refId}.crear.retestDelayHours must be non-negative`);
   }
+  if (meta.evidencePresentation !== undefined) {
+    if (!Array.isArray(meta.evidence) || meta.evidence.length === 0) {
+      throw new Error(`CREAR JSON: ${refId}.crear.evidencePresentation requires evidence`);
+    }
+    if (
+      meta.evidencePresentation.mode !== 'sequential' ||
+      typeof meta.evidencePresentation.allowReview !== 'boolean'
+    ) {
+      throw new Error(`CREAR JSON: ${refId}.crear.evidencePresentation is invalid`);
+    }
+    if (
+      meta.evidencePresentation.initialEvidenceId !== undefined &&
+      !meta.evidence?.some((item) => item.id === meta.evidencePresentation?.initialEvidenceId)
+    ) {
+      throw new Error(
+        `CREAR JSON: ${refId}.crear.evidencePresentation.initialEvidenceId is not authored`
+      );
+    }
+  }
+  if (meta.responseParts !== undefined) {
+    if (meta.input !== 'text') {
+      throw new Error(`CREAR JSON: ${refId}.crear.responseParts requires text input`);
+    }
+    if (!Array.isArray(meta.responseParts) || meta.responseParts.length !== 3) {
+      throw new Error(`CREAR JSON: ${refId}.crear.responseParts must contain exactly three parts`);
+    }
+    const categories = meta.responseParts.map((part, index) => {
+      if (!part || typeof part !== 'object') {
+        throw new Error(`CREAR JSON: ${refId}.crear.responseParts[${index}] must be an object`);
+      }
+      if (part.id !== part.categoria || !RESPONSE_CATEGORY_SET.has(part.categoria)) {
+        throw new Error(
+          `CREAR JSON: ${refId}.crear.responseParts[${index}] has an invalid category`
+        );
+      }
+      for (const field of ['label', 'prompt', 'placeholder'] as const) {
+        if (typeof part[field] !== 'string' || part[field].trim().length === 0) {
+          throw new Error(
+            `CREAR JSON: ${refId}.crear.responseParts[${index}].${field} must be non-empty`
+          );
+        }
+      }
+      if (!Number.isFinite(part.minChars) || part.minChars < 1) {
+        throw new Error(
+          `CREAR JSON: ${refId}.crear.responseParts[${index}].minChars must be positive`
+        );
+      }
+      return part.categoria;
+    });
+    if (
+      new Set(categories).size !== RESPONSE_CATEGORIES.length ||
+      RESPONSE_CATEGORIES.some((category) => !categories.includes(category))
+    ) {
+      throw new Error(
+        `CREAR JSON: ${refId}.crear.responseParts must author each semantic category once`
+      );
+    }
+  }
 
   const classifier = meta.classifier;
   if (!classifier) return;
@@ -98,6 +167,12 @@ function validateMeta(meta: CrearStepMeta, refId: string): void {
 
 export function validateCrearWorkshopJson(input: unknown): CrearWorkshop {
   const workshop = validateWorkshopJson(input) as CrearWorkshop;
+  if (
+    workshop.audio_asset_version !== undefined &&
+    (typeof workshop.audio_asset_version !== 'string' || workshop.audio_asset_version.length === 0)
+  ) {
+    throw new Error('CREAR JSON: audio_asset_version must be a non-empty string');
+  }
   const refs = workshop.pasos.map((step) => step.ref_id);
   if (refs.some((refId) => typeof refId !== 'string' || refId.length === 0)) {
     throw new Error('CREAR JSON: every step must have a non-empty ref_id');

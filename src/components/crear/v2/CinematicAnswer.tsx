@@ -1,8 +1,14 @@
 "use client";
 
-import { ArrowRight, Check, Sparkles } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, Sparkles } from 'lucide-react';
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
-import { CREAR_MAX_ANSWER_LENGTH, type CrearInputMode } from '@/lib/crear/types';
+import {
+  CREAR_MAX_ANSWER_LENGTH,
+  CREAR_MAX_RESPONSE_PART_LENGTH,
+  type CrearInputMode,
+  type CrearResponsePart,
+  type CrearResponsePartAnswer,
+} from '@/lib/crear/types';
 import type { ChoiceOption } from '../AnswerComposer';
 import styles from './CinematicEnglishPlayer.module.css';
 
@@ -13,10 +19,11 @@ interface CinematicAnswerProps {
   choices?: ChoiceOption[];
   pending: boolean;
   minChars?: number;
+  responseParts?: CrearResponsePart[];
   continueLabel?: string;
   submitLabel?: string;
   onContinue: () => void;
-  onSubmitText: (text: string) => void;
+  onSubmitText: (text: string, parts?: CrearResponsePartAnswer[]) => void;
   onSubmitChoice: (choiceId: string) => void;
   onFocusChange?: (focused: boolean) => void;
 }
@@ -28,6 +35,7 @@ export function CinematicAnswer({
   choices = [],
   pending,
   minChars = 2,
+  responseParts = [],
   continueLabel = 'Continuar',
   submitLabel = 'Enviar idea',
   onContinue,
@@ -37,13 +45,21 @@ export function CinematicAnswer({
 }: CinematicAnswerProps) {
   const [text, setText] = useState('');
   const [choiceId, setChoiceId] = useState('');
+  const [partIndex, setPartIndex] = useState(0);
+  const [partAnswers, setPartAnswers] = useState<Record<string, string>>({});
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const choiceRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
   useEffect(() => {
     setText('');
     setChoiceId('');
+    setPartIndex(0);
+    setPartAnswers({});
   }, [prompt, mode]);
+
+  useEffect(() => {
+    resizeTextarea();
+  }, [partIndex, responseParts.length]);
 
   function resizeTextarea() {
     const textarea = textareaRef.current;
@@ -129,6 +145,121 @@ export function CinematicAnswer({
             </>
           )}
         </button>
+      </div>
+    );
+  }
+
+  if (mode === 'text' && responseParts.length > 0) {
+    const activePart = responseParts[partIndex] ?? responseParts[0];
+    const activeText = partAnswers[activePart.id] ?? '';
+    const isLastPart = partIndex === responseParts.length - 1;
+    const activeMinimum = activePart.minChars ?? minChars;
+
+    const saveActivePart = (value: string): Record<string, string> => {
+      const nextAnswers = { ...partAnswers, [activePart.id]: value };
+      setPartAnswers(nextAnswers);
+      return nextAnswers;
+    };
+
+    const moveToPart = (nextIndex: number): void => {
+      saveActivePart(activeText);
+      setPartIndex(nextIndex);
+      window.requestAnimationFrame(() => textareaRef.current?.focus({ preventScroll: true }));
+    };
+
+    const handleStructuredAction = (): void => {
+      const nextAnswers = saveActivePart(activeText.trim());
+      if (!isLastPart) {
+        setPartIndex(partIndex + 1);
+        window.requestAnimationFrame(() => textareaRef.current?.focus({ preventScroll: true }));
+        return;
+      }
+
+      const parts = responseParts.map((part) => ({
+        categoria: part.categoria,
+        texto: (nextAnswers[part.id] ?? '').trim(),
+      }));
+      onSubmitText(parts.map((part) => part.texto).join('\n'), parts);
+    };
+
+    return (
+      <div className={styles.responseDock} aria-busy={pending}>
+        <div className={styles.structuredHeader}>
+          <div>
+            <small>RESPUESTA EN INGLÉS</small>
+            <strong>{activePart.label}</strong>
+          </div>
+          <span aria-label={`Parte ${partIndex + 1} de ${responseParts.length}`}>
+            {partIndex + 1} de {responseParts.length}
+          </span>
+        </div>
+
+        <div className={styles.partProgress} aria-hidden="true">
+          {responseParts.map((part, index) => (
+            <span
+              data-state={index === partIndex ? 'active' : index < partIndex ? 'complete' : 'upcoming'}
+              key={part.id}
+            />
+          ))}
+        </div>
+
+        <label className={styles.responsePrompt} htmlFor="celestea-cinematic-answer">
+          {activePart.prompt}
+        </label>
+        <div className={styles.textareaFrame}>
+          <textarea
+            ref={textareaRef}
+            id="celestea-cinematic-answer"
+            className={styles.cinematicTextarea}
+            value={activeText}
+            onChange={(event) => {
+              saveActivePart(event.target.value);
+              resizeTextarea();
+            }}
+            onFocus={() => onFocusChange?.(true)}
+            onBlur={() => onFocusChange?.(false)}
+            placeholder={activePart.placeholder || 'Escribe tu conclusión en inglés…'}
+            rows={3}
+            maxLength={CREAR_MAX_RESPONSE_PART_LENGTH}
+            lang="en-US"
+            spellCheck
+          />
+          <span className={styles.inputHint}>
+            Tu primer intento se guarda al completar las tres · {activeText.length}/{CREAR_MAX_RESPONSE_PART_LENGTH}
+          </span>
+        </div>
+
+        <div className={styles.structuredActions}>
+          {partIndex > 0 ? (
+            <button
+              className={styles.backPartAction}
+              disabled={pending}
+              type="button"
+              onClick={() => moveToPart(partIndex - 1)}
+            >
+              <ArrowLeft size={16} />
+              Anterior
+            </button>
+          ) : <span />}
+          <button
+            className={styles.primaryAction}
+            disabled={activeText.trim().length < activeMinimum || pending}
+            type="button"
+            onClick={handleStructuredAction}
+          >
+            {pending ? (
+              <>
+                <Sparkles className={styles.thinkingIcon} size={18} />
+                <span>Leyendo tus ideas…</span>
+              </>
+            ) : (
+              <>
+                <span>{isLastPart ? submitLabel : 'Siguiente conclusión'}</span>
+                <ArrowRight size={18} />
+              </>
+            )}
+          </button>
+        </div>
       </div>
     );
   }

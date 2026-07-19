@@ -1,6 +1,6 @@
 "use client";
 
-import type { CrearLessonId } from './types';
+import type { CrearLessonId, CrearResponsePartAnswer } from './types';
 
 export type CrearStudyPhase = 'initial' | 'waiting_retest' | 'completed';
 
@@ -9,6 +9,7 @@ export interface CrearStoredOutcome {
   correct: boolean;
   score: number;
   text: string;
+  parts?: CrearResponsePartAnswer[];
   attempt: number;
   confidence: number;
   submittedAt: number;

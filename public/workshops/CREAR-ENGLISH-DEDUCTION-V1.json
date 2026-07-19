@@ -1,8 +1,9 @@
 {
   "id_taller": "CREAR-ENGLISH-DEDUCTION-V1",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "schema_version": "0.1",
-  "content_version": "2026-07-13",
+  "content_version": "2026-07-19",
+  "audio_asset_version": "2026-07-13",
   "titulo": "The Vanished File",
   "metadata": {
     "grado": "Prepa",
@@ -32,15 +33,10 @@
         "scene": "arrival",
         "display": {
           "eyebrow": "ENGLISH LAB · B1+/B2 · 8 MIN",
-          "headline": "Can you sound certain without pretending you know?",
-          "body": "Lee la evidencia, calibra tu conclusión y llévala a un caso completamente nuevo."
+          "headline": "El video desapareció justo antes del cierre.",
+          "body": "Investiga tres señales. Después reconstruirás el caso en inglés."
         },
         "evidence": [
-          {
-            "id": "sync",
-            "label": "Cloud log · 11:58 PM",
-            "value": "SYNC CONFLICT — local copy replaced."
-          },
           {
             "id": "diego",
             "label": "Folder access · 11:57 PM",
@@ -49,12 +45,17 @@
           {
             "id": "nerea",
             "label": "Permissions",
-            "value": "Nerea's account had no permission to edit the folder."
+            "value": "Nerea's account was read-only — it had no edit or delete permissions."
+          },
+          {
+            "id": "sync",
+            "label": "Cloud log · 11:58 PM",
+            "value": "SYNC CONFLICT — local copy replaced."
           }
         ],
         "audio": {
           "src": "/audio/crear/english-deduction/arrival.wav",
-          "text": "At eleven fifty-eight p.m., your team's scholarship video vanished. You have two minutes before the deadline, and only three clues.",
+          "text": "It is eleven fifty-eight at night. Your team's scholarship video has vanished. The deadline is minutes away. Three clues remain. Find out what happened.",
           "lang": "en-US",
           "label": "Celestea · Case 01"
         },
@@ -68,8 +69,8 @@
       "tipo_paso": "pregunta_abierta_validada",
       "titulo_paso": "Respuesta en frío",
       "pregunta_abierta_validada": {
-        "pregunta": "Write three short conclusions: what almost certainly happened, what possibly happened, and what could not have happened.",
-        "placeholder": "Strong conclusion…\nOpen possibility…\nRuled out…",
+        "pregunta": "Escribe en inglés tres conclusiones: qué casi seguramente ocurrió, qué pudo ocurrir y qué no pudo ocurrir.",
+        "placeholder": "Escribe tus conclusiones en inglés…",
         "validacion": {
           "tipo": "palabras_clave",
           "criterio": ["must have", "might have", "can't have"],
@@ -85,30 +86,61 @@
         "scene": "signal",
         "display": {
           "eyebrow": "ANTES DE EXPLICAR NADA",
-          "headline": "Reconstruct the past.",
+          "headline": "Reconstruye lo que ocurrió.",
           "body": "No buscamos perfección. Queremos ver cómo calibras la evidencia antes de practicar."
         },
         "evidence": [
           {
-            "id": "sync",
-            "label": "Strong evidence",
-            "value": "The cloud log says the local copy was replaced."
-          },
-          {
             "id": "diego",
-            "label": "Open possibility",
-            "value": "Diego had access, but his activity is unknown."
+            "label": "Folder access · 11:57 PM",
+            "value": "Diego opened the folder. His activity after that is unknown."
           },
           {
             "id": "nerea",
-            "label": "Ruled out",
-            "value": "Nerea had no permission to edit."
+            "label": "Permissions",
+            "value": "Nerea's account was read-only — it had no edit or delete permissions."
+          },
+          {
+            "id": "sync",
+            "label": "Cloud log · 11:58 PM",
+            "value": "SYNC CONFLICT — local copy replaced."
+          }
+        ],
+        "evidencePresentation": {
+          "mode": "sequential",
+          "allowReview": true,
+          "initialEvidenceId": "diego"
+        },
+        "responseParts": [
+          {
+            "id": "casi_seguro",
+            "categoria": "casi_seguro",
+            "label": "Casi seguramente",
+            "prompt": "¿Qué casi seguramente ocurrió?",
+            "placeholder": "Escribe tu conclusión en inglés…",
+            "minChars": 10
+          },
+          {
+            "id": "posible",
+            "categoria": "posible",
+            "label": "Pudo ocurrir",
+            "prompt": "¿Qué pudo ocurrir, pero no puedes asegurarlo?",
+            "placeholder": "Escribe tu conclusión en inglés…",
+            "minChars": 10
+          },
+          {
+            "id": "imposible",
+            "categoria": "imposible",
+            "label": "No pudo ocurrir",
+            "prompt": "¿Qué no pudo haber ocurrido?",
+            "placeholder": "Escribe tu conclusión en inglés…",
+            "minChars": 10
           }
         ],
         "audio": {
           "src": "/audio/crear/english-deduction/precheck.wav",
-          "text": "Before I explain anything, reconstruct the past. Write what almost certainly happened, what possibly happened, and what could not have happened.",
-          "lang": "en-US"
+          "text": "Antes de examinar el patrón, haz una primera reconstrucción. Escribe tres conclusiones breves en inglés: qué casi seguramente ocurrió, qué pudo ocurrir y qué no pudo ocurrir según la evidencia.",
+          "lang": "es-MX"
         },
         "input": "text",
         "minChars": 28,
@@ -233,7 +265,7 @@
         },
         "audio": {
           "src": "/audio/crear/english-deduction/contrast.wav",
-          "text": "These sentences describe the same event, but the speaker knows something different. What changes in sentence B?",
+          "text": "Look at the two sentences. They describe the same event, but they do not express the same certainty. What changes in sentence B?",
           "lang": "en-US"
         },
         "input": "choice",
@@ -287,7 +319,7 @@
         "formula": ["MODAL", "HAVE", "PAST PARTICIPLE"],
         "audio": {
           "src": "/audio/crear/english-deduction/prism.wav",
-          "text": "Must marks a strong deduction. Might or could leaves a possibility open. Can't rules it out. To aim the deduction at the past, add have, then the past participle.",
+          "text": "Use ‘must have’ for a strong deduction about the past. Use ‘might have’ or ‘could have’ to keep a possibility open. Use ‘can’t have’ when the evidence rules something out. The pattern is: modal, have, past participle.",
           "lang": "en-US"
         },
         "input": "none",
@@ -326,7 +358,7 @@
         ],
         "audio": {
           "src": "/audio/crear/english-deduction/practice-strong.wav",
-          "text": "The edit log names Camila as the author. Camila blank changed the title.",
+          "text": "The edit log names Camila as the author. Choose the phrase that best completes the sentence on screen.",
           "lang": "en-US"
         },
         "input": "choice",
@@ -367,7 +399,7 @@
         ],
         "audio": {
           "src": "/audio/crear/english-deduction/practice-open.wav",
-          "text": "Mateo had access, but no activity was recorded. Mateo blank opened the folder.",
+          "text": "Mateo had access, but no activity was recorded. Choose the phrase that best completes the sentence on screen.",
           "lang": "en-US"
         },
         "input": "choice",
@@ -408,7 +440,7 @@
         ],
         "audio": {
           "src": "/audio/crear/english-deduction/practice-impossible.wav",
-          "text": "Iker's account was disabled. Iker blank changed the file.",
+          "text": "Iker's account had already been disabled before the edit. Choose the phrase that best completes the sentence on screen.",
           "lang": "en-US"
         },
         "input": "choice",
@@ -449,7 +481,7 @@
         ],
         "audio": {
           "src": "/audio/crear/english-deduction/calibrate.wav",
-          "text": "Diego often renames files before exporting, but the log does not show who renamed this one. Write the most careful deduction about Diego.",
+          "text": "Diego often renames files before exporting, but this log does not identify who renamed this one. Write one careful conclusion about Diego.",
           "lang": "en-US"
         },
         "input": "text",
@@ -535,8 +567,8 @@
       "tipo_paso": "pregunta_abierta_validada",
       "titulo_paso": "Nueva evidencia",
       "pregunta_abierta_validada": {
-        "pregunta": "Write one strong deduction, one open possibility, and one impossible conclusion.",
-        "placeholder": "The system…\nCamila…\nOmar…",
+        "pregunta": "Escribe en inglés tres conclusiones: qué casi seguramente ocurrió, qué pudo ocurrir y qué no pudo ocurrir.",
+        "placeholder": "Escribe tus conclusiones en inglés…",
         "validacion": {
           "tipo": "palabras_clave",
           "criterio": ["must have", "might have", "can't have"],
@@ -556,14 +588,45 @@
           "body": "Sin pista y sin reintento: calibra las tres conclusiones con el patrón que acabas de descubrir."
         },
         "evidence": [
+          { "id": "omar", "label": "Account", "value": "Omar's account was locked all day." },
           { "id": "auto", "label": "Log · 6:59 PM", "value": "AUTOMATIC RENAME" },
-          { "id": "camila", "label": "Access", "value": "Camila had access. Her activity is unknown." },
-          { "id": "omar", "label": "Account", "value": "Omar's account was locked all day." }
+          { "id": "camila", "label": "Access", "value": "Camila had access. Her activity is unknown." }
+        ],
+        "evidencePresentation": {
+          "mode": "sequential",
+          "allowReview": true,
+          "initialEvidenceId": "omar"
+        },
+        "responseParts": [
+          {
+            "id": "casi_seguro",
+            "categoria": "casi_seguro",
+            "label": "Casi seguramente",
+            "prompt": "¿Qué casi seguramente ocurrió?",
+            "placeholder": "Escribe tu conclusión en inglés…",
+            "minChars": 10
+          },
+          {
+            "id": "posible",
+            "categoria": "posible",
+            "label": "Pudo ocurrir",
+            "prompt": "¿Qué pudo ocurrir, pero no puedes asegurarlo?",
+            "placeholder": "Escribe tu conclusión en inglés…",
+            "minChars": 10
+          },
+          {
+            "id": "imposible",
+            "categoria": "imposible",
+            "label": "No pudo ocurrir",
+            "prompt": "¿Qué no pudo haber ocurrido?",
+            "placeholder": "Escribe tu conclusión en inglés…",
+            "minChars": 10
+          }
         ],
         "audio": {
           "src": "/audio/crear/english-deduction/postcheck.wav",
-          "text": "New file, new evidence. Write one strong deduction, one open possibility, and one impossible conclusion.",
-          "lang": "en-US"
+          "text": "Nuevo archivo. Nueva evidencia. Escribe tres conclusiones breves en inglés en los espacios de la pantalla: qué casi seguramente ocurrió, qué pudo ocurrir y qué no pudo ocurrir.",
+          "lang": "es-MX"
         },
         "input": "text",
         "minChars": 34,
@@ -646,9 +709,9 @@
       "titulo_paso": "Transferencia",
       "transferencia": {
         "escenario": "At midnight, a band's new track appeared online.",
-        "pregunta": "Reconstruct what happened. Write what must have happened, what might have happened, and what can't have happened.",
+        "pregunta": "Escribe en inglés tres conclusiones: qué casi seguramente ocurrió, qué pudo ocurrir y qué no pudo ocurrir.",
         "opciones": [],
-        "respuesta_correcta": "The label must have scheduled the release. Leo might have edited the caption. Mara can't have uploaded the track at noon.",
+        "respuesta_correcta": "The track must have been scheduled. Leo might have edited the caption. Mara can't have uploaded the track at noon.",
         "feedback_correcto": "You carried the pattern into a new domain.",
         "feedback_incorrecto": "The clues do not earn equal confidence.",
         "requiere_explicacion": true
@@ -665,14 +728,45 @@
           "body": "Ya no hay etiquetas gramaticales. Lleva el patrón del archivo perdido a un lanzamiento musical."
         },
         "evidence": [
-          { "id": "schedule", "label": "Label dashboard · 12:00", "value": "SCHEDULED RELEASE" },
           { "id": "leo", "label": "Caption access", "value": "Leo had access. The edit log is incomplete." },
-          { "id": "mara", "label": "Flight mode · 11:00–1:00", "value": "Mara had no internet connection." }
+          { "id": "mara", "label": "Flight mode · 11:00–1:00", "value": "Mara had no internet connection." },
+          { "id": "schedule", "label": "Release dashboard · 12:00", "value": "SCHEDULED RELEASE" }
+        ],
+        "evidencePresentation": {
+          "mode": "sequential",
+          "allowReview": true,
+          "initialEvidenceId": "leo"
+        },
+        "responseParts": [
+          {
+            "id": "casi_seguro",
+            "categoria": "casi_seguro",
+            "label": "Casi seguramente",
+            "prompt": "¿Qué casi seguramente ocurrió?",
+            "placeholder": "Escribe tu conclusión en inglés…",
+            "minChars": 10
+          },
+          {
+            "id": "posible",
+            "categoria": "posible",
+            "label": "Pudo ocurrir",
+            "prompt": "¿Qué pudo ocurrir, pero no puedes asegurarlo?",
+            "placeholder": "Escribe tu conclusión en inglés…",
+            "minChars": 10
+          },
+          {
+            "id": "imposible",
+            "categoria": "imposible",
+            "label": "No pudo ocurrir",
+            "prompt": "¿Qué no pudo haber ocurrido?",
+            "placeholder": "Escribe tu conclusión en inglés…",
+            "minChars": 10
+          }
         ],
         "audio": {
           "src": "/audio/crear/english-deduction/transfer.wav",
-          "text": "Different world, same kind of evidence. Reconstruct what happened. Write what must have happened, what might have happened, and what can't have happened.",
-          "lang": "en-US"
+          "text": "Ahora entra a un mundo distinto: un lanzamiento musical a medianoche. Usa las nuevas pistas para escribir tres conclusiones breves en inglés: qué casi seguramente ocurrió, qué pudo ocurrir y qué no pudo ocurrir.",
+          "lang": "es-MX"
         },
         "input": "text",
         "minChars": 38,
@@ -683,10 +777,13 @@
             {
               "rama": "correcto",
               "descripcion": "Transfers all three confidence levels and past modal forms to the music-release scenario.",
-              "ejemplos": ["The label must have scheduled it. Leo might have edited the caption. Mara can't have uploaded it."],
+              "ejemplos": [
+                "The track must have been scheduled. Leo might have edited the caption. Mara can't have uploaded it.",
+                "The label must have scheduled it. Leo might have edited the caption. Mara can't have uploaded it."
+              ],
               "match": {
                 "allGroups": [
-                  ["label must have", "release must have been scheduled", "dashboard must have"],
+                  ["track must have been scheduled", "release must have been scheduled", "label must have scheduled"],
                   ["leo might have", "leo may have", "leo could have"],
                   ["mara can't have", "mara cannot have", "mara couldn't have"]
                 ],
@@ -774,7 +871,7 @@
         },
         "audio": {
           "src": "/audio/crear/english-deduction/close.wav",
-        "text": "Your first attempt is saved. In seven days, a completely new case will tell us what stayed with you.",
+          "text": "Your first attempt is saved. Seven days from now, a completely new case will show what stayed with you.",
           "lang": "en-US"
         },
         "input": "none",
@@ -787,8 +884,8 @@
       "tipo_paso": "pregunta_abierta_validada",
       "titulo_paso": "Revisión durable",
       "pregunta_abierta_validada": {
-        "pregunta": "Write three evidence-based deductions in English. Do not use the lesson notes.",
-        "placeholder": "Strong conclusion…\nOpen possibility…\nRuled out…",
+        "pregunta": "Sin repasar la lección, escribe en inglés tres conclusiones: qué casi seguramente ocurrió, qué pudo ocurrir y qué no pudo ocurrir.",
+        "placeholder": "Escribe tus conclusiones en inglés…",
         "validacion": {
           "tipo": "palabras_clave",
           "criterio": ["must have", "might have", "can't have"],
@@ -808,14 +905,45 @@
           "body": "Un caso nuevo, sin explicación ni pistas. Esta vez medimos lo que permaneció."
         },
         "evidence": [
-          { "id": "automatic", "label": "Platform log · 7:59", "value": "AUTOMATIC UPDATE" },
           { "id": "ren", "label": "Commit access", "value": "Ren had access. No author was recorded." },
+          { "id": "automatic", "label": "Platform log · 7:59", "value": "AUTOMATIC UPDATE" },
           { "id": "emi", "label": "Account status", "value": "Emi's account had been disabled the previous day." }
+        ],
+        "evidencePresentation": {
+          "mode": "sequential",
+          "allowReview": true,
+          "initialEvidenceId": "ren"
+        },
+        "responseParts": [
+          {
+            "id": "casi_seguro",
+            "categoria": "casi_seguro",
+            "label": "Casi seguramente",
+            "prompt": "¿Qué casi seguramente ocurrió?",
+            "placeholder": "Escribe tu conclusión en inglés…",
+            "minChars": 10
+          },
+          {
+            "id": "posible",
+            "categoria": "posible",
+            "label": "Pudo ocurrir",
+            "prompt": "¿Qué pudo ocurrir, pero no puedes asegurarlo?",
+            "placeholder": "Escribe tu conclusión en inglés…",
+            "minChars": 10
+          },
+          {
+            "id": "imposible",
+            "categoria": "imposible",
+            "label": "No pudo ocurrir",
+            "prompt": "¿Qué no pudo haber ocurrido?",
+            "placeholder": "Escribe tu conclusión en inglés…",
+            "minChars": 10
+          }
         ],
         "audio": {
           "src": "/audio/crear/english-deduction/retest.wav",
-          "text": "A new case. Write three evidence-based deductions in English. Do not use the lesson notes.",
-          "lang": "en-US"
+          "text": "Un caso nuevo. Sin repasar la lección, escribe tres conclusiones breves en inglés basadas en la evidencia: qué casi seguramente ocurrió, qué pudo ocurrir y qué no pudo ocurrir.",
+          "lang": "es-MX"
         },
         "input": "text",
         "minChars": 38,

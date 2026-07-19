@@ -3,9 +3,13 @@
 import { AnimatePresence, MotionConfig, motion, useReducedMotion } from 'framer-motion';
 import {
   ArrowLeft,
+  ChevronLeft,
+  ChevronRight,
   CalendarClock,
   Check,
   Clock3,
+  FileClock,
+  FolderOpen,
   LockKeyhole,
   RotateCcw,
   Sparkles,
@@ -41,6 +45,7 @@ import type {
   CrearExperienceStage,
   CrearInputMode,
   CrearPaso,
+  CrearResponsePartAnswer,
   CrearWorkshop,
 } from '@/lib/crear/types';
 import { DEFAULT_CREAR_LESSON_ID } from '@/lib/crear/types';
@@ -109,6 +114,13 @@ function getChoices(step: CrearPaso): ChoiceOption[] {
 
 function getCorrectChoiceId(step: CrearPaso): string | null {
   return step.tipo_paso === 'opcion_multiple' ? step.opcion_multiple.respuesta_correcta : null;
+}
+
+function getHeadlineLanguage(step: CrearPaso): 'es-MX' | 'en-US' {
+  const stepId = getStepId(step);
+  return stepId === 'arrival' || stepId === 'precheck' || step.crear?.stage === 'recuerda'
+    ? 'es-MX'
+    : 'en-US';
 }
 
 function findBranch(step: CrearPaso, branchId: string): CrearClassifierBranch | null {
@@ -233,7 +245,12 @@ function PhaseRail({ stage }: { stage: CrearExperienceStage }) {
 
 function EvidenceField({ step }: { step: CrearPaso }) {
   const evidence = step.crear?.evidence ?? [];
+  const presentation = step.crear?.evidencePresentation;
   if (evidence.length === 0) return null;
+
+  if (presentation?.mode === 'sequential' || step.crear?.scene === 'arrival') {
+    return <CaseMicroScene step={step} />;
+  }
 
   return (
     <div className={styles.evidenceField} aria-label="Evidencia disponible">
@@ -253,6 +270,111 @@ function EvidenceField({ step }: { step: CrearPaso }) {
         </motion.article>
       ))}
     </div>
+  );
+}
+
+function CaseMicroScene({ step }: { step: CrearPaso }) {
+  const prefersReducedMotion = useReducedMotion();
+  const evidence = step.crear?.evidence ?? [];
+  const presentation = step.crear?.evidencePresentation;
+  const allowReview = presentation?.allowReview ?? true;
+  const initialIndex = Math.max(
+    0,
+    presentation?.initialEvidenceId
+      ? evidence.findIndex((item) => item.id === presentation.initialEvidenceId)
+      : 0
+  );
+  const [activeIndex, setActiveIndex] = useState(initialIndex);
+  const [revealedThrough, setRevealedThrough] = useState(initialIndex);
+  const activeEvidence = evidence[activeIndex] ?? evidence[0];
+
+  if (!activeEvidence) return null;
+
+  function selectEvidence(nextIndex: number): void {
+    if (nextIndex < 0 || nextIndex >= evidence.length) return;
+    if (!allowReview && nextIndex < activeIndex) return;
+    if (nextIndex > revealedThrough + 1) return;
+    setActiveIndex(nextIndex);
+    setRevealedThrough((current) => Math.max(current, nextIndex));
+  }
+
+  return (
+    <section className={styles.caseMicroScene} aria-label="Explorador de evidencias">
+      <div className={styles.caseSceneHeader}>
+        <span className={styles.folderGlyph} aria-hidden="true"><FolderOpen size={19} /></span>
+        <div>
+          <small>EVIDENCIA DEL CASO · {step.titulo_paso}</small>
+          <strong>Explora antes de concluir</strong>
+        </div>
+        <span>{activeIndex + 1}/{evidence.length}</span>
+      </div>
+
+      <div className={styles.caseTimeline} aria-label="Señales descubiertas">
+        {evidence.map((item, index) => {
+          const available = index <= revealedThrough + 1;
+          const revealed = index <= revealedThrough;
+          return (
+            <button
+              aria-current={index === activeIndex ? 'step' : undefined}
+              aria-label={revealed ? `Revisar señal ${index + 1}: ${item.label}` : `Descubrir señal ${index + 1}`}
+              className={styles.timelineNode}
+              data-active={index === activeIndex ? 'true' : 'false'}
+              data-revealed={revealed ? 'true' : 'false'}
+              disabled={!available}
+              key={item.id}
+              type="button"
+              onClick={() => selectEvidence(index)}
+            >
+              <span>{String(index + 1).padStart(2, '0')}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      <AnimatePresence mode="wait" initial={false}>
+        <motion.article
+          className={styles.caseSignal}
+          key={activeEvidence.id}
+          initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, x: 12 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, x: -10 }}
+          transition={{ duration: prefersReducedMotion ? 0.1 : 0.3, ease: [0.22, 1, 0.36, 1] }}
+          aria-live="polite"
+        >
+          <span className={styles.signalIcon} aria-hidden="true"><FileClock size={19} /></span>
+          <div>
+            <small>{activeEvidence.label}</small>
+            <p lang="en-US">{activeEvidence.value}</p>
+          </div>
+        </motion.article>
+      </AnimatePresence>
+
+      <div className={styles.caseSceneControls}>
+        <button
+          aria-label="Ver señal anterior"
+          className={styles.caseNavAction}
+          disabled={activeIndex === 0 || !allowReview}
+          type="button"
+          onClick={() => selectEvidence(activeIndex - 1)}
+        >
+          <ChevronLeft size={17} />
+        </button>
+        <p>
+          {revealedThrough < evidence.length - 1
+            ? 'Explora las señales. Ninguna interpreta el caso por ti.'
+            : 'Ya puedes comparar las tres señales.'}
+        </p>
+        <button
+          aria-label={activeIndex < evidence.length - 1 ? 'Descubrir siguiente señal' : 'Todas las señales descubiertas'}
+          className={styles.caseNavAction}
+          disabled={activeIndex === evidence.length - 1}
+          type="button"
+          onClick={() => selectEvidence(activeIndex + 1)}
+        >
+          <ChevronRight size={17} />
+        </button>
+      </div>
+    </section>
   );
 }
 
@@ -314,12 +436,66 @@ function ConceptPrism({ step }: { step: CrearPaso }) {
   );
 }
 
-function AmbientField() {
+interface AmbientFieldProps {
+  paused: boolean;
+}
+
+function AmbientField({ paused }: AmbientFieldProps) {
+  const videoLayerRef = useRef<HTMLSpanElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    if (paused) return;
+
+    let animationFrame = 0;
+    const syncLoopOpacity = () => {
+      const layer = videoLayerRef.current;
+      const video = videoRef.current;
+
+      if (layer && video && Number.isFinite(video.duration) && video.duration > 0) {
+        const fadeWindow = Math.min(1, video.duration / 2);
+        const fadeIn = Math.min(1, video.currentTime / fadeWindow);
+        const fadeOut = Math.min(1, (video.duration - video.currentTime) / fadeWindow);
+        const opacity = Math.max(0, Math.min(fadeIn, fadeOut));
+
+        layer.style.opacity = opacity.toFixed(3);
+        layer.dataset.loopPhase = fadeIn < 1 ? 'fade-in' : fadeOut < 1 ? 'fade-out' : 'steady';
+      }
+
+      animationFrame = window.requestAnimationFrame(syncLoopOpacity);
+    };
+
+    animationFrame = window.requestAnimationFrame(syncLoopOpacity);
+    return () => window.cancelAnimationFrame(animationFrame);
+  }, [paused]);
+
   return (
     <div className={styles.ambientField} aria-hidden="true">
+      {paused ? (
+        <span className={styles.waveFallback} />
+      ) : (
+        <span
+          className={styles.waveVideoLayer}
+          data-loop-phase="loading"
+          ref={videoLayerRef}
+        >
+          <video
+            className={styles.waveVideo}
+            autoPlay
+            disablePictureInPicture
+            loop
+            muted
+            playsInline
+            preload="metadata"
+            ref={videoRef}
+            tabIndex={-1}
+          >
+            <source src="/video/bg_waves.mp4" type="video/mp4" />
+          </video>
+        </span>
+      )}
+      <span className={styles.ambientWash} />
       <span className={styles.dotField} />
-      <span className={styles.auroraOne} />
-      <span className={styles.auroraTwo} />
       <span className={styles.horizonLine} />
     </div>
   );
@@ -541,7 +717,8 @@ export function CinematicEnglishPlayer() {
     score: number,
     text: string,
     attemptNumber: number,
-    confidence: number
+    confidence: number,
+    parts?: CrearResponsePartAnswer[]
   ): void {
     const stepId = getStepId(step);
     setStudy((current) => {
@@ -551,6 +728,7 @@ export function CinematicEnglishPlayer() {
         correct,
         score,
         text,
+        ...(parts && parts.length > 0 ? { parts } : {}),
         attempt: attemptNumber,
         confidence,
         submittedAt: Date.now(),
@@ -653,7 +831,8 @@ export function CinematicEnglishPlayer() {
     correct: boolean,
     score: number,
     text: string,
-    attemptNumber: number
+    attemptNumber: number,
+    parts?: CrearResponsePartAnswer[]
   ) {
     if (!lesson || !study) return;
     void trackCrearAnswer({
@@ -663,8 +842,9 @@ export function CinematicEnglishPlayer() {
       correcto: correct,
       rama: branch,
       texto: text,
+      partes: parts,
       score,
-      intento: attemptNumber,
+      attempt: attemptNumber,
       studyId: study.studyId,
       checksum: lesson.checksum,
     });
@@ -684,7 +864,7 @@ export function CinematicEnglishPlayer() {
     setFeedback(buildBranchFeedback(step, branch, branchId, confidence, attemptNumber));
   }
 
-  async function handleSubmitText(text: string) {
+  async function handleSubmitText(text: string, parts?: CrearResponsePartAnswer[]) {
     if (!currentStep || !lesson || !study) return;
     setPending(true);
     const attemptNumber = attempt + 1;
@@ -702,9 +882,10 @@ export function CinematicEnglishPlayer() {
         score,
         text,
         attemptNumber,
-        classification.confianza
+        classification.confianza,
+        parts
       );
-      queueAnswerTelemetry(currentStep, classification.rama, correct, score, text, attemptNumber);
+      queueAnswerTelemetry(currentStep, classification.rama, correct, score, text, attemptNumber, parts);
 
       if (branch?.pista) {
         void trackCrearHint({
@@ -796,7 +977,7 @@ export function CinematicEnglishPlayer() {
   if (loading) {
     return (
       <main className={styles.pageShell} data-scene="arrival" lang="es-MX">
-        <AmbientField />
+        <AmbientField paused={Boolean(prefersReducedMotion) || liteMode || pageHidden} />
         <div className={styles.loadingScene} role="status">
           <span className={styles.loadingOrb}><Sparkles size={24} /></span>
           <p>Preparando la señal…</p>
@@ -808,7 +989,7 @@ export function CinematicEnglishPlayer() {
   if (error || !lesson || !currentStep || !study) {
     return (
       <main className={styles.pageShell} data-scene="arrival" lang="es-MX">
-        <AmbientField />
+        <AmbientField paused={Boolean(prefersReducedMotion) || liteMode || pageHidden} />
         <section className={styles.errorScene}>
           <span><RotateCcw size={22} /></span>
           <h1>No pudimos abrir la experiencia</h1>
@@ -824,7 +1005,7 @@ export function CinematicEnglishPlayer() {
   if (completed) {
     return (
       <main className={styles.pageShell} data-scene="closure" lang="es-MX">
-        <AmbientField />
+        <AmbientField paused={Boolean(prefersReducedMotion) || liteMode || pageHidden} />
         <section className={styles.completionScene}>
           <span className={styles.completionMark}><Check size={28} /></span>
           <p className={styles.sceneEyebrow}>EVIDENCIA D7 REGISTRADA</p>
@@ -861,7 +1042,7 @@ export function CinematicEnglishPlayer() {
     }).format(study.retestDueAt);
     return (
       <main className={styles.pageShell} data-scene="closure" lang="es-MX">
-        <AmbientField />
+        <AmbientField paused={Boolean(prefersReducedMotion) || liteMode || pageHidden} />
         <header className={styles.topBar} aria-hidden={exitConfirm ? true : undefined}>
           <button className={styles.iconButton} type="button" onClick={() => setExitConfirm(true)} aria-label="Salir">
             <X size={20} />
@@ -898,6 +1079,7 @@ export function CinematicEnglishPlayer() {
   const prompt = getPrompt(currentStep);
   const display = currentStep.crear?.display;
   const audio = currentStep.crear?.audio;
+  const audioAssetsReady = lesson.audio_asset_version === lesson.content_version;
   const compactVoice = inputFocused || mode !== 'none';
   const sceneTransition = prefersReducedMotion
     ? { duration: 0.12 }
@@ -909,13 +1091,15 @@ export function CinematicEnglishPlayer() {
         className={styles.pageShell}
         data-scene={currentScene}
         data-stage={currentStage}
+        data-audio-ready={audioAssetsReady ? 'true' : 'false'}
+        data-structured={currentStep.crear?.responseParts ? 'true' : 'false'}
         data-voice-state={voiceStatus}
         data-input-focused={inputFocused ? 'true' : 'false'}
         data-page-hidden={pageHidden ? 'true' : 'false'}
         data-lite={liteMode ? 'true' : 'false'}
         lang="es-MX"
       >
-        <AmbientField />
+        <AmbientField paused={Boolean(prefersReducedMotion) || liteMode || pageHidden} />
         <section
           className={styles.experienceShell}
           aria-hidden={feedback || exitConfirm ? true : undefined}
@@ -942,7 +1126,7 @@ export function CinematicEnglishPlayer() {
                 <h1
                   ref={headingRef}
                   tabIndex={-1}
-                  lang={currentStage === 'recuerda' ? 'es-MX' : 'en-US'}
+                  lang={getHeadlineLanguage(currentStep)}
                 >
                   {display?.headline ?? lesson.titulo}
                 </h1>
@@ -953,7 +1137,7 @@ export function CinematicEnglishPlayer() {
               <ComparisonField step={currentStep} />
               <ConceptPrism step={currentStep} />
 
-              {audio ? (
+              {audio && audioAssetsReady ? (
                 <CinematicVoice
                   audio={audio}
                   sceneKey={getStepId(currentStep)}
@@ -970,6 +1154,7 @@ export function CinematicEnglishPlayer() {
                 choices={getChoices(currentStep)}
                 pending={pending}
                 minChars={currentStep.crear?.minChars}
+                responseParts={currentStep.crear?.responseParts}
                 continueLabel={currentScene === 'closure' ? 'Guardar y cerrar' : currentScene === 'arrival' ? 'Entrar al reto' : 'Continuar'}
                 submitLabel={currentStage === 'aplica' || currentStage === 'recuerda' ? 'Guardar evidencia' : 'Enviar idea'}
                 onContinue={handleContinue}

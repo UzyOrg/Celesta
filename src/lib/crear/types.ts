@@ -82,6 +82,29 @@ export interface CrearEvidenceItem {
   value: string;
 }
 
+export type CrearResponseCategory = 'casi_seguro' | 'posible' | 'imposible';
+
+export interface CrearEvidencePresentation {
+  mode: 'sequential';
+  allowReview: boolean;
+  initialEvidenceId?: string;
+}
+
+export interface CrearResponsePart {
+  id: CrearResponseCategory;
+  categoria: CrearResponseCategory;
+  label: string;
+  prompt: string;
+  placeholder: string;
+  minChars: number;
+}
+
+export interface CrearResponsePartAnswer {
+  categoria: CrearResponseCategory;
+  texto: string;
+  rama?: string;
+}
+
 export interface CrearConceptCard {
   id: string;
   term: string;
@@ -109,6 +132,8 @@ export interface CrearStepMeta {
   scene?: CrearScene;
   display?: CrearDisplayCopy;
   evidence?: CrearEvidenceItem[];
+  evidencePresentation?: CrearEvidencePresentation;
+  responseParts?: CrearResponsePart[];
   concepts?: CrearConceptCard[];
   comparison?: CrearComparison;
   formula?: string[];
@@ -124,6 +149,7 @@ export type CrearPaso = Paso & {
 };
 
 export type CrearWorkshop = Omit<Workshop, 'pasos'> & {
+  audio_asset_version?: string;
   pasos: CrearPaso[];
 };
 
@@ -150,11 +176,15 @@ export interface CrearTelemetryResult extends Record<string, unknown> {
   rama: string;
   texto?: string;
   score?: number;
+  partes?: CrearResponsePartAnswer[];
+  attempt?: number;
+  /** @deprecated Compatibility with events emitted before content version 2026-07-19. */
   intento?: number;
   studyId?: string;
 }
 
 export const CREAR_MAX_ANSWER_LENGTH = 1200;
+export const CREAR_MAX_RESPONSE_PART_LENGTH = 360;
 
 export const DEFAULT_CREAR_LESSON_ID: CrearLessonId = 'CREAR-ENGLISH-DEDUCTION-V1';
 
