@@ -8,10 +8,19 @@ import {
   loadWorkshopProgress,
   markWorkshopCompleted,
   saveWorkshopProgress,
-  type WorkshopProgress,
 } from '@/lib/workshopState';
-import { evalRule } from '@/lib/workshops/branch';
 import { loadCrearLesson } from '@/lib/crear/loadLesson';
+import {
+  findBranch,
+  getChoices,
+  getCorrectChoiceId,
+  getInputMode,
+  getPlaceholder,
+  getPrompt,
+  getStepId,
+  makeProgress,
+  resolveNextRef,
+} from '@/lib/crear/stepHelpers';
 import {
   trackCrearAnswer,
   trackCrearComplete,
@@ -21,89 +30,16 @@ import {
 } from '@/lib/crear/telemetry';
 import type {
   ClassifyResponse,
-  CrearClassifierBranch,
-  CrearInputMode,
   CrearLessonId,
   CrearPaso,
   CrearWorkshop,
 } from '@/lib/crear/types';
 import { isCrearLessonId } from '@/lib/crear/types';
-import { AnswerComposer, type ChoiceOption } from './AnswerComposer';
+import { AnswerComposer } from './AnswerComposer';
 import { MysteryPicker } from './MysteryPicker';
 import { VerdictCard } from './VerdictCard';
 import { VoiceLine } from './VoiceLine';
 import styles from './CrearLessonPlayer.module.css';
-
-interface BranchContext {
-  rama: string;
-  confianza: number;
-}
-
-function getStepId(step: CrearPaso): string {
-  return step.ref_id ?? String(step.paso_numero);
-}
-
-function getInputMode(step: CrearPaso): CrearInputMode {
-  return step.crear?.input ?? 'none';
-}
-
-function getPrompt(step: CrearPaso): string {
-  if (step.tipo_paso === 'instruccion') return step.instruccion.texto;
-  if (step.tipo_paso === 'pregunta_abierta_validada') return step.pregunta_abierta_validada.pregunta;
-  if (step.tipo_paso === 'opcion_multiple') return step.opcion_multiple.pregunta;
-  if (step.tipo_paso === 'transferencia') {
-    return `${step.transferencia.escenario} ${step.transferencia.pregunta}`.trim();
-  }
-  return step.titulo_paso;
-}
-
-function getPlaceholder(step: CrearPaso): string | undefined {
-  if (step.tipo_paso === 'pregunta_abierta_validada') return step.pregunta_abierta_validada.placeholder;
-  if (step.tipo_paso === 'transferencia') return 'Escribe el caso nuevo con tus palabras.';
-  return undefined;
-}
-
-function getChoices(step: CrearPaso): ChoiceOption[] {
-  if (step.tipo_paso !== 'opcion_multiple') return [];
-  return step.opcion_multiple.opciones;
-}
-
-function getCorrectChoiceId(step: CrearPaso): string | null {
-  if (step.tipo_paso !== 'opcion_multiple') return null;
-  return step.opcion_multiple.respuesta_correcta;
-}
-
-function findBranch(step: CrearPaso, rama: string): CrearClassifierBranch | null {
-  return step.crear?.classifier?.ramas.find((branch) => branch.rama === rama) ?? null;
-}
-
-function resolveNextRef(step: CrearPaso, ctx: BranchContext): string | null {
-  const rules = step.crear?.branchRules ?? [];
-  for (const branchRule of rules) {
-    if (evalRule(branchRule.rule, ctx)) {
-      return branchRule.nextRefId;
-    }
-  }
-
-  return step.crear?.nextRefId ?? null;
-}
-
-function makeProgress(
-  lesson: CrearWorkshop,
-  sessionId: string,
-  pasoActual: number,
-  completado: boolean
-): WorkshopProgress {
-  const existing = loadWorkshopProgress(sessionId, lesson.id_taller);
-  return {
-    taller_id: lesson.id_taller,
-    student_session_id: sessionId,
-    paso_actual: pasoActual,
-    paso_states: existing?.paso_states ?? {},
-    ultima_actualizacion: Date.now(),
-    completado,
-  };
-}
 
 export function CrearLessonPlayer() {
   const [lessonId, setLessonId] = useState<CrearLessonId | null>(null);
@@ -244,7 +180,7 @@ export function CrearLessonPlayer() {
       const classification = await classifyText(currentStep, trimmed);
       const branch = findBranch(currentStep, classification.rama);
       const fase = currentStep.crear?.fase ?? 'practica';
-      const correcto = branch?.correcto ?? true;
+      const correcto = branch?.correcto ?? false;
       const score = branch?.score ?? (correcto ? 1 : 0);
 
       await trackCrearAnswer({
@@ -406,7 +342,7 @@ export function CrearLessonPlayer() {
               <AnswerComposer
                 mode={mode}
                 prompt={prompt}
-                placeholder={getPlaceholder(currentStep)}
+                placeholder={getPlaceholder(currentStep, 'Escribe el caso nuevo con tus palabras.')}
                 choices={getChoices(currentStep)}
                 verdictOptions={currentStep.crear?.verdictOptions}
                 hidePrompt={hideComposerPrompt}

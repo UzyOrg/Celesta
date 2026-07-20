@@ -40,6 +40,9 @@ function validateBranch(branch: CrearClassifierBranch, label: string): void {
   if (branch.score !== undefined && (!Number.isFinite(branch.score) || branch.score < 0)) {
     throw new Error(`CREAR JSON: ${label}.score must be a non-negative number`);
   }
+  if (branch.prioridad !== undefined && !Number.isFinite(branch.prioridad)) {
+    throw new Error(`CREAR JSON: ${label}.prioridad must be a finite number`);
+  }
   assertStringArray(branch.ejemplos, `${label}.ejemplos`);
   assertStringArray(branch.keywords, `${label}.keywords`);
   assertStringArray(branch.match?.all, `${label}.match.all`);
@@ -195,6 +198,41 @@ export function validateCrearWorkshopJson(input: unknown): CrearWorkshop {
       }
     }
   });
+
+  if (workshop.pasos.length > 0) {
+    const reachable = new Set<number>();
+    const queue = [0];
+    let reachesTerminal = false;
+
+    while (queue.length > 0) {
+      const index = queue.shift()!;
+      if (reachable.has(index)) continue;
+      reachable.add(index);
+
+      const step = workshop.pasos[index]!;
+      const authoredTargets = [
+        step.crear?.nextRefId,
+        ...(step.crear?.branchRules ?? []).map((rule) => rule.nextRefId),
+      ].filter((target): target is string => typeof target === 'string');
+      const targetIndexes = authoredTargets.map((target) => refs.indexOf(target));
+
+      if (!step.crear?.nextRefId && index + 1 < workshop.pasos.length) {
+        targetIndexes.push(index + 1);
+      }
+
+      if (targetIndexes.length === 0) {
+        reachesTerminal = true;
+      }
+
+      for (const targetIndex of targetIndexes) {
+        if (targetIndex >= 0 && !reachable.has(targetIndex)) queue.push(targetIndex);
+      }
+    }
+
+    if (!reachesTerminal) {
+      throw new Error('CREAR JSON: step graph has no reachable terminal step');
+    }
+  }
 
   return workshop;
 }

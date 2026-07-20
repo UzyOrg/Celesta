@@ -6,6 +6,9 @@ import path from 'path';
 export const runtime = 'nodejs';
 export const revalidate = 0;
 
+const WORKSHOP_ID_PATTERN = /^[A-Za-z0-9_-]+$/;
+const EXAMPLES_DIRECTORY = path.resolve(process.cwd(), 'src', 'lib', 'workshops', 'examples');
+
 /**
  * GET /api/talleres/[id]
  * Retorna el contenido completo de un taller (oficial o personalizado)
@@ -21,9 +24,9 @@ export async function GET(
   try {
     const { id } = await params;
     
-    if (!id) {
+    if (!id || !WORKSHOP_ID_PATTERN.test(id)) {
       return NextResponse.json(
-        { error: 'ID de taller requerido' },
+        { error: 'ID de taller inválido' },
         { status: 400 }
       );
     }
@@ -33,7 +36,10 @@ export async function GET(
     if (error || !data) {
       // Fallback: intentar cargar desde src/lib/workshops/examples/{id}.json (dev)
       try {
-        const localPath = path.join(process.cwd(), 'src', 'lib', 'workshops', 'examples', `${id}.json`);
+        const localPath = path.resolve(EXAMPLES_DIRECTORY, `${id}.json`);
+        if (!localPath.startsWith(`${EXAMPLES_DIRECTORY}${path.sep}`)) {
+          return NextResponse.json({ error: 'ID de taller inválido' }, { status: 400 });
+        }
         if (fs.existsSync(localPath)) {
           const contenido = JSON.parse(fs.readFileSync(localPath, 'utf-8'));
           return NextResponse.json({

@@ -1,5 +1,6 @@
 import EvidenceReport from '@/components/evidence/EvidenceReport';
 import { getMockEvidenceData } from '@/lib/evidence/mockData';
+import { notFound } from 'next/navigation';
 
 /**
  * Reporte de Evidencia del Pasaporte Cognitivo.
@@ -15,6 +16,10 @@ export default async function EvidencePage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  if (process.env.NODE_ENV !== 'development' && process.env.EVIDENCE_PREVIEW !== '1') {
+    notFound();
+  }
+
   const { id } = await params;
   const data = getMockEvidenceData(id);
 

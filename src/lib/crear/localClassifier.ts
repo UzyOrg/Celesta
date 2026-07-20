@@ -109,15 +109,17 @@ export function classifyCrearLocally(
     .map((branch) => ({
       branch,
       score: scoreBranch(texto, branch),
-      priority: branch.correcto
-        ? 100
-        : branch.rama.includes('misconcepcion')
-          ? 80
-          : branch.rama.includes('parcial')
-            ? 20
-            : branch.rama.includes('no_claro')
-              ? 0
-              : 50,
+      priority: branch.prioridad ?? (
+        branch.correcto
+          ? 100
+          : branch.rama.includes('misconcepcion')
+            ? 80
+            : branch.rama.includes('parcial')
+              ? 20
+              : branch.rama.includes('no_claro')
+                ? 0
+                : 50
+      ),
     }))
     .filter((candidate) => candidate.score > 0)
     .sort((a, b) => b.priority - a.priority || b.score - a.score);

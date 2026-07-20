@@ -12,23 +12,29 @@ export type LearningEvent = {
   class_token?: string;
   taller_id: string;
   paso_id: string; // e.g., `${paso_numero}` or a semantic id
-  verbo: 'inicio_taller' | 'envio_respuesta' | 'solicito_pista' | 'completo_paso' | 'taller_completado' | 'abandono_taller' | 'telemetria_crisol';
+  verbo: 'inicio_taller' | 'envio_respuesta' | 'solicito_pista' | 'completo_paso' | 'taller_completado' | 'abandono_taller';
   result?: Json;
   ts: string; // ISO
   client_event_id: string; // idempotencia
   client_ts: string; // ISO desde cliente
 };
 
-async function postEventsBatch(events: LearningEvent[]): Promise<boolean> {
+type BatchPostResult = 'ok' | 'drop' | 'retry';
+
+async function postEventsBatch(events: LearningEvent[]): Promise<BatchPostResult> {
   try {
     const res = await fetch('/api/events/ingest', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ events }),
     });
-    return res.ok;
+    if (res.ok) return 'ok';
+    if (res.status >= 400 && res.status < 500 && res.status !== 408 && res.status !== 429) {
+      return 'drop';
+    }
+    return 'retry';
   } catch {
-    return false;
+    return 'retry';
   }
 }
 
@@ -80,15 +86,39 @@ async function flushEventQueueOnce(): Promise<void> {
   }
   if (curr.length > 0) chunks.push(curr);
 
-  let allOk = true;
+  async function deliverBatch(batch: LearningEvent[]): Promise<'ok' | 'retry'> {
+    const result = await postEventsBatch(batch);
+    if (result === 'ok') return 'ok';
+    if (result === 'retry') return 'retry';
+
+    // A permanent 4xx can be caused by one malformed event. Bisect the batch
+    // so valid telemetry still ships and only the poison entry is discarded.
+    if (batch.length > 1) {
+      const midpoint = Math.ceil(batch.length / 2);
+      const left = await deliverBatch(batch.slice(0, midpoint));
+      if (left === 'retry') return 'retry';
+      return deliverBatch(batch.slice(midpoint));
+    }
+
+    const rejectedEvent = batch[0];
+    if (rejectedEvent) {
+      await Promise.all(
+        entries
+          .filter((entry) => entry.value.client_event_id === rejectedEvent.client_event_id)
+          .map((entry) => idbDelete('events', entry.key))
+      );
+    }
+    return 'ok';
+  }
+
+  let shouldRetry = false;
   for (const batch of chunks) {
-    const ok = await postEventsBatch(batch);
-    if (!ok) {
-      allOk = false;
+    if (await deliverBatch(batch) === 'retry') {
+      shouldRetry = true;
       break;
     }
   }
-  if (allOk) {
+  if (!shouldRetry) {
     await Promise.all(entries.map((entry) => idbDelete('events', entry.key)));
     backoffMs = 1000;
   } else {

@@ -45,6 +45,7 @@ export interface CrearLocalMatch {
 export interface CrearClassifierBranch {
   rama: string;
   descripcion: string;
+  prioridad?: number;
   ejemplos?: string[];
   keywords?: string[];
   correcto: boolean;
@@ -185,6 +186,10 @@ export interface CrearTelemetryResult extends Record<string, unknown> {
   attempt?: number;
   /** @deprecated Compatibility with events emitted before content version 2026-07-19. */
   intento?: number;
+  /**
+   * Correlaciona pre/post/transfer/retest. En análisis, un retest con un delta
+   * menor a retestDelayHours desde taller_completado se considera no válido.
+   */
   studyId?: string;
 }
 

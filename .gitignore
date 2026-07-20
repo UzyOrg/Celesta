@@ -13,6 +13,9 @@ build
 coverage
 *.log
 .turbo
+test-artifacts/
+test-results/
+*.tsbuildinfo
 
 # Supabase migrations (ejecutar manualmente en cada instancia)
 lib/supabase/migrations/

@@ -20,11 +20,20 @@ import {
   loadWorkshopProgress,
   markWorkshopCompleted,
   saveWorkshopProgress,
-  type WorkshopProgress,
 } from '@/lib/workshopState';
-import { evalRule } from '@/lib/workshops/branch';
 import { loadCrearLesson } from '@/lib/crear/loadLesson';
 import { classifyCrearLocally } from '@/lib/crear/localClassifier';
+import {
+  findBranch,
+  getChoices,
+  getCorrectChoiceId,
+  getInputMode,
+  getPlaceholder,
+  getPrompt,
+  getStepId,
+  makeProgress,
+  resolveNextRef,
+} from '@/lib/crear/stepHelpers';
 import {
   getOrCreateCrearStudyState,
   saveCrearStudyState,
@@ -42,21 +51,14 @@ import type {
   ClassifyResponse,
   CrearClassifierBranch,
   CrearExperienceStage,
-  CrearInputMode,
   CrearPaso,
   CrearResponsePartAnswer,
   CrearWorkshop,
 } from '@/lib/crear/types';
 import { DEFAULT_CREAR_LESSON_ID } from '@/lib/crear/types';
-import type { ChoiceOption } from '../AnswerComposer';
 import { CinematicAnswer } from './CinematicAnswer';
 import { CinematicVoice, type CinematicVoiceStatus } from './CinematicVoice';
 import styles from './CinematicEnglishPlayer.module.css';
-
-interface BranchContext {
-  rama: string;
-  confianza: number;
-}
 
 interface FeedbackState {
   title: string;
@@ -82,49 +84,6 @@ const EXPERIENCE_STAGES: Array<{ id: Exclude<CrearExperienceStage, 'recuerda'>; 
   { id: 'practica', label: 'Practica' },
   { id: 'aplica', label: 'Aplica' },
 ];
-
-function getStepId(step: CrearPaso): string {
-  return step.ref_id ?? String(step.paso_numero);
-}
-
-function getInputMode(step: CrearPaso): CrearInputMode {
-  return step.crear?.input ?? 'none';
-}
-
-function getPrompt(step: CrearPaso): string {
-  if (step.tipo_paso === 'instruccion') return step.instruccion.texto;
-  if (step.tipo_paso === 'pregunta_abierta_validada') return step.pregunta_abierta_validada.pregunta;
-  if (step.tipo_paso === 'opcion_multiple') return step.opcion_multiple.pregunta;
-  if (step.tipo_paso === 'transferencia') {
-    return `${step.transferencia.escenario} ${step.transferencia.pregunta}`.trim();
-  }
-  return step.titulo_paso;
-}
-
-function getPlaceholder(step: CrearPaso): string | undefined {
-  if (step.tipo_paso === 'pregunta_abierta_validada') return step.pregunta_abierta_validada.placeholder;
-  if (step.tipo_paso === 'transferencia') return 'Escribe una oración breve en inglés…';
-  return undefined;
-}
-
-function getChoices(step: CrearPaso): ChoiceOption[] {
-  return step.tipo_paso === 'opcion_multiple' ? step.opcion_multiple.opciones : [];
-}
-
-function getCorrectChoiceId(step: CrearPaso): string | null {
-  return step.tipo_paso === 'opcion_multiple' ? step.opcion_multiple.respuesta_correcta : null;
-}
-
-function findBranch(step: CrearPaso, branchId: string): CrearClassifierBranch | null {
-  return step.crear?.classifier?.ramas.find((branch) => branch.rama === branchId) ?? null;
-}
-
-function resolveNextRef(step: CrearPaso, ctx: BranchContext): string | null {
-  for (const branchRule of step.crear?.branchRules ?? []) {
-    if (evalRule(branchRule.rule, ctx)) return branchRule.nextRefId;
-  }
-  return step.crear?.nextRefId ?? null;
-}
 
 function buildBranchFeedback(
   step: CrearPaso,
@@ -182,23 +141,6 @@ function buildChoiceFeedback(
     retry,
     nextRefId: resolveNextRef(step, { rama: branchId, confianza: 1 }),
     correct,
-  };
-}
-
-function makeProgress(
-  lesson: CrearWorkshop,
-  sessionId: string,
-  stepIndex: number,
-  completed: boolean
-): WorkshopProgress {
-  const existing = loadWorkshopProgress(sessionId, lesson.id_taller);
-  return {
-    taller_id: lesson.id_taller,
-    student_session_id: sessionId,
-    paso_actual: stepIndex,
-    paso_states: existing?.paso_states ?? {},
-    ultima_actualizacion: Date.now(),
-    completado: completed,
   };
 }
 
@@ -575,10 +517,14 @@ export function CinematicEnglishPlayer() {
         setAttempt(nextStudy.attempts[getStepId(firstStep)] ?? 0);
 
         const firstStepId = getStepId(firstStep);
-        const outcomeStepId = nextStudy.phase === 'completed'
-          ? 'retest'
-          : firstStepId === 'close'
-            ? 'transfer'
+        const transferStep = loaded.pasos.find((step) => step.crear?.fase === 'transfer');
+        const retestStep = loaded.pasos.find(
+          (step) => typeof step.crear?.retestDelayHours === 'number'
+        );
+        const outcomeStepId = nextStudy.phase === 'completed' && retestStep
+          ? getStepId(retestStep)
+          : firstStep.crear?.scene === 'closure' && transferStep
+            ? getStepId(transferStep)
             : firstStepId;
         const storedOutcome =
           nextStudy.latestOutcomes[firstStepId] ?? nextStudy.firstOutcomes[outcomeStepId];
@@ -993,9 +939,9 @@ export function CinematicEnglishPlayer() {
     advance(currentStep, feedback.nextRefId);
   }
 
-  function confirmExit() {
+  async function confirmExit() {
     if (lesson && currentStep && study) {
-      void trackCrearAbandon({
+      await trackCrearAbandon({
         tallerId: lesson.id_taller,
         pasoId: getStepId(currentStep),
         checksum: lesson.checksum,
@@ -1116,7 +1062,7 @@ export function CinematicEnglishPlayer() {
       key={getStepId(currentStep)}
       mode={mode}
       prompt={prompt}
-      placeholder={getPlaceholder(currentStep)}
+      placeholder={getPlaceholder(currentStep, 'Escribe una oración breve en inglés…')}
       choices={getChoices(currentStep)}
       pending={pending}
       minChars={currentStep.crear?.minChars}
@@ -1294,7 +1240,7 @@ export function CinematicEnglishPlayer() {
 
 function renderExitSheet(
   setExitConfirm: (open: boolean) => void,
-  confirmExit: () => void,
+  confirmExit: () => void | Promise<void>,
   continueButtonRef: RefObject<HTMLButtonElement>
 ) {
   return (

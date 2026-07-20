@@ -1,4 +1,4 @@
-const CACHE_NAME = 'celesta-sw-v2';
+const CACHE_NAME = 'celesta-sw-v3';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
@@ -30,6 +30,25 @@ function shouldCache(request) {
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   if (!shouldCache(request)) return;
+
+  const url = new URL(request.url);
+  if (request.mode === 'navigate' && url.pathname.startsWith('/crear')) {
+    event.respondWith(
+      fetch(request)
+        .then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            const copy = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, copy)).catch(() => {});
+          }
+          return networkResponse;
+        })
+        .catch(async () => {
+          const cached = await caches.match(request);
+          return cached ?? Response.error();
+        })
+    );
+    return;
+  }
 
   event.respondWith(
     caches.match(request).then((cached) => {

@@ -5,6 +5,7 @@ import { z } from 'zod';
 import type {
   ClassifyResponse,
   CrearPaso,
+  CrearLessonId,
   CrearResponsePartAnswer,
   CrearWorkshop,
 } from '@/lib/crear/types';
@@ -15,18 +16,21 @@ import {
 import { validateCrearWorkshopJson } from '@/lib/crear/validation';
 import type { CrearClassifierBranch } from '@/lib/crear/types';
 import {
+  ALL_CREAR_LESSON_IDS,
   CREAR_MAX_ANSWER_LENGTH,
   CREAR_MAX_RESPONSE_PART_LENGTH,
 } from '@/lib/crear/types';
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 
 export const runtime = 'nodejs';
 
-const CrearLessonIdSchema = z.enum([
-  'CREAR-ENGLISH-DEDUCTION-V1',
-  'CREAR-VIDEOJUEGO',
-  'CREAR-CANCION',
-  'CREAR-REDES',
-]);
+const CrearLessonIdSchema = z.enum(
+  [...ALL_CREAR_LESSON_IDS] as [CrearLessonId, ...CrearLessonId[]]
+);
+
+const CLASSIFY_RATE_LIMIT = 30;
+const CLASSIFY_RATE_WINDOW_MS = 60_000;
+const workshopCache = new Map<CrearLessonId, CrearWorkshop>();
 
 const ClassifyRequestSchema = z.object({
   tallerId: CrearLessonIdSchema,
@@ -58,10 +62,14 @@ interface OpenAIChatResponse {
   choices?: OpenAIChatChoice[];
 }
 
-function loadWorkshopFromPublic(id: string): CrearWorkshop {
+function loadWorkshopFromPublic(id: CrearLessonId): CrearWorkshop {
+  const cached = workshopCache.get(id);
+  if (cached) return cached;
   const filePath = path.join(process.cwd(), 'public', 'workshops', `${id}.json`);
   const raw = fs.readFileSync(filePath, 'utf-8');
-  return validateCrearWorkshopJson(JSON.parse(raw) as unknown);
+  const workshop = validateCrearWorkshopJson(JSON.parse(raw) as unknown);
+  workshopCache.set(id, workshop);
+  return workshop;
 }
 
 function findStep(workshop: CrearWorkshop, pasoRefId: string): CrearPaso | null {
@@ -152,6 +160,22 @@ function sanitizeClassification(
 
 export async function POST(req: Request) {
   try {
+    const ip = getClientIp(req);
+    const rateLimit = checkRateLimit(
+      `crear:classify:${ip}`,
+      CLASSIFY_RATE_LIMIT,
+      CLASSIFY_RATE_WINDOW_MS
+    );
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: 'rate_limited' },
+        {
+          status: 429,
+          headers: { 'Retry-After': String(Math.ceil((rateLimit.resetAt - Date.now()) / 1000)) },
+        }
+      );
+    }
+
     const body = ClassifyRequestSchema.parse(await req.json());
     const workshop = loadWorkshopFromPublic(body.tallerId);
     const step = findStep(workshop, body.pasoRefId);

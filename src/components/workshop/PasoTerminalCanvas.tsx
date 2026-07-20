@@ -1,10 +1,8 @@
 "use client";
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import type { Paso } from '@/lib/workshops/schema';
 import type { StepComplete } from './PasoInstruccion';
 import { TerminalCanvas } from '@/components/cognitive-tools/TerminalCanvas';
-import type { TelemetryEvent } from '@/components/cognitive-tools/TerminalCanvas';
-import { trackEvent } from '@/lib/track';
 
 type Props = {
   step: Extract<Paso, { tipo_paso: 'terminal_canvas' }>;
@@ -26,8 +24,6 @@ export default function PasoTerminalCanvas({
   pistasUsadas,
   onHint,
   disabledInputs,
-  classToken,
-  tallerId,
 }: Props) {
   const cfg = step.terminal_canvas;
   const [text, setText] = useState('');
@@ -36,18 +32,6 @@ export default function PasoTerminalCanvas({
   const minWords = typeof cfg.min_palabras === 'number' ? Math.max(0, cfg.min_palabras) : 0;
   const wc = wordCount(text);
   const meetsMinimum = minWords === 0 || wc >= minWords;
-
-  const handleTelemetry = useCallback(
-    (event: TelemetryEvent) => {
-      trackEvent('telemetria_crisol', {
-        tallerId: tallerId ?? step.ref_id ?? 'unknown',
-        pasoId: String(step.paso_numero),
-        classToken,
-        result: { tipo: event.event, duration: event.duration },
-      });
-    },
-    [tallerId, step, classToken]
-  );
 
   const handleSubmit = () => {
     if (!meetsMinimum) {
@@ -87,7 +71,7 @@ export default function PasoTerminalCanvas({
       <TerminalCanvas
         value={text}
         onChange={disabledInputs ? () => {} : setText}
-        onTelemetryUpdate={handleTelemetry}
+        onTelemetryUpdate={() => undefined}
         placeholder={cfg.placeholder ?? 'Escribe tu respuesta aquí...'}
       />
 

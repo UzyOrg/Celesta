@@ -108,7 +108,7 @@ test('cinematic English probe records transfer and D7 without false mastery', as
   const response = await page.goto('/crear');
   expect(response?.status()).toBe(200);
 
-  const arrivalHeading = page.getByRole('heading', { name: 'Tengo un caso para ti.' });
+  const arrivalHeading = page.getByRole('heading', { name: '¿Qué fue lo que pasó?' });
   await expect(arrivalHeading).toBeVisible();
   await expect(page.getByText('Módulo de inglés', { exact: true })).toBeVisible();
   await expect(page.getByLabel('Nivel de inglés B1+ / B2', { exact: true })).toBeVisible();
@@ -451,7 +451,7 @@ test('desktop arrival keeps the cinematic CTA compact and visible', async ({ pag
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/crear');
 
-  await expect(page.getByRole('heading', { name: 'Tengo un caso para ti.' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '¿Qué fue lo que pasó?' })).toBeVisible();
   await expect(page.getByRole('navigation', { name: 'Fases de la experiencia' })).toHaveCount(0);
   await expect(page.getByRole('region', { name: 'Explorador de evidencias' })).toHaveCount(0);
   const cta = page.getByRole('button', { name: 'Estoy listo', exact: true });

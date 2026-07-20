@@ -1,10 +1,9 @@
 "use client";
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import type { Paso } from '@/lib/workshops/schema';
 import type { StepComplete } from './PasoInstruccion';
 import { LogicScaffold } from '@/components/cognitive-tools/LogicScaffold';
-import type { LogicNode, TelemetryEvent } from '@/components/cognitive-tools/LogicScaffold';
-import { trackEvent } from '@/lib/track';
+import type { LogicNode } from '@/components/cognitive-tools/LogicScaffold';
 
 type Props = {
   step: Extract<Paso, { tipo_paso: 'logic_scaffold' }>;
@@ -22,24 +21,10 @@ export default function PasoLogicScaffold({
   pistasUsadas,
   onHint,
   disabledInputs,
-  classToken,
-  tallerId,
 }: Props) {
   const cfg = step.logic_scaffold;
   const [nodes, setNodes] = useState<LogicNode[]>(cfg.nodos);
   const [feedback, setFeedback] = useState<string | null>(null);
-
-  const handleTelemetry = useCallback(
-    (event: TelemetryEvent) => {
-      trackEvent('telemetria_crisol', {
-        tallerId: tallerId ?? step.ref_id ?? 'unknown',
-        pasoId: String(step.paso_numero),
-        classToken,
-        result: { tipo: event.event, nodeId: event.nodeId },
-      });
-    },
-    [tallerId, step, classToken]
-  );
 
   const handleSubmit = () => {
     if (disabledInputs) return;
@@ -88,7 +73,7 @@ export default function PasoLogicScaffold({
         instruction={cfg.instruccion}
         nodes={nodes}
         onOrderChange={disabledInputs ? () => {} : setNodes}
-        onTelemetryUpdate={handleTelemetry}
+        onTelemetryUpdate={() => undefined}
       />
 
       {feedback && (

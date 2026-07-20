@@ -3,8 +3,7 @@ import React, { useState, useCallback } from 'react';
 import type { Paso } from '@/lib/workshops/schema';
 import type { StepComplete } from './PasoInstruccion';
 import { SocraticChat } from '@/components/cognitive-tools/SocraticChat';
-import type { SocraticMessage, TelemetryEvent } from '@/components/cognitive-tools/SocraticChat';
-import { trackEvent } from '@/lib/track';
+import type { SocraticMessage } from '@/components/cognitive-tools/SocraticChat';
 
 type Props = {
   step: Extract<Paso, { tipo_paso: 'socratico_chat' }>;
@@ -22,8 +21,6 @@ export default function PasoSocraticoCht({
   onComplete,
   pistasUsadas,
   disabledInputs,
-  classToken,
-  tallerId,
 }: Props) {
   const cfg = step.socratico_chat;
   const minTurns = typeof cfg.min_turnos === 'number' ? cfg.min_turnos : 2;
@@ -34,18 +31,6 @@ export default function PasoSocraticoCht({
   const [isLoading, setIsLoading] = useState(false);
   const [studentTurns, setStudentTurns] = useState(0);
   const [completed, setCompleted] = useState(false);
-
-  const handleTelemetry = useCallback(
-    (event: TelemetryEvent) => {
-      trackEvent('telemetria_crisol', {
-        tallerId: tallerId ?? step.ref_id ?? 'unknown',
-        pasoId: String(step.paso_numero),
-        classToken,
-        result: { tipo: event.event, duration: event.duration },
-      });
-    },
-    [tallerId, step, classToken]
-  );
 
   const handleSendMessage = useCallback(
     (text: string) => {
@@ -86,7 +71,7 @@ export default function PasoSocraticoCht({
       <SocraticChat
         messages={messages}
         onSendMessage={handleSendMessage}
-        onTelemetryUpdate={handleTelemetry}
+        onTelemetryUpdate={() => undefined}
         isLoading={isLoading}
       />
 
