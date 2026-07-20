@@ -5,12 +5,19 @@ import { z } from 'zod';
 import type {
   ClassifyResponse,
   CrearPaso,
+  CrearResponsePartAnswer,
   CrearWorkshop,
 } from '@/lib/crear/types';
-import { classifyCrearLocally } from '@/lib/crear/localClassifier';
+import {
+  classifyCrearLocally,
+  classifyCrearResponseStructure,
+} from '@/lib/crear/localClassifier';
 import { validateCrearWorkshopJson } from '@/lib/crear/validation';
 import type { CrearClassifierBranch } from '@/lib/crear/types';
-import { CREAR_MAX_ANSWER_LENGTH } from '@/lib/crear/types';
+import {
+  CREAR_MAX_ANSWER_LENGTH,
+  CREAR_MAX_RESPONSE_PART_LENGTH,
+} from '@/lib/crear/types';
 
 export const runtime = 'nodejs';
 
@@ -25,6 +32,10 @@ const ClassifyRequestSchema = z.object({
   tallerId: CrearLessonIdSchema,
   pasoRefId: z.string().min(1).max(80),
   texto: z.string().min(1).max(CREAR_MAX_ANSWER_LENGTH),
+  partes: z.array(z.object({
+    categoria: z.enum(['casi_seguro', 'posible', 'imposible']),
+    texto: z.string().min(1).max(CREAR_MAX_RESPONSE_PART_LENGTH),
+  })).max(3).optional(),
 });
 
 const ModelResponseSchema = z.object({
@@ -57,7 +68,11 @@ function findStep(workshop: CrearWorkshop, pasoRefId: string): CrearPaso | null 
   return workshop.pasos.find((paso) => paso.ref_id === pasoRefId) ?? null;
 }
 
-function buildClassifierPrompt(texto: string, ramas: CrearClassifierBranch[]): string {
+function buildClassifierPrompt(
+  texto: string,
+  ramas: CrearClassifierBranch[],
+  parts?: CrearResponsePartAnswer[]
+): string {
   const branchList = ramas.map((branch) => ({
     rama: branch.rama,
     descripcion: branch.descripcion,
@@ -69,13 +84,15 @@ function buildClassifierPrompt(texto: string, ramas: CrearClassifierBranch[]): s
     'No escribas feedback, contenido de clase, explicaciones ni texto para UI.',
     'Responde solo JSON valido con esta forma: {"rama":"...","confianza":0.0}.',
     `Ramas permitidas: ${JSON.stringify(branchList)}`,
+    parts?.length ? `Respuestas separadas por categoria: ${JSON.stringify(parts)}` : '',
     `Respuesta del estudiante: ${JSON.stringify(texto)}`,
-  ].join('\n');
+  ].filter(Boolean).join('\n');
 }
 
 async function classifyWithModel(
   texto: string,
-  ramas: CrearClassifierBranch[]
+  ramas: CrearClassifierBranch[],
+  parts?: CrearResponsePartAnswer[]
 ): Promise<LocalClassification | null> {
   const apiKey = process.env.CREAR_CLASSIFIER_API_KEY ?? process.env.OPENAI_API_KEY;
   if (!apiKey || process.env.CREAR_CLASSIFIER_FORCE_LOCAL === '1') {
@@ -100,7 +117,7 @@ async function classifyWithModel(
         },
         {
           role: 'user',
-          content: buildClassifierPrompt(texto, ramas),
+          content: buildClassifierPrompt(texto, ramas, parts),
         },
       ],
     }),
@@ -144,11 +161,20 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'classifier_not_found' }, { status: 404 });
     }
 
-    const local = classifyCrearLocally(body.texto, classifier);
+    const structureResult = classifyCrearResponseStructure(body.partes, classifier);
+    if (structureResult) {
+      return NextResponse.json(structureResult);
+    }
+
+    const local = classifyCrearLocally(body.texto, classifier, body.partes);
     let classification = local;
 
     try {
-      const modelClassification = await classifyWithModel(body.texto, classifier.ramas);
+      const modelClassification = await classifyWithModel(
+        body.texto,
+        classifier.ramas,
+        body.partes
+      );
       if (modelClassification) {
         classification = modelClassification;
       }

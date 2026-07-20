@@ -161,7 +161,7 @@ export function CinematicVoice({
       <div className={styles.voiceTranscript}>
         <span className={styles.voiceLabel}>
           <span className={styles.liveDot} aria-hidden="true" />
-          {audio.label ?? 'Celestea · English'}
+          {audio.label ?? 'Voz de Celestea'}
         </span>
         <p lang={audio.lang ?? 'en-US'}>{audio.text}</p>
         {status === 'error' ? <small>El audio no cargó; el texto sigue disponible.</small> : null}

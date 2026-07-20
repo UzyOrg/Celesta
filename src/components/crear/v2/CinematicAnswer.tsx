@@ -20,12 +20,29 @@ interface CinematicAnswerProps {
   pending: boolean;
   minChars?: number;
   responseParts?: CrearResponsePart[];
+  choiceLanguage?: 'es-MX' | 'en-US';
   continueLabel?: string;
   submitLabel?: string;
   onContinue: () => void;
   onSubmitText: (text: string, parts?: CrearResponsePartAnswer[]) => void;
   onSubmitChoice: (choiceId: string) => void;
   onFocusChange?: (focused: boolean) => void;
+}
+
+function SentencePrompt({ prompt }: { prompt: string }) {
+  const blankMarker = '___';
+  const markerIndex = prompt.indexOf(blankMarker);
+  if (markerIndex === -1) return <>{prompt}</>;
+
+  const before = prompt.slice(0, markerIndex).trimEnd();
+  const after = prompt.slice(markerIndex + blankMarker.length).trimStart();
+  return (
+    <>
+      {before}{' '}
+      <span className={styles.sentenceBlank} aria-label="espacio en blanco" role="img" />
+      {' '}{after}
+    </>
+  );
 }
 
 export function CinematicAnswer({
@@ -36,8 +53,9 @@ export function CinematicAnswer({
   pending,
   minChars = 2,
   responseParts = [],
+  choiceLanguage = 'es-MX',
   continueLabel = 'Continuar',
-  submitLabel = 'Enviar idea',
+  submitLabel = 'Enviar respuesta',
   onContinue,
   onSubmitText,
   onSubmitChoice,
@@ -93,10 +111,11 @@ export function CinematicAnswer({
   }
 
   if (mode === 'choice') {
+    const accessiblePrompt = prompt.replace('___', 'espacio en blanco');
     return (
       <div className={styles.responseDock} aria-busy={pending}>
-        <p className={styles.responsePrompt} lang="en-US">{prompt}</p>
-        <div className={styles.choiceStack} role="radiogroup" aria-label={prompt}>
+        <p className={styles.responsePrompt} lang="es-MX"><SentencePrompt prompt={prompt} /></p>
+        <div className={styles.choiceStack} role="radiogroup" aria-label={accessiblePrompt}>
           {choices.map((choice, index) => {
             const selected = choice.id === choiceId;
             return (
@@ -104,7 +123,7 @@ export function CinematicAnswer({
                 className={styles.choiceAction}
                 data-selected={selected ? 'true' : 'false'}
                 key={choice.id}
-                lang="en-US"
+                lang={choiceLanguage}
               >
                 <input
                   ref={(element) => {
@@ -136,7 +155,7 @@ export function CinematicAnswer({
           {pending ? (
             <>
               <Sparkles className={styles.thinkingIcon} size={18} />
-              <span>Calibrando…</span>
+              <span>Revisando…</span>
             </>
           ) : (
             <>
@@ -186,12 +205,9 @@ export function CinematicAnswer({
       <div className={styles.responseDock} aria-busy={pending}>
         <div className={styles.structuredHeader}>
           <div>
-            <small>RESPUESTA EN INGLÉS</small>
+            <small>{partIndex + 1} de {responseParts.length}</small>
             <strong>{activePart.label}</strong>
           </div>
-          <span aria-label={`Parte ${partIndex + 1} de ${responseParts.length}`}>
-            {partIndex + 1} de {responseParts.length}
-          </span>
         </div>
 
         <div className={styles.partProgress} aria-hidden="true">
@@ -224,9 +240,6 @@ export function CinematicAnswer({
             lang="en-US"
             spellCheck
           />
-          <span className={styles.inputHint}>
-            Tu primer intento se guarda al completar las tres · {activeText.length}/{CREAR_MAX_RESPONSE_PART_LENGTH}
-          </span>
         </div>
 
         <div className={styles.structuredActions}>
@@ -266,7 +279,7 @@ export function CinematicAnswer({
 
   return (
     <div className={styles.responseDock} aria-busy={pending}>
-      <label className={styles.responsePrompt} htmlFor="celestea-cinematic-answer" lang="en-US">
+      <label className={styles.responsePrompt} htmlFor="celestea-cinematic-answer" lang="es-MX">
         {prompt}
       </label>
       <div className={styles.textareaFrame}>
@@ -281,15 +294,12 @@ export function CinematicAnswer({
           }}
           onFocus={() => onFocusChange?.(true)}
           onBlur={() => onFocusChange?.(false)}
-          placeholder={placeholder ?? 'Write your answer in English…'}
+          placeholder={placeholder ?? 'Escribe una oración breve en inglés…'}
           rows={4}
           maxLength={CREAR_MAX_ANSWER_LENGTH}
           lang="en-US"
           spellCheck
         />
-        <span className={styles.inputHint}>
-          English · tu primer intento queda guardado · {text.length}/{CREAR_MAX_ANSWER_LENGTH}
-        </span>
       </div>
       <button
         className={styles.primaryAction}

@@ -370,6 +370,83 @@
   text-align: center;
 }
 
+.sceneCopy[data-scene="arrival"] {
+  display: grid;
+  gap: 0;
+  grid-template-rows: auto 1fr;
+  min-height: calc(100dvh - 104px - 210px);
+}
+
+.arrivalModuleBlock {
+  align-items: center;
+  border: 1px solid transparent;
+  border-radius: 20px;
+  box-shadow:
+    inset 0 1px 1px rgb(255 255 255 / 18.03%), 0 18px 54px rgb(153 153 153 / 4%);
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+  margin-bottom: 10px;
+  max-width: 520px;
+  padding: 18px 28px 19px;
+  position: relative;
+  width: min(100%, 520px);
+}
+
+.sceneCopy[data-scene="arrival"] .arrivalModuleBlock {
+  grid-row: 1;
+  margin-bottom: 0;
+}
+
+.caseBlock {
+  display: grid;
+  gap: 12px;
+  justify-items: center;
+  width: 100%;
+}
+
+.sceneCopy[data-scene="arrival"] .caseBlock {
+  align-items: center;
+  align-self: center;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  grid-row: 2;
+  justify-content: center;
+}
+
+.arrivalModuleName {
+  background: linear-gradient(100deg, rgba(157, 223, 255, 0.98), rgba(203, 187, 255, 0.95));
+  background-clip: text;
+  color: transparent;
+  font-size: 0.68rem;
+  font-weight: 820;
+  letter-spacing: 0.16em;
+  line-height: 1.3;
+  text-transform: uppercase;
+}
+
+.arrivalLevelBadge {
+  background: linear-gradient(135deg, rgba(118, 216, 255, 0.09), rgba(179, 155, 255, 0.09));
+  border: 1px solid rgba(179, 207, 255, 0.2);
+  border-radius: 999px;
+  color: rgba(229, 234, 247, 0.88);
+  font-size: 0.64rem;
+  font-weight: 760;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  padding: 7px 11px;
+}
+
+.arrivalLearningGoal {
+  color: rgba(193, 202, 218, 0.76);
+  font-size: 0.75rem;
+  line-height: 1.55;
+  margin: 3px 0 0;
+  max-width: 430px;
+  text-wrap: balance;
+}
+
 .sceneEyebrow {
   color: rgba(179, 155, 255, 0.9);
   font-size: 0.7rem;
@@ -407,6 +484,17 @@
   margin: 0;
   max-width: 650px;
   text-wrap: balance;
+  white-space: pre-line;
+}
+
+.pageShell[data-scene="arrival"] .sceneEyebrow {
+  color: rgba(255, 255, 255, 1);
+  letter-spacing: 0.18em;
+}
+
+.pageShell[data-scene="arrival"] .sceneBody {
+  line-height: 1.72;
+  max-width: 560px;
 }
 
 .evidenceField {
@@ -471,18 +559,15 @@
 }
 
 .caseMicroScene {
-  background:
-    linear-gradient(150deg, rgba(20, 30, 44, 0.9), rgba(8, 13, 21, 0.86)),
-    radial-gradient(circle at 18% 0%, rgba(118, 216, 255, 0.08), transparent 42%);
   border: 1px solid rgba(208, 227, 255, 0.14);
   border-radius: 24px;
   box-shadow: 0 26px 80px rgba(0, 0, 0, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.035);
   display: grid;
-  gap: 16px;
+  gap: 18px;
   margin: 0 auto;
   max-width: 720px;
   overflow: hidden;
-  padding: 16px;
+  padding: 20px;
   position: relative;
   width: 100%;
 }
@@ -498,14 +583,6 @@
   top: 0;
 }
 
-.caseSceneHeader {
-  align-items: center;
-  display: grid;
-  gap: 11px;
-  grid-template-columns: auto 1fr auto;
-}
-
-.folderGlyph,
 .signalIcon {
   align-items: center;
   background: rgba(118, 216, 255, 0.08);
@@ -518,13 +595,6 @@
   width: 40px;
 }
 
-.caseSceneHeader > div {
-  display: grid;
-  gap: 2px;
-  min-width: 0;
-}
-
-.caseSceneHeader small,
 .caseSignal small,
 .structuredHeader small {
   color: rgba(161, 171, 188, 0.62);
@@ -534,97 +604,28 @@
   line-height: 1.45;
 }
 
-.caseSceneHeader strong {
-  color: rgba(244, 247, 255, 0.9);
-  font-size: 0.82rem;
-  font-weight: 670;
-}
-
-.caseSceneHeader > span:last-child {
-  color: rgba(193, 202, 218, 0.58);
-  font-size: 0.7rem;
+.caseProgress {
+  color: rgba(193, 202, 218, 0.64);
+  font-size: 0.74rem;
   font-variant-numeric: tabular-nums;
+  font-weight: 690;
+  letter-spacing: 0.04em;
+  margin: 0;
+  text-transform: uppercase;
 }
 
-.caseTimeline {
-  align-items: center;
-  display: grid;
-  gap: 0;
-  grid-template-columns: repeat(3, 1fr);
-  margin: 1px 8px 0;
-  position: relative;
-}
-
-.caseTimeline::before {
-  background: rgba(208, 227, 255, 0.12);
-  content: "";
-  height: 1px;
-  left: 16.6%;
-  position: absolute;
-  right: 16.6%;
-  top: 50%;
-}
-
-.timelineNode {
-  align-items: center;
-  background: transparent;
-  border: 0;
-  color: rgba(161, 171, 188, 0.35);
-  cursor: pointer;
-  display: inline-flex;
-  justify-content: center;
-  padding: 5px;
-  position: relative;
-  z-index: 1;
-}
-
-.timelineNode > span {
-  align-items: center;
-  background: #101722;
-  border: 1px solid rgba(208, 227, 255, 0.13);
-  border-radius: 999px;
-  display: inline-flex;
-  font-size: 0.58rem;
-  font-weight: 790;
-  height: 26px;
-  justify-content: center;
-  transition: background 180ms ease, border-color 180ms ease, color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
-  width: 26px;
-}
-
-.timelineNode[data-revealed="true"] > span {
-  border-color: rgba(118, 216, 255, 0.28);
-  color: rgba(151, 226, 255, 0.8);
-}
-
-.timelineNode[data-active="true"] > span,
-.timelineNode:focus-visible > span {
-  background: linear-gradient(135deg, rgba(118, 216, 255, 0.2), rgba(179, 155, 255, 0.14));
-  border-color: rgba(118, 216, 255, 0.58);
-  box-shadow: 0 0 24px rgba(118, 216, 255, 0.18);
-  color: var(--text);
-  transform: scale(1.08);
-}
-
-.timelineNode:focus-visible {
-  outline: none;
-}
-
-.timelineNode:disabled {
-  cursor: not-allowed;
-  opacity: 0.34;
+.caseProgress strong {
+  color: var(--cyan);
+  font-size: 0.9rem;
 }
 
 .caseSignal {
   align-items: start;
-  background: rgba(6, 11, 18, 0.58);
-  border: 1px solid rgba(208, 227, 255, 0.12);
-  border-radius: 17px;
   display: grid;
   gap: 13px;
   grid-template-columns: auto 1fr;
-  min-height: 108px;
-  padding: 17px;
+  min-height: 124px;
+  padding: 12px 2px 8px;
 }
 
 .caseSignal > div {
@@ -650,31 +651,33 @@
 .caseSceneControls {
   align-items: center;
   display: grid;
-  gap: 9px;
-  grid-template-columns: 36px 1fr 36px;
-}
-
-.caseSceneControls p {
-  color: rgba(161, 171, 188, 0.58);
-  font-size: 0.64rem;
-  line-height: 1.45;
-  margin: 0;
-  text-align: center;
+  gap: 10px;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
 }
 
 .caseNavAction {
   align-items: center;
   background: rgba(255, 255, 255, 0.025);
   border: 1px solid rgba(208, 227, 255, 0.12);
-  border-radius: 50%;
+  border-radius: 999px;
   color: rgba(244, 247, 255, 0.74);
   cursor: pointer;
   display: inline-flex;
-  height: 36px;
+  font: inherit;
+  font-size: 0.74rem;
+  font-weight: 720;
+  gap: 6px;
+  min-height: 46px;
   justify-content: center;
-  padding: 0;
+  padding: 10px 14px;
   transition: background 170ms ease, border-color 170ms ease, color 170ms ease, transform 170ms ease;
-  width: 36px;
+  width: 100%;
+}
+
+.caseNavAction[data-primary="true"] {
+  background: linear-gradient(100deg, rgba(157, 223, 255, 0.94), rgba(193, 177, 255, 0.94));
+  border-color: transparent;
+  color: #0a1b2c;
 }
 
 .caseNavAction:hover,
@@ -686,10 +689,24 @@
   transform: translateY(-1px);
 }
 
+.caseNavAction[data-primary="true"]:hover,
+.caseNavAction[data-primary="true"]:focus-visible {
+  background: linear-gradient(100deg, #9ddfff, #c1b1ff);
+  color: #071725;
+}
+
 .caseNavAction:disabled {
   cursor: not-allowed;
   opacity: 0.25;
   transform: none;
+}
+
+.caseReviewComplete {
+  color: rgba(193, 202, 218, 0.68);
+  font-size: 0.74rem;
+  grid-column: 2;
+  line-height: 1.4;
+  text-align: center;
 }
 
 .comparisonField {
@@ -736,26 +753,34 @@
   width: 100%;
 }
 
-.prismGrid {
-  display: grid;
-  gap: 10px;
-  grid-template-columns: 1fr;
-}
-
-.prismCard {
-  background: linear-gradient(145deg, rgba(24, 34, 49, 0.92), rgba(14, 20, 29, 0.9));
-  border: 1px solid var(--line);
-  border-radius: 20px;
+.prismSelector {
   display: grid;
   gap: 8px;
-  min-width: 0;
-  overflow: hidden;
-  padding: 22px 18px 18px;
-  position: relative;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
-.certaintyLine {
+.prismOption {
+  background: rgba(10, 16, 24, 0.7);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  color: rgba(244, 247, 255, 0.68);
+  cursor: pointer;
+  display: grid;
+  font: inherit;
+  gap: 5px;
+  justify-items: start;
+  min-height: 78px;
+  min-width: 0;
+  overflow: hidden;
+  padding: 13px 11px 11px;
+  position: relative;
+  text-align: left;
+  transition: background 180ms ease, border-color 180ms ease, color 180ms ease, transform 180ms ease;
+}
+
+.prismOption::before {
   background: var(--cyan);
+  content: "";
   height: 2px;
   left: 0;
   position: absolute;
@@ -763,33 +788,72 @@
   width: 100%;
 }
 
-.prismCard[data-strength="open"] .certaintyLine {
+.prismOption[data-strength="open"]::before {
   background: var(--lavender);
-  width: 58%;
 }
 
-.prismCard[data-strength="ruled_out"] .certaintyLine {
+.prismOption[data-strength="ruled_out"]::before {
   background: var(--warm);
-  width: 82%;
 }
 
-.prismCard strong {
+.prismOption:hover,
+.prismOption:focus-visible {
+  background: rgba(118, 216, 255, 0.07);
+  border-color: rgba(118, 216, 255, 0.34);
   color: var(--text);
-  font-size: 1.08rem;
-  letter-spacing: 0.02em;
+  outline: none;
+  transform: translateY(-1px);
 }
 
-.prismCard small {
-  color: var(--muted);
-  font-size: 0.72rem;
-  line-height: 1.45;
+.prismOption[aria-pressed="true"] {
+  background: linear-gradient(135deg, rgba(118, 216, 255, 0.13), rgba(179, 155, 255, 0.1));
+  border-color: rgba(118, 216, 255, 0.46);
+  box-shadow: 0 12px 35px rgba(13, 44, 70, 0.13);
+  color: var(--text);
 }
 
-.prismCard p {
-  color: rgba(244, 247, 255, 0.76);
-  font-size: 0.78rem;
-  line-height: 1.48;
-  margin: 4px 0 0;
+.prismOption span {
+  color: rgba(193, 202, 218, 0.68);
+  font-size: 0.62rem;
+  line-height: 1.25;
+}
+
+.prismOption strong {
+  color: inherit;
+  font-size: clamp(0.7rem, 2.6vw, 0.86rem);
+  letter-spacing: 0.015em;
+  line-height: 1.2;
+}
+
+.prismExample {
+  background: rgba(9, 14, 21, 0.66);
+  border-radius: 14px;
+  display: grid;
+  gap: 7px;
+  min-height: 86px;
+  padding: 15px 18px;
+}
+
+.prismExample > p:first-child:not(:last-child) {
+  color: rgba(193, 202, 218, 0.78);
+  font-size: 0.82rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.prismExample small {
+  color: rgba(161, 171, 188, 0.62);
+  font-size: 0.64rem;
+  font-weight: 760;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.prismExample p {
+  color: rgba(244, 247, 255, 0.9);
+  font-size: clamp(0.9rem, 3vw, 1.04rem);
+  line-height: 1.5;
+  margin: 0;
 }
 
 .formulaRail {
@@ -1026,8 +1090,52 @@
   font-size: 0.72rem;
 }
 
+.structuredPane,
+.structuredAnswerStage {
+  margin: 0 auto;
+  max-width: 720px;
+  width: 100%;
+}
+
+.structuredPane[hidden],
+.structuredAnswerStage[hidden] {
+  display: none;
+}
+
+.structuredPane:focus-visible {
+  border-radius: 22px;
+  outline: 2px solid rgba(118, 216, 255, 0.58);
+  outline-offset: 7px;
+}
+
+.structuredAnswerStage {
+  display: grid;
+  gap: 12px;
+}
+
+.reviewEvidenceAction {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  color: rgba(193, 202, 218, 0.7);
+  cursor: pointer;
+  display: inline-flex;
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 720;
+  gap: 7px;
+  min-height: 44px;
+  padding: 5px 2px;
+  width: fit-content;
+}
+
+.reviewEvidenceAction:hover,
+.reviewEvidenceAction:focus-visible {
+  color: var(--cyan);
+  outline: none;
+}
+
 .responseDock {
-  background: linear-gradient(145deg, rgba(24, 34, 49, 0.94), rgba(11, 17, 25, 0.94));
   border: 1px solid rgba(208, 227, 255, 0.15);
   border-radius: 24px;
   box-shadow: 0 28px 90px rgba(0, 0, 0, 0.26), inset 0 1px 0 rgba(255, 255, 255, 0.035);
@@ -1060,10 +1168,7 @@
 }
 
 .structuredHeader {
-  align-items: end;
-  display: grid;
-  gap: 12px;
-  grid-template-columns: 1fr auto;
+  display: block;
 }
 
 .structuredHeader > div {
@@ -1076,13 +1181,6 @@
   font-size: clamp(1rem, 3.6vw, 1.18rem);
   font-weight: 680;
   line-height: 1.25;
-}
-
-.structuredHeader > span {
-  color: rgba(193, 202, 218, 0.62);
-  font-size: 0.7rem;
-  font-variant-numeric: tabular-nums;
-  font-weight: 700;
 }
 
 .partProgress {
@@ -1136,13 +1234,6 @@
   border-color: rgba(118, 216, 255, 0.54);
   box-shadow: 0 0 0 3px rgba(118, 216, 255, 0.08), 0 20px 60px rgba(22, 71, 112, 0.12);
   outline: none;
-}
-
-.inputHint {
-  color: rgba(161, 171, 188, 0.54);
-  font-size: 0.66rem;
-  line-height: 1.4;
-  padding: 0 2px;
 }
 
 .structuredActions {
@@ -1396,6 +1487,10 @@
   color: var(--mint);
 }
 
+.feedbackSheet[data-correct="true"] h2 {
+  color: var(--mint);
+}
+
 .feedbackSheet > div,
 .exitSheet {
   text-align: left;
@@ -1433,6 +1528,14 @@
 
 .forwardArrow {
   transform: rotate(180deg);
+}
+
+.sentenceBlank {
+  border-bottom: 2px solid currentColor;
+  display: inline-block;
+  margin-inline: 0.16em;
+  transform: translateY(-0.12em);
+  width: clamp(46px, 14vw, 64px);
 }
 
 .exitActions {
@@ -1569,10 +1672,6 @@
     padding-inline: 30px;
   }
 
-  .prismGrid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
   .comparisonField {
     align-items: stretch;
     grid-template-columns: 1fr 1fr;
@@ -1642,6 +1741,12 @@
 
   .pageShell[data-scene="arrival"] .actionDock {
     grid-column: 2;
+  }
+
+  .pageShell[data-scene="arrival"][data-audio-ready="false"] .actionDock {
+    grid-column: 1 / -1;
+    justify-self: center;
+    max-width: 360px;
   }
 
   .responseDock {
@@ -1724,12 +1829,44 @@
     padding: 30px 2px 38px;
   }
 
-  .sceneCopy h1 {
-    font-size: clamp(2.05rem, 10.2vw, 3rem);
+  .pageShell[data-scene="arrival"] .scene {
+    padding-top: 42px;
   }
 
-  .sceneBody {
-    font-size: 0.92rem;
+  .pageShell[data-scene="arrival"] .sceneCopy {
+    gap: 10px;
+  }
+
+  .arrivalModuleBlock {
+    gap: 7px;
+    margin-bottom: 8px;
+    padding: 15px 18px 16px;
+  }
+
+  .sceneCopy h1,
+  .completionScene h1,
+  .gateScene h1,
+  .errorScene h1 {
+    font-size: 1.75rem;
+    line-height: 1.08;
+  }
+
+  .sceneBody,
+  .gateScene > p,
+  .completionScene > p,
+  .errorScene > p {
+    font-size: 0.75rem;
+    line-height: 1.55;
+  }
+
+  .feedbackSheet h2,
+  .exitSheet h2 {
+    font-size: 1.75rem;
+  }
+
+  .feedbackSheet > div > span,
+  .exitSheet > p:not(.sceneEyebrow) {
+    font-size: 0.75rem;
   }
 
   .voiceControl {
@@ -1755,10 +1892,6 @@
     border-radius: 20px;
     gap: 13px;
     padding: 14px;
-  }
-
-  .caseSceneHeader small {
-    letter-spacing: 0.065em;
   }
 
   .caseSignal {
@@ -1787,7 +1920,7 @@
 
 @media (max-width: 360px) {
   .sceneCopy h1 {
-    font-size: 1.94rem;
+    font-size: 1.75rem;
   }
 
   .phaseItem[data-state="active"] {

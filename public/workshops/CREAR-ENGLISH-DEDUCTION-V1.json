@@ -1,10 +1,10 @@
 {
   "id_taller": "CREAR-ENGLISH-DEDUCTION-V1",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "schema_version": "0.1",
-  "content_version": "2026-07-19",
+  "content_version": "2026-07-20",
   "audio_asset_version": "2026-07-13",
-  "titulo": "The Vanished File",
+  "titulo": "El archivo desaparecido",
   "metadata": {
     "grado": "Prepa",
     "materia": "English B1+/B2",
@@ -21,9 +21,9 @@
       "paso_numero": 1,
       "ref_id": "arrival",
       "tipo_paso": "instruccion",
-      "titulo_paso": "Llegada",
+      "titulo_paso": "Bienvenida",
       "instruccion": {
-        "texto": "At 11:58 p.m., your team's scholarship video vanished. You have two minutes before the deadline, and only three clues."
+        "texto": "Tu equipo debía entregar un video para una beca a medianoche. A las 11:58 p. m., el archivo desapareció."
       },
       "bloquea_avance_si_falla": false,
       "puntaje": 0,
@@ -32,32 +32,18 @@
         "stage": "descubre",
         "scene": "arrival",
         "display": {
-          "eyebrow": "ENGLISH LAB · B1+/B2 · 8 MIN",
-          "headline": "El video desapareció justo antes del cierre.",
-          "body": "Investiga tres señales. Después reconstruirás el caso en inglés."
+          "eyebrow": "CASO 01",
+          "moduleLabel": "Módulo de inglés",
+          "levelLabel": "B1+ / B2",
+          "learningGoal": "Aprenderás a explicar en inglés qué pudo haber ocurrido usando pistas.",
+          "headline": "¿Qué fue lo que pasó?",
+          "body": "Tu equipo está por entregar un video para una beca.\nDos minutos antes del cierre, el archivo desaparece.\nRevisa tres pistas y explica qué crees que pasó."
         },
-        "evidence": [
-          {
-            "id": "diego",
-            "label": "Folder access · 11:57 PM",
-            "value": "Diego opened the folder. His activity after that is unknown."
-          },
-          {
-            "id": "nerea",
-            "label": "Permissions",
-            "value": "Nerea's account was read-only — it had no edit or delete permissions."
-          },
-          {
-            "id": "sync",
-            "label": "Cloud log · 11:58 PM",
-            "value": "SYNC CONFLICT — local copy replaced."
-          }
-        ],
         "audio": {
           "src": "/audio/crear/english-deduction/arrival.wav",
-          "text": "It is eleven fifty-eight at night. Your team's scholarship video has vanished. The deadline is minutes away. Three clues remain. Find out what happened.",
-          "lang": "en-US",
-          "label": "Celestea · Case 01"
+          "text": "Este es un módulo de inglés nivel B uno avanzado a B dos. Aprenderás a explicar qué pudo haber ocurrido usando pistas. Tengo un caso para ti. Tu equipo estaba por entregar un video para una beca cuando el archivo desapareció. Revisa las tres pistas y después explica en inglés qué crees que pasó. No necesitas conocer la forma todavía. ¿Listo?",
+          "lang": "es-MX",
+          "label": "Celestea · El caso"
         },
         "input": "none",
         "nextRefId": "precheck"
@@ -67,15 +53,15 @@
       "paso_numero": 2,
       "ref_id": "precheck",
       "tipo_paso": "pregunta_abierta_validada",
-      "titulo_paso": "Respuesta en frío",
+      "titulo_paso": "Tu primer intento",
       "pregunta_abierta_validada": {
-        "pregunta": "Escribe en inglés tres conclusiones: qué casi seguramente ocurrió, qué pudo ocurrir y qué no pudo ocurrir.",
+        "pregunta": "Escribe en inglés tres conclusiones: lo más probable, una posibilidad y lo que queda descartado.",
         "placeholder": "Escribe tus conclusiones en inglés…",
         "validacion": {
           "tipo": "palabras_clave",
           "criterio": ["must have", "might have", "can't have"],
-          "feedback_correcto": "Your certainty matches the evidence.",
-          "feedback_incorrecto": "This is only a baseline. We will reconstruct it together."
+          "feedback_correcto": "Tus conclusiones coinciden con la fuerza de las pistas.",
+          "feedback_incorrecto": "Este es solo tu punto de partida. Lo reconstruiremos juntos."
         }
       },
       "bloquea_avance_si_falla": false,
@@ -85,25 +71,25 @@
         "stage": "descubre",
         "scene": "signal",
         "display": {
-          "eyebrow": "ANTES DE EXPLICAR NADA",
-          "headline": "Reconstruye lo que ocurrió.",
-          "body": "No buscamos perfección. Queremos ver cómo calibras la evidencia antes de practicar."
+          "eyebrow": "",
+          "headline": "¿Qué crees que pasó?",
+          "body": "Revisa tres pistas, una por una. Después escribirás en inglés lo más probable, una posibilidad y lo que queda descartado. No necesitas conocer la forma todavía."
         },
         "evidence": [
           {
             "id": "diego",
-            "label": "Folder access · 11:57 PM",
-            "value": "Diego opened the folder. His activity after that is unknown."
+            "label": "Acceso de Diego · 11:57 p. m.",
+            "value": "Diego opened the folder at 11:57 p.m. We do not know what he did after that."
           },
           {
             "id": "nerea",
-            "label": "Permissions",
-            "value": "Nerea's account was read-only — it had no edit or delete permissions."
+            "label": "Permisos de Nerea",
+            "value": "Nerea's account was view-only. Editing and deleting were disabled."
           },
           {
             "id": "sync",
-            "label": "Cloud log · 11:58 PM",
-            "value": "SYNC CONFLICT — local copy replaced."
+            "label": "Registro de la nube · 11:58 p. m.",
+            "value": "SYNC CONFLICT — the local copy replaced the online file."
           }
         ],
         "evidencePresentation": {
@@ -115,31 +101,31 @@
           {
             "id": "casi_seguro",
             "categoria": "casi_seguro",
-            "label": "Casi seguramente",
-            "prompt": "¿Qué casi seguramente ocurrió?",
-            "placeholder": "Escribe tu conclusión en inglés…",
+            "label": "Lo más probable",
+            "prompt": "Según las pistas, ¿qué ocurrió casi con seguridad?",
+            "placeholder": "Escribe una oración breve en inglés…",
             "minChars": 10
           },
           {
             "id": "posible",
             "categoria": "posible",
-            "label": "Pudo ocurrir",
-            "prompt": "¿Qué pudo ocurrir, pero no puedes asegurarlo?",
-            "placeholder": "Escribe tu conclusión en inglés…",
+            "label": "Una posibilidad",
+            "prompt": "¿Qué pudo haber ocurrido, aunque no puedes asegurarlo?",
+            "placeholder": "Escribe una oración breve en inglés…",
             "minChars": 10
           },
           {
             "id": "imposible",
             "categoria": "imposible",
-            "label": "No pudo ocurrir",
+            "label": "Lo que queda descartado",
             "prompt": "¿Qué no pudo haber ocurrido?",
-            "placeholder": "Escribe tu conclusión en inglés…",
+            "placeholder": "Escribe una oración breve en inglés…",
             "minChars": 10
           }
         ],
         "audio": {
           "src": "/audio/crear/english-deduction/precheck.wav",
-          "text": "Antes de examinar el patrón, haz una primera reconstrucción. Escribe tres conclusiones breves en inglés: qué casi seguramente ocurrió, qué pudo ocurrir y qué no pudo ocurrir según la evidencia.",
+          "text": "Revisa las tres pistas. Después escribe en inglés una conclusión sobre lo que parece casi seguro, otra sobre lo que quizá ocurrió y otra sobre lo que no pudo ocurrir. Este es solo tu punto de partida.",
           "lang": "es-MX"
         },
         "input": "text",
@@ -167,8 +153,8 @@
               "correcto": true,
               "score": 6,
               "feedback": {
-                "title": "Three levels are already visible",
-                "body": "You separate strong evidence, possibility, and impossibility."
+                "title": "Ya aparecen los tres niveles",
+                "body": "Separaste lo más probable, una posibilidad y lo que queda descartado."
               }
             },
             {
@@ -181,8 +167,8 @@
               "correcto": false,
               "score": 2,
               "feedback": {
-                "title": "The forms are not the whole case",
-                "body": "Each clue earns a different level of confidence."
+                "title": "La forma no es todo",
+                "body": "Cada pista permite un nivel distinto de seguridad."
               }
             },
             {
@@ -195,8 +181,8 @@
               "correcto": false,
               "score": 2,
               "feedback": {
-                "title": "Your reasoning has the right shape",
-                "body": "English needs one bridge between the modal and the action."
+                "title": "Tu razonamiento va bien",
+                "body": "En inglés falta una pieza entre la expresión de certeza y la acción."
               }
             },
             {
@@ -209,8 +195,8 @@
               "correcto": false,
               "score": 3,
               "feedback": {
-                "title": "Part of the ladder is already there",
-                "body": "Listen for the structure that makes each level precise."
+                "title": "Una parte ya está ahí",
+                "body": "Ahora descubriremos cómo expresar cada nivel con claridad."
               }
             },
             {
@@ -221,8 +207,8 @@
               "correcto": false,
               "score": 0,
               "feedback": {
-                "title": "A first hypothesis is enough",
-                "body": "We will reconstruct the three levels together."
+                "title": "Una primera idea es suficiente",
+                "body": "Reconstruiremos los tres niveles juntos."
               }
             }
           ]
@@ -234,17 +220,17 @@
       "paso_numero": 3,
       "ref_id": "contrast",
       "tipo_paso": "opcion_multiple",
-      "titulo_paso": "Descubre la diferencia",
+      "titulo_paso": "Compara las frases",
       "opcion_multiple": {
-        "pregunta": "What changes in sentence B?",
+        "pregunta": "¿Qué comunica la frase B?",
         "opciones": [
-          { "id": "fact", "texto": "It reports a witnessed fact." },
-          { "id": "inference", "texto": "It shows a strong conclusion from evidence." },
-          { "id": "obligation", "texto": "It gives the cloud an obligation." }
+          { "id": "fact", "texto": "Cuenta algo que alguien vio." },
+          { "id": "inference", "texto": "Expresa una conclusión basada en pistas." },
+          { "id": "obligation", "texto": "Da una orden al sistema." }
         ],
         "respuesta_correcta": "inference",
-        "feedback_correcto": "Exactly. Sentence A reports; sentence B reconstructs the event from clues.",
-        "feedback_incorrecto": "No one witnessed the event, and no one is giving an order. Sentence B is a conclusion built from evidence."
+        "feedback_correcto": "La frase A cuenta lo que pasó y la frase B usa las pistas para explicar qué debió ocurrir.",
+        "feedback_incorrecto": "Nadie vio el cambio y la frase no da una orden. La frase B expresa una conclusión basada en pistas."
       },
       "bloquea_avance_si_falla": false,
       "puntaje": 1,
@@ -253,20 +239,20 @@
         "stage": "descubre",
         "scene": "contrast",
         "display": {
-          "eyebrow": "SAME EVENT · DIFFERENT KNOWLEDGE",
-          "headline": "What does the speaker actually know?",
-          "body": "Las dos frases apuntan al mismo evento, pero no hacen la misma afirmación."
+          "eyebrow": "",
+          "headline": "Las dos frases hablan del mismo cambio, pero no dicen lo mismo.",
+          "body": "Compáralas y decide qué comunica la segunda."
         },
         "comparison": {
-          "leftLabel": "Sentence A",
+          "leftLabel": "Frase A",
           "left": "The cloud replaced the file.",
-          "rightLabel": "Sentence B",
+          "rightLabel": "Frase B",
           "right": "The cloud must have replaced the file."
         },
         "audio": {
           "src": "/audio/crear/english-deduction/contrast.wav",
-          "text": "Look at the two sentences. They describe the same event, but they do not express the same certainty. What changes in sentence B?",
-          "lang": "en-US"
+          "text": "Lee las dos frases en inglés. Las dos hablan del mismo cambio, pero expresan algo diferente. ¿Qué comunica la frase B?",
+          "lang": "es-MX"
         },
         "input": "choice",
         "allowRetry": true,
@@ -278,9 +264,9 @@
       "paso_numero": 4,
       "ref_id": "prism",
       "tipo_paso": "instruccion",
-      "titulo_paso": "Prisma de certeza",
+      "titulo_paso": "Tres niveles de seguridad",
       "instruccion": {
-        "texto": "Must marks a strong deduction. Might or could leaves a possibility open. Can't rules it out. To aim the deduction at the past, add have, then the past participle."
+        "texto": "Las pistas pueden apoyar una conclusión con fuerza, dejar una posibilidad abierta o descartar algo. En inglés, cada nivel usa una expresión distinta."
       },
       "bloquea_avance_si_falla": false,
       "puntaje": 0,
@@ -289,38 +275,41 @@
         "stage": "descubre",
         "scene": "prism",
         "display": {
-          "eyebrow": "THE CERTAINTY PRISM",
-          "headline": "One past. Three levels of confidence.",
-          "body": "El modal calibra tu certeza. HAVE mueve esa deducción hacia un hecho pasado."
+          "eyebrow": "",
+          "headline": "Tus palabras muestran qué tan seguro estás.",
+          "body": "Primero identifica lo que permiten afirmar las pistas. Después elige la expresión en inglés que corresponde."
         },
         "concepts": [
-          {
-            "id": "must",
-            "term": "MUST HAVE",
-            "meaning": "Strong evidence",
-            "example": "The cloud must have replaced it.",
-            "strength": "strong"
-          },
-          {
-            "id": "might",
-            "term": "MIGHT HAVE",
-            "meaning": "Open possibility",
-            "example": "Diego might have moved it.",
-            "strength": "open"
-          },
-          {
-            "id": "cant",
-            "term": "CAN'T HAVE",
-            "meaning": "Ruled out by evidence",
-            "example": "Nerea can't have deleted it.",
-            "strength": "ruled_out"
-          }
+        {
+          "id": "must",
+          "term": "MUST HAVE",
+          "meaning": "Casi seguro",
+          "description": "Las pistas apuntan con fuerza a esta explicación.",
+          "example": "The cloud must have replaced it.",
+          "strength": "strong"
+        },
+        {
+          "id": "might",
+          "term": "MIGHT HAVE",
+          "meaning": "Es posible",
+          "description": "La pista lo permite, pero no lo demuestra.",
+          "example": "Diego might have moved it.",
+          "strength": "open"
+        },
+        {
+          "id": "cant",
+          "term": "CAN'T HAVE",
+          "meaning": "Queda descartado",
+          "description": "La evidencia muestra que no pudo pasar.",
+          "example": "Nerea can't have deleted it.",
+          "strength": "ruled_out"
+        }
         ],
-        "formula": ["MODAL", "HAVE", "PAST PARTICIPLE"],
+        "formula": ["MUST / MIGHT / CAN'T", "HAVE", "FORMA PASADA: CHANGED / MOVED / GONE"],
         "audio": {
           "src": "/audio/crear/english-deduction/prism.wav",
-          "text": "Use ‘must have’ for a strong deduction about the past. Use ‘might have’ or ‘could have’ to keep a possibility open. Use ‘can’t have’ when the evidence rules something out. The pattern is: modal, have, past participle.",
-          "lang": "en-US"
+          "text": "Las pistas no siempre nos dan la misma seguridad. Si apuntan con fuerza, usamos must have. Si solo dejan una posibilidad, usamos might have. Si descartan algo, usamos can't have. Las tres llevan have y después la forma pasada de la acción, por ejemplo changed, moved o gone.",
+          "lang": "es-MX"
         },
         "input": "none",
         "nextRefId": "practice-strong"
@@ -330,17 +319,17 @@
       "paso_numero": 5,
       "ref_id": "practice-strong",
       "tipo_paso": "opcion_multiple",
-      "titulo_paso": "Evidencia fuerte",
+      "titulo_paso": "Lo más probable",
       "opcion_multiple": {
-        "pregunta": "The edit log names Camila as the author. Camila ___ changed the title.",
+        "pregunta": "Completa la frase: Camila ___ changed the title.",
         "opciones": [
           { "id": "must", "texto": "must have" },
           { "id": "might", "texto": "might have" },
           { "id": "cant", "texto": "can't have" }
         ],
         "respuesta_correcta": "must",
-        "feedback_correcto": "The log names her. The evidence supports the strongest deduction: must have.",
-        "feedback_incorrecto": "The log directly names Camila. Use the strongest deduction the clue earns."
+        "feedback_correcto": "El registro identifica a Camila. La conclusión más fuerte usa must have.",
+        "feedback_incorrecto": "El registro identifica directamente a Camila. Elige la expresión más fuerte."
       },
       "bloquea_avance_si_falla": false,
       "puntaje": 1,
@@ -349,17 +338,17 @@
         "stage": "practica",
         "scene": "practice",
         "display": {
-          "eyebrow": "CALIBRATE · 01",
-          "headline": "How strong is the evidence?",
-          "body": "No elijas la forma más segura: elige la fuerza que la pista realmente permite."
+          "eyebrow": "",
+          "headline": "La pista identifica a una persona.",
+          "body": "El registro nombra a Camila como autora. Completa la frase con la opción que mejor representa esa pista."
         },
         "evidence": [
-          { "id": "log", "label": "Edit log", "value": "Author: Camila · 6:59 PM" }
+          { "id": "log", "label": "Registro de edición", "value": "Author: Camila · 6:59 p.m." }
         ],
         "audio": {
           "src": "/audio/crear/english-deduction/practice-strong.wav",
-          "text": "The edit log names Camila as the author. Choose the phrase that best completes the sentence on screen.",
-          "lang": "en-US"
+          "text": "El registro identifica a Camila como autora. Completa la frase en inglés con la opción que mejor representa esa pista.",
+          "lang": "es-MX"
         },
         "input": "choice",
         "allowRetry": true,
@@ -371,17 +360,17 @@
       "paso_numero": 6,
       "ref_id": "practice-open",
       "tipo_paso": "opcion_multiple",
-      "titulo_paso": "Posibilidad abierta",
+      "titulo_paso": "Una posibilidad",
       "opcion_multiple": {
-        "pregunta": "Mateo had access, but no activity was recorded. Mateo ___ opened the folder.",
+        "pregunta": "Completa la frase: Mateo ___ opened the folder.",
         "opciones": [
           { "id": "must", "texto": "must have" },
           { "id": "might", "texto": "might have" },
           { "id": "cant", "texto": "can't have" }
         ],
         "respuesta_correcta": "might",
-        "feedback_correcto": "Access leaves a possibility open, but it is not proof: might have.",
-        "feedback_incorrecto": "Access makes the action possible, not certain and not impossible. Keep the possibility open."
+        "feedback_correcto": "Tener acceso deja abierta una posibilidad, pero no la demuestra: might have.",
+        "feedback_incorrecto": "El acceso hace posible la acción, pero no la confirma ni la descarta. Deja abierta la posibilidad."
       },
       "bloquea_avance_si_falla": false,
       "puntaje": 1,
@@ -390,17 +379,17 @@
         "stage": "practica",
         "scene": "practice",
         "display": {
-          "eyebrow": "CALIBRATE · 02",
-          "headline": "Possible is not the same as proven.",
-          "body": "Tener acceso abre una posibilidad; no la convierte en un hecho."
+          "eyebrow": "",
+          "headline": "Tener acceso no demuestra una acción.",
+          "body": "Mateo podía entrar, pero no hay actividad registrada. Elige la opción más cuidadosa."
         },
         "evidence": [
-          { "id": "access", "label": "Access record", "value": "Mateo had access. No activity was recorded." }
+          { "id": "access", "label": "Registro de acceso", "value": "Mateo had access. No activity was recorded." }
         ],
         "audio": {
           "src": "/audio/crear/english-deduction/practice-open.wav",
-          "text": "Mateo had access, but no activity was recorded. Choose the phrase that best completes the sentence on screen.",
-          "lang": "en-US"
+          "text": "Mateo tenía acceso, pero no hay actividad registrada. Completa la frase con la opción más cuidadosa.",
+          "lang": "es-MX"
         },
         "input": "choice",
         "allowRetry": true,
@@ -412,17 +401,17 @@
       "paso_numero": 7,
       "ref_id": "practice-impossible",
       "tipo_paso": "opcion_multiple",
-      "titulo_paso": "Evidencia que descarta",
+      "titulo_paso": "Lo que queda descartado",
       "opcion_multiple": {
-        "pregunta": "Iker's account was disabled. Iker ___ changed the file.",
+        "pregunta": "Completa la frase: Iker ___ changed the file.",
         "opciones": [
           { "id": "must", "texto": "must have" },
           { "id": "might", "texto": "might have" },
           { "id": "cant", "texto": "can't have" }
         ],
         "respuesta_correcta": "cant",
-        "feedback_correcto": "Disabled access rules him out: can't have.",
-        "feedback_incorrecto": "Disabled access does not weaken the possibility. It rules the action out."
+        "feedback_correcto": "La cuenta desactivada descarta a Iker: can't have.",
+        "feedback_incorrecto": "La cuenta estaba desactivada antes del cambio. La pista no reduce la posibilidad: la descarta."
       },
       "bloquea_avance_si_falla": false,
       "puntaje": 1,
@@ -431,17 +420,17 @@
         "stage": "practica",
         "scene": "practice",
         "display": {
-          "eyebrow": "CALIBRATE · 03",
-          "headline": "Some evidence closes the door.",
-          "body": "Cuando la evidencia descarta una acción, tu inglés también debe descartarla."
+          "eyebrow": "",
+          "headline": "Esta pista permite descartar una acción.",
+          "body": "La cuenta de Iker estaba desactivada antes del cambio. Completa la frase."
         },
         "evidence": [
-          { "id": "disabled", "label": "Account status", "value": "Iker · DISABLED before the edit" }
+          { "id": "disabled", "label": "Estado de la cuenta", "value": "Iker's account was disabled before the edit." }
         ],
         "audio": {
           "src": "/audio/crear/english-deduction/practice-impossible.wav",
-          "text": "Iker's account had already been disabled before the edit. Choose the phrase that best completes the sentence on screen.",
-          "lang": "en-US"
+          "text": "La cuenta de Iker estaba desactivada antes del cambio. Completa la frase con la opción que esa pista permite.",
+          "lang": "es-MX"
         },
         "input": "choice",
         "allowRetry": true,
@@ -453,15 +442,15 @@
       "paso_numero": 8,
       "ref_id": "calibrate",
       "tipo_paso": "pregunta_abierta_validada",
-      "titulo_paso": "Resiste la sobreconfianza",
+      "titulo_paso": "Una conclusión cuidadosa",
       "pregunta_abierta_validada": {
-        "pregunta": "Write the most careful deduction about Diego.",
+        "pregunta": "Escribe en inglés la conclusión más cuidadosa sobre Diego.",
         "placeholder": "Diego … renamed the file.",
         "validacion": {
           "tipo": "palabras_clave",
           "criterio": ["Diego", "might have", "renamed"],
-          "feedback_correcto": "A pattern makes the action possible, not certain.",
-          "feedback_incorrecto": "Past behavior is a clue, not proof."
+          "feedback_correcto": "Un hábito hace posible la acción, pero no la confirma.",
+          "feedback_incorrecto": "Lo que alguien hizo antes es una pista, no una prueba."
         }
       },
       "bloquea_avance_si_falla": false,
@@ -471,18 +460,18 @@
         "stage": "practica",
         "scene": "practice",
         "display": {
-          "eyebrow": "PRODUCE · NO STEMS",
-          "headline": "Resist overconfidence.",
-          "body": "Ahora construye la deducción completa. La pista sugiere; no demuestra."
+          "eyebrow": "",
+          "headline": "Ahora escribe una conclusión cuidadosa.",
+          "body": "Diego suele renombrar archivos, pero este registro no dice quién lo hizo. Escribe solo lo que las pistas permiten afirmar."
         },
         "evidence": [
-          { "id": "habit", "label": "Known pattern", "value": "Diego often renames files before exporting." },
-          { "id": "missing-log", "label": "Missing evidence", "value": "The log does not show who renamed this file." }
+          { "id": "habit", "label": "Lo que sabemos de Diego", "value": "Diego often renames files before exporting." },
+          { "id": "missing-log", "label": "Lo que el registro no muestra", "value": "The log does not show who renamed this file." }
         ],
         "audio": {
           "src": "/audio/crear/english-deduction/calibrate.wav",
-          "text": "Diego often renames files before exporting, but this log does not identify who renamed this one. Write one careful conclusion about Diego.",
-          "lang": "en-US"
+          "text": "Diego suele renombrar archivos antes de exportarlos, pero el registro no dice quién renombró este. Escribe en inglés una conclusión cuidadosa sobre Diego.",
+          "lang": "es-MX"
         },
         "input": "text",
         "minChars": 18,
@@ -503,8 +492,8 @@
               "correcto": true,
               "score": 1,
               "feedback": {
-                "title": "Careful, not vague",
-                "body": "A known pattern makes Diego possible, not certain."
+                "title": "Cuidadosa y clara",
+                "body": "El hábito de Diego lo convierte en una posibilidad, no en una certeza."
               }
             },
             {
@@ -515,8 +504,8 @@
               "score": 0,
               "pista": true,
               "feedback": {
-                "title": "A habit is not proof",
-                "body": "Keep the possibility open instead of turning it into certainty."
+                "title": "Un hábito no es una prueba",
+                "body": "Déjalo como una posibilidad en vez de convertirlo en certeza."
               }
             },
             {
@@ -527,8 +516,8 @@
               "score": 0,
               "pista": true,
               "feedback": {
-                "title": "The evidence does not give you a fact",
-                "body": "Show that this is a possible reconstruction, not something witnessed."
+                "title": "La pista no permite afirmarlo como hecho",
+                "body": "Muestra que es una explicación posible, no algo que alguien vio."
               }
             },
             {
@@ -539,8 +528,8 @@
               "score": 0,
               "pista": true,
               "feedback": {
-                "title": "Keep the idea; repair the bridge",
-                "body": "Use modal + have + past participle."
+                "title": "La idea está bien; falta una pieza",
+                "body": "Coloca have entre might y la acción: might have renamed."
               }
             },
             {
@@ -552,8 +541,8 @@
               "score": 0,
               "pista": true,
               "feedback": {
-                "title": "Start with the confidence level",
-                "body": "Try: Diego might have…"
+                "title": "Empieza por mostrar que es posible",
+                "body": "Prueba así: Diego might have…"
               }
             }
           ]
@@ -565,15 +554,15 @@
       "paso_numero": 9,
       "ref_id": "postcheck",
       "tipo_paso": "pregunta_abierta_validada",
-      "titulo_paso": "Nueva evidencia",
+      "titulo_paso": "Nuevo caso",
       "pregunta_abierta_validada": {
-        "pregunta": "Escribe en inglés tres conclusiones: qué casi seguramente ocurrió, qué pudo ocurrir y qué no pudo ocurrir.",
+        "pregunta": "Escribe en inglés tres conclusiones: lo más probable, una posibilidad y lo que queda descartado.",
         "placeholder": "Escribe tus conclusiones en inglés…",
         "validacion": {
           "tipo": "palabras_clave",
           "criterio": ["must have", "might have", "can't have"],
-          "feedback_correcto": "Your confidence matches the new evidence.",
-          "feedback_incorrecto": "Check which clue proves, permits, or rules out."
+          "feedback_correcto": "Tus conclusiones coinciden con la fuerza de las nuevas pistas.",
+          "feedback_incorrecto": "Revisa qué pista confirma, cuál deja una posibilidad y cuál descarta."
         }
       },
       "bloquea_avance_si_falla": false,
@@ -583,14 +572,14 @@
         "stage": "practica",
         "scene": "signal",
         "display": {
-          "eyebrow": "POST-CHECK · FIRST ATTEMPT COUNTS",
-          "headline": "New file. New evidence.",
-          "body": "Sin pista y sin reintento: calibra las tres conclusiones con el patrón que acabas de descubrir."
+          "eyebrow": "",
+          "headline": "Un archivo cambió de nombre. ¿Qué ocurrió?",
+          "body": "Revisa tres pistas nuevas. Después escribe tus tres conclusiones en inglés con lo que acabas de practicar."
         },
         "evidence": [
-          { "id": "omar", "label": "Account", "value": "Omar's account was locked all day." },
-          { "id": "auto", "label": "Log · 6:59 PM", "value": "AUTOMATIC RENAME" },
-          { "id": "camila", "label": "Access", "value": "Camila had access. Her activity is unknown." }
+          { "id": "omar", "label": "Cuenta de Omar", "value": "Omar's account was locked all day." },
+          { "id": "auto", "label": "Registro del sistema · 6:59 p. m.", "value": "The system renamed the file automatically at 6:59 p.m." },
+          { "id": "camila", "label": "Acceso de Camila", "value": "Camila had access. We do not know what she did." }
         ],
         "evidencePresentation": {
           "mode": "sequential",
@@ -601,35 +590,36 @@
           {
             "id": "casi_seguro",
             "categoria": "casi_seguro",
-            "label": "Casi seguramente",
-            "prompt": "¿Qué casi seguramente ocurrió?",
-            "placeholder": "Escribe tu conclusión en inglés…",
+            "label": "Lo más probable",
+            "prompt": "Según las pistas, ¿qué ocurrió casi con seguridad?",
+            "placeholder": "Escribe una oración breve en inglés…",
             "minChars": 10
           },
           {
             "id": "posible",
             "categoria": "posible",
-            "label": "Pudo ocurrir",
-            "prompt": "¿Qué pudo ocurrir, pero no puedes asegurarlo?",
-            "placeholder": "Escribe tu conclusión en inglés…",
+            "label": "Una posibilidad",
+            "prompt": "¿Qué pudo haber ocurrido, aunque no puedes asegurarlo?",
+            "placeholder": "Escribe una oración breve en inglés…",
             "minChars": 10
           },
           {
             "id": "imposible",
             "categoria": "imposible",
-            "label": "No pudo ocurrir",
+            "label": "Lo que queda descartado",
             "prompt": "¿Qué no pudo haber ocurrido?",
-            "placeholder": "Escribe tu conclusión en inglés…",
+            "placeholder": "Escribe una oración breve en inglés…",
             "minChars": 10
           }
         ],
         "audio": {
           "src": "/audio/crear/english-deduction/postcheck.wav",
-          "text": "Nuevo archivo. Nueva evidencia. Escribe tres conclusiones breves en inglés en los espacios de la pantalla: qué casi seguramente ocurrió, qué pudo ocurrir y qué no pudo ocurrir.",
+          "text": "Ahora tienes un caso nuevo. Revisa las tres pistas y escribe tus tres conclusiones en inglés. Esta vez hazlo sin ayuda sobre la forma. Tus respuestas se guardarán cuando las envíes.",
           "lang": "es-MX"
         },
         "input": "text",
         "minChars": 34,
+        "revealFeedback": false,
         "classifier": {
           "fallbackRama": "no_claro",
           "minConfianza": 0.5,
@@ -649,8 +639,8 @@
               "correcto": true,
               "score": 6,
               "feedback": {
-                "title": "Your confidence matches the evidence",
-                "body": "You rebuilt all three levels without a stem."
+                "title": "Tus conclusiones coinciden con las pistas",
+                "body": "Usaste los tres niveles sin recibir el inicio de las frases."
               }
             },
             {
@@ -660,8 +650,8 @@
               "correcto": false,
               "score": 2,
               "feedback": {
-                "title": "The structures work; the confidence does not",
-                "body": "One clue explains, one permits, and one rules out."
+                "title": "Las oraciones funcionan; la seguridad no coincide",
+                "body": "Una pista explica, otra permite una posibilidad y otra descarta."
               }
             },
             {
@@ -671,8 +661,8 @@
               "correcto": false,
               "score": 2,
               "feedback": {
-                "title": "The reasoning improved; the structure slipped",
-                "body": "The repair is modal + have + past participle."
+                "title": "El razonamiento se entiende; revisa la forma",
+                "body": "Comprueba que cada expresión lleve have antes de la acción."
               }
             },
             {
@@ -682,8 +672,8 @@
               "correcto": false,
               "score": 3,
               "feedback": {
-                "title": "Part of the ladder is right",
-                "body": "Check which clue proves, permits, or rules out."
+                "title": "Una parte ya está bien",
+                "body": "Revisa qué pista confirma, cuál permite una posibilidad y cuál descarta."
               }
             },
             {
@@ -693,8 +683,8 @@
               "correcto": false,
               "score": 0,
               "feedback": {
-                "title": "The three evidence levels are not visible yet",
-                "body": "Strongly supported, still possible, ruled out."
+                "title": "Todavía no aparecen las tres conclusiones",
+                "body": "Busca una explicación fuerte, una posibilidad y algo que las pistas descarten."
               }
             }
           ]
@@ -706,14 +696,14 @@
       "paso_numero": 10,
       "ref_id": "transfer",
       "tipo_paso": "transferencia",
-      "titulo_paso": "Transferencia",
+      "titulo_paso": "Misterio musical",
       "transferencia": {
-        "escenario": "At midnight, a band's new track appeared online.",
-        "pregunta": "Escribe en inglés tres conclusiones: qué casi seguramente ocurrió, qué pudo ocurrir y qué no pudo ocurrir.",
+        "escenario": "A medianoche, la nueva canción de una banda apareció en línea.",
+        "pregunta": "Escribe en inglés tres conclusiones: lo más probable, una posibilidad y lo que queda descartado.",
         "opciones": [],
-        "respuesta_correcta": "The track must have been scheduled. Leo might have edited the caption. Mara can't have uploaded the track at noon.",
-        "feedback_correcto": "You carried the pattern into a new domain.",
-        "feedback_incorrecto": "The clues do not earn equal confidence.",
+        "respuesta_correcta": "The track must have been scheduled. Leo might have edited the caption. Mara can't have uploaded the track at midnight.",
+        "feedback_correcto": "Aplicaste la idea en una situación nueva.",
+        "feedback_incorrecto": "Las tres pistas no permiten el mismo nivel de seguridad.",
         "requiere_explicacion": true
       },
       "bloquea_avance_si_falla": false,
@@ -723,14 +713,14 @@
         "stage": "aplica",
         "scene": "transfer",
         "display": {
-          "eyebrow": "UNSEEN DOMAIN · NO HINTS",
-          "headline": "Different world. Same kind of evidence.",
-          "body": "Ya no hay etiquetas gramaticales. Lleva el patrón del archivo perdido a un lanzamiento musical."
+          "eyebrow": "",
+          "headline": "Ahora resuelve un misterio musical.",
+          "body": "Una canción apareció en línea a medianoche. Revisa las nuevas pistas y escribe qué parece seguro, qué es posible y qué queda descartado."
         },
         "evidence": [
-          { "id": "leo", "label": "Caption access", "value": "Leo had access. The edit log is incomplete." },
-          { "id": "mara", "label": "Flight mode · 11:00–1:00", "value": "Mara had no internet connection." },
-          { "id": "schedule", "label": "Release dashboard · 12:00", "value": "SCHEDULED RELEASE" }
+          { "id": "leo", "label": "Acceso de Leo", "value": "Leo had access to the caption. The edit log is incomplete." },
+          { "id": "mara", "label": "Cuenta de Mara", "value": "Mara's account was disabled before 11:00 p.m. Uploading and scheduling were blocked." },
+          { "id": "schedule", "label": "Panel del lanzamiento · 12:00 a. m.", "value": "RELEASE STATUS: SCHEDULED" }
         ],
         "evidencePresentation": {
           "mode": "sequential",
@@ -741,31 +731,31 @@
           {
             "id": "casi_seguro",
             "categoria": "casi_seguro",
-            "label": "Casi seguramente",
-            "prompt": "¿Qué casi seguramente ocurrió?",
-            "placeholder": "Escribe tu conclusión en inglés…",
+            "label": "Lo más probable",
+            "prompt": "Según las pistas, ¿qué ocurrió casi con seguridad?",
+            "placeholder": "Escribe una oración breve en inglés…",
             "minChars": 10
           },
           {
             "id": "posible",
             "categoria": "posible",
-            "label": "Pudo ocurrir",
-            "prompt": "¿Qué pudo ocurrir, pero no puedes asegurarlo?",
-            "placeholder": "Escribe tu conclusión en inglés…",
+            "label": "Una posibilidad",
+            "prompt": "¿Qué pudo haber ocurrido, aunque no puedes asegurarlo?",
+            "placeholder": "Escribe una oración breve en inglés…",
             "minChars": 10
           },
           {
             "id": "imposible",
             "categoria": "imposible",
-            "label": "No pudo ocurrir",
+            "label": "Lo que queda descartado",
             "prompt": "¿Qué no pudo haber ocurrido?",
-            "placeholder": "Escribe tu conclusión en inglés…",
+            "placeholder": "Escribe una oración breve en inglés…",
             "minChars": 10
           }
         ],
         "audio": {
           "src": "/audio/crear/english-deduction/transfer.wav",
-          "text": "Ahora entra a un mundo distinto: un lanzamiento musical a medianoche. Usa las nuevas pistas para escribir tres conclusiones breves en inglés: qué casi seguramente ocurrió, qué pudo ocurrir y qué no pudo ocurrir.",
+          "text": "El contexto cambia: ahora investigas el lanzamiento de una canción. Revisa las pistas y escribe qué parece casi seguro, qué es posible y qué queda descartado. Hazlo en inglés.",
           "lang": "es-MX"
         },
         "input": "text",
@@ -792,9 +782,9 @@
               "correcto": true,
               "score": 6,
               "feedback": {
-                "title": "You carried the pattern into a new case",
-                "body": "The schedule supports certainty, Leo remains possible, and no internet rules Mara out.",
-                "actionLabel": "Ver mi evidencia"
+                "title": "Aplicaste la idea en una situación nueva",
+                "body": "El horario apoya una conclusión fuerte, Leo sigue siendo una posibilidad y la cuenta bloqueada descarta a Mara.",
+                "actionLabel": "Continuar"
               }
             },
             {
@@ -804,9 +794,9 @@
               "correcto": false,
               "score": 2,
               "feedback": {
-                "title": "The clues do not earn equal confidence",
-                "body": "One schedules, one leaves a possibility, and one makes the action impossible.",
-                "actionLabel": "Guardar intento"
+                "title": "Las pistas no permiten la misma seguridad",
+                "body": "Una confirma la programación, otra deja una posibilidad y otra hace imposible la acción.",
+                "actionLabel": "Continuar"
               }
             },
             {
@@ -816,9 +806,9 @@
               "correcto": false,
               "score": 2,
               "feedback": {
-                "title": "Your reasoning transferred; the structure slipped",
-                "body": "The missing bridge is modal + have + past participle.",
-                "actionLabel": "Guardar intento"
+                "title": "El razonamiento llegó al nuevo caso; revisa la forma",
+                "body": "Comprueba que cada expresión lleve have antes de la acción.",
+                "actionLabel": "Continuar"
               }
             },
             {
@@ -828,9 +818,9 @@
               "correcto": false,
               "score": 3,
               "feedback": {
-                "title": "Part of the pattern transferred",
-                "body": "Your first attempt contains at least one calibrated conclusion, but not all three yet.",
-                "actionLabel": "Guardar intento"
+                "title": "Una parte llegó al nuevo caso",
+                "body": "Al menos una conclusión coincide con las pistas, pero todavía no aparecen las tres.",
+                "actionLabel": "Continuar"
               }
             },
             {
@@ -840,9 +830,9 @@
               "correcto": false,
               "score": 0,
               "feedback": {
-                "title": "Transfer is not demonstrated yet",
-                "body": "We saved the attempt without turning it into a success claim.",
-                "actionLabel": "Guardar intento"
+                "title": "Todavía no aparecen las tres conclusiones",
+                "body": "Guardamos tu intento. Nos muestra qué conviene practicar de nuevo.",
+                "actionLabel": "Continuar"
               }
             }
           ]
@@ -854,9 +844,9 @@
       "paso_numero": 11,
       "ref_id": "close",
       "tipo_paso": "instruccion",
-      "titulo_paso": "Evidencia de hoy",
+      "titulo_paso": "Cierre de hoy",
       "instruccion": {
-      "texto": "Your first attempt is saved. In seven days, a completely new case will tell us what stayed with you."
+        "texto": "Terminaste por hoy. En siete días verás un caso nuevo para descubrir qué recuerdas sin repasar."
       },
       "bloquea_avance_si_falla": false,
       "puntaje": 0,
@@ -865,14 +855,14 @@
         "stage": "aplica",
         "scene": "closure",
         "display": {
-        "eyebrow": "FIRST ATTEMPT SAVED · DURABILITY PENDING",
-        "headline": "One attempt is a signal. Seven days tests what stayed.",
-          "body": "Tu intento quedó guardado. No afirmaremos dominio hasta verte resolver un caso nuevo sin repasar."
+          "eyebrow": "",
+          "headline": "Terminaste por hoy.",
+          "body": "Guardamos tus respuestas. En siete días te mostraremos un caso nuevo para ver qué recuerdas sin repasar."
         },
         "audio": {
           "src": "/audio/crear/english-deduction/close.wav",
-          "text": "Your first attempt is saved. Seven days from now, a completely new case will show what stayed with you.",
-          "lang": "en-US"
+          "text": "Terminaste por hoy. Guardamos tus respuestas. En siete días te mostraremos un caso nuevo para ver qué recuerdas sin repasar.",
+          "lang": "es-MX"
         },
         "input": "none",
         "nextRefId": "retest"
@@ -882,15 +872,15 @@
       "paso_numero": 12,
       "ref_id": "retest",
       "tipo_paso": "pregunta_abierta_validada",
-      "titulo_paso": "Revisión durable",
+      "titulo_paso": "Revisión de la semana",
       "pregunta_abierta_validada": {
-        "pregunta": "Sin repasar la lección, escribe en inglés tres conclusiones: qué casi seguramente ocurrió, qué pudo ocurrir y qué no pudo ocurrir.",
+        "pregunta": "A las 8:00 a. m., el código del equipo había cambiado. Escribe en inglés tres conclusiones: lo más probable, una posibilidad y lo que queda descartado.",
         "placeholder": "Escribe tus conclusiones en inglés…",
         "validacion": {
           "tipo": "palabras_clave",
           "criterio": ["must have", "might have", "can't have"],
-          "feedback_correcto": "The pattern stayed available in a new case.",
-          "feedback_incorrecto": "This is useful evidence about what needs another cycle."
+          "feedback_correcto": "Pudiste usar las tres formas en un caso nuevo.",
+          "feedback_incorrecto": "Tu respuesta nos muestra qué parte conviene practicar otra vez."
         }
       },
       "bloquea_avance_si_falla": false,
@@ -900,14 +890,14 @@
         "stage": "recuerda",
         "scene": "retest",
         "display": {
-          "eyebrow": "D7 · NO REVIEW · FIRST ATTEMPT COUNTS",
-          "headline": "¿Sigue contigo?",
-          "body": "Un caso nuevo, sin explicación ni pistas. Esta vez medimos lo que permaneció."
+          "eyebrow": "",
+          "headline": "El código cambió durante la noche.",
+          "body": "Ha pasado una semana. A las 8:00 a. m., el equipo encontró una versión nueva de su código. Revisa las tres pistas y explica en inglés qué ocurrió."
         },
         "evidence": [
-          { "id": "ren", "label": "Commit access", "value": "Ren had access. No author was recorded." },
-          { "id": "automatic", "label": "Platform log · 7:59", "value": "AUTOMATIC UPDATE" },
-          { "id": "emi", "label": "Account status", "value": "Emi's account had been disabled the previous day." }
+          { "id": "ren", "label": "Acceso de Ren", "value": "Ren had access. No author was recorded." },
+          { "id": "automatic", "label": "Registro de la plataforma · 7:59", "value": "The platform log says: AUTOMATIC UPDATE APPLIED." },
+          { "id": "emi", "label": "Cuenta de Emi", "value": "Emi's account was disabled the day before." }
         ],
         "evidencePresentation": {
           "mode": "sequential",
@@ -918,31 +908,31 @@
           {
             "id": "casi_seguro",
             "categoria": "casi_seguro",
-            "label": "Casi seguramente",
-            "prompt": "¿Qué casi seguramente ocurrió?",
-            "placeholder": "Escribe tu conclusión en inglés…",
+            "label": "Lo más probable",
+            "prompt": "Según las pistas, ¿qué ocurrió casi con seguridad?",
+            "placeholder": "Escribe una oración breve en inglés…",
             "minChars": 10
           },
           {
             "id": "posible",
             "categoria": "posible",
-            "label": "Pudo ocurrir",
-            "prompt": "¿Qué pudo ocurrir, pero no puedes asegurarlo?",
-            "placeholder": "Escribe tu conclusión en inglés…",
+            "label": "Una posibilidad",
+            "prompt": "¿Qué pudo haber ocurrido, aunque no puedes asegurarlo?",
+            "placeholder": "Escribe una oración breve en inglés…",
             "minChars": 10
           },
           {
             "id": "imposible",
             "categoria": "imposible",
-            "label": "No pudo ocurrir",
+            "label": "Lo que queda descartado",
             "prompt": "¿Qué no pudo haber ocurrido?",
-            "placeholder": "Escribe tu conclusión en inglés…",
+            "placeholder": "Escribe una oración breve en inglés…",
             "minChars": 10
           }
         ],
         "audio": {
           "src": "/audio/crear/english-deduction/retest.wav",
-          "text": "Un caso nuevo. Sin repasar la lección, escribe tres conclusiones breves en inglés basadas en la evidencia: qué casi seguramente ocurrió, qué pudo ocurrir y qué no pudo ocurrir.",
+          "text": "Ha pasado una semana. A las ocho de la mañana, el equipo encontró una versión nueva de su código. Revisa las pistas y escribe en inglés qué parece casi seguro, qué es posible y qué queda descartado. Hazlo con lo que recuerdes; no necesitas repasar.",
           "lang": "es-MX"
         },
         "input": "text",
@@ -954,7 +944,7 @@
           "ramas": [
             {
               "rama": "d7_correcto",
-              "descripcion": "All three confidence levels and past modal forms remain available in a novel robotics scenario.",
+              "descripcion": "All three confidence levels and past modal forms remain available in a novel software-change scenario.",
               "ejemplos": ["The platform must have applied the update. Ren might have edited the code. Emi can't have pushed the change."],
               "match": {
                 "allGroups": [
@@ -967,9 +957,9 @@
               "correcto": true,
               "score": 6,
               "feedback": {
-                "title": "The pattern stayed available",
-                "body": "You calibrated strong evidence, possibility, and impossibility without reteaching.",
-                "actionLabel": "Cerrar revisión"
+                "title": "Pudiste usar las tres formas una semana después",
+                "body": "Relacionaste una conclusión fuerte, una posibilidad y algo descartado con pistas nuevas.",
+                "actionLabel": "Terminar"
               }
             },
             {
@@ -979,9 +969,9 @@
               "correcto": false,
               "score": 2,
               "feedback": {
-                "title": "The forms remained; the calibration moved",
-                "body": "That distinction tells us exactly what needs another learning cycle.",
-                "actionLabel": "Cerrar revisión"
+                "title": "Las formas siguen ahí; revisa la seguridad",
+                "body": "Una conclusión recibió más o menos seguridad de la que permiten las pistas.",
+                "actionLabel": "Terminar"
               }
             },
             {
@@ -991,9 +981,9 @@
               "correcto": false,
               "score": 2,
               "feedback": {
-                "title": "The reasoning stayed; the form faded",
-                "body": "This is useful evidence, not failure. The next cycle should reinforce the bridge after the modal.",
-                "actionLabel": "Cerrar revisión"
+                "title": "El razonamiento sigue ahí; revisa la forma",
+                "body": "La idea se entiende. Conviene practicar de nuevo cómo unir la expresión de certeza con la acción.",
+                "actionLabel": "Terminar"
               }
             },
             {
@@ -1003,9 +993,9 @@
               "correcto": false,
               "score": 3,
               "feedback": {
-                "title": "Part of the pattern remained",
-                "body": "The durable evidence is partial. We know what to strengthen next.",
-                "actionLabel": "Cerrar revisión"
+                "title": "Una parte sigue contigo",
+                "body": "Una o dos conclusiones coinciden con las pistas. Ya sabemos qué conviene reforzar.",
+                "actionLabel": "Terminar"
               }
             },
             {
@@ -1015,9 +1005,9 @@
               "correcto": false,
               "score": 0,
               "feedback": {
-                "title": "The pattern was not available today",
-                "body": "That is honest evidence for redesigning the practice, not a judgment about you.",
-                "actionLabel": "Cerrar revisión"
+                "title": "Hoy no aparecieron las tres conclusiones",
+                "body": "No es una calificación sobre ti. Nos indica cómo mejorar la práctica.",
+                "actionLabel": "Terminar"
               }
             }
           ]

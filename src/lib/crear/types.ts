@@ -74,6 +74,9 @@ export interface CrearDisplayCopy {
   eyebrow: string;
   headline: string;
   body?: string;
+  moduleLabel?: string;
+  levelLabel?: string;
+  learningGoal?: string;
 }
 
 export interface CrearEvidenceItem {
@@ -109,6 +112,7 @@ export interface CrearConceptCard {
   id: string;
   term: string;
   meaning: string;
+  description?: string;
   example: string;
   strength: 'strong' | 'open' | 'ruled_out';
 }
@@ -163,6 +167,7 @@ export interface ClassifyRequest {
   tallerId: CrearLessonId;
   pasoRefId: string;
   texto: string;
+  partes?: CrearResponsePartAnswer[];
 }
 
 export interface ClassifyResponse {

@@ -9,7 +9,6 @@ import {
   Check,
   Clock3,
   FileClock,
-  FolderOpen,
   LockKeyhole,
   RotateCcw,
   Sparkles,
@@ -104,7 +103,7 @@ function getPrompt(step: CrearPaso): string {
 
 function getPlaceholder(step: CrearPaso): string | undefined {
   if (step.tipo_paso === 'pregunta_abierta_validada') return step.pregunta_abierta_validada.placeholder;
-  if (step.tipo_paso === 'transferencia') return 'Write three short deductions in English…';
+  if (step.tipo_paso === 'transferencia') return 'Escribe una oración breve en inglés…';
   return undefined;
 }
 
@@ -114,13 +113,6 @@ function getChoices(step: CrearPaso): ChoiceOption[] {
 
 function getCorrectChoiceId(step: CrearPaso): string | null {
   return step.tipo_paso === 'opcion_multiple' ? step.opcion_multiple.respuesta_correcta : null;
-}
-
-function getHeadlineLanguage(step: CrearPaso): 'es-MX' | 'en-US' {
-  const stepId = getStepId(step);
-  return stepId === 'arrival' || stepId === 'precheck' || step.crear?.stage === 'recuerda'
-    ? 'es-MX'
-    : 'en-US';
 }
 
 function findBranch(step: CrearPaso, branchId: string): CrearClassifierBranch | null {
@@ -150,7 +142,7 @@ function buildBranchFeedback(
   const authored = branch?.feedback;
 
   return {
-    title: authored?.title ?? (correct ? 'La evidencia y tu certeza coinciden' : 'Hay una pieza por calibrar'),
+    title: authored?.title ?? (correct ? 'Tu respuesta coincide con las pistas' : 'Hay una parte por revisar'),
     body:
       authored?.body ??
       (correct
@@ -184,7 +176,7 @@ function buildChoiceFeedback(
         : 'Vuelve a mirar qué permite afirmar la evidencia.';
 
   return {
-    title: correct ? 'Bien calibrado' : 'Todavía hay margen de duda',
+    title: correct ? 'Bien hecho' : 'Probemos de nuevo',
     body,
     actionLabel: retry ? 'Probar otra vez' : 'Continuar',
     retry,
@@ -243,13 +235,18 @@ function PhaseRail({ stage }: { stage: CrearExperienceStage }) {
   );
 }
 
-function EvidenceField({ step }: { step: CrearPaso }) {
+interface EvidenceFieldProps {
+  step: CrearPaso;
+  onReadyToAnswer?: () => void;
+}
+
+function EvidenceField({ step, onReadyToAnswer }: EvidenceFieldProps) {
   const evidence = step.crear?.evidence ?? [];
   const presentation = step.crear?.evidencePresentation;
   if (evidence.length === 0) return null;
 
   if (presentation?.mode === 'sequential' || step.crear?.scene === 'arrival') {
-    return <CaseMicroScene step={step} />;
+    return <CaseMicroScene step={step} onReadyToAnswer={onReadyToAnswer} />;
   }
 
   return (
@@ -273,7 +270,12 @@ function EvidenceField({ step }: { step: CrearPaso }) {
   );
 }
 
-function CaseMicroScene({ step }: { step: CrearPaso }) {
+interface CaseMicroSceneProps {
+  step: CrearPaso;
+  onReadyToAnswer?: () => void;
+}
+
+function CaseMicroScene({ step, onReadyToAnswer }: CaseMicroSceneProps) {
   const prefersReducedMotion = useReducedMotion();
   const evidence = step.crear?.evidence ?? [];
   const presentation = step.crear?.evidencePresentation;
@@ -300,36 +302,9 @@ function CaseMicroScene({ step }: { step: CrearPaso }) {
 
   return (
     <section className={styles.caseMicroScene} aria-label="Explorador de evidencias">
-      <div className={styles.caseSceneHeader}>
-        <span className={styles.folderGlyph} aria-hidden="true"><FolderOpen size={19} /></span>
-        <div>
-          <small>EVIDENCIA DEL CASO · {step.titulo_paso}</small>
-          <strong>Explora antes de concluir</strong>
-        </div>
-        <span>{activeIndex + 1}/{evidence.length}</span>
-      </div>
-
-      <div className={styles.caseTimeline} aria-label="Señales descubiertas">
-        {evidence.map((item, index) => {
-          const available = index <= revealedThrough + 1;
-          const revealed = index <= revealedThrough;
-          return (
-            <button
-              aria-current={index === activeIndex ? 'step' : undefined}
-              aria-label={revealed ? `Revisar señal ${index + 1}: ${item.label}` : `Descubrir señal ${index + 1}`}
-              className={styles.timelineNode}
-              data-active={index === activeIndex ? 'true' : 'false'}
-              data-revealed={revealed ? 'true' : 'false'}
-              disabled={!available}
-              key={item.id}
-              type="button"
-              onClick={() => selectEvidence(index)}
-            >
-              <span>{String(index + 1).padStart(2, '0')}</span>
-            </button>
-          );
-        })}
-      </div>
+      <p className={styles.caseProgress} aria-live="polite">
+        Pista <strong>{activeIndex + 1}</strong> de {evidence.length}
+      </p>
 
       <AnimatePresence mode="wait" initial={false}>
         <motion.article
@@ -351,28 +326,35 @@ function CaseMicroScene({ step }: { step: CrearPaso }) {
 
       <div className={styles.caseSceneControls}>
         <button
-          aria-label="Ver señal anterior"
+          aria-label="Ver pista anterior"
           className={styles.caseNavAction}
           disabled={activeIndex === 0 || !allowReview}
           type="button"
           onClick={() => selectEvidence(activeIndex - 1)}
         >
           <ChevronLeft size={17} />
+          <span>Anterior</span>
         </button>
-        <p>
-          {revealedThrough < evidence.length - 1
-            ? 'Explora las señales. Ninguna interpreta el caso por ti.'
-            : 'Ya puedes comparar las tres señales.'}
-        </p>
-        <button
-          aria-label={activeIndex < evidence.length - 1 ? 'Descubrir siguiente señal' : 'Todas las señales descubiertas'}
-          className={styles.caseNavAction}
-          disabled={activeIndex === evidence.length - 1}
-          type="button"
-          onClick={() => selectEvidence(activeIndex + 1)}
-        >
-          <ChevronRight size={17} />
-        </button>
+        {activeIndex < evidence.length - 1 || onReadyToAnswer ? (
+          <button
+            aria-label={activeIndex < evidence.length - 1 ? 'Ver siguiente pista' : 'Responder el caso'}
+            className={styles.caseNavAction}
+            data-primary="true"
+            type="button"
+            onClick={() => {
+              if (activeIndex < evidence.length - 1) {
+                selectEvidence(activeIndex + 1);
+                return;
+              }
+              onReadyToAnswer?.();
+            }}
+          >
+            <span>{activeIndex < evidence.length - 1 ? 'Siguiente pista' : 'Responder'}</span>
+            {activeIndex < evidence.length - 1 ? <ChevronRight size={17} /> : <ArrowLeft className={styles.forwardArrow} size={17} />}
+          </button>
+        ) : (
+          <span className={styles.caseReviewComplete} role="status">Ya revisaste todas las pistas.</span>
+        )}
       </div>
     </section>
   );
@@ -397,30 +379,51 @@ function ComparisonField({ step }: { step: CrearPaso }) {
 }
 
 function ConceptPrism({ step }: { step: CrearPaso }) {
+  const prefersReducedMotion = useReducedMotion();
   const concepts = step.crear?.concepts ?? [];
   const formula = step.crear?.formula ?? [];
+  const [activeConceptId, setActiveConceptId] = useState(concepts[0]?.id ?? '');
+  const activeConcept = concepts.find((concept) => concept.id === activeConceptId) ?? concepts[0];
+
   if (concepts.length === 0 && formula.length === 0) return null;
 
   return (
     <div className={styles.prismWrap}>
       {concepts.length > 0 ? (
-        <div className={styles.prismGrid}>
-          {concepts.map((concept, index) => (
-            <motion.article
-              className={styles.prismCard}
-              data-strength={concept.strength}
-              initial={{ opacity: 0, scale: 0.96, y: 10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              transition={{ delay: index * 0.09, duration: 0.45 }}
-              key={concept.id}
-            >
-              <span className={styles.certaintyLine} aria-hidden="true" />
-              <strong lang="en-US">{concept.term}</strong>
-              <small>{concept.meaning}</small>
-              <p lang="en-US">{concept.example}</p>
-            </motion.article>
-          ))}
-        </div>
+        <>
+          <div className={styles.prismSelector} aria-label="Elige un nivel de certeza">
+            {concepts.map((concept) => (
+              <button
+                aria-pressed={concept.id === activeConcept?.id}
+                className={styles.prismOption}
+                data-strength={concept.strength}
+                key={concept.id}
+                type="button"
+                onClick={() => setActiveConceptId(concept.id)}
+              >
+                <span>{concept.meaning}</span>
+                <strong lang="en-US">{concept.term}</strong>
+              </button>
+            ))}
+          </div>
+          <AnimatePresence mode="wait" initial={false}>
+            {activeConcept ? (
+              <motion.div
+                className={styles.prismExample}
+                key={activeConcept.id}
+                initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: -6 }}
+                transition={{ duration: 0.24 }}
+                aria-live="polite"
+              >
+                {activeConcept.description ? <p>{activeConcept.description}</p> : null}
+                <small>Ejemplo</small>
+                <p lang="en-US">{activeConcept.example}</p>
+              </motion.div>
+            ) : null}
+          </AnimatePresence>
+        </>
       ) : null}
       {formula.length > 0 ? (
         <div className={styles.formulaRail} aria-label="Estructura gramatical">
@@ -504,6 +507,8 @@ function AmbientField({ paused }: AmbientFieldProps) {
 export function CinematicEnglishPlayer() {
   const prefersReducedMotion = useReducedMotion();
   const headingRef = useRef<HTMLHeadingElement | null>(null);
+  const structuredEvidenceRef = useRef<HTMLDivElement | null>(null);
+  const structuredAnswerRef = useRef<HTMLDivElement | null>(null);
   const feedbackActionRef = useRef<HTMLButtonElement>(null);
   const exitContinueRef = useRef<HTMLButtonElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
@@ -525,10 +530,16 @@ export function CinematicEnglishPlayer() {
   const [pageHidden, setPageHidden] = useState(false);
   const [liteMode, setLiteMode] = useState(false);
   const [clockNow, setClockNow] = useState(() => Date.now());
+  const [structuredView, setStructuredView] = useState<'explore' | 'answer'>('explore');
 
   const currentStep = lesson?.pasos[currentIndex] ?? null;
   const currentStage = currentStep?.crear?.stage ?? 'descubre';
   const currentScene = currentStep?.crear?.scene ?? 'signal';
+  const hasStructuredEvidenceFlow = Boolean(
+    currentStep?.crear?.responseParts?.length &&
+    currentStep.crear.evidencePresentation &&
+    currentStep.crear.evidence?.length
+  );
 
   useEffect(() => {
     if (bootedRef.current) return;
@@ -796,10 +807,29 @@ export function CinematicEnglishPlayer() {
     setAttempt(0);
     setInputFocused(false);
     setVoiceStatus('ready');
+    setStructuredView('explore');
     setCurrentIndex(nextIndex);
   }
 
-  async function classifyText(step: CrearPaso, text: string): Promise<ClassifyResponse> {
+  function showStructuredAnswer(): void {
+    setStructuredView('answer');
+    window.requestAnimationFrame(() => {
+      structuredAnswerRef.current
+        ?.querySelector<HTMLTextAreaElement>('textarea')
+        ?.focus({ preventScroll: true });
+    });
+  }
+
+  function showStructuredEvidence(): void {
+    setStructuredView('explore');
+    window.requestAnimationFrame(() => structuredEvidenceRef.current?.focus({ preventScroll: true }));
+  }
+
+  async function classifyText(
+    step: CrearPaso,
+    text: string,
+    parts?: CrearResponsePartAnswer[]
+  ): Promise<ClassifyResponse> {
     const classifier = step.crear?.classifier;
     if (!classifier) return { rama: 'no_claro', confianza: 0 };
 
@@ -813,13 +843,14 @@ export function CinematicEnglishPlayer() {
           tallerId: DEFAULT_CREAR_LESSON_ID,
           pasoRefId: getStepId(step),
           texto: text,
+          partes: parts,
         }),
         signal: controller.signal,
       });
       if (!response.ok) throw new Error(`classifier_${response.status}`);
       return (await response.json()) as ClassifyResponse;
     } catch {
-      return classifyCrearLocally(text, classifier);
+      return classifyCrearLocally(text, classifier, parts);
     } finally {
       window.clearTimeout(timeout);
     }
@@ -871,7 +902,7 @@ export function CinematicEnglishPlayer() {
     setAttempt(attemptNumber);
 
     try {
-      const classification = await classifyText(currentStep, text);
+      const classification = await classifyText(currentStep, text, parts);
       const branch = findBranch(currentStep, classification.rama);
       const correct = branch?.correcto ?? false;
       const score = branch?.score ?? 0;
@@ -980,7 +1011,7 @@ export function CinematicEnglishPlayer() {
         <AmbientField paused={Boolean(prefersReducedMotion) || liteMode || pageHidden} />
         <div className={styles.loadingScene} role="status">
           <span className={styles.loadingOrb}><Sparkles size={24} /></span>
-          <p>Preparando la señal…</p>
+          <p>Preparando el caso…</p>
         </div>
       </main>
     );
@@ -1008,11 +1039,8 @@ export function CinematicEnglishPlayer() {
         <AmbientField paused={Boolean(prefersReducedMotion) || liteMode || pageHidden} />
         <section className={styles.completionScene}>
           <span className={styles.completionMark}><Check size={28} /></span>
-          <p className={styles.sceneEyebrow}>EVIDENCIA D7 REGISTRADA</p>
-          <h1>Ahora sí sabemos qué permaneció.</h1>
-          <p>
-            Tu respuesta quedó vinculada con el primer intento. No es una calificación: es evidencia para mejorar cómo aprendes.
-          </p>
+          <h1>Terminaste la revisión.</h1>
+          <p>Guardamos tus respuestas para mejorar la siguiente experiencia.</p>
           <div
             className={styles.outcomeCard}
             data-correct={lastOutcome ? (lastOutcome.correct ? 'true' : 'false') : 'unknown'}
@@ -1021,9 +1049,9 @@ export function CinematicEnglishPlayer() {
             <strong>
               {lastOutcome
                 ? lastOutcome.correct
-                  ? 'El patrón se sostuvo en un caso nuevo.'
-                  : 'El patrón todavía necesita otra vuelta.'
-                : 'La revisión quedó registrada y vinculada con tu primer intento.'}
+                  ? 'Pudiste usar las tres formas en un caso nuevo.'
+                  : 'Ya sabemos qué conviene practicar de nuevo.'
+                : 'La revisión quedó guardada.'}
             </strong>
           </div>
           <button className={styles.secondaryAction} type="button" onClick={() => window.location.assign('/')}>
@@ -1052,9 +1080,8 @@ export function CinematicEnglishPlayer() {
         </header>
         <section className={styles.gateScene} aria-hidden={exitConfirm ? true : undefined}>
           <span className={styles.gateIcon}><LockKeyhole size={24} /></span>
-          <p className={styles.sceneEyebrow}>PRIMERA SESIÓN COMPLETA</p>
-          <h1>La prueba real ocurre después.</h1>
-          <p>Hoy aplicaste el patrón en un caso nuevo. Regresa sin repasar para descubrir qué sigue contigo.</p>
+          <h1>Volvemos en una semana.</h1>
+          <p>Hoy resolviste un caso nuevo. Regresa sin repasar para descubrir qué recuerdas.</p>
           <div className={styles.retestDate}>
             <Clock3 size={19} />
             <span>
@@ -1084,6 +1111,25 @@ export function CinematicEnglishPlayer() {
   const sceneTransition = prefersReducedMotion
     ? { duration: 0.12 }
     : { duration: 0.52, ease: [0.22, 1, 0.36, 1] as const };
+  const answerElement = (
+    <CinematicAnswer
+      key={getStepId(currentStep)}
+      mode={mode}
+      prompt={prompt}
+      placeholder={getPlaceholder(currentStep)}
+      choices={getChoices(currentStep)}
+      pending={pending}
+      minChars={currentStep.crear?.minChars}
+      responseParts={currentStep.crear?.responseParts}
+      choiceLanguage={currentScene === 'practice' ? 'en-US' : 'es-MX'}
+      continueLabel={currentScene === 'closure' ? 'Terminar por hoy' : currentScene === 'arrival' ? 'Estoy listo' : 'Continuar'}
+      submitLabel={currentStep.crear?.responseParts?.length ? 'Enviar mis respuestas' : 'Enviar respuesta'}
+      onContinue={handleContinue}
+      onSubmitText={handleSubmitText}
+      onSubmitChoice={handleSubmitChoice}
+      onFocusChange={setInputFocused}
+    />
+  );
 
   return (
     <MotionConfig reducedMotion="user">
@@ -1093,6 +1139,7 @@ export function CinematicEnglishPlayer() {
         data-stage={currentStage}
         data-audio-ready={audioAssetsReady ? 'true' : 'false'}
         data-structured={currentStep.crear?.responseParts ? 'true' : 'false'}
+        data-structured-view={hasStructuredEvidenceFlow ? structuredView : undefined}
         data-voice-state={voiceStatus}
         data-input-focused={inputFocused ? 'true' : 'false'}
         data-page-hidden={pageHidden ? 'true' : 'false'}
@@ -1109,7 +1156,7 @@ export function CinematicEnglishPlayer() {
               <X size={20} />
             </button>
             <span className={styles.wordmark}>CELESTEA</span>
-            <PhaseRail stage={currentStage} />
+            {currentScene !== 'arrival' ? <PhaseRail stage={currentStage} /> : null}
           </header>
 
           <AnimatePresence mode="wait">
@@ -1121,23 +1168,60 @@ export function CinematicEnglishPlayer() {
               exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: -8, scale: 0.992 }}
               transition={sceneTransition}
             >
-              <div className={styles.sceneCopy}>
-                <p className={styles.sceneEyebrow}>{display?.eyebrow ?? currentStep.titulo_paso}</p>
-                <h1
-                  ref={headingRef}
-                  tabIndex={-1}
-                  lang={getHeadlineLanguage(currentStep)}
-                >
-                  {display?.headline ?? lesson.titulo}
-                </h1>
-                {display?.body ? <p className={styles.sceneBody}>{display.body}</p> : null}
-              </div>
+              {!(hasStructuredEvidenceFlow && structuredView === 'answer') ? (
+                <div className={styles.sceneCopy} data-scene={currentScene}>
+                  {currentScene === 'arrival' && (
+                    display?.moduleLabel || display?.levelLabel || display?.learningGoal
+                  ) ? (
+                    <div className={styles.arrivalModuleBlock}>
+                      {display.moduleLabel ? (
+                        <span className={styles.arrivalModuleName}>{display.moduleLabel}</span>
+                      ) : null}
+                      {display.levelLabel ? (
+                        <span
+                          className={styles.arrivalLevelBadge}
+                          aria-label={`Nivel de inglés ${display.levelLabel}`}
+                        >
+                          {display.levelLabel}
+                        </span>
+                      ) : null}
+                      {display.learningGoal ? (
+                        <p className={styles.arrivalLearningGoal}>{display.learningGoal}</p>
+                      ) : null}
+                    </div>
+                  ) : null}
+                  <div className={styles.caseBlock}>
+                    {display?.eyebrow?.trim() ? <p className={styles.sceneEyebrow}>{display.eyebrow}</p> : null}
+                    <h1
+                      ref={headingRef}
+                      tabIndex={-1}
+                      lang="es-MX"
+                    >
+                      {display?.headline ?? lesson.titulo}
+                    </h1>
+                    {display?.body ? <p className={styles.sceneBody}>{display.body}</p> : null}
+                  </div>
+                </div>
+              ) : null}
 
-              <EvidenceField step={currentStep} />
+              {currentScene !== 'arrival' ? (
+                hasStructuredEvidenceFlow ? (
+                  <div
+                    className={styles.structuredPane}
+                    hidden={structuredView !== 'explore'}
+                    ref={structuredEvidenceRef}
+                    role="region"
+                    aria-label="Pistas del caso. Usa los botones Anterior y Siguiente pista para revisarlas."
+                    tabIndex={-1}
+                  >
+                    <EvidenceField step={currentStep} onReadyToAnswer={showStructuredAnswer} />
+                  </div>
+                ) : <EvidenceField step={currentStep} />
+              ) : null}
               <ComparisonField step={currentStep} />
               <ConceptPrism step={currentStep} />
 
-              {audio && audioAssetsReady ? (
+              {audio && audioAssetsReady && (!hasStructuredEvidenceFlow || structuredView === 'explore') ? (
                 <CinematicVoice
                   audio={audio}
                   sceneKey={getStepId(currentStep)}
@@ -1146,22 +1230,20 @@ export function CinematicEnglishPlayer() {
                 />
               ) : null}
 
-              <CinematicAnswer
-                key={`${getStepId(currentStep)}-${attempt}`}
-                mode={mode}
-                prompt={prompt}
-                placeholder={getPlaceholder(currentStep)}
-                choices={getChoices(currentStep)}
-                pending={pending}
-                minChars={currentStep.crear?.minChars}
-                responseParts={currentStep.crear?.responseParts}
-                continueLabel={currentScene === 'closure' ? 'Guardar y cerrar' : currentScene === 'arrival' ? 'Entrar al reto' : 'Continuar'}
-                submitLabel={currentStage === 'aplica' || currentStage === 'recuerda' ? 'Guardar evidencia' : 'Enviar idea'}
-                onContinue={handleContinue}
-                onSubmitText={handleSubmitText}
-                onSubmitChoice={handleSubmitChoice}
-                onFocusChange={setInputFocused}
-              />
+              {hasStructuredEvidenceFlow ? (
+                <div
+                  className={styles.structuredAnswerStage}
+                  hidden={structuredView !== 'answer'}
+                  ref={structuredAnswerRef}
+                  tabIndex={-1}
+                >
+                  <button className={styles.reviewEvidenceAction} type="button" onClick={showStructuredEvidence}>
+                    <ArrowLeft size={16} />
+                    Revisar pistas
+                  </button>
+                  {answerElement}
+                </div>
+              ) : answerElement}
             </motion.article>
           </AnimatePresence>
         </section>
@@ -1183,11 +1265,11 @@ export function CinematicEnglishPlayer() {
               >
                 <span className={styles.feedbackSignal}>{feedback.correct ? <Check size={20} /> : <Sparkles size={20} />}</span>
                 <div>
-                  <p role="status" aria-live="polite">
-                    {feedback.correct ? 'EVIDENCIA CALIBRADA' : 'AJUSTE ÚTIL'}
-                  </p>
-                  <h2 id="feedback-title" lang="en-US">{feedback.title}</h2>
-                  <span id="feedback-body" lang="en-US">{feedback.body}</span>
+                  {!feedback.correct ? (
+                    <p role="status" aria-live="polite">PROBEMOS DE NUEVO</p>
+                  ) : null}
+                  <h2 id="feedback-title" lang="es-MX">{feedback.title}</h2>
+                  <span id="feedback-body" lang="es-MX">{feedback.body}</span>
                 </div>
                 <button
                   ref={feedbackActionRef}
@@ -1226,7 +1308,6 @@ function renderExitSheet(
         aria-modal="true"
         aria-labelledby="exit-title"
       >
-        <p className={styles.sceneEyebrow}>TU AVANCE YA QUEDÓ GUARDADO</p>
         <h2 id="exit-title">¿Quieres salir por ahora?</h2>
         <p>Podrás volver a la misma escena desde este dispositivo.</p>
         <div className={styles.exitActions}>

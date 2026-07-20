@@ -2,7 +2,15 @@ import type {
   ClassifyResponse,
   CrearClassifierBranch,
   CrearClassifierDefinition,
+  CrearResponseCategory,
+  CrearResponsePartAnswer,
 } from './types';
+
+const CATEGORY_SIGNALS: Record<CrearResponseCategory, string[]> = {
+  casi_seguro: ['must have'],
+  posible: ['might have', 'may have', 'could have'],
+  imposible: ["can't have", 'cannot have', "couldn't have", 'could not have'],
+};
 
 function normalizeText(text: string): string {
   return text
@@ -52,10 +60,51 @@ function scoreBranch(text: string, branch: CrearClassifierBranch): number {
   return score;
 }
 
+function categoryMismatchBranch(
+  classifier: CrearClassifierDefinition
+): CrearClassifierBranch | null {
+  return classifier.ramas.find((branch) => branch.rama.endsWith('misconcepcion_certeza'))
+    ?? classifier.ramas.find((branch) => branch.rama.includes('parcial'))
+    ?? null;
+}
+
+export function classifyCrearResponseStructure(
+  parts: CrearResponsePartAnswer[] | undefined,
+  classifier: CrearClassifierDefinition
+): ClassifyResponse | null {
+  if (!parts || parts.length === 0) return null;
+
+  const mismatch = parts.some((part) => {
+    const normalized = normalizeText(part.texto);
+    const detected = (Object.entries(CATEGORY_SIGNALS) as Array<[
+      CrearResponseCategory,
+      string[],
+    ]>).filter(([, signals]) =>
+      signals.some((signal) => normalized.includes(normalizeText(signal)))
+    );
+
+    return detected.length > 0 && (
+      !detected.some(([category]) => category === part.categoria)
+      || detected.some(([category]) => category !== part.categoria)
+    );
+  });
+
+  if (!mismatch) return null;
+  const branch = categoryMismatchBranch(classifier);
+  return {
+    rama: branch?.rama ?? classifier.fallbackRama,
+    confianza: 0.95,
+  };
+}
+
 export function classifyCrearLocally(
   texto: string,
-  classifier: CrearClassifierDefinition
+  classifier: CrearClassifierDefinition,
+  parts?: CrearResponsePartAnswer[]
 ): ClassifyResponse {
+  const structureResult = classifyCrearResponseStructure(parts, classifier);
+  if (structureResult) return structureResult;
+
   const ranked = classifier.ramas
     .map((branch) => ({
       branch,
