@@ -3,7 +3,7 @@
   "version": "1.2.0",
   "schema_version": "0.1",
   "content_version": "2026-07-20",
-  "audio_asset_version": "2026-07-13",
+  "audio_asset_version": "2026-07-20",
   "titulo": "El archivo desaparecido",
   "metadata": {
     "grado": "Prepa",
@@ -40,8 +40,8 @@
           "body": "Tu equipo está por entregar un video para una beca.\nDos minutos antes del cierre, el archivo desaparece.\nRevisa tres pistas y explica qué crees que pasó."
         },
         "audio": {
-          "src": "/audio/crear/english-deduction/arrival.wav",
-          "text": "Este es un módulo de inglés nivel B uno avanzado a B dos. Aprenderás a explicar qué pudo haber ocurrido usando pistas. Tengo un caso para ti. Tu equipo estaba por entregar un video para una beca cuando el archivo desapareció. Revisa las tres pistas y después explica en inglés qué crees que pasó. No necesitas conocer la forma todavía. ¿Listo?",
+          "src": "/audio/crear/english-deduction/arrival.mp3",
+          "text": "Este es un módulo de inglés, nivel B uno avanzado a B dos. Aprenderás a explicar qué pudo haber ocurrido usando pistas. Tu equipo está por entregar un video para una beca. Dos minutos antes del cierre, el archivo desaparece. Revisa las tres pistas y después explica en inglés qué crees que pasó. No necesitas conocer la estructura todavía. ¿Listo?",
           "lang": "es-MX",
           "label": "Celestea · El caso"
         },
@@ -124,8 +124,8 @@
           }
         ],
         "audio": {
-          "src": "/audio/crear/english-deduction/precheck.wav",
-          "text": "Revisa las tres pistas. Después escribe en inglés una conclusión sobre lo que parece casi seguro, otra sobre lo que quizá ocurrió y otra sobre lo que no pudo ocurrir. Este es solo tu punto de partida.",
+          "src": "/audio/crear/english-deduction/precheck.mp3",
+          "text": "Revisa las tres pistas, una por una. Después escribe en inglés una conclusión sobre lo que parece casi seguro, otra sobre lo que quizá ocurrió y otra sobre lo que no pudo ocurrir. Este es solo tu punto de partida.",
           "lang": "es-MX"
         },
         "input": "text",
@@ -250,7 +250,7 @@
           "right": "The cloud must have replaced the file."
         },
         "audio": {
-          "src": "/audio/crear/english-deduction/contrast.wav",
+          "src": "/audio/crear/english-deduction/contrast.mp3",
           "text": "Lee las dos frases en inglés. Las dos hablan del mismo cambio, pero expresan algo diferente. ¿Qué comunica la frase B?",
           "lang": "es-MX"
         },
@@ -307,8 +307,8 @@
         ],
         "formula": ["MUST / MIGHT / CAN'T", "HAVE", "FORMA PASADA: CHANGED / MOVED / GONE"],
         "audio": {
-          "src": "/audio/crear/english-deduction/prism.wav",
-          "text": "Las pistas no siempre nos dan la misma seguridad. Si apuntan con fuerza, usamos must have. Si solo dejan una posibilidad, usamos might have. Si descartan algo, usamos can't have. Las tres llevan have y después la forma pasada de la acción, por ejemplo changed, moved o gone.",
+          "src": "/audio/crear/english-deduction/prism.mp3",
+          "text": "Las pistas no siempre nos dan la misma seguridad. Si apuntan con fuerza, usamos must have. Si solo dejan una posibilidad, usamos might have. Si descartan algo, usamos can't have. Las tres llevan have y después la forma pasada de la acción.",
           "lang": "es-MX"
         },
         "input": "none",
@@ -346,7 +346,7 @@
           { "id": "log", "label": "Registro de edición", "value": "Author: Camila · 6:59 p.m." }
         ],
         "audio": {
-          "src": "/audio/crear/english-deduction/practice-strong.wav",
+          "src": "/audio/crear/english-deduction/practice-strong.mp3",
           "text": "El registro identifica a Camila como autora. Completa la frase en inglés con la opción que mejor representa esa pista.",
           "lang": "es-MX"
         },
@@ -387,7 +387,7 @@
           { "id": "access", "label": "Registro de acceso", "value": "Mateo had access. No activity was recorded." }
         ],
         "audio": {
-          "src": "/audio/crear/english-deduction/practice-open.wav",
+          "src": "/audio/crear/english-deduction/practice-open.mp3",
           "text": "Mateo tenía acceso, pero no hay actividad registrada. Completa la frase con la opción más cuidadosa.",
           "lang": "es-MX"
         },
@@ -428,7 +428,7 @@
           { "id": "disabled", "label": "Estado de la cuenta", "value": "Iker's account was disabled before the edit." }
         ],
         "audio": {
-          "src": "/audio/crear/english-deduction/practice-impossible.wav",
+          "src": "/audio/crear/english-deduction/practice-impossible.mp3",
           "text": "La cuenta de Iker estaba desactivada antes del cambio. Completa la frase con la opción que esa pista permite.",
           "lang": "es-MX"
         },
@@ -469,7 +469,7 @@
           { "id": "missing-log", "label": "Lo que el registro no muestra", "value": "The log does not show who renamed this file." }
         ],
         "audio": {
-          "src": "/audio/crear/english-deduction/calibrate.wav",
+          "src": "/audio/crear/english-deduction/calibrate.mp3",
           "text": "Diego suele renombrar archivos antes de exportarlos, pero el registro no dice quién renombró este. Escribe en inglés una conclusión cuidadosa sobre Diego.",
           "lang": "es-MX"
         },
@@ -613,8 +613,8 @@
           }
         ],
         "audio": {
-          "src": "/audio/crear/english-deduction/postcheck.wav",
-          "text": "Ahora tienes un caso nuevo. Revisa las tres pistas y escribe tus tres conclusiones en inglés. Esta vez hazlo sin ayuda sobre la forma. Tus respuestas se guardarán cuando las envíes.",
+          "src": "/audio/crear/english-deduction/postcheck.mp3",
+          "text": "Ahora tienes un caso nuevo. Revisa las tres pistas y escribe tus tres conclusiones en inglés. Esta vez hazlo sin ayuda sobre la estructura. Tus respuestas se guardarán cuando las envíes.",
           "lang": "es-MX"
         },
         "input": "text",
@@ -754,8 +754,8 @@
           }
         ],
         "audio": {
-          "src": "/audio/crear/english-deduction/transfer.wav",
-          "text": "El contexto cambia: ahora investigas el lanzamiento de una canción. Revisa las pistas y escribe qué parece casi seguro, qué es posible y qué queda descartado. Hazlo en inglés.",
+          "src": "/audio/crear/english-deduction/transfer.mp3",
+          "text": "El contexto cambia. Ahora investigas el lanzamiento de una canción. Revisa las pistas y escribe qué parece casi seguro, qué es posible y qué queda descartado. Hazlo en inglés.",
           "lang": "es-MX"
         },
         "input": "text",
@@ -860,7 +860,7 @@
           "body": "Guardamos tus respuestas. En siete días te mostraremos un caso nuevo para ver qué recuerdas sin repasar."
         },
         "audio": {
-          "src": "/audio/crear/english-deduction/close.wav",
+          "src": "/audio/crear/english-deduction/close.mp3",
           "text": "Terminaste por hoy. Guardamos tus respuestas. En siete días te mostraremos un caso nuevo para ver qué recuerdas sin repasar.",
           "lang": "es-MX"
         },
@@ -931,8 +931,8 @@
           }
         ],
         "audio": {
-          "src": "/audio/crear/english-deduction/retest.wav",
-          "text": "Ha pasado una semana. A las ocho de la mañana, el equipo encontró una versión nueva de su código. Revisa las pistas y escribe en inglés qué parece casi seguro, qué es posible y qué queda descartado. Hazlo con lo que recuerdes; no necesitas repasar.",
+          "src": "/audio/crear/english-deduction/retest.mp3",
+          "text": "Ha pasado una semana. A las ocho de la mañana, el equipo encontró una versión nueva de su código. Revisa las pistas y escribe en inglés qué parece casi seguro, qué es posible y qué queda descartado. Hazlo con lo que recuerdes. No necesitas repasar.",
           "lang": "es-MX"
         },
         "input": "text",

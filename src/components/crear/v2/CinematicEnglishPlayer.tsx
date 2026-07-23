@@ -57,7 +57,8 @@ import type {
 } from '@/lib/crear/types';
 import { DEFAULT_CREAR_LESSON_ID } from '@/lib/crear/types';
 import { CinematicAnswer } from './CinematicAnswer';
-import { CinematicVoice, type CinematicVoiceStatus } from './CinematicVoice';
+import { CinematicVoice } from './CinematicVoice';
+import { useCinematicNarration } from './useCinematicNarration';
 import styles from './CinematicEnglishPlayer.module.css';
 
 interface FeedbackState {
@@ -466,7 +467,6 @@ export function CinematicEnglishPlayer() {
   const [attempt, setAttempt] = useState(0);
   const [completed, setCompleted] = useState(false);
   const [lastOutcome, setLastOutcome] = useState<OutcomeState | null>(null);
-  const [voiceStatus, setVoiceStatus] = useState<CinematicVoiceStatus>('ready');
   const [inputFocused, setInputFocused] = useState(false);
   const [exitConfirm, setExitConfirm] = useState(false);
   const [pageHidden, setPageHidden] = useState(false);
@@ -477,6 +477,17 @@ export function CinematicEnglishPlayer() {
   const currentStep = lesson?.pasos[currentIndex] ?? null;
   const currentStage = currentStep?.crear?.stage ?? 'descubre';
   const currentScene = currentStep?.crear?.scene ?? 'signal';
+  const audioAssetsReady = Boolean(
+    lesson && lesson.audio_asset_version === lesson.content_version
+  );
+  const audio = audioAssetsReady ? currentStep?.crear?.audio : undefined;
+  const sceneTransitionMs = prefersReducedMotion ? 120 : 520;
+  const narration = useCinematicNarration({
+    audio,
+    sceneKey: currentStep ? getStepId(currentStep) : 'loading',
+    pageHidden,
+  });
+  const pauseNarration = narration.pause;
   const hasStructuredEvidenceFlow = Boolean(
     currentStep?.crear?.responseParts?.length &&
     currentStep.crear.evidencePresentation &&
@@ -601,6 +612,8 @@ export function CinematicEnglishPlayer() {
   useEffect(() => {
     if (!feedback && !exitConfirm) return;
 
+    pauseNarration();
+
     previousFocusRef.current = document.activeElement instanceof HTMLElement
       ? document.activeElement
       : null;
@@ -638,7 +651,7 @@ export function CinematicEnglishPlayer() {
       document.removeEventListener('keydown', handleDialogKeyDown);
       previousFocusRef.current?.focus({ preventScroll: true });
     };
-  }, [exitConfirm, feedback]);
+  }, [exitConfirm, feedback, pauseNarration]);
 
   useEffect(() => {
     if (currentStep && !feedback) {
@@ -740,6 +753,11 @@ export function CinematicEnglishPlayer() {
     }
 
     const nextStep = lesson.pasos[nextIndex];
+    narration.prepareTransition({
+      audio: audioAssetsReady ? nextStep.crear?.audio : undefined,
+      sceneKey: getStepId(nextStep),
+      transitionMs: sceneTransitionMs,
+    });
     const delayHours = effectiveRetestDelayHours(nextStep);
     const nextStudy: Partial<CrearStudyState> = { stepIndex: nextIndex };
     if (delayHours != null && study.phase === 'initial') {
@@ -752,7 +770,6 @@ export function CinematicEnglishPlayer() {
     setFeedback(null);
     setAttempt(0);
     setInputFocused(false);
-    setVoiceStatus('ready');
     setStructuredView('explore');
     setCurrentIndex(nextIndex);
   }
@@ -1051,8 +1068,6 @@ export function CinematicEnglishPlayer() {
   const mode = getInputMode(currentStep);
   const prompt = getPrompt(currentStep);
   const display = currentStep.crear?.display;
-  const audio = currentStep.crear?.audio;
-  const audioAssetsReady = lesson.audio_asset_version === lesson.content_version;
   const compactVoice = inputFocused || mode !== 'none';
   const sceneTransition = prefersReducedMotion
     ? { duration: 0.12 }
@@ -1086,23 +1101,62 @@ export function CinematicEnglishPlayer() {
         data-audio-ready={audioAssetsReady ? 'true' : 'false'}
         data-structured={currentStep.crear?.responseParts ? 'true' : 'false'}
         data-structured-view={hasStructuredEvidenceFlow ? structuredView : undefined}
-        data-voice-state={voiceStatus}
+        data-voice-state={narration.status}
         data-input-focused={inputFocused ? 'true' : 'false'}
         data-page-hidden={pageHidden ? 'true' : 'false'}
         data-lite={liteMode ? 'true' : 'false'}
         lang="es-MX"
       >
         <AmbientField paused={Boolean(prefersReducedMotion) || liteMode || pageHidden} />
+        <audio
+          ref={narration.audioRef}
+          preload="metadata"
+          onEnded={narration.onEnded}
+          onError={narration.onError}
+          onPause={narration.onPause}
+          onPlay={narration.onPlay}
+        />
         <section
           className={styles.experienceShell}
           aria-hidden={feedback || exitConfirm ? true : undefined}
         >
-          <header className={styles.topBar}>
-            <button className={styles.iconButton} type="button" onClick={() => setExitConfirm(true)} aria-label="Salir de la sesión">
-              <X size={20} />
-            </button>
-            <span className={styles.wordmark}>CELESTEA</span>
-            {currentScene !== 'arrival' ? <PhaseRail stage={currentStage} /> : null}
+          <header
+            className={styles.topBar}
+            data-scene={currentScene}
+          >
+            {currentScene === 'arrival' ? (
+              <>
+                <div className={styles.arrivalHeaderModule}>
+                  {display?.moduleLabel ? (
+                    <span className={styles.arrivalModuleName}>{display.moduleLabel}</span>
+                  ) : null}
+                  {display?.levelLabel ? (
+                    <span
+                      className={styles.arrivalLevelBadge}
+                      aria-label={`Nivel de inglés ${display.levelLabel}`}
+                    >
+                      {display.levelLabel}
+                    </span>
+                  ) : null}
+                </div>
+                <button
+                  className={`${styles.iconButton} ${styles.arrivalExitButton}`}
+                  type="button"
+                  onClick={() => setExitConfirm(true)}
+                  aria-label="Salir de la sesión"
+                >
+                  <X size={20} />
+                </button>
+              </>
+            ) : (
+              <>
+                <button className={styles.iconButton} type="button" onClick={() => setExitConfirm(true)} aria-label="Salir de la sesión">
+                  <X size={20} />
+                </button>
+                <span className={styles.wordmark}>CELESTEA</span>
+                <PhaseRail stage={currentStage} />
+              </>
+            )}
           </header>
 
           <AnimatePresence mode="wait">
@@ -1116,25 +1170,8 @@ export function CinematicEnglishPlayer() {
             >
               {!(hasStructuredEvidenceFlow && structuredView === 'answer') ? (
                 <div className={styles.sceneCopy} data-scene={currentScene}>
-                  {currentScene === 'arrival' && (
-                    display?.moduleLabel || display?.levelLabel || display?.learningGoal
-                  ) ? (
-                    <div className={styles.arrivalModuleBlock}>
-                      {display.moduleLabel ? (
-                        <span className={styles.arrivalModuleName}>{display.moduleLabel}</span>
-                      ) : null}
-                      {display.levelLabel ? (
-                        <span
-                          className={styles.arrivalLevelBadge}
-                          aria-label={`Nivel de inglés ${display.levelLabel}`}
-                        >
-                          {display.levelLabel}
-                        </span>
-                      ) : null}
-                      {display.learningGoal ? (
-                        <p className={styles.arrivalLearningGoal}>{display.learningGoal}</p>
-                      ) : null}
-                    </div>
+                  {currentScene === 'arrival' && display?.learningGoal ? (
+                    <p className={styles.arrivalLearningGoal}>{display.learningGoal}</p>
                   ) : null}
                   <div className={styles.caseBlock}>
                     {display?.eyebrow?.trim() ? <p className={styles.sceneEyebrow}>{display.eyebrow}</p> : null}
@@ -1170,9 +1207,9 @@ export function CinematicEnglishPlayer() {
               {audio && audioAssetsReady && (!hasStructuredEvidenceFlow || structuredView === 'explore') ? (
                 <CinematicVoice
                   audio={audio}
-                  sceneKey={getStepId(currentStep)}
                   compact={compactVoice}
-                  onStatusChange={setVoiceStatus}
+                  status={narration.status}
+                  onToggle={narration.toggle}
                 />
               ) : null}
 

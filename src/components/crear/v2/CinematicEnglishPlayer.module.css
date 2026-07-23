@@ -255,6 +255,27 @@
   z-index: -1;
 }
 
+.topBar[data-scene="arrival"] {
+  grid-template-columns: 48px minmax(0, 1fr) 48px;
+}
+
+.arrivalHeaderModule {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  margin-top: 30px;
+  gap: 9px;
+  grid-column: 2;
+  justify-content: center;
+  min-width: 0;
+}
+
+.arrivalExitButton {
+  grid-column: 3;
+  grid-row: 1;
+  justify-self: end;
+}
+
 .wordmark {
   color: rgba(244, 247, 255, 0.95);
   font-size: 0.8rem;
@@ -372,30 +393,9 @@
 
 .sceneCopy[data-scene="arrival"] {
   display: grid;
-  gap: 0;
+  gap: 18px;
   grid-template-rows: auto 1fr;
-  min-height: calc(100dvh - 104px - 210px);
-}
 
-.arrivalModuleBlock {
-  align-items: center;
-  border: 1px solid transparent;
-  border-radius: 20px;
-  box-shadow:
-    inset 0 1px 1px rgb(255 255 255 / 18.03%), 0 18px 54px rgb(153 153 153 / 4%);
-  display: grid;
-  gap: 8px;
-  justify-items: center;
-  margin-bottom: 10px;
-  max-width: 520px;
-  padding: 18px 28px 19px;
-  position: relative;
-  width: min(100%, 520px);
-}
-
-.sceneCopy[data-scene="arrival"] .arrivalModuleBlock {
-  grid-row: 1;
-  margin-bottom: 0;
 }
 
 .caseBlock {
@@ -407,12 +407,12 @@
 
 .sceneCopy[data-scene="arrival"] .caseBlock {
   align-items: center;
-  align-self: center;
+  align-self: start;
   display: flex;
   flex-direction: column;
   gap: 12px;
   grid-row: 2;
-  justify-content: center;
+  justify-content: flex-start;
 }
 
 .arrivalModuleName {
@@ -441,8 +441,9 @@
 .arrivalLearningGoal {
   color: rgba(193, 202, 218, 0.76);
   font-size: 0.75rem;
+  grid-row: 1;
   line-height: 1.55;
-  margin: 3px 0 0;
+  margin: 0;
   max-width: 430px;
   text-wrap: balance;
 }
@@ -1799,6 +1800,14 @@
     min-height: 66px;
   }
 
+  .topBar[data-scene="arrival"] {
+    grid-template-columns: 44px minmax(0, 1fr) 44px;
+  }
+
+  .arrivalHeaderModule {
+    gap: 7px;
+  }
+
   .iconButton {
     height: 44px;
     width: 44px;
@@ -1824,23 +1833,17 @@
   }
 
   .scene {
-    gap: 22px;
+    gap: 37px;
     min-height: calc(100dvh - 82px);
     padding: 30px 2px 38px;
   }
 
   .pageShell[data-scene="arrival"] .scene {
-    padding-top: 42px;
+    padding-top: 24px;
   }
 
   .pageShell[data-scene="arrival"] .sceneCopy {
-    gap: 10px;
-  }
-
-  .arrivalModuleBlock {
-    gap: 7px;
-    margin-bottom: 8px;
-    padding: 15px 18px 16px;
+    gap: 8vh;
   }
 
   .sceneCopy h1,

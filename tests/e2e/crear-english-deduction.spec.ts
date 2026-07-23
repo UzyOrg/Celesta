@@ -124,11 +124,24 @@ test('cinematic English probe records transfer and D7 without false mastery', as
   await expect(page.getByRole('navigation', { name: 'Fases de la experiencia' })).toHaveCount(0);
   await expect(page.getByRole('region', { name: 'Explorador de evidencias' })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Estoy listo', exact: true })).toBeInViewport();
+  const narrationAudio = page.locator('audio');
+  await expect.poll(() => narrationAudio.evaluate((element) => (element as HTMLAudioElement).currentSrc))
+    .toContain('/audio/crear/english-deduction/arrival.mp3');
+  await expect(page.locator('main')).toHaveAttribute('data-voice-state', 'ready');
   await capture(page, 'celestea-v2-mobile-hero.png');
   await page.getByRole('button', { name: 'Estoy listo', exact: true }).click();
 
   const precheckHeading = page.getByRole('heading', { name: '¿Qué crees que pasó?' });
   await expect(precheckHeading).toBeVisible();
+  await expect.poll(() => narrationAudio.evaluate((element) => (element as HTMLAudioElement).currentSrc))
+    .toContain('/audio/crear/english-deduction/precheck.mp3');
+  await expect.poll(() => narrationAudio.evaluate((element) => (element as HTMLAudioElement).volume))
+    .toBeGreaterThan(0.9);
+  await expect.poll(() => narrationAudio.evaluate((element) => (element as HTMLAudioElement).currentTime))
+    .toBeGreaterThan(0);
+  await expect(page.locator('main')).toHaveAttribute('data-voice-state', 'playing');
+  await page.getByRole('button', { name: 'Pausar voz', exact: true }).click();
+  await expect(page.locator('main')).toHaveAttribute('data-voice-state', 'paused');
   expect(await precheckHeading.evaluate((element) => getComputedStyle(element).fontSize)).toBe('28px');
   const precheckSubtitle = page.locator('p[class*="sceneBody"]').first();
   expect(await precheckSubtitle.evaluate((element) => getComputedStyle(element).fontSize)).toBe('12px');
@@ -154,6 +167,9 @@ test('cinematic English probe records transfer and D7 without false mastery', as
   );
 
   await expect(page.getByRole('heading', { name: 'Las dos frases hablan del mismo cambio, pero no dicen lo mismo.' })).toBeVisible();
+  await expect.poll(() => narrationAudio.evaluate((element) => (element as HTMLAudioElement).currentSrc))
+    .toContain('/audio/crear/english-deduction/contrast.mp3');
+  await expect(page.locator('main')).toHaveAttribute('data-voice-state', 'playing');
   const factRadio = page.getByRole('radio', { name: 'Cuenta algo que alguien vio.', exact: true });
   const inferenceRadio = page.getByRole('radio', { name: 'Expresa una conclusión basada en pistas.', exact: true });
   await factRadio.check();
