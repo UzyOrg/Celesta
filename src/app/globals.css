@@ -1,4 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap');
+@import "../../tokens.css";
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600..800&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap');
 
 :root {
   /* Crystal Theme Palette */
@@ -19,6 +20,7 @@
 }
 
 html {
+  overflow-x: clip;
   scroll-behavior: smooth;
 }
 
@@ -27,7 +29,8 @@ html {
 @tailwind utilities;
 
 body {
-  background-color: #0D1117;
-  color: white;
+  background-color: var(--bg-deep-dark);
+  color: var(--text-neutral-100);
   font-family: 'Plus Jakarta Sans', sans-serif;
+  overflow-x: clip;
 }

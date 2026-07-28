@@ -1,7 +1,12 @@
 "use client";
 
 import { trackEvent } from '@/lib/track';
-import type { CrearFase, CrearResponsePartAnswer, CrearTelemetryResult } from './types';
+import type {
+  CrearFase,
+  CrearResponseCategory,
+  CrearResponsePartAnswer,
+  CrearTelemetryResult,
+} from './types';
 
 interface TrackCrearAnswerInput {
   tallerId: string;
@@ -11,6 +16,9 @@ interface TrackCrearAnswerInput {
   rama: string;
   texto?: string;
   partes?: CrearResponsePartAnswer[];
+  mapping?: Record<string, CrearResponseCategory>;
+  assisted?: boolean;
+  targetCategory?: CrearResponseCategory;
   score?: number;
   checksum?: string;
   intento?: number;
@@ -46,6 +54,18 @@ export async function trackCrearAnswer(input: TrackCrearAnswerInput): Promise<vo
 
   if (partes && partes.length > 0) {
     result.partes = partes;
+  }
+
+  if (input.mapping) {
+    result.mapping = input.mapping;
+  }
+
+  if (typeof input.assisted === 'boolean') {
+    result.assisted = input.assisted;
+  }
+
+  if (input.targetCategory) {
+    result.targetCategory = input.targetCategory;
   }
 
   if (typeof input.score === 'number') {

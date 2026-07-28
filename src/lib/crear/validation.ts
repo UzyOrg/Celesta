@@ -6,7 +6,7 @@ import type {
   CrearWorkshop,
 } from './types';
 
-const INPUT_MODES = new Set(['none', 'text', 'choice', 'verdict']);
+const INPUT_MODES = new Set(['none', 'text', 'choice', 'verdict', 'match']);
 const FASES = new Set(['pre_check', 'practica', 'post', 'transfer', 'teach_back']);
 const STAGES = new Set(['descubre', 'practica', 'aplica', 'recuerda']);
 const SCENES = new Set(['arrival', 'signal', 'contrast', 'prism', 'practice', 'transfer', 'closure', 'retest']);
@@ -63,11 +63,13 @@ function validateMeta(meta: CrearStepMeta, refId: string): void {
   if (!meta || typeof meta !== 'object') {
     throw new Error(`CREAR JSON: ${refId}.crear must be an object`);
   }
-  if (!meta.audio || typeof meta.audio.src !== 'string' || !meta.audio.src.startsWith('/audio/')) {
-    throw new Error(`CREAR JSON: ${refId}.crear.audio.src must start with /audio/`);
-  }
-  if (typeof meta.audio.text !== 'string' || meta.audio.text.length === 0) {
-    throw new Error(`CREAR JSON: ${refId}.crear.audio.text must be non-empty`);
+  if (meta.audio !== undefined) {
+    if (typeof meta.audio.src !== 'string' || !meta.audio.src.startsWith('/audio/')) {
+      throw new Error(`CREAR JSON: ${refId}.crear.audio.src must start with /audio/`);
+    }
+    if (typeof meta.audio.text !== 'string' || meta.audio.text.length === 0) {
+      throw new Error(`CREAR JSON: ${refId}.crear.audio.text must be non-empty`);
+    }
   }
   if (meta.input !== undefined && !INPUT_MODES.has(meta.input)) {
     throw new Error(`CREAR JSON: ${refId}.crear.input is invalid`);
@@ -143,6 +145,99 @@ function validateMeta(meta: CrearStepMeta, refId: string): void {
       throw new Error(
         `CREAR JSON: ${refId}.crear.responseParts must author each semantic category once`
       );
+    }
+  }
+  if (meta.formula !== undefined) {
+    if (
+      !Array.isArray(meta.formula) ||
+      meta.formula.length === 0 ||
+      meta.formula.some((part) =>
+        !part ||
+        typeof part.value !== 'string' ||
+        !part.value.trim() ||
+        typeof part.label !== 'string' ||
+        !part.label.trim() ||
+        (part.lang !== undefined && part.lang !== 'es-MX' && part.lang !== 'en-US')
+      )
+    ) {
+      throw new Error(`CREAR JSON: ${refId}.crear.formula must contain labeled sentence parts`);
+    }
+  }
+  if (meta.certaintyMap !== undefined) {
+    if (meta.input !== 'match') {
+      throw new Error(`CREAR JSON: ${refId}.crear.certaintyMap requires match input`);
+    }
+    const map = meta.certaintyMap;
+    if (typeof map.instruction !== 'string' || map.instruction.trim().length === 0) {
+      throw new Error(`CREAR JSON: ${refId}.crear.certaintyMap.instruction must be non-empty`);
+    }
+    if (!Array.isArray(map.categories) || map.categories.length !== RESPONSE_CATEGORIES.length) {
+      throw new Error(`CREAR JSON: ${refId}.crear.certaintyMap.categories must contain three items`);
+    }
+    const categoryIds = map.categories.map((category, index) => {
+      if (
+        !category ||
+        !RESPONSE_CATEGORY_SET.has(category.id) ||
+        typeof category.label !== 'string' ||
+        typeof category.term !== 'string' ||
+        !category.label.trim() ||
+        !category.term.trim()
+      ) {
+        throw new Error(
+          `CREAR JSON: ${refId}.crear.certaintyMap.categories[${index}] is invalid`
+        );
+      }
+      return category.id;
+    });
+    if (
+      new Set(categoryIds).size !== RESPONSE_CATEGORIES.length ||
+      RESPONSE_CATEGORIES.some((category) => !categoryIds.includes(category))
+    ) {
+      throw new Error(
+        `CREAR JSON: ${refId}.crear.certaintyMap.categories must author each category once`
+      );
+    }
+    if (!Array.isArray(map.statements) || map.statements.length !== RESPONSE_CATEGORIES.length) {
+      throw new Error(`CREAR JSON: ${refId}.crear.certaintyMap.statements must contain three items`);
+    }
+    const statementIds = new Set<string>();
+    map.statements.forEach((statement, index) => {
+      if (
+        !statement ||
+        typeof statement.id !== 'string' ||
+        !statement.id.trim() ||
+        statementIds.has(statement.id) ||
+        typeof statement.clue !== 'string' ||
+        !statement.clue.trim() ||
+        typeof statement.sentenceStart !== 'string' ||
+        !statement.sentenceStart.trim() ||
+        typeof statement.sentenceEnd !== 'string' ||
+        !statement.sentenceEnd.trim() ||
+        !RESPONSE_CATEGORY_SET.has(statement.correctCategory)
+      ) {
+        throw new Error(
+          `CREAR JSON: ${refId}.crear.certaintyMap.statements[${index}] is invalid`
+        );
+      }
+      statementIds.add(statement.id);
+    });
+    for (const field of ['successTitle', 'successBody'] as const) {
+      if (typeof map[field] !== 'string' || !map[field].trim()) {
+        throw new Error(`CREAR JSON: ${refId}.crear.certaintyMap.${field} must be non-empty`);
+      }
+    }
+    if (map.production !== undefined) {
+      if (
+        !RESPONSE_CATEGORY_SET.has(map.production.category) ||
+        typeof map.production.prompt !== 'string' ||
+        !map.production.prompt.trim() ||
+        typeof map.production.placeholder !== 'string' ||
+        !map.production.placeholder.trim() ||
+        !Number.isFinite(map.production.minChars) ||
+        map.production.minChars < 1
+      ) {
+        throw new Error(`CREAR JSON: ${refId}.crear.certaintyMap.production is invalid`);
+      }
     }
   }
 

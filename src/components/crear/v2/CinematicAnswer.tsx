@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, ArrowRight, Check, Sparkles } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, Loader2 } from 'lucide-react';
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import {
   CREAR_MAX_ANSWER_LENGTH,
@@ -10,7 +10,7 @@ import {
   type CrearResponsePartAnswer,
 } from '@/lib/crear/types';
 import type { ChoiceOption } from '../AnswerComposer';
-import styles from './CinematicEnglishPlayer.module.css';
+import styles from './CinematicEnglishPlayer.hallmark.module.css';
 
 interface CinematicAnswerProps {
   mode: CrearInputMode;
@@ -154,7 +154,7 @@ export function CinematicAnswer({
         >
           {pending ? (
             <>
-              <Sparkles className={styles.thinkingIcon} size={18} />
+              <Loader2 className={styles.thinkingIcon} size={18} />
               <span>Revisando…</span>
             </>
           ) : (
@@ -238,6 +238,7 @@ export function CinematicAnswer({
             rows={3}
             maxLength={CREAR_MAX_RESPONSE_PART_LENGTH}
             lang="en-US"
+            disabled={pending}
             spellCheck
           />
         </div>
@@ -262,7 +263,7 @@ export function CinematicAnswer({
           >
             {pending ? (
               <>
-                <Sparkles className={styles.thinkingIcon} size={18} />
+                <Loader2 className={styles.thinkingIcon} size={18} />
                 <span>Leyendo tus ideas…</span>
               </>
             ) : (
@@ -298,6 +299,7 @@ export function CinematicAnswer({
           rows={4}
           maxLength={CREAR_MAX_ANSWER_LENGTH}
           lang="en-US"
+          disabled={pending}
           spellCheck
         />
       </div>
@@ -309,7 +311,7 @@ export function CinematicAnswer({
       >
         {pending ? (
           <>
-            <Sparkles className={styles.thinkingIcon} size={18} />
+            <Loader2 className={styles.thinkingIcon} size={18} />
             <span>Leyendo tu idea…</span>
           </>
         ) : (

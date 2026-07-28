@@ -1,0 +1,16 @@
+{
+  "scannedAt": "2026-07-27",
+  "scope": "src/components/crear/v2/CinematicCertaintyMap.tsx",
+  "framework": "Next.js 15 App Router",
+  "styling": "CSS Modules",
+  "fontStack": "Plus Jakarta Sans with system sans fallbacks",
+  "palette": "Celestea crystal dark with cyan, lavender, mint and warm semantic accents",
+  "motion": "framer-motion 11 with prefers-reduced-motion support",
+  "spacing": "Existing 4/8px-derived component rhythm",
+  "preserve": [
+    "Celestea crystal-dark identity",
+    "one-task sequential lesson structure",
+    "tap and drag parity",
+    "existing lesson and telemetry contracts"
+  ]
+}

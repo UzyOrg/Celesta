@@ -3,15 +3,15 @@
 import { AnimatePresence, MotionConfig, motion, useReducedMotion } from 'framer-motion';
 import {
   ArrowLeft,
+  BookOpenText,
   ChevronLeft,
   ChevronRight,
   CalendarClock,
   Check,
   Clock3,
   FileClock,
-  LockKeyhole,
+  Loader2,
   RotateCcw,
-  Sparkles,
   X,
 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState, type RefObject } from 'react';
@@ -50,16 +50,19 @@ import {
 import type {
   ClassifyResponse,
   CrearClassifierBranch,
+  CrearCertaintyMapSubmission,
   CrearExperienceStage,
   CrearPaso,
+  CrearResponseCategory,
   CrearResponsePartAnswer,
   CrearWorkshop,
 } from '@/lib/crear/types';
 import { DEFAULT_CREAR_LESSON_ID } from '@/lib/crear/types';
 import { CinematicAnswer } from './CinematicAnswer';
+import { CinematicCertaintyMap } from './CinematicCertaintyMap';
 import { CinematicVoice } from './CinematicVoice';
 import { useCinematicNarration } from './useCinematicNarration';
-import styles from './CinematicEnglishPlayer.module.css';
+import styles from './CinematicEnglishPlayer.hallmark.module.css';
 
 interface FeedbackState {
   title: string;
@@ -327,6 +330,17 @@ function ConceptPrism({ step }: { step: CrearPaso }) {
   const formula = step.crear?.formula ?? [];
   const [activeConceptId, setActiveConceptId] = useState(concepts[0]?.id ?? '');
   const activeConcept = concepts.find((concept) => concept.id === activeConceptId) ?? concepts[0];
+  const activeExampleParts = (() => {
+    if (!activeConcept) return null;
+    const sentence = activeConcept.example.trim().replace(/[.!?]+$/, '');
+    const marker = ` ${activeConcept.term.toLowerCase()} `;
+    const markerIndex = sentence.toLowerCase().indexOf(marker);
+    if (markerIndex < 0) return null;
+    return {
+      subject: sentence.slice(0, markerIndex),
+      action: sentence.slice(markerIndex + marker.length),
+    };
+  })();
 
   if (concepts.length === 0 && formula.length === 0) return null;
 
@@ -334,12 +348,12 @@ function ConceptPrism({ step }: { step: CrearPaso }) {
     <div className={styles.prismWrap}>
       {concepts.length > 0 ? (
         <>
-          <div className={styles.prismSelector} aria-label="Elige un nivel de certeza">
+          <div className={styles.prismSelector} aria-label="Tres niveles de seguridad">
             {concepts.map((concept) => (
               <button
                 aria-pressed={concept.id === activeConcept?.id}
                 className={styles.prismOption}
-                data-strength={concept.strength}
+                data-active={concept.id === activeConcept?.id ? 'true' : 'false'}
                 key={concept.id}
                 type="button"
                 onClick={() => setActiveConceptId(concept.id)}
@@ -360,20 +374,27 @@ function ConceptPrism({ step }: { step: CrearPaso }) {
                 transition={{ duration: 0.24 }}
                 aria-live="polite"
               >
-                {activeConcept.description ? <p>{activeConcept.description}</p> : null}
-                <small>Ejemplo</small>
-                <p lang="en-US">{activeConcept.example}</p>
+                <p className={styles.prismMeaning}>{activeConcept.description}</p>
+                <p className={styles.prismSentence} lang="en-US">{activeConcept.example}</p>
               </motion.div>
             ) : null}
           </AnimatePresence>
         </>
       ) : null}
       {formula.length > 0 ? (
-        <div className={styles.formulaRail} aria-label="Estructura gramatical">
+        <div className={styles.formulaRail} aria-label="Partes de una deducción sobre el pasado">
           {formula.map((part, index) => (
-            <span key={part}>
-              <b lang="en-US">{part}</b>
-              {index < formula.length - 1 ? <i aria-hidden="true">+</i> : null}
+            <span key={`${part.value}-${part.label}`}>
+              <b lang={part.lang}>
+                {index === 0 && activeExampleParts
+                  ? activeExampleParts.subject
+                  : index === 1 && activeConcept
+                    ? activeConcept.term.toLowerCase()
+                    : index === 2 && activeExampleParts
+                      ? activeExampleParts.action
+                      : part.value}
+              </b>
+              <small>{part.label}</small>
             </span>
           ))}
         </div>
@@ -432,6 +453,7 @@ function AmbientField({ paused }: AmbientFieldProps) {
             loop
             muted
             playsInline
+            poster="/video/bg_waves-poster.png"
             preload="metadata"
             ref={videoRef}
             tabIndex={-1}
@@ -453,6 +475,7 @@ export function CinematicEnglishPlayer() {
   const structuredEvidenceRef = useRef<HTMLDivElement | null>(null);
   const structuredAnswerRef = useRef<HTMLDivElement | null>(null);
   const feedbackActionRef = useRef<HTMLButtonElement>(null);
+  const guideCloseRef = useRef<HTMLButtonElement>(null);
   const exitContinueRef = useRef<HTMLButtonElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
   const bootedRef = useRef(false);
@@ -469,6 +492,7 @@ export function CinematicEnglishPlayer() {
   const [lastOutcome, setLastOutcome] = useState<OutcomeState | null>(null);
   const [inputFocused, setInputFocused] = useState(false);
   const [exitConfirm, setExitConfirm] = useState(false);
+  const [guideOpen, setGuideOpen] = useState(false);
   const [pageHidden, setPageHidden] = useState(false);
   const [liteMode, setLiteMode] = useState(false);
   const [clockNow, setClockNow] = useState(() => Date.now());
@@ -477,6 +501,10 @@ export function CinematicEnglishPlayer() {
   const currentStep = lesson?.pasos[currentIndex] ?? null;
   const currentStage = currentStep?.crear?.stage ?? 'descubre';
   const currentScene = currentStep?.crear?.scene ?? 'signal';
+  const guideStep = lesson?.pasos.find((step) => step.crear?.scene === 'prism') ?? null;
+  const guideUnlocked = Boolean(
+    guideStep && lesson && currentIndex > lesson.pasos.indexOf(guideStep)
+  );
   const audioAssetsReady = Boolean(
     lesson && lesson.audio_asset_version === lesson.content_version
   );
@@ -489,7 +517,7 @@ export function CinematicEnglishPlayer() {
   });
   const pauseNarration = narration.pause;
   const hasStructuredEvidenceFlow = Boolean(
-    currentStep?.crear?.responseParts?.length &&
+    (currentStep?.crear?.responseParts?.length || currentStep?.crear?.certaintyMap) &&
     currentStep.crear.evidencePresentation &&
     currentStep.crear.evidence?.length
   );
@@ -610,20 +638,29 @@ export function CinematicEnglishPlayer() {
   }, [study?.retestDueAt]);
 
   useEffect(() => {
-    if (!feedback && !exitConfirm) return;
+    if (!feedback && !exitConfirm && !guideOpen) return;
 
     pauseNarration();
 
     previousFocusRef.current = document.activeElement instanceof HTMLElement
       ? document.activeElement
       : null;
-    const targetRef = exitConfirm ? exitContinueRef : feedbackActionRef;
+    const targetRef = exitConfirm
+      ? exitContinueRef
+      : guideOpen
+        ? guideCloseRef
+        : feedbackActionRef;
     const frame = window.requestAnimationFrame(() => targetRef.current?.focus());
 
     function handleDialogKeyDown(event: KeyboardEvent) {
       if (event.key === 'Escape' && exitConfirm) {
         event.preventDefault();
         setExitConfirm(false);
+        return;
+      }
+      if (event.key === 'Escape' && guideOpen) {
+        event.preventDefault();
+        setGuideOpen(false);
         return;
       }
       if (event.key !== 'Tab') return;
@@ -651,7 +688,7 @@ export function CinematicEnglishPlayer() {
       document.removeEventListener('keydown', handleDialogKeyDown);
       previousFocusRef.current?.focus({ preventScroll: true });
     };
-  }, [exitConfirm, feedback, pauseNarration]);
+  }, [exitConfirm, feedback, guideOpen, pauseNarration]);
 
   useEffect(() => {
     if (currentStep && !feedback) {
@@ -688,7 +725,12 @@ export function CinematicEnglishPlayer() {
     text: string,
     attemptNumber: number,
     confidence: number,
-    parts?: CrearResponsePartAnswer[]
+    parts?: CrearResponsePartAnswer[],
+    details?: {
+      mapping?: Record<string, CrearResponseCategory>;
+      assisted?: boolean;
+      targetCategory?: CrearResponseCategory;
+    }
   ): void {
     const stepId = getStepId(step);
     setStudy((current) => {
@@ -699,6 +741,9 @@ export function CinematicEnglishPlayer() {
         score,
         text,
         ...(parts && parts.length > 0 ? { parts } : {}),
+        ...(details?.mapping ? { mapping: details.mapping } : {}),
+        ...(typeof details?.assisted === 'boolean' ? { assisted: details.assisted } : {}),
+        ...(details?.targetCategory ? { targetCategory: details.targetCategory } : {}),
         attempt: attemptNumber,
         confidence,
         submittedAt: Date.now(),
@@ -759,7 +804,13 @@ export function CinematicEnglishPlayer() {
       transitionMs: sceneTransitionMs,
     });
     const delayHours = effectiveRetestDelayHours(nextStep);
-    const nextStudy: Partial<CrearStudyState> = { stepIndex: nextIndex };
+    const nextStudy: Partial<CrearStudyState> = {
+      stepIndex: nextIndex,
+      awaitingFeedback: {
+        ...study.awaitingFeedback,
+        [getStepId(step)]: false,
+      },
+    };
     if (delayHours != null && study.phase === 'initial') {
       nextStudy.phase = 'waiting_retest';
       nextStudy.retestDueAt = Date.now() + delayHours * 60 * 60 * 1000;
@@ -771,6 +822,7 @@ export function CinematicEnglishPlayer() {
     setAttempt(0);
     setInputFocused(false);
     setStructuredView('explore');
+    setGuideOpen(false);
     setCurrentIndex(nextIndex);
   }
 
@@ -826,7 +878,12 @@ export function CinematicEnglishPlayer() {
     score: number,
     text: string,
     attemptNumber: number,
-    parts?: CrearResponsePartAnswer[]
+    parts?: CrearResponsePartAnswer[],
+    details?: {
+      mapping?: Record<string, CrearResponseCategory>;
+      assisted?: boolean;
+      targetCategory?: CrearResponseCategory;
+    }
   ) {
     if (!lesson || !study) return;
     void trackCrearAnswer({
@@ -837,6 +894,9 @@ export function CinematicEnglishPlayer() {
       rama: branch,
       texto: text,
       partes: parts,
+      mapping: details?.mapping,
+      assisted: details?.assisted,
+      targetCategory: details?.targetCategory,
       score,
       attempt: attemptNumber,
       studyId: study.studyId,
@@ -934,6 +994,104 @@ export function CinematicEnglishPlayer() {
     setFeedback(buildChoiceFeedback(currentStep, correct, attemptNumber));
   }
 
+  async function handleSubmitMap(submission: CrearCertaintyMapSubmission) {
+    if (!currentStep || !lesson || !study || !currentStep.crear?.certaintyMap) return;
+    setPending(true);
+    const attemptNumber = attempt + 1;
+    setAttempt(attemptNumber);
+    const targetCategory = currentStep.crear.certaintyMap.production?.category;
+    const answerText = submission.productionText?.trim()
+      || JSON.stringify(submission.assignments);
+
+    try {
+      const classification = submission.productionText
+        ? await classifyText(currentStep, submission.productionText)
+        : { rama: submission.assisted ? 'mapa_asistido' : 'mapa_independiente', confianza: 1 };
+      const branch = submission.productionText
+        ? findBranch(currentStep, classification.rama)
+        : null;
+      const correct = submission.productionText ? branch?.correcto ?? false : true;
+      const score = submission.productionText
+        ? branch?.score ?? 0
+        : submission.assisted ? 0.75 : 1;
+      const details = {
+        mapping: submission.assignments,
+        assisted: submission.assisted,
+        ...(targetCategory ? { targetCategory } : {}),
+      };
+
+      persistAttempt(
+        currentStep,
+        classification.rama,
+        correct,
+        score,
+        answerText,
+        attemptNumber,
+        classification.confianza,
+        undefined,
+        details
+      );
+      queueAnswerTelemetry(
+        currentStep,
+        classification.rama,
+        correct,
+        score,
+        answerText,
+        attemptNumber,
+        undefined,
+        details
+      );
+      setLastOutcome({ branch: classification.rama, correct, score });
+
+      if (submission.productionText) {
+        if (!correct) {
+          markAssistance('answer_retry');
+        }
+        setFeedback(buildBranchFeedback(
+          currentStep,
+          branch,
+          classification.rama,
+          classification.confianza,
+          attemptNumber
+        ));
+        return;
+      }
+
+      setFeedback({
+        title: currentStep.crear.certaintyMap.successTitle,
+        body: currentStep.crear.certaintyMap.successBody,
+        actionLabel: 'Continuar',
+        retry: false,
+        nextRefId: currentStep.crear.nextRefId ?? null,
+        correct: true,
+      });
+    } finally {
+      setPending(false);
+    }
+  }
+
+  function markAssistance(reason: 'guide_opened' | 'map_retry' | 'answer_retry'): void {
+    if (!currentStep || !lesson || !study) return;
+    const stepId = getStepId(currentStep);
+    if (!study.assistance[stepId]) {
+      persistStudy({
+        assistance: { ...study.assistance, [stepId]: true },
+      });
+    }
+    void trackCrearHint({
+      tallerId: lesson.id_taller,
+      pasoId: stepId,
+      rama: reason,
+      checksum: lesson.checksum,
+      studyId: study.studyId,
+    });
+  }
+
+  function openGuide(): void {
+    markAssistance('guide_opened');
+    setGuideOpen(true);
+  }
+
   function handleContinue() {
     if (!currentStep) return;
     advance(currentStep, currentStep.crear?.nextRefId ?? null);
@@ -941,15 +1099,13 @@ export function CinematicEnglishPlayer() {
 
   function handleFeedbackAction() {
     if (!currentStep || !feedback) return;
-    const stepId = getStepId(currentStep);
-    setStudy((current) => {
-      if (!current) return current;
-      return saveCrearStudyState({
-        ...current,
-        awaitingFeedback: { ...current.awaitingFeedback, [stepId]: false },
-      });
-    });
     if (feedback.retry) {
+      persistStudy({
+        awaitingFeedback: {
+          ...study?.awaitingFeedback,
+          [getStepId(currentStep)]: false,
+        },
+      });
       setFeedback(null);
       return;
     }
@@ -970,10 +1126,10 @@ export function CinematicEnglishPlayer() {
 
   if (loading) {
     return (
-      <main className={styles.pageShell} data-scene="arrival" lang="es-MX">
+      <main className={styles.pageShell} data-scene="arrival" data-celestea-create="true" lang="es-MX">
         <AmbientField paused={Boolean(prefersReducedMotion) || liteMode || pageHidden} />
         <div className={styles.loadingScene} role="status">
-          <span className={styles.loadingOrb}><Sparkles size={24} /></span>
+          <span className={styles.loadingOrb}><Loader2 size={24} /></span>
           <p>Preparando el caso…</p>
         </div>
       </main>
@@ -982,7 +1138,7 @@ export function CinematicEnglishPlayer() {
 
   if (error || !lesson || !currentStep || !study) {
     return (
-      <main className={styles.pageShell} data-scene="arrival" lang="es-MX">
+      <main className={styles.pageShell} data-scene="arrival" data-celestea-create="true" lang="es-MX">
         <AmbientField paused={Boolean(prefersReducedMotion) || liteMode || pageHidden} />
         <section className={styles.errorScene}>
           <span><RotateCcw size={22} /></span>
@@ -998,7 +1154,7 @@ export function CinematicEnglishPlayer() {
 
   if (completed) {
     return (
-      <main className={styles.pageShell} data-scene="closure" lang="es-MX">
+      <main className={styles.pageShell} data-scene="closure" data-celestea-create="true" lang="es-MX">
         <AmbientField paused={Boolean(prefersReducedMotion) || liteMode || pageHidden} />
         <section className={styles.completionScene}>
           <span className={styles.completionMark}><Check size={28} /></span>
@@ -1012,7 +1168,7 @@ export function CinematicEnglishPlayer() {
             <strong>
               {lastOutcome
                 ? lastOutcome.correct
-                  ? 'Pudiste usar las tres formas en un caso nuevo.'
+                  ? 'Pudiste escribir una deducción en un caso nuevo.'
                   : 'Ya sabemos qué conviene practicar de nuevo.'
                 : 'La revisión quedó guardada.'}
             </strong>
@@ -1032,7 +1188,13 @@ export function CinematicEnglishPlayer() {
       timeStyle: 'short',
     }).format(study.retestDueAt);
     return (
-      <main className={styles.pageShell} data-scene="closure" lang="es-MX">
+      <main
+        className={styles.pageShell}
+        data-scene="closure"
+        data-gate="retest"
+        data-celestea-create="true"
+        lang="es-MX"
+      >
         <AmbientField paused={Boolean(prefersReducedMotion) || liteMode || pageHidden} />
         <header className={styles.topBar} aria-hidden={exitConfirm ? true : undefined}>
           <button className={styles.iconButton} type="button" onClick={() => setExitConfirm(true)} aria-label="Salir">
@@ -1042,18 +1204,20 @@ export function CinematicEnglishPlayer() {
           <span className={styles.retestPill}><CalendarClock size={14} /> Día 7</span>
         </header>
         <section className={styles.gateScene} aria-hidden={exitConfirm ? true : undefined}>
-          <span className={styles.gateIcon}><LockKeyhole size={24} /></span>
-          <h1>Volvemos en una semana.</h1>
-          <p>Hoy resolviste un caso nuevo. Regresa sin repasar para descubrir qué recuerdas.</p>
-          <div className={styles.retestDate}>
-            <Clock3 size={19} />
-            <span>
-              <small>Revisión disponible</small>
-              <strong>{dueDate}</strong>
-            </span>
+          <div className={styles.gateContent}>
+            <span className={styles.gateLabel}><CalendarClock size={16} /> Próxima revisión</span>
+            <h1>Volvemos en una semana.</h1>
+            <p>Hoy resolviste un caso nuevo. Regresa sin repasar para descubrir qué recuerdas.</p>
+            <div className={styles.retestDate}>
+              <Clock3 size={18} />
+              <span>
+                <small>Disponible</small>
+                <strong>{dueDate}</strong>
+              </span>
+            </div>
           </div>
-          <button className={styles.secondaryAction} type="button" onClick={() => window.location.assign('/')}>
-            Cerrar por hoy
+          <button className={styles.gatePrimaryAction} type="button" onClick={() => window.location.assign('/')}>
+            Listo, cerrar
           </button>
         </section>
         <AnimatePresence>
@@ -1072,7 +1236,17 @@ export function CinematicEnglishPlayer() {
   const sceneTransition = prefersReducedMotion
     ? { duration: 0.12 }
     : { duration: 0.52, ease: [0.22, 1, 0.36, 1] as const };
-  const answerElement = (
+  const answerElement = mode === 'match' && currentStep.crear?.certaintyMap ? (
+    <CinematicCertaintyMap
+      key={getStepId(currentStep)}
+      config={currentStep.crear.certaintyMap}
+      pending={pending}
+      assisted={Boolean(study.assistance[getStepId(currentStep)])}
+      onAssistance={() => markAssistance('map_retry')}
+      onSubmit={handleSubmitMap}
+      onFocusChange={setInputFocused}
+    />
+  ) : (
     <CinematicAnswer
       key={getStepId(currentStep)}
       mode={mode}
@@ -1099,12 +1273,13 @@ export function CinematicEnglishPlayer() {
         data-scene={currentScene}
         data-stage={currentStage}
         data-audio-ready={audioAssetsReady ? 'true' : 'false'}
-        data-structured={currentStep.crear?.responseParts ? 'true' : 'false'}
+        data-structured={currentStep.crear?.responseParts || currentStep.crear?.certaintyMap ? 'true' : 'false'}
         data-structured-view={hasStructuredEvidenceFlow ? structuredView : undefined}
         data-voice-state={narration.status}
         data-input-focused={inputFocused ? 'true' : 'false'}
         data-page-hidden={pageHidden ? 'true' : 'false'}
         data-lite={liteMode ? 'true' : 'false'}
+        data-celestea-create="true"
         lang="es-MX"
       >
         <AmbientField paused={Boolean(prefersReducedMotion) || liteMode || pageHidden} />
@@ -1118,7 +1293,7 @@ export function CinematicEnglishPlayer() {
         />
         <section
           className={styles.experienceShell}
-          aria-hidden={feedback || exitConfirm ? true : undefined}
+          aria-hidden={feedback || exitConfirm || guideOpen ? true : undefined}
         >
           <header
             className={styles.topBar}
@@ -1159,15 +1334,27 @@ export function CinematicEnglishPlayer() {
             )}
           </header>
 
-          <AnimatePresence mode="wait">
-            <motion.article
-              className={styles.scene}
-              key={getStepId(currentStep)}
-              initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: 16, scale: 0.985 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: -8, scale: 0.992 }}
-              transition={sceneTransition}
-            >
+          <motion.article
+            className={styles.scene}
+            key={getStepId(currentStep)}
+            initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: 16, scale: 0.985 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={sceneTransition}
+          >
+              {currentStep.crear?.guideAvailable
+                && guideUnlocked
+                && guideStep
+                && !(hasStructuredEvidenceFlow && structuredView === 'answer') ? (
+                <button
+                  aria-label="Ayuda"
+                  className={styles.guideAction}
+                  type="button"
+                  onClick={openGuide}
+                >
+                  <BookOpenText size={16} />
+                  Guía
+                </button>
+              ) : null}
               {!(hasStructuredEvidenceFlow && structuredView === 'answer') ? (
                 <div className={styles.sceneCopy} data-scene={currentScene}>
                   {currentScene === 'arrival' && display?.learningGoal ? (
@@ -1208,6 +1395,7 @@ export function CinematicEnglishPlayer() {
                 <CinematicVoice
                   audio={audio}
                   compact={compactVoice}
+                  presentation={currentScene === 'arrival' ? 'intro' : 'default'}
                   status={narration.status}
                   onToggle={narration.toggle}
                 />
@@ -1220,20 +1408,35 @@ export function CinematicEnglishPlayer() {
                   ref={structuredAnswerRef}
                   tabIndex={-1}
                 >
-                  <button className={styles.reviewEvidenceAction} type="button" onClick={showStructuredEvidence}>
-                    <ArrowLeft size={16} />
-                    Revisar pistas
-                  </button>
+                  <div className={styles.answerUtilities}>
+                    <button className={styles.reviewEvidenceAction} type="button" onClick={showStructuredEvidence}>
+                      <ArrowLeft size={16} />
+                      Revisar pistas
+                    </button>
+                    {currentStep.crear?.guideAvailable && guideUnlocked && guideStep ? (
+                    <button
+                      aria-label="Ayuda"
+                      className={styles.answerHelpAction}
+                      type="button"
+                      onClick={openGuide}
+                    >
+                      <BookOpenText size={15} />
+                      Guía
+                    </button>
+                    ) : null}
+                  </div>
                   {answerElement}
                 </div>
               ) : answerElement}
-            </motion.article>
-          </AnimatePresence>
+          </motion.article>
         </section>
 
-        <AnimatePresence>
-          {feedback ? (
-            <motion.div className={styles.sheetBackdrop} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+        {feedback ? (
+            <motion.div
+              className={styles.sheetBackdrop}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+            >
               <motion.section
                 className={styles.feedbackSheet}
                 data-correct={feedback.correct ? 'true' : 'false'}
@@ -1243,14 +1446,12 @@ export function CinematicEnglishPlayer() {
                 aria-describedby="feedback-body"
                 initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: 28 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 18 }}
                 transition={{ duration: prefersReducedMotion ? 0.12 : 0.36, ease: [0.22, 1, 0.36, 1] }}
               >
-                <span className={styles.feedbackSignal}>{feedback.correct ? <Check size={20} /> : <Sparkles size={20} />}</span>
+                <span className={styles.feedbackSignal}>
+                  {feedback.correct ? <Check size={20} /> : <RotateCcw size={20} />}
+                </span>
                 <div>
-                  {!feedback.correct ? (
-                    <p role="status" aria-live="polite">PROBEMOS DE NUEVO</p>
-                  ) : null}
                   <h2 id="feedback-title" lang="es-MX">{feedback.title}</h2>
                   <span id="feedback-body" lang="es-MX">{feedback.body}</span>
                 </div>
@@ -1266,6 +1467,12 @@ export function CinematicEnglishPlayer() {
               </motion.section>
             </motion.div>
           ) : null}
+        <AnimatePresence>
+          {guideOpen && guideStep
+            ? renderGuideSheet(guideStep, () => setGuideOpen(false), guideCloseRef)
+            : null}
+        </AnimatePresence>
+        <AnimatePresence>
           {exitConfirm
             ? renderExitSheet(setExitConfirm, confirmExit, exitContinueRef)
             : null}
@@ -1275,13 +1482,62 @@ export function CinematicEnglishPlayer() {
   );
 }
 
+function renderGuideSheet(
+  guideStep: CrearPaso,
+  closeGuide: () => void,
+  closeButtonRef: RefObject<HTMLButtonElement>
+) {
+  return (
+    <motion.div
+      key="guide-sheet"
+      className={styles.sheetBackdrop}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+    >
+      <motion.section
+        className={styles.guideSheet}
+        initial={{ opacity: 0, y: 24 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 18 }}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="guide-title"
+      >
+        <div className={styles.guideHeading}>
+          <span><BookOpenText size={18} /></span>
+          <div>
+            <small>Consúltala cuando la necesites</small>
+            <h2 id="guide-title">Tres formas de decir qué tan seguro estás</h2>
+          </div>
+        </div>
+        <ConceptPrism step={guideStep} />
+        <button
+          ref={closeButtonRef}
+          className={styles.primaryAction}
+          type="button"
+          onClick={closeGuide}
+        >
+          Volver al caso
+        </button>
+      </motion.section>
+    </motion.div>
+  );
+}
+
 function renderExitSheet(
   setExitConfirm: (open: boolean) => void,
   confirmExit: () => void | Promise<void>,
   continueButtonRef: RefObject<HTMLButtonElement>
 ) {
   return (
-    <motion.div className={styles.sheetBackdrop} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+    <motion.div
+      key="exit-sheet"
+      className={styles.sheetBackdrop}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+    >
       <motion.section
         className={styles.exitSheet}
         initial={{ opacity: 0, y: 24 }}

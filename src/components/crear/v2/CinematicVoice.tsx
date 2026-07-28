@@ -4,12 +4,13 @@ import { Pause, Play, RotateCcw, Volume2 } from 'lucide-react';
 import type { CSSProperties } from 'react';
 import type { CrearAudioLine } from '@/lib/crear/types';
 import type { CinematicVoiceStatus } from './useCinematicNarration';
-import styles from './CinematicEnglishPlayer.module.css';
+import styles from './CinematicEnglishPlayer.hallmark.module.css';
 
 interface CinematicVoiceProps {
   audio: CrearAudioLine;
   status: CinematicVoiceStatus;
   compact?: boolean;
+  presentation?: 'default' | 'intro';
   onToggle: () => void | Promise<void>;
 }
 
@@ -17,15 +18,25 @@ export function CinematicVoice({
   audio,
   status,
   compact = false,
+  presentation = 'default',
   onToggle,
 }: CinematicVoiceProps) {
   const actionLabel = status === 'playing' ? 'Pausar voz' : status === 'ended' ? 'Repetir voz' : 'Reproducir voz';
   const VoiceIcon = status === 'playing' ? Pause : status === 'ended' ? RotateCcw : Play;
+  const isIntro = presentation === 'intro';
+  const visibleLabel = isIntro
+    ? status === 'playing'
+      ? 'Escuchando introducción'
+      : status === 'ended'
+        ? 'Escuchar de nuevo'
+        : 'Escuchar introducción'
+    : audio.label ?? 'Voz de Celestea';
 
   return (
     <section
       className={`${styles.voicePresence} ${compact ? styles.voicePresenceCompact : ''}`}
       data-voice-state={status}
+      data-presentation={presentation}
       aria-label="Voz de Celestea"
     >
       <button className={styles.voiceControl} type="button" onClick={onToggle} aria-label={actionLabel}>
@@ -45,9 +56,14 @@ export function CinematicVoice({
       <div className={styles.voiceTranscript}>
         <span className={styles.voiceLabel}>
           <span className={styles.liveDot} aria-hidden="true" />
-          {audio.label ?? 'Voz de Celestea'}
+          {visibleLabel}
         </span>
-        <p lang={audio.lang ?? 'en-US'}>{audio.text}</p>
+        <p
+          className={isIntro && status !== 'error' ? styles.visuallyHidden : undefined}
+          lang={audio.lang ?? 'en-US'}
+        >
+          {audio.text}
+        </p>
         {status === 'error' ? <small>El audio no cargó; el texto sigue disponible.</small> : null}
       </div>
     </section>

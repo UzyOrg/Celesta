@@ -1,0 +1,139 @@
+# Celestea · Current State
+
+Last updated: 2026-07-27
+
+This is a compact handoff for a fresh Codex task. It records the current
+checkpoint, not permanent repository policy. Read `AGENTS.md` first; it wins
+over deprecated documents in this repository.
+
+## Product decision
+
+Celestea is a B2C, voice-first learning companion for Mexican prepa students.
+The current MVP uses English deduction at B1+/B2 as the test domain, not as the
+entire long-term company.
+
+The learning loop is:
+
+1. discover the distinction;
+2. practice with feedback;
+3. apply it to a new case (transfer);
+4. return for a durable retest.
+
+The product must reduce cognitive and emotional friction without making the
+learning evidence dishonest. Transfer and the later retest matter more than
+completion, surveillance, streaks, or decorative gamification.
+
+## Current MVP
+
+Route: `/crear`
+
+Lesson: `CREAR-ENGLISH-DEDUCTION-V1`, content version `2026-07-27`, lesson
+version `1.4.0`.
+
+The current session contains:
+
+- a Spanish introduction with pre-generated ElevenLabs audio;
+- a short contrast exercise;
+- a guided explanation of `must have`, `might have`, and `can't have`;
+- a low-friction certainty-mapping interaction with tap and drag support;
+- a consultable guide whose use is recorded as assisted;
+- one transfer case with a short English production response;
+- a seven-day retest;
+- local-first study state and telemetry;
+- a constrained classifier that returns authored branch keys only.
+
+Do not reintroduce the old three-long-free-text-answer flow. It caused stress,
+repetition, fatigue, and poor recall of the explanation in the first observed
+student test.
+
+## Approved UX direction
+
+The active visual system is custom Hallmark, called **“chalk over film”**:
+
+- dark, quiet, cinematic, and mobile-first;
+- neutral chalk interface instead of cyan/lavender neon UI;
+- the founder-provided wave MP4 remains the atmospheric layer;
+- the arrival hierarchy is orientation → case → voice → action;
+- no `01 CASO` eyebrow, ornamental line, audio card, or visibly truncated
+  transcript;
+- the introduction audio is an integrated 44×44 control;
+- the primary arrival action is ivory and remains in the thumb zone;
+- the full narration text stays available to assistive technology and becomes
+  visible if audio fails.
+
+The background loop is intentional: opacity fades from 0 → 1 → 0 around the
+real video duration. **Do not add an opacity floor or replace this behavior**
+without founder approval. A poster extracted from the same MP4 prevents a dead
+loading frame.
+
+The previous Hallmark Aurora direction was rejected because it preserved too
+much of the old composition and used recognizable AI-tool neon colors.
+
+## Source files
+
+- `AGENTS.md` — durable engineering and product rules.
+- `public/workshops/CREAR-ENGLISH-DEDUCTION-V1.json` — authored lesson.
+- `src/app/crear/page.tsx` — route and video preload.
+- `src/components/crear/v2/CinematicEnglishPlayer.tsx` — experience player.
+- `src/components/crear/v2/CinematicEnglishPlayer.hallmark.module.css` — active
+  visual and interaction layer.
+- `src/components/crear/v2/CinematicCertaintyMap.tsx` — tap/drag certainty task.
+- `src/components/crear/v2/CinematicAnswer.tsx` — answer surfaces.
+- `src/components/crear/v2/CinematicVoice.tsx` — narration control.
+- `src/lib/crear/` — study state, telemetry, contracts, and validation.
+- `tokens.css` — active Celestea design tokens.
+- `tests/e2e/crear-english-deduction.spec.ts` — behavioral and responsive
+  regression suite.
+- `.hallmark/audit-chalk-over-film-2026-07-27.md` — current design audit.
+
+## Verification checkpoint
+
+Most recent checks:
+
+- `npm run typecheck` — passed.
+- `npx playwright test tests/e2e/crear-english-deduction.spec.ts` — 9/9 passed.
+- responsive checks — 320×812, 375×812, 414×896, 768×1024, and 1280×800.
+- no horizontal overflow in the tested viewports;
+- arrival title remains one line on mobile;
+- video fade is verified near zero at both ends of the loop;
+- transfer, assisted correction, guide telemetry, D7, tap, pointer drag, and
+  reduced motion are covered.
+
+The dev server can be started with:
+
+```bash
+npm run dev -- --hostname 127.0.0.1 --port 3000
+```
+
+## Git checkpoint
+
+The working tree is currently dirty. The current changes include the lesson
+1.4 flow, certainty map, audio behavior, telemetry/state contracts, the
+Hallmark redesign, video poster, and E2E coverage. Treat all existing changes
+as founder-owned work. Do not reset, overwrite, or discard unrelated files.
+
+Before beginning another substantial feature, review `git status` and create a
+checkpoint commit if the founder approves.
+
+## Known boundaries
+
+- TTS output is v1; student input remains text. STT is a fast-follow, not part
+  of this checkpoint.
+- Lesson content is pre-authored. The LLM classifies; it does not generate
+  lesson content or UI at runtime.
+- Do not extend legacy teacher, dashboard, anti-cheat, Cognitive Gym, or
+  Verification OS areas.
+- Do not add Tailwind to the new `/crear` work.
+- Do not interpret visual polish as market validation. The next meaningful
+  evidence comes from observed student sessions and learning/transfer data.
+
+## How to resume in a fresh Codex task
+
+Use the same local project, open a completely new task (not a fork), and send:
+
+> Read `AGENTS.md` and `docs/CURRENT_STATE.md`. Inspect `git status` before
+> changing anything. Preserve the approved decisions and current uncommitted
+> work. My next task is: [one concrete objective].
+
+Update this file only when the product checkpoint changes materially. Do not
+turn it into a chronological diary.

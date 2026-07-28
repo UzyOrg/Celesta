@@ -1,6 +1,10 @@
 "use client";
 
-import type { CrearLessonId, CrearResponsePartAnswer } from './types';
+import type {
+  CrearLessonId,
+  CrearResponseCategory,
+  CrearResponsePartAnswer,
+} from './types';
 
 export type CrearStudyPhase = 'initial' | 'waiting_retest' | 'completed';
 
@@ -10,6 +14,9 @@ export interface CrearStoredOutcome {
   score: number;
   text: string;
   parts?: CrearResponsePartAnswer[];
+  mapping?: Record<string, CrearResponseCategory>;
+  assisted?: boolean;
+  targetCategory?: CrearResponseCategory;
   attempt: number;
   confidence: number;
   submittedAt: number;
@@ -28,6 +35,7 @@ export interface CrearStudyState {
   firstOutcomes: Record<string, CrearStoredOutcome>;
   latestOutcomes: Record<string, CrearStoredOutcome>;
   awaitingFeedback: Record<string, boolean>;
+  assistance: Record<string, boolean>;
 }
 
 const STORAGE_PREFIX = 'celesta:crear:study';
@@ -96,6 +104,7 @@ export function loadCrearStudyState(lessonId: CrearLessonId): CrearStudyState | 
     const firstOutcomes = parsed.firstOutcomes ?? {};
     const latestOutcomes = parsed.latestOutcomes ?? {};
     const awaitingFeedback = parsed.awaitingFeedback ?? {};
+    const assistance = parsed.assistance ?? {};
     if (
       parsed.lessonId !== lessonId ||
       typeof parsed.studyId !== 'string' ||
@@ -110,7 +119,8 @@ export function loadCrearStudyState(lessonId: CrearLessonId): CrearStudyState | 
       !isRecordOf(attempts, isNonNegativeInteger) ||
       !isRecordOf(firstOutcomes, isStoredOutcome) ||
       !isRecordOf(latestOutcomes, isStoredOutcome) ||
-      !isRecordOf(awaitingFeedback, (value): value is boolean => typeof value === 'boolean')
+      !isRecordOf(awaitingFeedback, (value): value is boolean => typeof value === 'boolean') ||
+      !isRecordOf(assistance, (value): value is boolean => typeof value === 'boolean')
     ) {
       return null;
     }
@@ -128,6 +138,7 @@ export function loadCrearStudyState(lessonId: CrearLessonId): CrearStudyState | 
       firstOutcomes,
       latestOutcomes,
       awaitingFeedback,
+      assistance,
     };
   } catch {
     return null;
@@ -154,6 +165,7 @@ export function getOrCreateCrearStudyState(
     firstOutcomes: {},
     latestOutcomes: {},
     awaitingFeedback: {},
+    assistance: {},
   };
   saveCrearStudyState(state);
   return state;

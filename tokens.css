@@ -1,0 +1,80 @@
+:root {
+  /* Celestea · Hallmark custom system: chalk over film */
+  --celestea-font-display: "Bricolage Grotesque", "Plus Jakarta Sans", ui-sans-serif, sans-serif;
+  --celestea-font-body: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+
+  --celestea-paper: oklch(11.5% 0.022 266);
+  --celestea-paper-deep: oklch(8.5% 0.018 266);
+  --celestea-paper-raised: oklch(17% 0.028 260);
+  --celestea-paper-high: oklch(21% 0.032 256);
+  --celestea-paper-soft: oklch(25% 0.03 256);
+  --celestea-paper-translucent: oklch(11.5% 0.022 266 / 0.9);
+  --celestea-scrim: oklch(6% 0.018 266 / 0.82);
+  --celestea-ink: oklch(96% 0.01 245);
+  --celestea-ink-soft: oklch(86% 0.016 245);
+  --celestea-muted: oklch(73% 0.018 248);
+  --celestea-muted-quiet: oklch(61% 0.02 252);
+  --celestea-rule: oklch(34% 0.018 252);
+  --celestea-rule-strong: oklch(48% 0.022 248);
+  --celestea-accent: oklch(92% 0.018 84);
+  --celestea-accent-soft: oklch(92% 0.018 84 / 0.13);
+  --celestea-accent-quiet: oklch(92% 0.018 84 / 0.07);
+  --celestea-accent-ink: oklch(14% 0.024 260);
+  --celestea-focus: oklch(92% 0.018 84);
+  --celestea-success: oklch(78% 0.105 166);
+  --celestea-success-soft: oklch(78% 0.105 166 / 0.12);
+  --celestea-warning: oklch(82% 0.11 82);
+  --celestea-error: oklch(72% 0.16 28);
+  --celestea-error-soft: oklch(72% 0.16 28 / 0.11);
+  --celestea-wave: oklch(74% 0.13 238 / 0.24);
+  --celestea-wave-clear: oklch(74% 0.13 238 / 0);
+  --celestea-overlay-top: oklch(8.5% 0.018 266 / 0.76);
+  --celestea-overlay-bottom: oklch(8.5% 0.018 266 / 0.05);
+  --celestea-wave-fallback-cyan: rgb(86 206 255 / 0.42);
+  --celestea-wave-fallback-lavender: rgb(166 132 255 / 0.42);
+  --celestea-wash-top: rgb(7 10 16 / 0.72);
+  --celestea-wash-middle: rgb(7 10 16 / 0.18);
+  --celestea-wash-bottom: rgb(7 10 16 / 0.42);
+  --celestea-wash-vignette: rgb(7 10 16 / 0.28);
+  --celestea-dot: rgb(196 216 255 / 0.24);
+  --celestea-horizon-cyan: rgb(118 216 255 / 0.38);
+  --celestea-horizon-lavender: rgb(179 155 255 / 0.3);
+  --celestea-mask-solid: black;
+  --celestea-mask-middle: rgb(0 0 0 / 0.7);
+
+  --celestea-space-3xs: 0.125rem;
+  --celestea-space-2xs: 0.25rem;
+  --celestea-space-xs: 0.5rem;
+  --celestea-space-sm: 0.75rem;
+  --celestea-space-md: 1rem;
+  --celestea-space-lg: 1.5rem;
+  --celestea-space-xl: 2.5rem;
+  --celestea-space-2xl: 4rem;
+  --celestea-space-3xl: 6rem;
+
+  --celestea-text-xs: 0.75rem;
+  --celestea-text-sm: 0.875rem;
+  --celestea-text-base: 1rem;
+  --celestea-text-md: 1.125rem;
+  --celestea-text-lg: 1.375rem;
+  --celestea-text-title: 1.75rem;
+  --celestea-text-display: 2.25rem;
+
+  --celestea-radius-sm: 0.625rem;
+  --celestea-radius-control: 0.875rem;
+  --celestea-radius-surface: 1.25rem;
+  --celestea-radius-sheet: 1.75rem;
+
+  --celestea-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --celestea-ease-in: cubic-bezier(0.7, 0, 0.84, 0);
+  --celestea-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --celestea-dur-micro: 100ms;
+  --celestea-dur-short: 180ms;
+  --celestea-dur-medium: 280ms;
+  --celestea-dur-long: 420ms;
+
+  --celestea-z-base: 1;
+  --celestea-z-raised: 10;
+  --celestea-z-sticky: 200;
+  --celestea-z-modal: 400;
+}

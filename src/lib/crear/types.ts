@@ -8,7 +8,7 @@ export type CrearLessonId =
 
 export type CrearFase = 'pre_check' | 'practica' | 'post' | 'transfer' | 'teach_back';
 
-export type CrearInputMode = 'none' | 'text' | 'choice' | 'verdict';
+export type CrearInputMode = 'none' | 'text' | 'choice' | 'verdict' | 'match';
 
 export type CrearExperienceStage = 'descubre' | 'practica' | 'aplica' | 'recuerda';
 
@@ -109,6 +109,42 @@ export interface CrearResponsePartAnswer {
   rama?: string;
 }
 
+export interface CrearCertaintyCategory {
+  id: CrearResponseCategory;
+  label: string;
+  term: string;
+}
+
+export interface CrearCertaintyStatement {
+  id: string;
+  clue: string;
+  sentenceStart: string;
+  sentenceEnd: string;
+  correctCategory: CrearResponseCategory;
+}
+
+export interface CrearProductionPrompt {
+  category: CrearResponseCategory;
+  prompt: string;
+  placeholder: string;
+  minChars: number;
+}
+
+export interface CrearCertaintyMap {
+  instruction: string;
+  categories: CrearCertaintyCategory[];
+  statements: CrearCertaintyStatement[];
+  production?: CrearProductionPrompt;
+  successTitle: string;
+  successBody: string;
+}
+
+export interface CrearCertaintyMapSubmission {
+  assignments: Record<string, CrearResponseCategory>;
+  productionText?: string;
+  assisted: boolean;
+}
+
 export interface CrearConceptCard {
   id: string;
   term: string;
@@ -116,6 +152,12 @@ export interface CrearConceptCard {
   description?: string;
   example: string;
   strength: 'strong' | 'open' | 'ruled_out';
+}
+
+export interface CrearFormulaPart {
+  value: string;
+  label: string;
+  lang?: 'es-MX' | 'en-US';
 }
 
 export interface CrearComparison {
@@ -127,7 +169,7 @@ export interface CrearComparison {
 
 export interface CrearStepMeta {
   fase?: CrearFase;
-  audio: CrearAudioLine;
+  audio?: CrearAudioLine;
   input?: CrearInputMode;
   nextRefId?: string;
   classifier?: CrearClassifierDefinition;
@@ -139,9 +181,11 @@ export interface CrearStepMeta {
   evidence?: CrearEvidenceItem[];
   evidencePresentation?: CrearEvidencePresentation;
   responseParts?: CrearResponsePart[];
+  certaintyMap?: CrearCertaintyMap;
+  guideAvailable?: boolean;
   concepts?: CrearConceptCard[];
   comparison?: CrearComparison;
-  formula?: string[];
+  formula?: CrearFormulaPart[];
   revealFeedback?: boolean;
   allowRetry?: boolean;
   maxAttempts?: number;
@@ -183,6 +227,9 @@ export interface CrearTelemetryResult extends Record<string, unknown> {
   texto?: string;
   score?: number;
   partes?: CrearResponsePartAnswer[];
+  mapping?: Record<string, CrearResponseCategory>;
+  assisted?: boolean;
+  targetCategory?: CrearResponseCategory;
   attempt?: number;
   /** @deprecated Compatibility with events emitted before content version 2026-07-19. */
   intento?: number;
