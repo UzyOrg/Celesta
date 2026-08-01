@@ -1,16 +1,29 @@
 {
-  "scannedAt": "2026-07-27",
-  "scope": "src/components/crear/v2/CinematicCertaintyMap.tsx",
+  "scannedAt": "2026-07-31",
+  "scope": "Celestea /crear fixed-slot certainty motion and practice spacing",
   "framework": "Next.js 15 App Router",
   "styling": "CSS Modules",
-  "fontStack": "Plus Jakarta Sans with system sans fallbacks",
-  "palette": "Celestea crystal dark with cyan, lavender, mint and warm semantic accents",
-  "motion": "framer-motion 11 with prefers-reduced-motion support",
-  "spacing": "Existing 4/8px-derived component rhythm",
+  "fontStack": "Bricolage Grotesque display with Plus Jakarta Sans body",
+  "palette": "Neutral ivory chalk over the founder-owned blue-black wave film",
+  "motion": "Framer Motion 11 transform-only travelers between measured fixed source slots and the sentence, with reduced-motion support",
+  "spacing": "Existing Celestea 4/8px-derived token rhythm",
   "preserve": [
-    "Celestea crystal-dark identity",
-    "one-task sequential lesson structure",
+    "Celestea chalk-over-film identity",
+    "one-clue-at-a-time lesson structure",
+    "three permanent semantic option positions",
+    "stable sentence target height and term-to-rule spacing",
     "tap and drag parity",
+    "founder-owned wave fade and poster",
     "existing lesson and telemetry contracts"
+  ],
+  "avoid": [
+    "thick side-stripe translation cards",
+    "duplicate scene and task headings",
+    "teleporting or opacity-only term replacement",
+    "baseline shifts when the sentence receives a term",
+    "recentring unselected options",
+    "decorative gradient horizon rules",
+    "generic filler copy",
+    "forced waiting between practice and transfer"
   ]
 }

@@ -1,9 +1,9 @@
 {
   "id_taller": "CREAR-ENGLISH-DEDUCTION-V1",
-  "version": "1.4.0",
+  "version": "1.6.1",
   "schema_version": "0.1",
-  "content_version": "2026-07-27",
-  "audio_asset_version": "2026-07-27",
+  "content_version": "2026-07-30",
+  "audio_asset_version": "2026-07-30",
   "titulo": "El archivo desaparecido",
   "metadata": {
     "grado": "Prepa",
@@ -78,9 +78,9 @@
         },
         "comparison": {
           "leftLabel": "FRASE A",
-          "left": "The cloud replaced the file.",
+          "left": "Valeria painted the poster.",
           "rightLabel": "FRASE B",
-          "right": "The cloud must have replaced the file."
+          "right": "Valeria must have painted the poster."
         },
         "audio": {
           "src": "/audio/crear/english-deduction/contrast.mp3",
@@ -118,7 +118,7 @@
             "term": "MUST HAVE",
             "meaning": "Casi seguro",
             "description": "Crees que ocurrió. Tienes razones fuertes para pensarlo, aunque no lo viste.",
-            "example": "Camila must have changed the title.",
+            "example": "Valeria must have painted the poster.",
             "strength": "strong"
           },
           {
@@ -126,7 +126,7 @@
             "term": "MIGHT HAVE",
             "meaning": "Es posible",
             "description": "Es una posibilidad. Puede haber ocurrido, pero no estás seguro.",
-            "example": "Mateo might have changed the title.",
+            "example": "Mateo might have helped with the poster.",
             "strength": "open"
           },
           {
@@ -134,7 +134,7 @@
             "term": "CAN'T HAVE",
             "meaning": "Descartado",
             "description": "Crees que no ocurrió. La información disponible lo descarta.",
-            "example": "Iker can't have changed the title.",
+            "example": "Iker can't have helped with the poster.",
             "strength": "ruled_out"
           }
         ],
@@ -180,8 +180,7 @@
         "scene": "practice",
         "display": {
           "eyebrow": "",
-          "headline": "Completa cada deducción.",
-          "body": "Lee una señal y elige la expresión que completa la frase."
+          "headline": "Completa la frase."
         },
         "input": "match",
         "guideAvailable": true,
@@ -206,40 +205,76 @@
           ],
           "statements": [
             {
-              "id": "camila",
-              "clue": "The edit history lists Camila as the author.",
-              "sentenceStart": "Camila",
-              "sentenceEnd": "changed the title.",
-              "correctCategory": "casi_seguro"
+              "id": "valeria",
+              "clue": "Valeria had fresh blue paint on her hands. The poster had the same paint.",
+              "translationEs": "Valeria tenía pintura azul fresca en las manos. El cartel tenía la misma pintura.",
+              "sentenceStart": "Valeria",
+              "sentenceEnd": "painted the poster.",
+              "correctCategory": "casi_seguro",
+              "feedbackIncorrecto": "La pintura conecta directamente a Valeria con el cartel: la evidencia es fuerte."
             },
             {
               "id": "mateo",
-              "clue": "Mateo opened the folder. What he did next is unknown.",
+              "clue": "Mateo stayed after class. No one saw whether he worked on the poster.",
+              "translationEs": "Mateo se quedó después de clase. Nadie vio si trabajó en el cartel.",
               "sentenceStart": "Mateo",
-              "sentenceEnd": "changed the title.",
-              "correctCategory": "posible"
+              "sentenceEnd": "helped with the poster.",
+              "correctCategory": "posible",
+              "feedbackIncorrecto": "Estar ahí lo hace posible, pero nadie vio qué hizo: no puedes asegurarlo."
             },
             {
               "id": "iker",
-              "clue": "Iker had read-only access. Editing was blocked.",
+              "clue": "Iker was playing a match at another school when the poster was made.",
+              "translationEs": "Iker estaba jugando un partido en otra escuela cuando hicieron el cartel.",
               "sentenceStart": "Iker",
-              "sentenceEnd": "changed the title.",
-              "correctCategory": "imposible"
+              "sentenceEnd": "helped with the poster.",
+              "correctCategory": "imposible",
+              "feedbackIncorrecto": "El partido lo coloca fuera de la escuela: esta acción queda descartada."
             }
           ],
           "successTitle": "Elegiste las tres expresiones",
           "successBody": "Usaste la información para decidir cuánta seguridad comunica cada frase."
         },
-        "nextRefId": "transfer"
+        "revealFeedback": false,
+        "nextRefId": "transfer-bridge"
       }
     },
     {
       "paso_numero": 5,
+      "ref_id": "transfer-bridge",
+      "tipo_paso": "instruccion",
+      "titulo_paso": "Puente hacia la transferencia",
+      "instruccion": {
+        "texto": "Usa la misma idea en un caso nuevo."
+      },
+      "bloquea_avance_si_falla": false,
+      "puntaje": 0,
+      "crear": {
+        "fase": "transfer",
+        "stage": "aplica",
+        "scene": "transfer-bridge",
+        "display": {
+          "eyebrow": "",
+          "headline": "La misma idea, en otro caso.",
+          "body": "Ahora trabajarás con una maqueta para la feria. Seguirás viendo una pista a la vez."
+        },
+        "audio": {
+          "src": "/audio/crear/english-deduction/transfer-bridge.wav",
+          "text": "Bien. Ya resolviste tres deducciones con ayuda. Ahora cambia el caso, no la idea. Vas a investigar una maqueta para la feria y usarás lo que acabas de aprender. Verás una pista a la vez. Cuando quieras, empieza.",
+          "lang": "es-MX",
+          "label": "Celestea · Nuevo caso"
+        },
+        "input": "none",
+        "nextRefId": "transfer"
+      }
+    },
+    {
+      "paso_numero": 6,
       "ref_id": "transfer",
       "tipo_paso": "transferencia",
-      "titulo_paso": "Un misterio musical",
+      "titulo_paso": "La maqueta de la feria",
       "transferencia": {
-        "escenario": "Una canción debía publicarse a medianoche.",
+        "escenario": "Un equipo preparó una maqueta para la feria de ciencias.",
         "pregunta": "Usa las pistas para explicar qué pudo haber ocurrido.",
         "opciones": [],
         "respuesta_correcta": "",
@@ -254,30 +289,7 @@
         "scene": "transfer",
         "display": {
           "eyebrow": "",
-          "headline": "Ahora resuelve un misterio musical.",
-          "body": "El contexto cambia, pero la idea es la misma. Revisa cada señal y completa la deducción."
-        },
-        "evidence": [
-          {
-            "id": "leo",
-            "label": "Acceso de Leo",
-            "value": "Leo had access to the caption. The edit log is incomplete."
-          },
-          {
-            "id": "mara",
-            "label": "Cuenta de Mara",
-            "value": "Mara's account was disabled before 11:00 p.m. Uploading was blocked."
-          },
-          {
-            "id": "schedule",
-            "label": "Panel del lanzamiento · 12:00 a. m.",
-            "value": "RELEASE STATUS: SCHEDULED"
-          }
-        ],
-        "evidencePresentation": {
-          "mode": "sequential",
-          "allowReview": true,
-          "initialEvidenceId": "leo"
+          "headline": "La maqueta de la feria."
         },
         "input": "match",
         "guideAvailable": true,
@@ -302,31 +314,37 @@
           ],
           "statements": [
             {
-              "id": "scheduled",
-              "clue": "The release panel showed SCHEDULED at midnight.",
-              "sentenceStart": "The track",
-              "sentenceEnd": "been scheduled.",
-              "correctCategory": "casi_seguro"
+              "id": "elena",
+              "clue": "Elena had fresh glue on her hands. The same glue was on the model.",
+              "translationEs": "Elena tenía pegamento fresco en las manos. La maqueta tenía el mismo pegamento.",
+              "sentenceStart": "Elena",
+              "sentenceEnd": "worked on the model.",
+              "correctCategory": "casi_seguro",
+              "feedbackIncorrecto": "El mismo pegamento conecta directamente a Elena con la maqueta: la evidencia es fuerte."
             },
             {
-              "id": "caption",
-              "clue": "Leo had access. The edit log is incomplete.",
+              "id": "leo",
+              "clue": "Leo stayed in the classroom during lunch. No one saw what he worked on.",
+              "translationEs": "Leo se quedó en el salón durante el recreo. Nadie vio en qué trabajó.",
               "sentenceStart": "Leo",
-              "sentenceEnd": "edited the caption.",
-              "correctCategory": "posible"
+              "sentenceEnd": "worked on the model.",
+              "correctCategory": "posible",
+              "feedbackIncorrecto": "Leo estaba ahí, pero nadie vio qué hizo: la pista solo deja una posibilidad."
             },
             {
-              "id": "upload",
-              "clue": "Mara's account was disabled. Uploading was blocked.",
+              "id": "mara",
+              "clue": "Mara left school before the model arrived.",
+              "translationEs": "Mara salió de la escuela antes de que llegara la maqueta.",
               "sentenceStart": "Mara",
-              "sentenceEnd": "uploaded the track.",
-              "correctCategory": "imposible"
+              "sentenceEnd": "worked on the model.",
+              "correctCategory": "imposible",
+              "feedbackIncorrecto": "Mara ya se había ido cuando llegó la maqueta: esta acción queda descartada."
             }
           ],
           "production": {
             "category": "posible",
-            "prompt": "Nora tenía acceso a la portada, pero no aparece quién la cambió. Escribe una posibilidad sobre Nora en inglés.",
-            "placeholder": "Nora might have…",
+            "prompt": "Nora estuvo en el salón durante el recreo. Nadie vio en qué trabajó. Escribe una posibilidad en inglés.",
+            "placeholder": "Nora might have worked…",
             "minChars": 14
           },
           "successTitle": "Completaste las tres deducciones",
@@ -342,9 +360,9 @@
               "rama": "correcto",
               "descripcion": "Uses a possibility modal and attributes a plausible past action to Nora.",
               "ejemplos": [
-                "Nora might have changed the cover.",
-                "Nora may have edited the artwork.",
-                "Nora could have updated the image."
+                "Nora might have worked on the model.",
+                "Nora may have helped with the project.",
+                "Nora could have painted the model."
               ],
               "match": {
                 "allGroups": [
@@ -363,7 +381,7 @@
             {
               "rama": "misconcepcion_certeza",
               "descripcion": "Turns an open possibility into certainty or impossibility.",
-              "ejemplos": ["Nora must have changed it", "Nora can't have changed it"],
+              "ejemplos": ["Nora must have worked on it", "Nora can't have helped"],
               "match": {
                 "any": ["nora must have", "nora can't have", "nora cannot have"]
               },
@@ -371,7 +389,7 @@
               "score": 0.5,
               "feedback": {
                 "title": "La pista deja una posibilidad abierta",
-                "body": "Tener acceso no demuestra la acción. Usa una forma que conserve esa duda."
+                "body": "Estar en el salón no demuestra qué hizo. Usa una forma que conserve esa duda."
               }
             },
             {
@@ -405,7 +423,7 @@
       }
     },
     {
-      "paso_numero": 6,
+      "paso_numero": 7,
       "ref_id": "close",
       "tipo_paso": "instruccion",
       "titulo_paso": "Cierre",
@@ -433,18 +451,18 @@
       }
     },
     {
-      "paso_numero": 7,
+      "paso_numero": 8,
       "ref_id": "retest",
       "tipo_paso": "pregunta_abierta_validada",
       "titulo_paso": "Revisión de día 7",
       "pregunta_abierta_validada": {
-        "pregunta": "La cuenta de Emi estaba desactivada desde el día anterior. Escribe en inglés qué no pudo haber hecho Emi.",
+        "pregunta": "Emi estaba en una excursión cuando alguien movió el cartel del salón. Escribe en inglés qué no pudo haber hecho Emi.",
         "placeholder": "Emi can't have…",
         "validacion": {
           "tipo": "palabras_clave",
           "criterio": ["emi", "can't have"],
           "feedback_correcto": "Usaste una pista para descartar una acción una semana después.",
-          "feedback_incorrecto": "La cuenta desactivada permite descartar una acción."
+          "feedback_incorrecto": "La excursión permite descartar que Emi moviera el cartel."
         }
       },
       "bloquea_avance_si_falla": false,
@@ -460,9 +478,9 @@
         },
         "evidence": [
           {
-            "id": "disabled",
-            "label": "Cuenta de Emi",
-            "value": "Emi's account had been disabled since the day before."
+            "id": "school-trip",
+            "label": "Ubicación de Emi",
+            "value": "Emi was on a school trip when someone moved the classroom poster."
           }
         ],
         "input": "text",
@@ -477,9 +495,9 @@
               "rama": "correcto",
               "descripcion": "Uses an impossibility past modal and attributes the excluded action to Emi.",
               "ejemplos": [
-                "Emi can't have pushed the update.",
-                "Emi cannot have changed the code.",
-                "Emi couldn't have uploaded the file."
+                "Emi can't have moved the poster.",
+                "Emi cannot have changed the classroom display.",
+                "Emi couldn't have taken down the poster."
               ],
               "match": {
                 "allGroups": [
@@ -507,7 +525,7 @@
               "score": 0.5,
               "feedback": {
                 "title": "La pista permite descartar",
-                "body": "La cuenta estaba desactivada. La frase debe mostrar que esa acción no pudo ocurrir.",
+                "body": "Emi estaba fuera de la escuela. La frase debe mostrar que esa acción no pudo ocurrir.",
                 "actionLabel": "Terminar"
               }
             },

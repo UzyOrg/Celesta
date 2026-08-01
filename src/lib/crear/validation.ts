@@ -9,7 +9,17 @@ import type {
 const INPUT_MODES = new Set(['none', 'text', 'choice', 'verdict', 'match']);
 const FASES = new Set(['pre_check', 'practica', 'post', 'transfer', 'teach_back']);
 const STAGES = new Set(['descubre', 'practica', 'aplica', 'recuerda']);
-const SCENES = new Set(['arrival', 'signal', 'contrast', 'prism', 'practice', 'transfer', 'closure', 'retest']);
+const SCENES = new Set([
+  'arrival',
+  'signal',
+  'contrast',
+  'prism',
+  'practice',
+  'transfer-bridge',
+  'transfer',
+  'closure',
+  'retest',
+]);
 const RESPONSE_CATEGORIES: readonly CrearResponseCategory[] = [
   'casi_seguro',
   'posible',
@@ -218,6 +228,16 @@ function validateMeta(meta: CrearStepMeta, refId: string): void {
         throw new Error(
           `CREAR JSON: ${refId}.crear.certaintyMap.statements[${index}] is invalid`
         );
+      }
+      for (const field of ['translationEs', 'feedbackIncorrecto'] as const) {
+        if (
+          statement[field] !== undefined &&
+          (typeof statement[field] !== 'string' || !statement[field].trim())
+        ) {
+          throw new Error(
+            `CREAR JSON: ${refId}.crear.certaintyMap.statements[${index}].${field} must be non-empty`
+          );
+        }
       }
       statementIds.add(statement.id);
     });

@@ -10,7 +10,7 @@ interface CinematicVoiceProps {
   audio: CrearAudioLine;
   status: CinematicVoiceStatus;
   compact?: boolean;
-  presentation?: 'default' | 'intro';
+  presentation?: 'default' | 'intro' | 'bridge';
   onToggle: () => void | Promise<void>;
 }
 
@@ -24,12 +24,19 @@ export function CinematicVoice({
   const actionLabel = status === 'playing' ? 'Pausar voz' : status === 'ended' ? 'Repetir voz' : 'Reproducir voz';
   const VoiceIcon = status === 'playing' ? Pause : status === 'ended' ? RotateCcw : Play;
   const isIntro = presentation === 'intro';
+  const isBridge = presentation === 'bridge';
   const visibleLabel = isIntro
     ? status === 'playing'
       ? 'Escuchando introducción'
       : status === 'ended'
         ? 'Escuchar de nuevo'
         : 'Escuchar introducción'
+    : isBridge
+      ? status === 'playing'
+        ? 'Escuchando el nuevo caso'
+        : status === 'ended'
+          ? 'Escuchar de nuevo'
+          : 'Escuchar el nuevo caso'
     : audio.label ?? 'Voz de Celestea';
 
   return (
@@ -59,7 +66,7 @@ export function CinematicVoice({
           {visibleLabel}
         </span>
         <p
-          className={isIntro && status !== 'error' ? styles.visuallyHidden : undefined}
+          className={(isIntro || isBridge) && status !== 'error' ? styles.visuallyHidden : undefined}
           lang={audio.lang ?? 'en-US'}
         >
           {audio.text}

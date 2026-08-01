@@ -3,7 +3,7 @@ import path from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
 
 const LESSON_ID = 'CREAR-ENGLISH-DEDUCTION-V1';
-const CONTENT_VERSION = '2026-07-27';
+const CONTENT_VERSION = '2026-07-30';
 const ARTIFACT_DIR = path.join(process.cwd(), 'test-artifacts');
 
 interface CapturedLearningEvent {
@@ -18,6 +18,7 @@ interface CapturedLearningEvent {
     mapping?: Record<string, string>;
     rama?: string;
     score?: number;
+    statementId?: string;
     targetCategory?: string;
     texto?: string;
   };
@@ -84,7 +85,7 @@ async function reachGuidedMap(page: Page) {
   await page.getByRole('button', { name: 'Continuar', exact: true }).click();
   await page.getByRole('button', { name: 'Continuar', exact: true }).click();
   await expect(page.getByRole('heading', {
-    name: 'Completa cada deducción.',
+    name: 'Completa la frase.',
     exact: true,
   })).toBeVisible();
 }
@@ -101,14 +102,6 @@ async function assignCorrectMap(page: Page) {
       await page.getByRole('button', { name: 'Siguiente', exact: true }).click();
     }
   }
-}
-
-async function revealTransferEvidence(page: Page) {
-  const explorer = page.getByRole('region', { name: 'Explorador de evidencias' });
-  await expect(explorer.getByText('Pista 1 de 3', { exact: true })).toBeVisible();
-  await explorer.getByRole('button', { name: 'Ver siguiente pista', exact: true }).click();
-  await explorer.getByRole('button', { name: 'Ver siguiente pista', exact: true }).click();
-  await explorer.getByRole('button', { name: 'Responder el caso', exact: true }).click();
 }
 
 test('Hallmark arrival reads as one quiet cinematic task at 375px', async ({ page }) => {
@@ -229,25 +222,49 @@ test('completes a low-friction session and preserves transfer plus D7 evidence',
   await assignCorrectMap(page);
   await page.getByRole('button', { name: 'Comprobar', exact: true }).click();
   await expect(page.getByRole('heading', {
-    name: 'Elegiste las tres expresiones',
+    name: 'La misma idea, en otro caso.',
     exact: true,
   })).toBeVisible();
-  await page.getByRole('button', { name: 'Continuar', exact: true }).click();
+  await expect(page.getByLabel('Voz de Celestea').getByRole('button')).toBeVisible();
+  await expect.poll(() => page.locator('audio').evaluate((element) =>
+    (element as HTMLAudioElement).duration
+  )).toBeGreaterThan(10);
+  await expect(page.getByRole('button', {
+    name: 'Empezar el caso',
+    exact: true,
+  })).toBeEnabled();
+  await capture(page, 'celestea-v16-transfer-bridge-mobile.png');
+  await page.getByRole('button', { name: 'Empezar el caso', exact: true }).click();
 
   await expect(page.getByRole('heading', {
-    name: 'Ahora resuelve un misterio musical.',
+    name: 'La maqueta de la feria.',
     exact: true,
   })).toBeVisible();
-  await revealTransferEvidence(page);
   await assignCorrectMap(page);
   await page.getByRole('button', {
     name: 'Comprobar',
     exact: true,
   }).click();
-  await page.getByRole('textbox', {
-    name: 'Nora tenía acceso a la portada, pero no aparece quién la cambió. Escribe una posibilidad sobre Nora en inglés.',
+  await expect(page.getByRole('heading', {
+    name: 'Escribe tu propia deducción.',
     exact: true,
-  }).fill('Nora might have changed the cover.');
+  })).toBeVisible();
+  await expect(page.getByRole('heading', {
+    name: 'La maqueta de la feria.',
+    exact: true,
+  })).toHaveCount(0);
+  await expect(page.getByText('Ahora cambia de situación.', { exact: true })).toHaveCount(0);
+  const productionAction = page.getByRole('button', {
+    name: 'Enviar mi frase',
+    exact: true,
+  });
+  const productionActionBox = await productionAction.boundingBox();
+  expect(productionActionBox?.y).toBeGreaterThan(680);
+  await capture(page, 'celestea-v16-production-mobile.png');
+  await page.getByRole('textbox', {
+    name: 'Nora estuvo en el salón durante el recreo. Nadie vio en qué trabajó. Escribe una posibilidad en inglés.',
+    exact: true,
+  }).fill('Nora might have worked on the model.');
   await page.getByRole('button', { name: 'Enviar mi frase', exact: true }).click();
   await expect(page.getByRole('heading', {
     name: 'Aplicaste la idea en una pista nueva',
@@ -261,11 +278,11 @@ test('completes a low-friction session and preserves transfer plus D7 evidence',
     correct: true,
     assisted: false,
     targetCategory: 'posible',
-    text: 'Nora might have changed the cover.',
+    text: 'Nora might have worked on the model.',
     mapping: {
-      scheduled: 'casi_seguro',
-      caption: 'posible',
-      upload: 'imposible',
+      elena: 'casi_seguro',
+      leo: 'posible',
+      mara: 'imposible',
     },
   });
 
@@ -277,9 +294,9 @@ test('completes a low-friction session and preserves transfer plus D7 evidence',
   await page.getByRole('button', { name: 'Terminar por hoy', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Una semana después.', exact: true })).toBeVisible();
   await page.getByRole('textbox', {
-    name: 'La cuenta de Emi estaba desactivada desde el día anterior. Escribe en inglés qué no pudo haber hecho Emi.',
+    name: 'Emi estaba en una excursión cuando alguien movió el cartel del salón. Escribe en inglés qué no pudo haber hecho Emi.',
     exact: true,
-  }).fill("Emi can't have uploaded the file.");
+  }).fill("Emi can't have moved the poster.");
   await page.getByRole('button', { name: 'Enviar respuesta', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'La idea sigue contigo', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Terminar', exact: true }).click();
@@ -291,16 +308,18 @@ test('completes a low-friction session and preserves transfer plus D7 evidence',
   )).toBeVisible();
   await expect.poll(() => telemetry.filter(
     (event) => event.verbo === 'envio_respuesta' && event.paso_id === 'transfer'
-  )).toHaveLength(1);
+  )).toHaveLength(4);
   const transferEvent = telemetry.find(
-    (event) => event.verbo === 'envio_respuesta' && event.paso_id === 'transfer'
+    (event) => event.verbo === 'envio_respuesta'
+      && event.paso_id === 'transfer'
+      && event.result?.rama === 'correcto'
   );
   expect(transferEvent?.result).toMatchObject({
     assisted: false,
     correcto: true,
     fase: 'transfer',
     targetCategory: 'posible',
-    texto: 'Nora might have changed the cover.',
+    texto: 'Nora might have worked on the model.',
   });
   expect(consoleErrors, `Missing resources: ${missingResources.join(', ')}`).toEqual([]);
 });
@@ -333,8 +352,59 @@ test('keeps the learning guide available and marks its use as assisted', async (
   )).toBe(true);
 });
 
+test('swaps one clue into Spanish without a side stripe or layout jump', async ({ page }) => {
+  const telemetry = await mockTelemetry(page);
+  await seedStep(page, 3);
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.goto('/crear');
+
+  const englishClue = page.getByText(
+    'Valeria had fresh blue paint on her hands. The poster had the same paint.',
+    { exact: true }
+  );
+  await expect(englishClue).toBeVisible();
+  const clueViewport = page.getByTestId('certainty-map-clue');
+  const beforeBox = await clueViewport.boundingBox();
+  const translationAction = page.getByRole('button', {
+    name: 'Mostrar pista en español',
+    exact: true,
+  });
+  const translationActionBox = await translationAction.boundingBox();
+  expect(translationActionBox?.height).toBeGreaterThanOrEqual(44);
+  await translationAction.click();
+  await expect(page.getByText(
+    'Valeria tenía pintura azul fresca en las manos. El cartel tenía la misma pintura.',
+    { exact: true }
+  )).toBeVisible();
+  await expect(englishClue).toHaveCount(0);
+  await expect(page.getByRole('button', {
+    name: 'Mostrar pista en inglés',
+    exact: true,
+  })).toBeVisible();
+  const afterBox = await clueViewport.boundingBox();
+  expect(Math.abs((afterBox?.height ?? 0) - (beforeBox?.height ?? 0))).toBeLessThanOrEqual(2);
+  expect(await clueViewport.evaluate((element) =>
+    getComputedStyle(element).borderInlineStartWidth
+  )).toBe('0px');
+  await capture(page, 'celestea-v16-translation-mobile.png');
+  const verticalOverflow = await page.evaluate(() =>
+    document.documentElement.scrollHeight - window.innerHeight
+  );
+  expect(verticalOverflow).toBeLessThanOrEqual(1);
+
+  const state = await page.evaluate((lessonId) =>
+    JSON.parse(localStorage.getItem(`celesta:crear:study:${lessonId}`) ?? '{}'),
+  LESSON_ID);
+  expect(state.assistance['guided-map']).toBe(true);
+  await expect.poll(() => telemetry.some(
+    (event) => event.verbo === 'solicito_pista'
+      && event.paso_id === 'guided-map'
+      && event.result?.rama === 'translation_opened'
+  )).toBe(true);
+});
+
 test('turns a corrected map into assisted evidence instead of a false independent success', async ({ page }) => {
-  await mockTelemetry(page);
+  const telemetry = await mockTelemetry(page);
   await seedStep(page, 3);
   await page.goto('/crear');
 
@@ -343,27 +413,22 @@ test('turns a corrected map into assisted evidence instead of a false independen
     exact: true,
   }).click();
   await page.getByRole('button', { name: 'Siguiente', exact: true }).click();
-  await page.getByRole('button', {
-    name: 'Elegir MUST HAVE para completar la frase',
-    exact: true,
-  }).click();
-  await page.getByRole('button', { name: 'Siguiente', exact: true }).click();
-  await page.getByRole('button', {
-    name: "Elegir CAN'T HAVE para completar la frase",
-    exact: true,
-  }).click();
-  await page.getByRole('button', { name: 'Comprobar', exact: true }).click();
   await expect(page.getByText(
-    'Esa expresión dice algo distinto. Revisa cuánto puedes asegurar y prueba otra.',
+    'La pintura conecta directamente a Valeria con el cartel: la evidencia es fuerte.',
     { exact: true }
   )).toBeVisible();
   await page.getByRole('button', {
     name: 'Elegir MUST HAVE para completar la frase',
     exact: true,
   }).click();
-  await page.getByRole('button', { name: 'Revisar siguiente', exact: true }).click();
+  await page.getByRole('button', { name: 'Siguiente', exact: true }).click();
   await page.getByRole('button', {
     name: 'Elegir MIGHT HAVE para completar la frase',
+    exact: true,
+  }).click();
+  await page.getByRole('button', { name: 'Siguiente', exact: true }).click();
+  await page.getByRole('button', {
+    name: "Elegir CAN'T HAVE para completar la frase",
     exact: true,
   }).click();
   await page.getByRole('button', { name: 'Comprobar', exact: true }).click();
@@ -376,19 +441,38 @@ test('turns a corrected map into assisted evidence instead of a false independen
     correct: true,
     assisted: true,
   });
+  await expect.poll(() => telemetry.filter(
+    (event) => event.verbo === 'envio_respuesta'
+      && event.paso_id === 'guided-map'
+      && event.result?.statementId === 'valeria'
+  )).toHaveLength(2);
+  const valeriaAttempts = telemetry.filter(
+    (event) => event.verbo === 'envio_respuesta'
+      && event.paso_id === 'guided-map'
+      && event.result?.statementId === 'valeria'
+  );
+  expect(valeriaAttempts[0]?.result).toMatchObject({
+    assisted: false,
+    correcto: false,
+    rama: 'map_item_incorrecto',
+  });
+  expect(valeriaAttempts[1]?.result).toMatchObject({
+    assisted: true,
+    correcto: true,
+    rama: 'map_item_correcto',
+  });
 });
 
 test('does not convert a miscalibrated transfer sentence into success', async ({ page }) => {
   await mockTelemetry(page);
-  await seedStep(page, 4);
+  await seedStep(page, 5);
   await page.goto('/crear');
-  await revealTransferEvidence(page);
   await assignCorrectMap(page);
   await page.getByRole('button', {
     name: 'Comprobar',
     exact: true,
   }).click();
-  await page.getByRole('textbox').fill('Nora must have changed the cover.');
+  await page.getByRole('textbox').fill('Nora must have worked on the model.');
   await page.getByRole('button', { name: 'Enviar mi frase', exact: true }).click();
 
   await expect(page.getByRole('heading', {
@@ -407,7 +491,7 @@ test('local classifier distinguishes the authored transfer and D7 targets', asyn
     data: {
       tallerId: LESSON_ID,
       pasoRefId: 'transfer',
-      texto: 'Nora might have changed the cover.',
+      texto: 'Nora might have worked on the model.',
     },
   });
   expect(transfer.ok()).toBe(true);
@@ -417,7 +501,7 @@ test('local classifier distinguishes the authored transfer and D7 targets', asyn
     data: {
       tallerId: LESSON_ID,
       pasoRefId: 'transfer',
-      texto: 'Nora must have changed the cover.',
+      texto: 'Nora must have worked on the model.',
     },
   });
   expect(wrongStrength.ok()).toBe(true);
@@ -427,14 +511,14 @@ test('local classifier distinguishes the authored transfer and D7 targets', asyn
     data: {
       tallerId: LESSON_ID,
       pasoRefId: 'retest',
-      texto: "Emi can't have uploaded the file.",
+      texto: "Emi can't have moved the poster.",
     },
   });
   expect(retest.ok()).toBe(true);
   expect(await retest.json()).toMatchObject({ rama: 'correcto' });
 });
 
-test('lesson 1.4 removes answer leakage and keeps the honest evidence line', async () => {
+test('lesson 1.6 integrates the voiced transfer bridge and familiar contexts', async () => {
   const lessonPath = path.join(process.cwd(), 'public/workshops', `${LESSON_ID}.json`);
   const lesson = JSON.parse(fs.readFileSync(lessonPath, 'utf8')) as {
     version: string;
@@ -448,6 +532,7 @@ test('lesson 1.4 removes answer leakage and keeps the honest evidence line', asy
           production?: { category: string };
           statements: unknown[];
         };
+        evidencePresentation?: unknown;
         guideAvailable?: boolean;
         input?: string;
         responseParts?: unknown[];
@@ -455,7 +540,7 @@ test('lesson 1.4 removes answer leakage and keeps the honest evidence line', asy
     }>;
   };
 
-  expect(lesson.version).toBe('1.4.0');
+  expect(lesson.version).toBe('1.6.1');
   expect(lesson.content_version).toBe(CONTENT_VERSION);
   expect(lesson.metadata.duracion_estimada_min).toBe(5);
   expect(lesson.pasos.map((step) => step.ref_id)).toEqual([
@@ -463,6 +548,7 @@ test('lesson 1.4 removes answer leakage and keeps the honest evidence line', asy
     'contrast',
     'prism',
     'guided-map',
+    'transfer-bridge',
     'transfer',
     'close',
     'retest',
@@ -472,13 +558,32 @@ test('lesson 1.4 removes answer leakage and keeps the honest evidence line', asy
     .toMatchObject({
       production: { category: 'posible' },
       statements: [
-        { sentenceStart: 'The track', sentenceEnd: 'been scheduled.' },
-        { sentenceStart: 'Leo', sentenceEnd: 'edited the caption.' },
-        { sentenceStart: 'Mara', sentenceEnd: 'uploaded the track.' },
+        {
+          sentenceStart: 'Elena',
+          sentenceEnd: 'worked on the model.',
+          translationEs: expect.any(String),
+          feedbackIncorrecto: expect.any(String),
+        },
+        {
+          sentenceStart: 'Leo',
+          sentenceEnd: 'worked on the model.',
+          translationEs: expect.any(String),
+          feedbackIncorrecto: expect.any(String),
+        },
+        {
+          sentenceStart: 'Mara',
+          sentenceEnd: 'worked on the model.',
+          translationEs: expect.any(String),
+          feedbackIncorrecto: expect.any(String),
+        },
       ],
     });
+  expect(lesson.pasos.find((step) => step.ref_id === 'transfer')?.crear?.evidencePresentation)
+    .toBeUndefined();
   expect(lesson.pasos.find((step) => step.ref_id === 'guided-map')?.crear?.guideAvailable)
     .toBe(true);
+  expect(lesson.pasos.find((step) => step.ref_id === 'transfer-bridge')?.crear?.audio?.text)
+    .toContain('Ahora cambia el caso, no la idea');
   expect(lesson.pasos.find((step) => step.ref_id === 'transfer')?.crear?.guideAvailable)
     .toBe(true);
   expect(lesson.pasos.find((step) => step.ref_id === 'retest')?.crear?.guideAvailable)
@@ -493,16 +598,23 @@ test('mobile map stays readable, tappable and motion-safe at 375px', async ({ pa
   await page.goto('/crear');
 
   const heading = page.getByRole('heading', {
-    name: 'Completa cada deducción.',
+    name: 'Completa la frase.',
     exact: true,
   });
   await expect(heading).toBeVisible();
-  expect(await heading.evaluate((element) => getComputedStyle(element).fontSize)).toBe('28px');
-  const subtitle = page.getByText(
+  const headingSize = await heading.evaluate((element) =>
+    Number.parseFloat(getComputedStyle(element).fontSize)
+  );
+  expect(headingSize).toBeGreaterThanOrEqual(22);
+  expect(headingSize).toBeLessThanOrEqual(26);
+  await expect(page.getByText(
     'Lee una señal y elige la expresión que completa la frase.',
     { exact: true }
-  );
-  expect(await subtitle.evaluate((element) => getComputedStyle(element).fontSize)).toBe('15px');
+  )).toHaveCount(0);
+  expect(await page.getByText(
+    'Valeria had fresh blue paint on her hands. The poster had the same paint.',
+    { exact: true }
+  ).evaluate((element) => getComputedStyle(element).fontSize)).toBe('16px');
 
   const target = page.getByRole('button', {
     name: 'Elegir MUST HAVE para completar la frase',
@@ -526,6 +638,25 @@ test('mobile map stays readable, tappable and motion-safe at 375px', async ({ pa
     exact: true,
   }).evaluate((element) => getComputedStyle(element).whiteSpace)).toBe('nowrap');
 
+  await target.click();
+  await expect(target).toHaveCount(0);
+  await expect(page.getByRole('group', {
+    name: 'Expresiones para completar la frase',
+    exact: true,
+  }).getByRole('button')).toHaveCount(2);
+  await expect(page.getByTestId('certainty-term-slot-casi_seguro'))
+    .toHaveAttribute('data-vacant', 'true');
+  await expect(page.getByLabel(
+    'Espacio completado con MUST HAVE. Toca para cambiarlo',
+    { exact: true }
+  )).toBeVisible();
+  await blank.click();
+  await expect(target).toBeVisible();
+  await expect(page.getByRole('group', {
+    name: 'Expresiones para completar la frase',
+    exact: true,
+  }).getByRole('button')).toHaveCount(3);
+
   for (const viewport of [
     { width: 320, height: 812 },
     { width: 375, height: 812 },
@@ -540,10 +671,16 @@ test('mobile map stays readable, tappable and motion-safe at 375px', async ({ pa
     expect(overflow).toBeLessThanOrEqual(1);
     expect(await sentence.evaluate((element) => getComputedStyle(element).whiteSpace))
       .toBe('nowrap');
+    if (viewport.height >= 800 && viewport.width <= 414) {
+      const verticalOverflow = await page.evaluate(() =>
+        document.documentElement.scrollHeight - window.innerHeight
+      );
+      expect(verticalOverflow).toBeLessThanOrEqual(1);
+    }
   }
 
   await page.setViewportSize({ width: 375, height: 812 });
-  await capture(page, 'celestea-v15-guided-map-mobile.png');
+  await capture(page, 'celestea-v16-guided-map-mobile.png');
 });
 
 test('mobile map accepts a real pointer drag without making drag mandatory', async ({ page }) => {
@@ -575,11 +712,244 @@ test('mobile map accepts a real pointer drag without making drag mandatory', asy
   await page.mouse.up();
 
   await expect(page.getByLabel(
-    'Espacio completado con MUST HAVE',
+    'Espacio completado con MUST HAVE. Toca para cambiarlo',
     { exact: true }
   )).toBeVisible();
   await expect(page.getByRole('button', {
     name: 'Siguiente',
     exact: true,
   })).toBeEnabled();
+});
+
+test('keeps fixed slots and animates all initial selections plus directed swaps', async ({ page }) => {
+  await mockTelemetry(page);
+  await seedStep(page, 3);
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.goto('/crear');
+
+  const categories = [
+    { id: 'casi_seguro', term: 'MUST HAVE' },
+    { id: 'posible', term: 'MIGHT HAVE' },
+    { id: 'imposible', term: "CAN'T HAVE" },
+  ] as const;
+  const slots = categories.map((category) =>
+    page.getByTestId(`certainty-term-slot-${category.id}`)
+  );
+  await page.waitForTimeout(600);
+  const initialSlotBoxes = await Promise.all(slots.map((slot) => slot.boundingBox()));
+  const sentence = page.getByTestId('certainty-map-sentence');
+  const initialSentenceBox = await sentence.boundingBox();
+
+  async function startMotionRecorder() {
+    await page.evaluate(() => {
+      const samples: Array<{
+        category: string;
+        direction: string;
+        x: number;
+        y: number;
+      }> = [];
+      const startedAt = performance.now();
+      const record = () => {
+        document.querySelectorAll<HTMLElement>('[data-term-traveler="true"]')
+          .forEach((element) => {
+          const rect = element.getBoundingClientRect();
+          samples.push({
+            category: element.dataset.category ?? '',
+            direction: element.dataset.direction ?? '',
+            x: rect.x,
+            y: rect.y,
+          });
+        });
+        if (performance.now() - startedAt < 450) {
+          const runtimeWindow = window as typeof window & {
+            __celesteaTermMotionFrame?: number;
+          };
+          runtimeWindow.__celesteaTermMotionFrame = requestAnimationFrame(record);
+        }
+      };
+      Object.assign(window, {
+        __celesteaTermMotionSamples: samples,
+      });
+      record();
+    });
+  }
+
+  async function stopMotionRecorder() {
+    return page.evaluate(() => {
+      const runtimeWindow = window as typeof window & {
+        __celesteaTermMotionFrame?: number;
+        __celesteaTermMotionSamples?: Array<{
+          category: string;
+          direction: string;
+          x: number;
+          y: number;
+        }>;
+      };
+      if (runtimeWindow.__celesteaTermMotionFrame !== undefined) {
+        cancelAnimationFrame(runtimeWindow.__celesteaTermMotionFrame);
+      }
+      return runtimeWindow.__celesteaTermMotionSamples ?? [];
+    });
+  }
+
+  async function expectStableSlots() {
+    const currentBoxes = await Promise.all(slots.map((slot) => slot.boundingBox()));
+    currentBoxes.forEach((box, index) => {
+      const initial = initialSlotBoxes[index];
+      expect(box).not.toBeNull();
+      expect(initial).not.toBeNull();
+      for (const key of ['x', 'y', 'width', 'height'] as const) {
+        expect(Math.abs((box?.[key] ?? 0) - (initial?.[key] ?? 0)))
+          .toBeLessThanOrEqual(1);
+      }
+    });
+  }
+
+  async function expectStableSentence() {
+    const current = await sentence.boundingBox();
+    expect(current).not.toBeNull();
+    expect(initialSentenceBox).not.toBeNull();
+    for (const key of ['x', 'y', 'width', 'height'] as const) {
+      expect(Math.abs((current?.[key] ?? 0) - (initialSentenceBox?.[key] ?? 0)))
+        .toBeLessThanOrEqual(1);
+    }
+  }
+
+  async function expectTermNearRule() {
+    const term = page.getByTestId('selected-certainty-term');
+    const rule = page.getByTestId('certainty-map-drop-target');
+    const termBox = await term.boundingBox();
+    const ruleBox = await rule.boundingBox();
+    expect(termBox).not.toBeNull();
+    expect(ruleBox).not.toBeNull();
+    const ruleBottom = (ruleBox?.y ?? 0) + (ruleBox?.height ?? 0);
+    const termBottom = (termBox?.y ?? 0) + (termBox?.height ?? 0);
+    expect(ruleBottom - termBottom).toBeLessThanOrEqual(10);
+  }
+
+  function expectSpatialPath(
+    samples: Array<{
+      category: string;
+      direction: string;
+      x: number;
+      y: number;
+    }>,
+    category: string,
+    direction: 'incoming' | 'outgoing'
+  ) {
+    const path = samples.filter((sample) =>
+      sample.category === category && sample.direction === direction
+    );
+    expect(path.length).toBeGreaterThanOrEqual(3);
+    const xs = path.map((sample) => sample.x);
+    const ys = path.map((sample) => sample.y);
+    const distance = Math.hypot(
+      Math.max(...xs) - Math.min(...xs),
+      Math.max(...ys) - Math.min(...ys)
+    );
+    expect(distance).toBeGreaterThan(40);
+  }
+
+  async function expectTermTypography(category: typeof categories[number]) {
+    const traveler = page.getByTestId(
+      `certainty-term-traveler-incoming-${category.id}`
+    );
+    await expect(traveler).toBeVisible();
+    const styles = await page.evaluate((categoryId) => {
+      const selectors = [
+        `[data-testid="certainty-source-term-${categoryId}"]`,
+        '[data-testid="selected-certainty-term"]',
+        `[data-testid="certainty-term-traveler-incoming-${categoryId}"]`,
+      ];
+      const properties = [
+        'fontFamily',
+        'fontSize',
+        'fontWeight',
+        'letterSpacing',
+        'lineHeight',
+        'textTransform',
+      ] as const;
+      return selectors.map((selector) => {
+        const element = document.querySelector(selector);
+        if (!element) return null;
+        const computed = getComputedStyle(element);
+        return properties.map((property) => computed[property]);
+      });
+    }, category.id);
+    expect(styles[0]).toEqual(styles[1]);
+    expect(styles[0]).toEqual(styles[2]);
+  }
+
+  async function expectRestingSelection(category: typeof categories[number]) {
+    await expect(page.getByTestId('selected-certainty-term')).toBeVisible();
+    await expect(page.getByTestId('selected-certainty-term')).toHaveText(category.term);
+    await expect(page.getByTestId(`certainty-source-term-${category.id}`)).toBeHidden();
+    await expect(page.locator('[data-term-traveler="true"]')).toHaveCount(0);
+    for (const candidate of categories) {
+      if (candidate.id === category.id) continue;
+      await expect(page.getByTestId(`certainty-source-term-${candidate.id}`)).toBeVisible();
+    }
+  }
+
+  for (const category of categories) {
+    await startMotionRecorder();
+    await page.getByRole('button', {
+      name: `Elegir ${category.term} para completar la frase`,
+      exact: true,
+    }).click();
+    await expectTermTypography(category);
+    await expectStableSentence();
+    await page.waitForTimeout(340);
+    const initialSamples = await stopMotionRecorder();
+    expectSpatialPath(initialSamples, category.id, 'incoming');
+    await expectRestingSelection(category);
+    await expectStableSentence();
+    await expectTermNearRule();
+    await expectStableSlots();
+    await expect(page.getByTestId(`certainty-term-slot-${category.id}`))
+      .toHaveAttribute('data-vacant', 'true');
+    await page.getByTestId('certainty-map-drop-target').click();
+    await page.waitForTimeout(340);
+    await expect(page.getByTestId(`certainty-source-term-${category.id}`)).toBeVisible();
+    await expect(page.locator('[data-term-traveler="true"]')).toHaveCount(0);
+    await expectStableSentence();
+    await expectStableSlots();
+  }
+
+  for (const from of categories) {
+    for (const to of categories) {
+      if (from.id === to.id) continue;
+      await page.getByRole('button', {
+        name: `Elegir ${from.term} para completar la frase`,
+        exact: true,
+      }).click();
+      await page.waitForTimeout(340);
+      await startMotionRecorder();
+      await page.getByRole('button', {
+        name: `Elegir ${to.term} para completar la frase`,
+        exact: true,
+      }).click();
+      await page.waitForTimeout(340);
+      const swapSamples = await stopMotionRecorder();
+      expectSpatialPath(swapSamples, from.id, 'outgoing');
+      expectSpatialPath(swapSamples, to.id, 'incoming');
+      await expectRestingSelection(to);
+      await expectStableSentence();
+      await expectTermNearRule();
+      await expectStableSlots();
+      await expect(page.getByTestId(`certainty-term-slot-${from.id}`))
+        .toHaveAttribute('data-vacant', 'false');
+      await expect(page.getByTestId(`certainty-term-slot-${to.id}`))
+        .toHaveAttribute('data-vacant', 'true');
+      await page.getByTestId('certainty-map-drop-target').click();
+      await page.waitForTimeout(340);
+    }
+  }
+
+  await page.getByRole('button', {
+    name: 'Elegir MIGHT HAVE para completar la frase',
+    exact: true,
+  }).click();
+  await page.waitForTimeout(340);
+  await capture(page, 'celestea-v161-fixed-term-slots-mobile.png');
 });

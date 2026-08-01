@@ -19,6 +19,7 @@ interface TrackCrearAnswerInput {
   mapping?: Record<string, CrearResponseCategory>;
   assisted?: boolean;
   targetCategory?: CrearResponseCategory;
+  statementId?: string;
   score?: number;
   checksum?: string;
   intento?: number;
@@ -66,6 +67,10 @@ export async function trackCrearAnswer(input: TrackCrearAnswerInput): Promise<vo
 
   if (input.targetCategory) {
     result.targetCategory = input.targetCategory;
+  }
+
+  if (input.statementId) {
+    result.statementId = input.statementId;
   }
 
   if (typeof input.score === 'number') {

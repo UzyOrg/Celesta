@@ -18,6 +18,7 @@ export type CrearScene =
   | 'contrast'
   | 'prism'
   | 'practice'
+  | 'transfer-bridge'
   | 'transfer'
   | 'closure'
   | 'retest';
@@ -118,9 +119,11 @@ export interface CrearCertaintyCategory {
 export interface CrearCertaintyStatement {
   id: string;
   clue: string;
+  translationEs?: string;
   sentenceStart: string;
   sentenceEnd: string;
   correctCategory: CrearResponseCategory;
+  feedbackIncorrecto?: string;
 }
 
 export interface CrearProductionPrompt {
@@ -142,6 +145,15 @@ export interface CrearCertaintyMap {
 export interface CrearCertaintyMapSubmission {
   assignments: Record<string, CrearResponseCategory>;
   productionText?: string;
+  assisted: boolean;
+}
+
+export interface CrearCertaintyMapAttempt {
+  statementId: string;
+  category: CrearResponseCategory;
+  correct: boolean;
+  attempt: number;
+  assignments: Record<string, CrearResponseCategory>;
   assisted: boolean;
 }
 
@@ -230,6 +242,7 @@ export interface CrearTelemetryResult extends Record<string, unknown> {
   mapping?: Record<string, CrearResponseCategory>;
   assisted?: boolean;
   targetCategory?: CrearResponseCategory;
+  statementId?: string;
   attempt?: number;
   /** @deprecated Compatibility with events emitted before content version 2026-07-19. */
   intento?: number;

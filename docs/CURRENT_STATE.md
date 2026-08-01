@@ -1,6 +1,6 @@
 # Celestea · Current State
 
-Last updated: 2026-07-27
+Last updated: 2026-07-31
 
 This is a compact handoff for a fresh Codex task. It records the current
 checkpoint, not permanent repository policy. Read `AGENTS.md` first; it wins
@@ -27,17 +27,31 @@ completion, surveillance, streaks, or decorative gamification.
 
 Route: `/crear`
 
-Lesson: `CREAR-ENGLISH-DEDUCTION-V1`, content version `2026-07-27`, lesson
-version `1.4.0`.
+Lesson: `CREAR-ENGLISH-DEDUCTION-V1`, content version `2026-07-30`, lesson
+version `1.6.1`.
 
 The current session contains:
 
 - a Spanish introduction with pre-generated ElevenLabs audio;
 - a short contrast exercise;
 - a guided explanation of `must have`, `might have`, and `can't have`;
-- a low-friction certainty-mapping interaction with tap and drag support;
+- a low-friction certainty interaction that keeps each clue beside its
+  incomplete sentence and validates one decision at a time;
+- a three-term word bank with permanent source slots: the chosen term visibly
+  travels into the sentence, its original space remains reserved, and changing
+  an answer uses two explicitly measured paths for the outgoing and incoming
+  terms without recentering untouched options; all three term states share one
+  locked typographic token so the transition does not change font metrics; the
+  sentence row reserves its target height and keeps the term close to its rule;
+- optional, pre-authored Spanish translations that replace the English clue
+  in the same stable text area and are recorded as assistance;
+- specific, local error feedback without clearing other answers or creating a
+  multi-error review loop;
 - a consultable guide whose use is recorded as assisted;
-- one transfer case with a short English production response;
+- a learner-paced, voiced bridge that names transfer as the same idea in a new
+  school-based case instead of presenting it as a second unrelated topic;
+- a production screen with one natural instruction, one prompt, and the
+  primary action in the mobile thumb zone;
 - a seven-day retest;
 - local-first study state and telemetry;
 - a constrained classifier that returns authored branch keys only.
@@ -69,6 +83,16 @@ loading frame.
 The previous Hallmark Aurora direction was rejected because it preserved too
 much of the old composition and used recognizable AI-tool neon colors.
 
+Every new design or material visual change on `/crear` must run the complete
+Hallmark preflight, rendered review, 58-gate slop test, responsive checks, and
+updated audit before handoff. A typecheck or behavioral test alone is not a
+design sign-off.
+
+The practice and transfer layout is designed to fit the complete core task in
+typical 320×812 and 375×812 mobile viewports without normal scrolling. The
+header participates in layout instead of covering content. Landscape and
+large-text cases retain ordinary page scrolling as an accessibility fallback.
+
 ## Source files
 
 - `AGENTS.md` — durable engineering and product rules.
@@ -84,19 +108,23 @@ much of the old composition and used recognizable AI-tool neon colors.
 - `tokens.css` — active Celestea design tokens.
 - `tests/e2e/crear-english-deduction.spec.ts` — behavioral and responsive
   regression suite.
-- `.hallmark/audit-chalk-over-film-2026-07-27.md` — current design audit.
+- `.hallmark/audit-chalk-over-film-2026-07-30.md` — current design audit.
 
 ## Verification checkpoint
 
 Most recent checks:
 
 - `npm run typecheck` — passed.
-- `npx playwright test tests/e2e/crear-english-deduction.spec.ts` — 9/9 passed.
+- `npx playwright test tests/e2e/crear-english-deduction.spec.ts` — 11/11 passed.
 - responsive checks — 320×812, 375×812, 414×896, 768×1024, and 1280×800.
 - no horizontal overflow in the tested viewports;
+- no vertical overflow in the core practice task at 320×812, 375×812, and
+  414×896, including the Spanish clue state at 375×812;
 - arrival title remains one line on mobile;
 - video fade is verified near zero at both ends of the loop;
-- transfer, assisted correction, guide telemetry, D7, tap, pointer drag, and
+- integrated voiced transfer, per-clue attempts, assisted correction,
+  translation and guide telemetry, D7, fixed-slot word-bank behavior, all
+  three initial motion paths, all six directed swaps, tap, pointer drag, and
   reduced motion are covered.
 
 The dev server can be started with:
@@ -107,10 +135,13 @@ npm run dev -- --hostname 127.0.0.1 --port 3000
 
 ## Git checkpoint
 
-The working tree is currently dirty. The current changes include the lesson
-1.4 flow, certainty map, audio behavior, telemetry/state contracts, the
-Hallmark redesign, video poster, and E2E coverage. Treat all existing changes
-as founder-owned work. Do not reset, overwrite, or discard unrelated files.
+The working tree is currently dirty and `main` is ahead of `origin/main` by six
+commits. The current uncommitted changes are the approved lesson 1.6 integrated
+clue/answer flow, school-based content, in-place Spanish support, local
+feedback, voiced transfer bridge, per-clue telemetry, fixed-slot bidirectional
+term motion, responsive production layout, Hallmark artifacts, and E2E
+coverage. Treat all existing changes as founder-owned work. Do not reset,
+overwrite, or discard unrelated files.
 
 Before beginning another substantial feature, review `git status` and create a
 checkpoint commit if the founder approves.
@@ -119,6 +150,9 @@ checkpoint commit if the founder approves.
 
 - TTS output is v1; student input remains text. STT is a fast-follow, not part
   of this checkpoint.
+- The transfer bridge uses a pre-generated local `es-MX` system voice asset;
+  it can be re-rendered with the founder's production voice without changing
+  the runtime contract.
 - Lesson content is pre-authored. The LLM classifies; it does not generate
   lesson content or UI at runtime.
 - Do not extend legacy teacher, dashboard, anti-cheat, Cognitive Gym, or

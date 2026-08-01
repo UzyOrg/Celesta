@@ -158,18 +158,6 @@
   right: -48vw;
 }
 
-.horizonLine {
-  background: linear-gradient(90deg, transparent, rgba(118, 216, 255, 0.38), rgba(179, 155, 255, 0.3), transparent);
-  bottom: 18vh;
-  height: 1px;
-  left: 8%;
-  opacity: 0.28;
-  position: absolute;
-  right: 8%;
-  transform: scaleX(0.72);
-  transition: transform 900ms var(--ease-out), opacity 900ms ease;
-}
-
 .pageShell[data-scene="arrival"] .auroraOne,
 .pageShell[data-scene="arrival"] .auroraTwo {
   bottom: -30vh;
@@ -202,11 +190,6 @@
   transform: scaleX(1.18);
 }
 
-.pageShell[data-scene="closure"] .horizonLine {
-  opacity: 0.7;
-  transform: scaleX(1);
-}
-
 .pageShell[data-gate="retest"] .waveVideo {
   filter: blur(38px) saturate(0.28) brightness(0.36);
   opacity: 0.22;
@@ -225,10 +208,6 @@
 
 .pageShell[data-gate="retest"] .dotField {
   opacity: 0.08;
-}
-
-.pageShell[data-gate="retest"] .horizonLine {
-  display: none;
 }
 
 .pageShell[data-gate="retest"] .retestPill {

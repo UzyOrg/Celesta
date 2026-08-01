@@ -50,6 +50,7 @@ import {
 import type {
   ClassifyResponse,
   CrearClassifierBranch,
+  CrearCertaintyMapAttempt,
   CrearCertaintyMapSubmission,
   CrearExperienceStage,
   CrearPaso,
@@ -59,7 +60,10 @@ import type {
 } from '@/lib/crear/types';
 import { DEFAULT_CREAR_LESSON_ID } from '@/lib/crear/types';
 import { CinematicAnswer } from './CinematicAnswer';
-import { CinematicCertaintyMap } from './CinematicCertaintyMap';
+import {
+  CinematicCertaintyMap,
+  type CrearCertaintyMapPhase,
+} from './CinematicCertaintyMap';
 import { CinematicVoice } from './CinematicVoice';
 import { useCinematicNarration } from './useCinematicNarration';
 import styles from './CinematicEnglishPlayer.hallmark.module.css';
@@ -464,7 +468,6 @@ function AmbientField({ paused }: AmbientFieldProps) {
       )}
       <span className={styles.ambientWash} />
       <span className={styles.dotField} />
-      <span className={styles.horizonLine} />
     </div>
   );
 }
@@ -497,6 +500,7 @@ export function CinematicEnglishPlayer() {
   const [liteMode, setLiteMode] = useState(false);
   const [clockNow, setClockNow] = useState(() => Date.now());
   const [structuredView, setStructuredView] = useState<'explore' | 'answer'>('explore');
+  const [certaintyPhase, setCertaintyPhase] = useState<CrearCertaintyMapPhase>('map');
 
   const currentStep = lesson?.pasos[currentIndex] ?? null;
   const currentStage = currentStep?.crear?.stage ?? 'descubre';
@@ -822,6 +826,7 @@ export function CinematicEnglishPlayer() {
     setAttempt(0);
     setInputFocused(false);
     setStructuredView('explore');
+    setCertaintyPhase('map');
     setGuideOpen(false);
     setCurrentIndex(nextIndex);
   }
@@ -883,6 +888,7 @@ export function CinematicEnglishPlayer() {
       mapping?: Record<string, CrearResponseCategory>;
       assisted?: boolean;
       targetCategory?: CrearResponseCategory;
+      statementId?: string;
     }
   ) {
     if (!lesson || !study) return;
@@ -897,6 +903,7 @@ export function CinematicEnglishPlayer() {
       mapping: details?.mapping,
       assisted: details?.assisted,
       targetCategory: details?.targetCategory,
+      statementId: details?.statementId,
       score,
       attempt: attemptNumber,
       studyId: study.studyId,
@@ -994,6 +1001,24 @@ export function CinematicEnglishPlayer() {
     setFeedback(buildChoiceFeedback(currentStep, correct, attemptNumber));
   }
 
+  function handleMapItemAttempt(mapAttempt: CrearCertaintyMapAttempt): void {
+    if (!currentStep) return;
+    queueAnswerTelemetry(
+      currentStep,
+      mapAttempt.correct ? 'map_item_correcto' : 'map_item_incorrecto',
+      mapAttempt.correct,
+      mapAttempt.correct ? 1 : 0,
+      `${mapAttempt.statementId}:${mapAttempt.category}`,
+      mapAttempt.attempt,
+      undefined,
+      {
+        mapping: mapAttempt.assignments,
+        assisted: mapAttempt.assisted,
+        statementId: mapAttempt.statementId,
+      }
+    );
+  }
+
   async function handleSubmitMap(submission: CrearCertaintyMapSubmission) {
     if (!currentStep || !lesson || !study || !currentStep.crear?.certaintyMap) return;
     setPending(true);
@@ -1057,6 +1082,11 @@ export function CinematicEnglishPlayer() {
         return;
       }
 
+      if (currentStep.crear.revealFeedback === false) {
+        advance(currentStep, currentStep.crear.nextRefId ?? null);
+        return;
+      }
+
       setFeedback({
         title: currentStep.crear.certaintyMap.successTitle,
         body: currentStep.crear.certaintyMap.successBody,
@@ -1070,7 +1100,9 @@ export function CinematicEnglishPlayer() {
     }
   }
 
-  function markAssistance(reason: 'guide_opened' | 'map_retry' | 'answer_retry'): void {
+  function markAssistance(
+    reason: 'guide_opened' | 'map_retry' | 'answer_retry' | 'translation_opened'
+  ): void {
     if (!currentStep || !lesson || !study) return;
     const stepId = getStepId(currentStep);
     if (!study.assistance[stepId]) {
@@ -1233,6 +1265,11 @@ export function CinematicEnglishPlayer() {
   const prompt = getPrompt(currentStep);
   const display = currentStep.crear?.display;
   const compactVoice = inputFocused || mode !== 'none';
+  const hideMapSceneCopy = Boolean(
+    mode === 'match'
+      && currentStep.crear?.certaintyMap
+      && certaintyPhase === 'produce'
+  );
   const sceneTransition = prefersReducedMotion
     ? { duration: 0.12 }
     : { duration: 0.52, ease: [0.22, 1, 0.36, 1] as const };
@@ -1242,9 +1279,11 @@ export function CinematicEnglishPlayer() {
       config={currentStep.crear.certaintyMap}
       pending={pending}
       assisted={Boolean(study.assistance[getStepId(currentStep)])}
-      onAssistance={() => markAssistance('map_retry')}
+      onAssistance={markAssistance}
+      onAttempt={handleMapItemAttempt}
       onSubmit={handleSubmitMap}
       onFocusChange={setInputFocused}
+      onPhaseChange={setCertaintyPhase}
     />
   ) : (
     <CinematicAnswer
@@ -1257,7 +1296,15 @@ export function CinematicEnglishPlayer() {
       minChars={currentStep.crear?.minChars}
       responseParts={currentStep.crear?.responseParts}
       choiceLanguage={currentScene === 'practice' ? 'en-US' : 'es-MX'}
-      continueLabel={currentScene === 'closure' ? 'Terminar por hoy' : currentScene === 'arrival' ? 'Estoy listo' : 'Continuar'}
+      continueLabel={
+        currentScene === 'closure'
+          ? 'Terminar por hoy'
+          : currentScene === 'arrival'
+            ? 'Estoy listo'
+            : currentScene === 'transfer-bridge'
+              ? 'Empezar el caso'
+              : 'Continuar'
+      }
       submitLabel={currentStep.crear?.responseParts?.length ? 'Enviar mis respuestas' : 'Enviar respuesta'}
       onContinue={handleContinue}
       onSubmitText={handleSubmitText}
@@ -1274,6 +1321,7 @@ export function CinematicEnglishPlayer() {
         data-stage={currentStage}
         data-audio-ready={audioAssetsReady ? 'true' : 'false'}
         data-structured={currentStep.crear?.responseParts || currentStep.crear?.certaintyMap ? 'true' : 'false'}
+        data-certainty-phase={mode === 'match' ? certaintyPhase : undefined}
         data-structured-view={hasStructuredEvidenceFlow ? structuredView : undefined}
         data-voice-state={narration.status}
         data-input-focused={inputFocused ? 'true' : 'false'}
@@ -1344,6 +1392,7 @@ export function CinematicEnglishPlayer() {
               {currentStep.crear?.guideAvailable
                 && guideUnlocked
                 && guideStep
+                && certaintyPhase !== 'produce'
                 && !(hasStructuredEvidenceFlow && structuredView === 'answer') ? (
                 <button
                   aria-label="Ayuda"
@@ -1355,7 +1404,7 @@ export function CinematicEnglishPlayer() {
                   Guía
                 </button>
               ) : null}
-              {!(hasStructuredEvidenceFlow && structuredView === 'answer') ? (
+              {!(hasStructuredEvidenceFlow && structuredView === 'answer') && !hideMapSceneCopy ? (
                 <div className={styles.sceneCopy} data-scene={currentScene}>
                   {currentScene === 'arrival' && display?.learningGoal ? (
                     <p className={styles.arrivalLearningGoal}>{display.learningGoal}</p>
@@ -1395,7 +1444,13 @@ export function CinematicEnglishPlayer() {
                 <CinematicVoice
                   audio={audio}
                   compact={compactVoice}
-                  presentation={currentScene === 'arrival' ? 'intro' : 'default'}
+                  presentation={
+                    currentScene === 'arrival'
+                      ? 'intro'
+                      : currentScene === 'transfer-bridge'
+                        ? 'bridge'
+                        : 'default'
+                  }
                   status={narration.status}
                   onToggle={narration.toggle}
                 />
