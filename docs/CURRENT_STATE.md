@@ -155,17 +155,22 @@ npm run dev -- --hostname 127.0.0.1 --port 3000
 
 ## Git checkpoint
 
-The current worktree is on a detached `HEAD` and is dirty. The uncommitted
-changes are founder-approved work: the lesson 1.7 evidence-visible flow,
-school-based content, in-place Spanish support, local feedback, voiced transfer
-bridge, split independent transfer and D7 checks, construct-level evidence
-ledger, fixed-slot bidirectional term motion, functional SVG case artifacts,
-responsive layout, Hallmark artifacts, and E2E coverage. Treat all existing
-changes as founder-owned work. Do not reset, overwrite, or discard unrelated
-files.
+The lesson 1.7 checkpoint is integrated into `main`. Commit `6c99754` preserves
+the founder-owned dirty state that already existed in the primary checkout;
+commit `b917365` applies the verified evidence-visible flow on top. Their final
+product tree was compared byte for byte with the implementation snapshot before
+the auxiliary worktree was retired.
 
-Before beginning another substantial feature, review `git status` and create a
-checkpoint commit if the founder approves.
+The integrated state includes the school-based content, in-place Spanish
+support, local feedback, voiced transfer bridge, split independent transfer and
+D7 checks, construct-level evidence ledger, fixed-slot bidirectional term
+motion, functional SVG case artifacts, responsive layout, Hallmark artifacts,
+and E2E coverage.
+
+Temporary worktrees are disposable after their commits are integrated and
+verified; the primary checkout and Git history are the continuing source of
+truth. Before another substantial feature, review `git status` and preserve any
+new founder-owned changes.
 
 ## Known boundaries
 
