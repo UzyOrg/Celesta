@@ -162,6 +162,35 @@ function validateMeta(meta: CrearStepMeta, refId: string): void {
   ) {
     throw new Error(`CREAR JSON: ${refId}.crear.actionLabel must be non-empty`);
   }
+  if (meta.comparison !== undefined) {
+    if (
+      typeof meta.comparison.left !== 'string' ||
+      !meta.comparison.left.trim() ||
+      typeof meta.comparison.right !== 'string' ||
+      !meta.comparison.right.trim()
+    ) {
+      throw new Error(`CREAR JSON: ${refId}.crear.comparison sentences must be non-empty`);
+    }
+    for (const field of ['leftLabel', 'rightLabel'] as const) {
+      if (
+        meta.comparison[field] !== undefined &&
+        (typeof meta.comparison[field] !== 'string' || !meta.comparison[field]?.trim())
+      ) {
+        throw new Error(`CREAR JSON: ${refId}.crear.comparison.${field} must be non-empty`);
+      }
+    }
+    if (meta.comparison.rightEmphasis !== undefined) {
+      const emphasis = meta.comparison.rightEmphasis.trim();
+      if (
+        !emphasis ||
+        !meta.comparison.right.toLocaleLowerCase('en').includes(emphasis.toLocaleLowerCase('en'))
+      ) {
+        throw new Error(
+          `CREAR JSON: ${refId}.crear.comparison.rightEmphasis must occur in the right sentence`
+        );
+      }
+    }
+  }
   if (meta.caseArtifact !== undefined) {
     validateCaseArtifact(meta.caseArtifact, `${refId}.crear.caseArtifact`);
   }

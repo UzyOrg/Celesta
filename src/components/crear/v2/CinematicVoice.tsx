@@ -10,7 +10,7 @@ interface CinematicVoiceProps {
   audio: CrearAudioLine;
   status: CinematicVoiceStatus;
   compact?: boolean;
-  presentation?: 'default' | 'intro' | 'bridge';
+  presentation?: 'default' | 'intro' | 'bridge' | 'comparison';
   onToggle: () => void | Promise<void>;
 }
 
@@ -25,6 +25,7 @@ export function CinematicVoice({
   const VoiceIcon = status === 'playing' ? Pause : status === 'ended' ? RotateCcw : Play;
   const isIntro = presentation === 'intro';
   const isBridge = presentation === 'bridge';
+  const isComparison = presentation === 'comparison';
   const visibleLabel = isIntro
     ? status === 'playing'
       ? 'Escuchando introducción'
@@ -61,12 +62,16 @@ export function CinematicVoice({
       </button>
 
       <div className={styles.voiceTranscript}>
-        <span className={styles.voiceLabel}>
+        <span className={`${styles.voiceLabel} ${isComparison ? styles.visuallyHidden : ''}`}>
           <span className={styles.liveDot} aria-hidden="true" />
           {visibleLabel}
         </span>
         <p
-          className={(compact || isIntro || isBridge) && status !== 'error' ? styles.visuallyHidden : undefined}
+          className={
+            (compact || isIntro || isBridge || isComparison) && status !== 'error'
+              ? styles.visuallyHidden
+              : undefined
+          }
           lang={audio.lang ?? 'en-US'}
         >
           {audio.text}

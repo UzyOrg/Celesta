@@ -14,7 +14,7 @@ import {
   RotateCcw,
   X,
 } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState, type RefObject } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from 'react';
 import { getOrCreateSessionId } from '@/lib/session';
 import {
   loadWorkshopProgress,
@@ -312,19 +312,62 @@ function CaseMicroScene({ step, onReadyToAnswer }: CaseMicroSceneProps) {
   );
 }
 
-function ComparisonField({ step }: { step: CrearPaso }) {
+function ComparisonSentence({
+  text,
+  emphasis,
+}: {
+  text: string;
+  emphasis?: string;
+}) {
+  const cleanEmphasis = emphasis?.trim();
+  if (!cleanEmphasis) return <>{text}</>;
+
+  const emphasisIndex = text.toLocaleLowerCase('en').indexOf(
+    cleanEmphasis.toLocaleLowerCase('en')
+  );
+  if (emphasisIndex < 0) return <>{text}</>;
+
+  return (
+    <>
+      {text.slice(0, emphasisIndex)}
+      <mark className={styles.comparisonEmphasis}>
+        {text.slice(emphasisIndex, emphasisIndex + cleanEmphasis.length)}
+      </mark>
+      {text.slice(emphasisIndex + cleanEmphasis.length)}
+    </>
+  );
+}
+
+function ComparisonField({
+  step,
+  audioControl,
+}: {
+  step: CrearPaso;
+  audioControl?: ReactNode;
+}) {
   const comparison = step.crear?.comparison;
   if (!comparison) return null;
   return (
-    <div className={styles.comparisonField}>
-      <article>
-        <small>{comparison.leftLabel ?? 'Sentence A'}</small>
-        <p lang="en-US">{comparison.left}</p>
+    <div className={styles.comparisonField} aria-label="Comparación de dos frases">
+      <article aria-label="Frase A">
+        <div className={styles.comparisonLabelRow}>
+          <small>{comparison.leftLabel ?? 'A'}</small>
+        </div>
+        <p lang="en-US">
+          <ComparisonSentence text={comparison.left} />
+        </p>
       </article>
-      <span className={styles.comparisonBeam} aria-hidden="true" />
-      <article>
-        <small>{comparison.rightLabel ?? 'Sentence B'}</small>
-        <p lang="en-US">{comparison.right}</p>
+      <article aria-label="Frase B">
+        <div className={styles.comparisonLabelRow}>
+          <small>{comparison.rightLabel ?? 'B'}</small>
+          {audioControl}
+        </div>
+        <p lang="en-US">
+          <ComparisonSentence
+            text={comparison.right}
+            emphasis={comparison.rightEmphasis}
+          />
+        </p>
       </article>
     </div>
   );
@@ -1540,10 +1583,26 @@ export function CinematicEnglishPlayer() {
                   </div>
                 ) : <EvidenceField step={currentStep} />
               ) : null}
-              <ComparisonField step={currentStep} />
+              <ComparisonField
+                step={currentStep}
+                audioControl={
+                  currentScene === 'contrast' && audio && audioAssetsReady ? (
+                    <CinematicVoice
+                      audio={audio}
+                      compact
+                      presentation="comparison"
+                      status={narration.status}
+                      onToggle={narration.toggle}
+                    />
+                  ) : undefined
+                }
+              />
               <ConceptPrism step={currentStep} />
 
-              {audio && audioAssetsReady && (!hasStructuredEvidenceFlow || structuredView === 'explore') ? (
+              {audio
+                && audioAssetsReady
+                && currentScene !== 'contrast'
+                && (!hasStructuredEvidenceFlow || structuredView === 'explore') ? (
                 <CinematicVoice
                   audio={audio}
                   compact={compactVoice}

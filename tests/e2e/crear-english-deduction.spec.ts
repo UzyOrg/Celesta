@@ -3,7 +3,7 @@ import path from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
 
 const LESSON_ID = 'CREAR-ENGLISH-DEDUCTION-V1';
-const CONTENT_VERSION = '2026-08-01';
+const CONTENT_VERSION = '2026-08-01-contrast';
 const ARTIFACT_DIR = path.join(process.cwd(), 'test-artifacts');
 
 interface CapturedLearningEvent {
@@ -82,11 +82,36 @@ async function seedStep(page: Page, stepIndex: number) {
   }, { lessonId: LESSON_ID, contentVersion: CONTENT_VERSION, index: stepIndex });
 }
 
+async function seedLockedRetest(page: Page) {
+  await page.addInitScript(({ lessonId, contentVersion }) => {
+    const now = Date.now();
+    localStorage.setItem(
+      `celesta:crear:study:${lessonId}`,
+      JSON.stringify({
+        studyId: 'study-locked-retest',
+        lessonId,
+        contentVersion,
+        startedAt: now - 60_000,
+        updatedAt: now,
+        phase: 'waiting_retest',
+        stepIndex: 9,
+        retestDueAt: now + 7 * 24 * 60 * 60 * 1000,
+        attempts: {},
+        firstOutcomes: {},
+        latestOutcomes: {},
+        awaitingFeedback: {},
+        assistance: {},
+        evidenceLedger: [],
+      })
+    );
+  }, { lessonId: LESSON_ID, contentVersion: CONTENT_VERSION });
+}
+
 async function reachGuidedMap(page: Page) {
   await page.goto('/crear');
   await page.getByRole('button', { name: 'Ver la primera pista', exact: true }).click();
   await page.getByRole('radio', {
-    name: 'Expresa una conclusión basada en pistas.',
+    name: 'Deduce algo por una pista.',
     exact: true,
   }).click();
   await page.getByRole('button', { name: 'Comprobar', exact: true }).click();
@@ -214,6 +239,119 @@ test('Hallmark arrival reads as one quiet cinematic task at 375px', async ({ pag
   const desktopActionBox = await primaryAction.boundingBox();
   expect((desktopActionBox?.y ?? 0) + (desktopActionBox?.height ?? 0))
     .toBeLessThanOrEqual(800);
+});
+
+test('contrast is one compact diagnostic task at common mobile widths', async ({ page }) => {
+  await mockTelemetry(page);
+  await seedStep(page, 1);
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.goto('/crear');
+
+  await expect(page.getByRole('heading', {
+    name: '¿Lo vio o lo dedujo?',
+    exact: true,
+  })).toBeVisible();
+  await expect(page.getByRole('article', { name: 'Frase A', exact: true }))
+    .toContainText('Valeria painted the poster.');
+  await expect(page.getByRole('article', { name: 'Frase B', exact: true }))
+    .toContainText('Valeria must have painted the poster.');
+  await expect(page.locator('mark', { hasText: 'must have' })).toBeVisible();
+  await expect(page.getByLabel('Voz de Celestea').getByRole('button', {
+    name: 'Reproducir voz',
+    exact: true,
+  })).toBeVisible();
+  await expect(page.getByText(
+    'Las dos hablan de Valeria. Solo una presenta una conclusión.',
+    { exact: true }
+  )).toHaveCount(0);
+
+  const choices = [
+    'Cuenta algo que vio.',
+    'Deduce algo por una pista.',
+    'Habla de una obligación.',
+  ];
+  for (const choice of choices) {
+    const radio = page.getByRole('radio', { name: choice, exact: true });
+    await expect(radio).toBeVisible();
+    const choiceBox = await radio.locator('..').boundingBox();
+    expect(choiceBox?.height).toBeGreaterThanOrEqual(51.5);
+  }
+
+  await page.getByRole('radio', {
+    name: 'Deduce algo por una pista.',
+    exact: true,
+  }).click();
+  await expect(page.getByRole('button', { name: 'Comprobar', exact: true }))
+    .toBeEnabled();
+  await capture(page, 'celestea-hallmark-contrast-375.png');
+
+  for (const viewport of [
+    { width: 320, height: 812 },
+    { width: 375, height: 812 },
+    { width: 414, height: 896 },
+    { width: 768, height: 1024 },
+  ]) {
+    await page.setViewportSize(viewport);
+    const overflow = await page.evaluate(() => ({
+      horizontal: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      vertical: document.documentElement.scrollHeight - window.innerHeight,
+    }));
+    expect(overflow.horizontal).toBeLessThanOrEqual(1);
+    expect(overflow.vertical).toBeLessThanOrEqual(1);
+
+    const actionBox = await page.getByRole('button', {
+      name: 'Comprobar',
+      exact: true,
+    }).boundingBox();
+    expect((actionBox?.y ?? 0) + (actionBox?.height ?? 0))
+      .toBeLessThanOrEqual(viewport.height);
+  }
+});
+
+test('locked D7 gate keeps safe gutters at mobile widths', async ({ page }) => {
+  await mockTelemetry(page);
+  await seedLockedRetest(page);
+
+  for (const viewport of [
+    { width: 320, height: 812 },
+    { width: 375, height: 812 },
+    { width: 414, height: 896 },
+    { width: 768, height: 1024 },
+  ]) {
+    await page.setViewportSize(viewport);
+    await page.goto('/crear');
+
+    const heading = page.getByRole('heading', {
+      name: 'Volvemos en una semana.',
+      exact: true,
+    });
+    await expect(heading).toBeVisible();
+    const action = page.getByRole('button', {
+      name: 'Listo, cerrar',
+      exact: true,
+    });
+    const exit = page.getByRole('button', {
+      name: 'Salir',
+      exact: true,
+    });
+    const headingBox = await heading.boundingBox();
+    const actionBox = await action.boundingBox();
+    const exitBox = await exit.boundingBox();
+
+    expect(headingBox?.x).toBeGreaterThanOrEqual(16);
+    expect(actionBox?.x).toBeGreaterThanOrEqual(16);
+    expect((actionBox?.x ?? 0) + (actionBox?.width ?? 0))
+      .toBeLessThanOrEqual(viewport.width - 16);
+    expect((actionBox?.y ?? 0) + (actionBox?.height ?? 0))
+      .toBeLessThanOrEqual(viewport.height);
+    expect(exitBox?.x).toBeGreaterThanOrEqual(16);
+    expect(await page.evaluate(() =>
+      document.documentElement.scrollWidth - document.documentElement.clientWidth
+    )).toBeLessThanOrEqual(1);
+  }
+
+  await page.setViewportSize({ width: 375, height: 812 });
+  await capture(page, 'celestea-hallmark-d7-gate-375.png');
 });
 
 test('completes a low-friction session and preserves transfer plus D7 evidence', async ({ page }) => {
@@ -615,7 +753,7 @@ test('local classifier distinguishes the authored transfer and D7 targets', asyn
   expect(await retest.json()).toMatchObject({ rama: 'correcto' });
 });
 
-test('lesson 1.7 separates certainty from form and records authored evidence targets', async () => {
+test('lesson 1.8 separates certainty from form and records authored evidence targets', async () => {
   const lessonPath = path.join(process.cwd(), 'public/workshops', `${LESSON_ID}.json`);
   const lesson = JSON.parse(fs.readFileSync(lessonPath, 'utf8')) as {
     version: string;
@@ -634,7 +772,7 @@ test('lesson 1.7 separates certainty from form and records authored evidence tar
     }>;
   };
 
-  expect(lesson.version).toBe('1.7.0');
+  expect(lesson.version).toBe('1.8.0');
   expect(lesson.content_version).toBe(CONTENT_VERSION);
   expect(lesson.metadata.duracion_estimada_min).toBe(5);
   expect(lesson.pasos.map((step) => step.ref_id)).toEqual([

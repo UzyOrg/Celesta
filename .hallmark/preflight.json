@@ -1,6 +1,6 @@
 {
   "scannedAt": "2026-08-01",
-  "scope": "Celestea /crear learning flow 1.7: visible evidence, split independent proof, and delayed retest",
+  "scope": "Celestea /crear learning flow 1.8: concrete case promise, compact diagnostic contrast, visible evidence, and delayed retest",
   "framework": "Next.js 15 App Router",
   "styling": "CSS Modules",
   "fontStack": "Bricolage Grotesque display with Plus Jakarta Sans body",
@@ -16,6 +16,7 @@
     "founder-owned wave fade and poster",
     "authored branching and local-first runtime",
     "consultable guidance with assistance tracking",
+    "one comparison surface with integrated authored audio and diagnostic distractors",
     "transfer plus the seven-day retest"
   ],
   "avoid": [
@@ -25,6 +26,8 @@
     "baseline shifts when the sentence receives a term",
     "recentring unselected options",
     "decorative gradient horizon rules",
+    "divider-heavy comparison layouts",
+    "explanatory copy that reveals the diagnostic answer before the learner responds",
     "generic filler copy",
     "production prompts that hide the source evidence",
     "a single response masquerading as proof of mastery",

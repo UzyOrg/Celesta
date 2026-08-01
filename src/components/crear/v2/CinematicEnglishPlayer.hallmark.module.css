@@ -1,5 +1,5 @@
-/* Hallmark · pre-emit critique: P5 H5 E5 S5 R5 V5
- * macrostructure: case anchor → direct contrast → supported calibration → split independent proof → delayed retest
+/* Hallmark · pre-emit critique: P5 H5 E5 S5 R5 V4
+ * macrostructure: case promise → compact diagnostic contrast → supported calibration → split independent proof → delayed retest
  * genre: atmospheric · tone: warm, cinematic, quiet · anchor: neutral ivory over blue-black film
  * idea: “chalk over film” · theme: custom · axes: dark / geometric-sans / neutral
  * nav: N9 Edge-aligned minimal (app utility rail) · footer: none (task flow)
@@ -514,10 +514,11 @@
 }
 
 .arrivalLearningGoal {
-  color: var(--color-muted);
-  font-size: 0.8125rem;
-  line-height: 1.45;
-  max-width: 45ch;
+  color: var(--color-ink-soft);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  line-height: 1.5;
+  max-width: 48ch;
 }
 
 .sceneCopy[data-scene="arrival"] .caseBlock {
@@ -550,7 +551,6 @@
 
 .caseArtifactCanvas {
   align-items: center;
-  background-color: var(--color-paper-translucent);
   border-radius: var(--radius-surface);
   display: flex;
   height: clamp(7rem, 20vh, 9rem);
@@ -882,14 +882,23 @@
 }
 
 .comparisonField {
-  border-top: 1px solid var(--color-rule);
+  background-color: var(--color-paper-raised);
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius-surface);
   display: grid;
-  margin-block-end: var(--space-xl);
+  margin-block-end: var(--space-lg);
+  overflow: clip;
 }
 
 .comparisonField article {
-  border-bottom: 1px solid var(--color-rule);
-  padding-block: var(--space-md);
+  display: grid;
+  gap: var(--space-xs);
+  min-width: 0;
+  padding: var(--space-md);
+}
+
+.comparisonField article:last-child {
+  background-color: var(--color-paper-high);
 }
 
 .comparisonField article:last-child p {
@@ -897,8 +906,33 @@
   font-weight: 700;
 }
 
-.comparisonBeam {
-  display: none;
+.comparisonLabelRow {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  min-height: 2.75rem;
+}
+
+.comparisonLabelRow small {
+  align-items: center;
+  border: 1px solid var(--color-rule-strong);
+  border-radius: 50%;
+  color: var(--color-ink-soft);
+  display: inline-flex;
+  height: 1.75rem;
+  justify-content: center;
+  letter-spacing: 0;
+  width: 1.75rem;
+}
+
+.comparisonEmphasis {
+  background-color: transparent;
+  color: var(--color-accent);
+  font: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--color-accent);
+  text-decoration-thickness: 0.125rem;
+  text-underline-offset: 0.125rem;
 }
 
 .prismWrap {
@@ -1235,6 +1269,44 @@
 
 .voicePresence[data-presentation="bridge"] {
   margin-block: var(--space-md) var(--space-lg);
+}
+
+.voicePresence[data-presentation="comparison"] {
+  background-color: transparent;
+  border: 0;
+  border-radius: 0;
+  display: grid;
+  gap: 0;
+  grid-template-columns: 2.75rem;
+  margin: 0;
+  padding: 0;
+}
+
+.voicePresence[data-presentation="comparison"][data-voice-state="error"] {
+  gap: var(--space-xs);
+  grid-template-columns: 2.75rem minmax(0, 1fr);
+}
+
+.voicePresence[data-presentation="comparison"] .voiceControl {
+  background-color: transparent;
+  border-color: var(--color-rule-strong);
+  color: var(--color-ink);
+  height: 2.75rem;
+  width: 2.75rem;
+}
+
+.voicePresence[data-presentation="comparison"] .voiceControl::before,
+.voicePresence[data-presentation="comparison"] .liveDot {
+  display: none;
+}
+
+.voicePresence[data-presentation="comparison"] .voiceTranscript {
+  min-width: 0;
+  width: 1px;
+}
+
+.voicePresence[data-presentation="comparison"][data-voice-state="error"] .voiceTranscript {
+  width: auto;
 }
 
 .structuredPane {
@@ -1680,6 +1752,60 @@
   border-color: var(--color-accent);
 }
 
+.pageShell[data-scene="contrast"] .scene {
+  padding-block: var(--space-md);
+}
+
+.pageShell[data-scene="contrast"] .sceneCopy {
+  margin-block-end: var(--space-lg);
+}
+
+.pageShell[data-scene="contrast"] .sceneCopy h1 {
+  font-size: clamp(1.55rem, 7.4vw, 1.9rem);
+}
+
+.pageShell[data-scene="contrast"] .responseDock {
+  gap: var(--space-md);
+}
+
+.pageShell[data-scene="contrast"] .responsePrompt {
+  font-size: var(--text-base);
+  margin: 0;
+}
+
+.pageShell[data-scene="contrast"] .choiceStack {
+  border-top: 0;
+  gap: var(--space-xs);
+}
+
+.pageShell[data-scene="contrast"] .choiceAction {
+  background-color: var(--color-paper-raised);
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius-control);
+  min-height: 3.25rem;
+  padding: var(--space-sm);
+}
+
+.pageShell[data-scene="contrast"] .choiceAction[data-selected="true"] {
+  background-color: var(--color-paper-high);
+  border-color: var(--color-accent);
+}
+
+.pageShell[data-scene="contrast"] .choiceAction:has(.choiceNative:focus-visible) {
+  outline-offset: 2px;
+}
+
+.pageShell[data-scene="contrast"] .choiceIndicator {
+  background-color: transparent;
+  border: 0;
+  color: var(--color-accent);
+}
+
+.pageShell[data-scene="contrast"] .choiceAction[data-selected="true"] .choiceIndicator {
+  background-color: transparent;
+  border-color: transparent;
+}
+
 .structuredHeader {
   display: flex;
   justify-content: space-between;
@@ -2030,13 +2156,24 @@
 }
 
 .gateScene {
+  box-sizing: border-box;
   display: flex;
   flex: 1;
   flex-direction: column;
   margin-inline: auto;
   min-height: calc(100dvh - 5.75rem - env(safe-area-inset-top) - env(safe-area-inset-bottom));
   padding-block: clamp(var(--space-xl), 13dvh, var(--space-3xl)) var(--space-md);
+  padding-inline:
+    max(var(--space-md), env(safe-area-inset-left))
+    max(var(--space-md), env(safe-area-inset-right));
   width: min(100%, 38rem);
+}
+
+.pageShell[data-gate="retest"] > .topBar {
+  box-sizing: border-box;
+  padding-inline:
+    max(var(--space-md), env(safe-area-inset-left))
+    max(var(--space-md), env(safe-area-inset-right));
 }
 
 .gateContent {
@@ -2304,10 +2441,6 @@
 
   .comparisonField article {
     padding: var(--space-lg);
-  }
-
-  .comparisonField article:first-child {
-    border-inline-end: 1px solid var(--color-rule);
   }
 
   .prismOption {

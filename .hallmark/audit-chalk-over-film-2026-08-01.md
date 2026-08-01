@@ -1,4 +1,4 @@
-# Hallmark audit · Celestea `/crear` · learning flow 1.7
+# Hallmark audit · Celestea `/crear` · learning flow 1.8
 
 Date: 2026-08-01
 
@@ -6,7 +6,7 @@ Verb: `redesign`
 
 Route: custom, bespoke
 
-Macrostructure: case anchor → direct contrast → supported calibration → split independent proof → delayed retest
+Macrostructure: case promise → compact diagnostic contrast → supported calibration → split independent proof → delayed retest
 
 Audience: Mexican prepa students, primarily on a phone
 
@@ -18,10 +18,13 @@ This pass keeps the approved “chalk over film” system but changes what the
 screen helps the learner hold in working memory and what the product can
 honestly infer:
 
-- the opening names an observable outcome instead of an internal lesson
-  concept, states a concrete learning goal, and anchors the case with one
-  functional school-poster illustration;
-- the contrast asks one direct question before the rule is explained;
+- the opening frames a concrete challenge — discover who may have worked on
+  the poster and explain it in English — before naming the case;
+- the contrast is one bounded diagnostic surface: sentence A, sentence B,
+  emphasized `must have`, and its authored audio remain together;
+- the answer choices are tactile rows separated by space rather than seven
+  horizontal rules, and the prompt no longer reveals the answer before the
+  learner responds;
 - guided practice keeps one clue, one visual cue, one incomplete sentence, and
   the three fixed term positions in the same viewport;
 - Spanish support swaps the clue in place; it does not add a striped callout or
@@ -35,10 +38,10 @@ honestly infer:
   the English production on a third case;
 - hand-built SVGs communicate poster, model, presence, location, glue, and
   travel. They are functional evidence anchors, not generic decoration;
-- the compact voice control exposes playback state without reintroducing an
+- the compact voice control sits inside sentence B without reintroducing an
   audio card or visible transcript block;
-- the Day 7 header centers its label and removes a clipped one-letter
-  wordmark found in the rendered review.
+- the locked Day 7 screen keeps its header, copy, date, and action inside
+  logical safe-area gutters at every tested mobile width.
 
 ## Evidence contract
 
@@ -61,12 +64,12 @@ correctness before the paired English production.
 |---|---:|---|
 | Philosophy | 5 | Every screen either reduces extraneous memory load or produces a named learning observation. |
 | Hierarchy | 5 | Each viewport presents one decision, one visible source of evidence, and one primary action. |
-| Execution | 5 | Rendered review caught and removed duplicated production copy and the clipped D7 wordmark; geometry and motion regressions pass. |
+| Execution | 5 | Rendered review confirms the compact contrast, integrated audio, 1–2 px emphasis, safe D7 gutters, and stable motion geometry. |
 | Specificity | 5 | Authored school cases, visual clue states, Spanish support, and certainty language are intrinsic to this lesson. |
-| Restraint | 5 | No new cards, stripes, ornamental dividers, pills, or runtime-generated copy were introduced. |
-| Variety | 5 | The fingerprint adds a split evidence check and delayed paired retest rather than repeating the prior completion-only flow. |
+| Restraint | 5 | One semantic comparison surface replaces the divider stack; no stripe, ornamental rule, filler heading, or runtime-generated copy remains. |
+| Variety | 4 | The approved lesson sequence stays stable while the contrast changes from a document-like stack to a bounded diagnostic composition. |
 
-Stamp: `P5 H5 E5 S5 R5 V5`.
+Stamp: `P5 H5 E5 S5 R5 V4`.
 
 ## 58-gate result
 
@@ -88,13 +91,17 @@ surface.
 - `npm run typecheck` — passed.
 - `npm run lint:workshops` — passed with six unrelated legacy warnings.
 - `pnpm exec playwright test tests/e2e/crear-english-deduction.spec.ts`
-  — 12/12 passed.
+  — 14/14 passed.
 - Motion matrix: 3/3 initial selections and 6/6 directed swaps passed with
   stable source slots, stable sentence geometry, matching font metrics, and
   traveler cleanup.
 - Viewports: 320×812, 375×812, 414×896, 768×1024, 812×375, and 1280×800.
 - Arrival and independent production also pass at their dedicated responsive
   matrices; no tested viewport has horizontal overflow.
+- The contrast keeps both sentences, integrated audio, three choices, and the
+  primary action inside 320×812, 375×812, 414×896, and 768×1024.
+- The locked Day 7 header, content, date, and primary action retain at least
+  16 CSS pixels of horizontal gutter on the mobile matrix.
 - At 320×812 with the root type scaled to 125%, production remains reachable
   through ordinary vertical scrolling and still has no horizontal overflow.
 - Translation preserves clue height within 2 CSS pixels and adds no side
@@ -112,9 +119,11 @@ surface.
 Rendered artifacts:
 
 - `test-artifacts/celestea-hallmark-arrival-375.png`
+- `test-artifacts/celestea-hallmark-contrast-375.png`
 - `test-artifacts/celestea-v16-guided-map-mobile.png`
 - `test-artifacts/celestea-v16-translation-mobile.png`
 - `test-artifacts/celestea-v17-transfer-bridge-mobile.png`
 - `test-artifacts/celestea-v17-independent-certainty-mobile.png`
 - `test-artifacts/celestea-v17-production-mobile.png`
 - `test-artifacts/celestea-v17-d7-certainty-mobile.png`
+- `test-artifacts/celestea-hallmark-d7-gate-375.png`

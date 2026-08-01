@@ -228,6 +228,7 @@ export interface CrearComparison {
   right: string;
   leftLabel?: string;
   rightLabel?: string;
+  rightEmphasis?: string;
 }
 
 export interface CrearStepMeta {

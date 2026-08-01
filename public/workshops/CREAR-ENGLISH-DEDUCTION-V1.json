@@ -1,9 +1,9 @@
 {
   "id_taller": "CREAR-ENGLISH-DEDUCTION-V1",
-  "version": "1.7.0",
+  "version": "1.8.0",
   "schema_version": "0.1",
-  "content_version": "2026-08-01",
-  "audio_asset_version": "2026-08-01",
+  "content_version": "2026-08-01-contrast",
+  "audio_asset_version": "2026-08-01-contrast",
   "titulo": "La maqueta de la feria",
   "metadata": {
     "grado": "Prepa",
@@ -35,9 +35,9 @@
           "eyebrow": "",
           "moduleLabel": "Módulo de inglés",
           "levelLabel": "B1+ / B2",
-          "learningGoal": "Al final podrás distinguir lo casi seguro, lo posible y lo imposible, y decirlo en inglés.",
+          "learningGoal": "Tu reto es descubrir quién pudo haber trabajado en el cartel y explicarlo en inglés.",
           "headline": "El cartel cambió antes de la feria.",
-          "body": "Nadie vio quién trabajó en él. Usa las pistas para decidir qué puedes afirmar."
+          "body": "Nadie vio quién trabajó en él. Te mostraré una pista a la vez."
         },
         "caseArtifact": {
           "kind": "poster",
@@ -61,15 +61,15 @@
       "tipo_paso": "opcion_multiple",
       "titulo_paso": "Compara las frases",
       "opcion_multiple": {
-        "pregunta": "¿Qué comunica la frase B?",
+        "pregunta": "En la frase B, ¿qué hace quien habla?",
         "opciones": [
-          { "id": "fact", "texto": "Cuenta algo que alguien vio." },
-          { "id": "inference", "texto": "Expresa una conclusión basada en pistas." },
-          { "id": "obligation", "texto": "Da una orden al sistema." }
+          { "id": "fact", "texto": "Cuenta algo que vio." },
+          { "id": "inference", "texto": "Deduce algo por una pista." },
+          { "id": "obligation", "texto": "Habla de una obligación." }
         ],
         "respuesta_correcta": "inference",
-        "feedback_correcto": "La frase A cuenta lo que pasó y la frase B usa las pistas para explicar qué debió ocurrir.",
-        "feedback_incorrecto": "Nadie vio el cambio y la frase no da una orden. La frase B expresa una conclusión basada en pistas."
+        "feedback_correcto": "Exacto. “Must have” muestra que la persona no lo vio: usa una pista para deducir qué ocurrió.",
+        "feedback_incorrecto": "La persona no vio a Valeria y “must have” aquí no expresa una obligación. Usa una pista para deducir qué ocurrió."
       },
       "bloquea_avance_si_falla": false,
       "puntaje": 1,
@@ -79,19 +79,20 @@
         "scene": "contrast",
         "display": {
           "eyebrow": "",
-          "headline": "¿Qué cambia en la segunda frase?",
-          "body": "Las dos hablan de Valeria. Solo una presenta una conclusión."
+          "headline": "¿Lo vio o lo dedujo?"
         },
         "comparison": {
-          "leftLabel": "FRASE A",
+          "leftLabel": "A",
           "left": "Valeria painted the poster.",
-          "rightLabel": "FRASE B",
-          "right": "Valeria must have painted the poster."
+          "rightLabel": "B",
+          "right": "Valeria must have painted the poster.",
+          "rightEmphasis": "must have"
         },
         "audio": {
           "src": "/audio/crear/english-deduction/contrast.mp3",
           "text": "Lee las dos frases en inglés. Las dos hablan del mismo cambio, pero expresan algo diferente. ¿Qué comunica la frase B?",
-          "lang": "es-MX"
+          "lang": "es-MX",
+          "label": "Escuchar las frases"
         },
         "input": "choice",
         "learningOpportunity": {
