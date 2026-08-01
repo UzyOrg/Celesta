@@ -1,10 +1,10 @@
 {
   "id_taller": "CREAR-ENGLISH-DEDUCTION-V1",
-  "version": "1.6.1",
+  "version": "1.7.0",
   "schema_version": "0.1",
-  "content_version": "2026-07-30",
-  "audio_asset_version": "2026-07-30",
-  "titulo": "El archivo desaparecido",
+  "content_version": "2026-08-01",
+  "audio_asset_version": "2026-08-01",
+  "titulo": "La maqueta de la feria",
   "metadata": {
     "grado": "Prepa",
     "materia": "English B1+/B2",
@@ -23,28 +23,34 @@
       "tipo_paso": "instruccion",
       "titulo_paso": "Bienvenida",
       "instruccion": {
-        "texto": "Tu equipo debía entregar un video para una beca a medianoche. A las 11:58 p. m., el archivo desapareció."
+        "texto": "El cartel de la feria cambió antes de la entrega y nadie vio quién trabajó en él."
       },
       "bloquea_avance_si_falla": false,
       "puntaje": 0,
       "crear": {
-        "fase": "practica",
+        "fase": "pre_check",
         "stage": "descubre",
         "scene": "arrival",
         "display": {
-          "eyebrow": "CASO 01",
+          "eyebrow": "",
           "moduleLabel": "Módulo de inglés",
           "levelLabel": "B1+ / B2",
-          "learningGoal": "Aprenderás a explicar en inglés qué pudo haber ocurrido usando pistas.",
-          "headline": "¿Qué fue lo que pasó?",
-          "body": "Tu equipo está por entregar un video para una beca.\nDos minutos antes del cierre, el archivo desaparece.\nDescubre cómo una pista cambia lo que puedes afirmar."
+          "learningGoal": "Al final podrás distinguir lo casi seguro, lo posible y lo imposible, y decirlo en inglés.",
+          "headline": "El cartel cambió antes de la feria.",
+          "body": "Nadie vio quién trabajó en él. Usa las pistas para decidir qué puedes afirmar."
+        },
+        "caseArtifact": {
+          "kind": "poster",
+          "label": "Cartel de la feria",
+          "status": "La pintura todavía está fresca."
         },
         "audio": {
-          "src": "/audio/crear/english-deduction/arrival.mp3",
-          "text": "Este es un módulo de inglés, nivel B uno avanzado a B dos. Aprenderás a explicar qué pudo haber ocurrido usando pistas. Tu equipo está por entregar un video para una beca. Dos minutos antes del cierre, el archivo desaparece. Revisa las tres pistas y después explica en inglés qué crees que pasó. No necesitas conocer la estructura todavía. ¿Listo?",
+          "src": "/audio/crear/english-deduction/arrival-v17.wav",
+          "text": "El cartel de la feria cambió antes de la entrega y nadie vio quién trabajó en él. Vas a usar pistas para distinguir lo casi seguro, lo posible y lo imposible, y decirlo en inglés. Empecemos con una comparación breve.",
           "lang": "es-MX",
-          "label": "Celestea · El caso"
+          "label": "Escuchar el caso"
         },
+        "actionLabel": "Ver la primera pista",
         "input": "none",
         "nextRefId": "contrast"
       }
@@ -68,13 +74,13 @@
       "bloquea_avance_si_falla": false,
       "puntaje": 1,
       "crear": {
-        "fase": "practica",
+        "fase": "pre_check",
         "stage": "descubre",
         "scene": "contrast",
         "display": {
           "eyebrow": "",
-          "headline": "Las dos frases hablan del mismo cambio, pero no dicen lo mismo.",
-          "body": "Compáralas y decide qué comunica la segunda."
+          "headline": "¿Qué cambia en la segunda frase?",
+          "body": "Las dos hablan de Valeria. Solo una presenta una conclusión."
         },
         "comparison": {
           "leftLabel": "FRASE A",
@@ -88,6 +94,13 @@
           "lang": "es-MX"
         },
         "input": "choice",
+        "learningOpportunity": {
+          "id": "notice-fact-versus-inference",
+          "constructs": ["evidence_comprehension"],
+          "condition": "supported",
+          "novelty": "same_case",
+          "timing": "immediate"
+        },
         "allowRetry": true,
         "maxAttempts": 2,
         "nextRefId": "prism"
@@ -109,8 +122,8 @@
         "scene": "prism",
         "display": {
           "eyebrow": "",
-          "headline": "Tus palabras muestran qué tan seguro estás.",
-          "body": "Toca cada nivel para ver cuándo se usa."
+          "headline": "La pista cambia cuánta seguridad expresas.",
+          "body": "Toca un nivel para consultar la regla y un ejemplo."
         },
         "concepts": [
           {
@@ -184,8 +197,20 @@
         },
         "input": "match",
         "guideAvailable": true,
+        "learningOpportunity": {
+          "id": "guided-certainty-calibration-poster",
+          "constructs": ["certainty_calibration"],
+          "condition": "supported",
+          "novelty": "same_case",
+          "timing": "immediate"
+        },
         "certaintyMap": {
           "instruction": "Toca una expresión o arrástrala al espacio.",
+          "artifact": {
+            "kind": "poster",
+            "label": "Cartel de la feria",
+            "status": "Tres pistas sobre la misma entrega."
+          },
           "categories": [
             {
               "id": "casi_seguro",
@@ -208,6 +233,11 @@
               "id": "valeria",
               "clue": "Valeria had fresh blue paint on her hands. The poster had the same paint.",
               "translationEs": "Valeria tenía pintura azul fresca en las manos. El cartel tenía la misma pintura.",
+              "visualCue": {
+                "kind": "paint",
+                "label": "Pintura fresca",
+                "detail": "El mismo azul en sus manos y en el cartel."
+              },
               "sentenceStart": "Valeria",
               "sentenceEnd": "painted the poster.",
               "correctCategory": "casi_seguro",
@@ -217,6 +247,11 @@
               "id": "mateo",
               "clue": "Mateo stayed after class. No one saw whether he worked on the poster.",
               "translationEs": "Mateo se quedó después de clase. Nadie vio si trabajó en el cartel.",
+              "visualCue": {
+                "kind": "presence",
+                "label": "Estuvo ahí",
+                "detail": "Nadie vio en qué trabajó."
+              },
               "sentenceStart": "Mateo",
               "sentenceEnd": "helped with the poster.",
               "correctCategory": "posible",
@@ -226,6 +261,11 @@
               "id": "iker",
               "clue": "Iker was playing a match at another school when the poster was made.",
               "translationEs": "Iker estaba jugando un partido en otra escuela cuando hicieron el cartel.",
+              "visualCue": {
+                "kind": "location",
+                "label": "Otra escuela",
+                "detail": "Iker estaba fuera durante la entrega."
+              },
               "sentenceStart": "Iker",
               "sentenceEnd": "helped with the poster.",
               "correctCategory": "imposible",
@@ -255,8 +295,8 @@
         "scene": "transfer-bridge",
         "display": {
           "eyebrow": "",
-          "headline": "La misma idea, en otro caso.",
-          "body": "Ahora trabajarás con una maqueta para la feria. Seguirás viendo una pista a la vez."
+          "headline": "Nuevo caso. Misma pregunta.",
+          "body": "¿Qué tan segura es tu conclusión? Ahora las pistas hablan de una maqueta."
         },
         "audio": {
           "src": "/audio/crear/english-deduction/transfer-bridge.wav",
@@ -264,6 +304,7 @@
           "lang": "es-MX",
           "label": "Celestea · Nuevo caso"
         },
+        "actionLabel": "Resolver el nuevo caso",
         "input": "none",
         "nextRefId": "transfer"
       }
@@ -293,8 +334,20 @@
         },
         "input": "match",
         "guideAvailable": true,
+        "learningOpportunity": {
+          "id": "supported-certainty-calibration-model",
+          "constructs": ["certainty_calibration"],
+          "condition": "supported",
+          "novelty": "new_case",
+          "timing": "immediate"
+        },
         "certaintyMap": {
           "instruction": "Toca una expresión o arrástrala al espacio.",
+          "artifact": {
+            "kind": "model",
+            "label": "Maqueta de la feria",
+            "status": "Tres pistas sobre el mismo proyecto."
+          },
           "categories": [
             {
               "id": "casi_seguro",
@@ -317,6 +370,11 @@
               "id": "elena",
               "clue": "Elena had fresh glue on her hands. The same glue was on the model.",
               "translationEs": "Elena tenía pegamento fresco en las manos. La maqueta tenía el mismo pegamento.",
+              "visualCue": {
+                "kind": "glue",
+                "label": "Pegamento fresco",
+                "detail": "El mismo pegamento en sus manos y en la maqueta."
+              },
               "sentenceStart": "Elena",
               "sentenceEnd": "worked on the model.",
               "correctCategory": "casi_seguro",
@@ -326,6 +384,11 @@
               "id": "leo",
               "clue": "Leo stayed in the classroom during lunch. No one saw what he worked on.",
               "translationEs": "Leo se quedó en el salón durante el recreo. Nadie vio en qué trabajó.",
+              "visualCue": {
+                "kind": "presence",
+                "label": "Estuvo en el salón",
+                "detail": "Nadie vio en qué trabajó."
+              },
               "sentenceStart": "Leo",
               "sentenceEnd": "worked on the model.",
               "correctCategory": "posible",
@@ -335,52 +398,151 @@
               "id": "mara",
               "clue": "Mara left school before the model arrived.",
               "translationEs": "Mara salió de la escuela antes de que llegara la maqueta.",
+              "visualCue": {
+                "kind": "location",
+                "label": "Ya se había ido",
+                "detail": "La maqueta llegó después."
+              },
               "sentenceStart": "Mara",
               "sentenceEnd": "worked on the model.",
               "correctCategory": "imposible",
               "feedbackIncorrecto": "Mara ya se había ido cuando llegó la maqueta: esta acción queda descartada."
             }
           ],
-          "production": {
-            "category": "posible",
-            "prompt": "Nora estuvo en el salón durante el recreo. Nadie vio en qué trabajó. Escribe una posibilidad en inglés.",
-            "placeholder": "Nora might have worked…",
-            "minChars": 14
-          },
           "successTitle": "Completaste las tres deducciones",
-          "successBody": "Ahora expresa una posibilidad nueva con tus propias palabras."
+          "successBody": "Ahora resolverás una pista sin ver la respuesta en inglés."
         },
-        "allowRetry": true,
-        "maxAttempts": 2,
+        "revealFeedback": false,
+        "nextRefId": "transfer-check-certainty"
+      }
+    },
+    {
+      "paso_numero": 7,
+      "ref_id": "transfer-check-certainty",
+      "tipo_paso": "opcion_multiple",
+      "titulo_paso": "Decide la certeza",
+      "opcion_multiple": {
+        "pregunta": "Con esta pista, ¿qué tan segura puede ser tu conclusión?",
+        "opciones": [
+          { "id": "casi_seguro", "texto": "Es casi seguro" },
+          { "id": "posible", "texto": "Es posible" },
+          { "id": "imposible", "texto": "Queda descartado" }
+        ],
+        "respuesta_correcta": "posible",
+        "feedback_correcto": "La pista deja una posibilidad abierta.",
+        "feedback_incorrecto": "Estar ahí no demuestra qué hizo Nora."
+      },
+      "bloquea_avance_si_falla": false,
+      "puntaje": 1,
+      "crear": {
+        "fase": "transfer",
+        "stage": "aplica",
+        "scene": "transfer",
+        "display": {
+          "eyebrow": "",
+          "headline": "Primero, decide la certeza.",
+          "body": "Nora estuvo en el salón durante el recreo. Nadie vio en qué trabajó."
+        },
+        "caseArtifact": {
+          "kind": "model",
+          "label": "Maqueta de la feria",
+          "status": "Una pista nueva sobre Nora.",
+          "cue": {
+            "kind": "presence",
+            "label": "Estuvo en el salón",
+            "detail": "Nadie vio en qué trabajó."
+          }
+        },
+        "input": "choice",
+        "learningOpportunity": {
+          "id": "independent-transfer-certainty",
+          "constructs": ["certainty_calibration"],
+          "condition": "independent",
+          "novelty": "new_case",
+          "timing": "immediate"
+        },
+        "revealFeedback": false,
+        "allowRetry": false,
+        "nextRefId": "transfer-production"
+      }
+    },
+    {
+      "paso_numero": 8,
+      "ref_id": "transfer-production",
+      "tipo_paso": "pregunta_abierta_validada",
+      "titulo_paso": "Expresa la deducción",
+      "pregunta_abierta_validada": {
+        "pregunta": "Escribe una deducción en inglés sobre Nora.",
+        "placeholder": "Escribe una frase sobre Nora.",
+        "validacion": {
+          "tipo": "palabras_clave",
+          "criterio": ["nora", "might have"],
+          "feedback_correcto": "La certeza y la forma en inglés coinciden.",
+          "feedback_incorrecto": "La frase debe mostrar la misma certeza que elegiste."
+        }
+      },
+      "bloquea_avance_si_falla": false,
+      "puntaje": 2,
+      "crear": {
+        "fase": "transfer",
+        "stage": "aplica",
+        "scene": "transfer",
+        "display": {
+          "eyebrow": "",
+          "headline": "Ahora dilo en inglés.",
+          "body": "Nora estuvo en el salón durante el recreo. Nadie vio en qué trabajó."
+        },
+        "caseArtifact": {
+          "kind": "model",
+          "label": "Maqueta de la feria",
+          "status": "La pista sobre Nora sigue disponible.",
+          "cue": {
+            "kind": "presence",
+            "label": "Estuvo en el salón",
+            "detail": "Nadie vio en qué trabajó."
+          }
+        },
+        "input": "text",
+        "actionLabel": "Guardar mi frase",
+        "minChars": 14,
+        "allowRetry": false,
+        "learningOpportunity": {
+          "id": "independent-transfer-form",
+          "constructs": ["modal_form"],
+          "condition": "independent",
+          "novelty": "new_case",
+          "timing": "immediate"
+        },
         "classifier": {
           "fallbackRama": "no_claro",
           "minConfianza": 0.5,
           "ramas": [
             {
               "rama": "correcto",
-              "descripcion": "Uses a possibility modal and attributes a plausible past action to Nora.",
+              "descripcion": "Uses a possibility modal and a plausible past action about Nora.",
               "ejemplos": [
                 "Nora might have worked on the model.",
                 "Nora may have helped with the project.",
-                "Nora could have painted the model."
+                "Nora could have painted part of it."
               ],
               "match": {
                 "allGroups": [
                   ["nora"],
-                  ["might have", "may have", "could have"]
+                  ["might have", "may have", "could have"],
+                  ["worked", "helped", "built", "painted", "made", "changed", "fixed", "finished", "designed", "glued"]
                 ],
                 "none": ["nora must have", "nora can't have", "nora cannot have"]
               },
               "correcto": true,
               "score": 2,
               "feedback": {
-                "title": "Aplicaste la idea en una pista nueva",
-                "body": "Expresaste una posibilidad sin convertirla en certeza."
+                "title": "Tu frase conserva la posibilidad",
+                "body": "Separaste la certeza de la forma y después las hiciste coincidir."
               }
             },
             {
               "rama": "misconcepcion_certeza",
-              "descripcion": "Turns an open possibility into certainty or impossibility.",
+              "descripcion": "Turns the open possibility into certainty or impossibility.",
               "ejemplos": ["Nora must have worked on it", "Nora can't have helped"],
               "match": {
                 "any": ["nora must have", "nora can't have", "nora cannot have"]
@@ -388,13 +550,13 @@
               "correcto": false,
               "score": 0.5,
               "feedback": {
-                "title": "La pista deja una posibilidad abierta",
-                "body": "Estar en el salón no demuestra qué hizo. Usa una forma que conserve esa duda."
+                "title": "La forma cambió tu certeza",
+                "body": "La pista deja abierta una posibilidad; no permite asegurarla ni descartarla."
               }
             },
             {
               "rama": "misconcepcion_forma",
-              "descripcion": "The intended possibility is visible, but modal + have + participle is malformed.",
+              "descripcion": "The intended possibility is visible, but modal plus have plus participle is malformed.",
               "ejemplos": ["Nora might changed it", "Nora could has edited it"],
               "match": {
                 "any": ["nora might changed", "nora may changed", "nora could changed", "nora might has", "nora could has"]
@@ -402,8 +564,8 @@
               "correcto": false,
               "score": 0.5,
               "feedback": {
-                "title": "La posibilidad está bien elegida",
-                "body": "Completa la forma con might have, may have o could have y después la acción en pasado."
+                "title": "La certeza está; falta ajustar la forma",
+                "body": "Después de might, may o could, usa have y una acción en participio."
               }
             },
             {
@@ -413,8 +575,8 @@
               "correcto": false,
               "score": 0,
               "feedback": {
-                "title": "Haz visible la posibilidad",
-                "body": "Empieza con Nora might have y completa una acción posible."
+                "title": "Aún no aparece una deducción completa",
+                "body": "Guardamos esta señal por separado de tu decisión de certeza."
               }
             }
           ]
@@ -423,7 +585,7 @@
       }
     },
     {
-      "paso_numero": 7,
+      "paso_numero": 9,
       "ref_id": "close",
       "tipo_paso": "instruccion",
       "titulo_paso": "Cierre",
@@ -447,17 +609,69 @@
           "lang": "es-MX"
         },
         "input": "none",
-        "nextRefId": "retest"
+        "actionLabel": "Terminar por hoy",
+        "nextRefId": "retest-certainty"
       }
     },
     {
-      "paso_numero": 8,
-      "ref_id": "retest",
+      "paso_numero": 10,
+      "ref_id": "retest-certainty",
+      "tipo_paso": "opcion_multiple",
+      "titulo_paso": "Revisión de certeza",
+      "opcion_multiple": {
+        "pregunta": "Con esta pista, ¿qué tan segura puede ser tu conclusión?",
+        "opciones": [
+          { "id": "casi_seguro", "texto": "Es casi seguro" },
+          { "id": "posible", "texto": "Es posible" },
+          { "id": "imposible", "texto": "Queda descartado" }
+        ],
+        "respuesta_correcta": "imposible",
+        "feedback_correcto": "La excursión permite descartar que Emi moviera el cartel.",
+        "feedback_incorrecto": "Emi estaba fuera cuando alguien movió el cartel."
+      },
+      "bloquea_avance_si_falla": false,
+      "puntaje": 1,
+      "crear": {
+        "fase": "post",
+        "stage": "recuerda",
+        "scene": "retest",
+        "display": {
+          "eyebrow": "",
+          "headline": "Una semana después.",
+          "body": "Emi estaba en una excursión cuando alguien movió el cartel del salón."
+        },
+        "caseArtifact": {
+          "kind": "trip",
+          "label": "Excursión escolar",
+          "status": "Emi estaba lejos de la escuela.",
+          "cue": {
+            "kind": "trip",
+            "label": "Fuera de la escuela",
+            "detail": "El cartel se movió durante la excursión."
+          }
+        },
+        "input": "choice",
+        "learningOpportunity": {
+          "id": "delayed-independent-certainty",
+          "constructs": ["certainty_calibration"],
+          "condition": "independent",
+          "novelty": "new_case",
+          "timing": "delayed"
+        },
+        "revealFeedback": false,
+        "allowRetry": false,
+        "retestDelayHours": 168,
+        "nextRefId": "retest-production"
+      }
+    },
+    {
+      "paso_numero": 11,
+      "ref_id": "retest-production",
       "tipo_paso": "pregunta_abierta_validada",
-      "titulo_paso": "Revisión de día 7",
+      "titulo_paso": "Revisión de forma",
       "pregunta_abierta_validada": {
-        "pregunta": "Emi estaba en una excursión cuando alguien movió el cartel del salón. Escribe en inglés qué no pudo haber hecho Emi.",
-        "placeholder": "Emi can't have…",
+        "pregunta": "Escribe una deducción en inglés sobre Emi.",
+        "placeholder": "Escribe una frase sobre Emi.",
         "validacion": {
           "tipo": "palabras_clave",
           "criterio": ["emi", "can't have"],
@@ -473,20 +687,30 @@
         "scene": "retest",
         "display": {
           "eyebrow": "",
-          "headline": "Una semana después.",
-          "body": "Una pista, una frase. Responde con lo que recuerdes."
+          "headline": "Ahora dilo en inglés.",
+          "body": "Emi estaba de excursión cuando alguien movió el cartel del salón."
         },
-        "evidence": [
-          {
-            "id": "school-trip",
-            "label": "Ubicación de Emi",
-            "value": "Emi was on a school trip when someone moved the classroom poster."
+        "caseArtifact": {
+          "kind": "trip",
+          "label": "Excursión escolar",
+          "status": "La pista sobre Emi sigue disponible.",
+          "cue": {
+            "kind": "trip",
+            "label": "Fuera de la escuela",
+            "detail": "El cartel se movió durante la excursión."
           }
-        ],
+        },
         "input": "text",
+        "actionLabel": "Terminar revisión",
         "minChars": 14,
         "allowRetry": false,
-        "retestDelayHours": 168,
+        "learningOpportunity": {
+          "id": "delayed-independent-form",
+          "constructs": ["modal_form"],
+          "condition": "independent",
+          "novelty": "new_case",
+          "timing": "delayed"
+        },
         "classifier": {
           "fallbackRama": "no_claro",
           "minConfianza": 0.5,
@@ -502,7 +726,8 @@
               "match": {
                 "allGroups": [
                   ["emi"],
-                  ["can't have", "cannot have", "couldn't have", "could not have"]
+                  ["can't have", "cannot have", "couldn't have", "could not have"],
+                  ["moved", "changed", "taken", "removed", "touched", "worked", "helped"]
                 ],
                 "none": ["emi must have", "emi might have", "emi may have"]
               },

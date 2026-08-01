@@ -1,5 +1,15 @@
 [
   {
+    "date": "2026-08-01",
+    "macrostructure": "case anchor → direct contrast → supported calibration → split independent proof → delayed retest",
+    "theme": "custom",
+    "theme_axes": "dark / geometric-sans / neutral",
+    "vibe": "chalk over film, evidence-visible, learner-paced",
+    "enrichment": "user-owned wave film plus functional hand-built evidence SVGs and authored voice",
+    "brief": "Celestea /crear keeps the case visible, separates certainty from English form, distinguishes supported from independent performance, and retests both decisions after seven days",
+    "status": "accepted-build"
+  },
+  {
     "date": "2026-07-31",
     "macrostructure": "fixed source slots → measured bidirectional term completion",
     "theme": "custom",

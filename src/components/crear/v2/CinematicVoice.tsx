@@ -66,7 +66,7 @@ export function CinematicVoice({
           {visibleLabel}
         </span>
         <p
-          className={(isIntro || isBridge) && status !== 'error' ? styles.visuallyHidden : undefined}
+          className={(compact || isIntro || isBridge) && status !== 'error' ? styles.visuallyHidden : undefined}
           lang={audio.lang ?? 'en-US'}
         >
           {audio.text}

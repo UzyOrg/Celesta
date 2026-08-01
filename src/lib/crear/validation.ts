@@ -1,8 +1,11 @@
 import { validateWorkshopJson } from '@/lib/workshops/schema';
 import type {
+  CrearCaseArtifact,
   CrearClassifierBranch,
+  CrearLearningOpportunity,
   CrearResponseCategory,
   CrearStepMeta,
+  CrearVisualCue,
   CrearWorkshop,
 } from './types';
 
@@ -26,6 +29,66 @@ const RESPONSE_CATEGORIES: readonly CrearResponseCategory[] = [
   'imposible',
 ];
 const RESPONSE_CATEGORY_SET = new Set<CrearResponseCategory>(RESPONSE_CATEGORIES);
+const CASE_ARTIFACT_KINDS = new Set(['poster', 'model', 'trip']);
+const VISUAL_CUE_KINDS = new Set(['paint', 'glue', 'presence', 'location', 'trip']);
+const LEARNING_CONSTRUCTS = new Set([
+  'evidence_comprehension',
+  'certainty_calibration',
+  'modal_form',
+]);
+const LEARNING_CONDITIONS = new Set(['supported', 'independent']);
+const LEARNING_NOVELTIES = new Set(['same_case', 'new_case']);
+const LEARNING_TIMINGS = new Set(['immediate', 'delayed']);
+
+function validateVisualCue(cue: CrearVisualCue, label: string): void {
+  if (
+    !cue ||
+    typeof cue !== 'object' ||
+    !VISUAL_CUE_KINDS.has(cue.kind) ||
+    typeof cue.label !== 'string' ||
+    !cue.label.trim() ||
+    typeof cue.detail !== 'string' ||
+    !cue.detail.trim()
+  ) {
+    throw new Error(`CREAR JSON: ${label} is invalid`);
+  }
+}
+
+function validateCaseArtifact(artifact: CrearCaseArtifact, label: string): void {
+  if (
+    !artifact ||
+    typeof artifact !== 'object' ||
+    !CASE_ARTIFACT_KINDS.has(artifact.kind) ||
+    typeof artifact.label !== 'string' ||
+    !artifact.label.trim() ||
+    typeof artifact.status !== 'string' ||
+    !artifact.status.trim()
+  ) {
+    throw new Error(`CREAR JSON: ${label} is invalid`);
+  }
+  if (artifact.cue) validateVisualCue(artifact.cue, `${label}.cue`);
+}
+
+function validateLearningOpportunity(
+  opportunity: CrearLearningOpportunity,
+  label: string
+): void {
+  if (
+    !opportunity ||
+    typeof opportunity !== 'object' ||
+    typeof opportunity.id !== 'string' ||
+    !opportunity.id.trim() ||
+    !Array.isArray(opportunity.constructs) ||
+    opportunity.constructs.length === 0 ||
+    opportunity.constructs.some((construct) => !LEARNING_CONSTRUCTS.has(construct)) ||
+    new Set(opportunity.constructs).size !== opportunity.constructs.length ||
+    !LEARNING_CONDITIONS.has(opportunity.condition) ||
+    !LEARNING_NOVELTIES.has(opportunity.novelty) ||
+    !LEARNING_TIMINGS.has(opportunity.timing)
+  ) {
+    throw new Error(`CREAR JSON: ${label} is invalid`);
+  }
+}
 
 function assertStringArray(value: unknown, label: string): void {
   if (value === undefined) return;
@@ -92,6 +155,21 @@ function validateMeta(meta: CrearStepMeta, refId: string): void {
   }
   if (meta.scene !== undefined && !SCENES.has(meta.scene)) {
     throw new Error(`CREAR JSON: ${refId}.crear.scene is invalid`);
+  }
+  if (
+    meta.actionLabel !== undefined &&
+    (typeof meta.actionLabel !== 'string' || !meta.actionLabel.trim())
+  ) {
+    throw new Error(`CREAR JSON: ${refId}.crear.actionLabel must be non-empty`);
+  }
+  if (meta.caseArtifact !== undefined) {
+    validateCaseArtifact(meta.caseArtifact, `${refId}.crear.caseArtifact`);
+  }
+  if (meta.learningOpportunity !== undefined) {
+    validateLearningOpportunity(
+      meta.learningOpportunity,
+      `${refId}.crear.learningOpportunity`
+    );
   }
   if (
     meta.retestDelayHours !== undefined &&
@@ -178,6 +256,9 @@ function validateMeta(meta: CrearStepMeta, refId: string): void {
       throw new Error(`CREAR JSON: ${refId}.crear.certaintyMap requires match input`);
     }
     const map = meta.certaintyMap;
+    if (map.artifact !== undefined) {
+      validateCaseArtifact(map.artifact, `${refId}.crear.certaintyMap.artifact`);
+    }
     if (typeof map.instruction !== 'string' || map.instruction.trim().length === 0) {
       throw new Error(`CREAR JSON: ${refId}.crear.certaintyMap.instruction must be non-empty`);
     }
@@ -238,6 +319,12 @@ function validateMeta(meta: CrearStepMeta, refId: string): void {
             `CREAR JSON: ${refId}.crear.certaintyMap.statements[${index}].${field} must be non-empty`
           );
         }
+      }
+      if (statement.visualCue !== undefined) {
+        validateVisualCue(
+          statement.visualCue,
+          `${refId}.crear.certaintyMap.statements[${index}].visualCue`
+        );
       }
       statementIds.add(statement.id);
     });

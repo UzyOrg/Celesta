@@ -3,6 +3,7 @@
 import { trackEvent } from '@/lib/track';
 import type {
   CrearFase,
+  CrearLearningOpportunity,
   CrearResponseCategory,
   CrearResponsePartAnswer,
   CrearTelemetryResult,
@@ -25,6 +26,7 @@ interface TrackCrearAnswerInput {
   intento?: number;
   attempt?: number;
   studyId?: string;
+  learningOpportunity?: CrearLearningOpportunity;
 }
 
 interface TrackCrearStepInput {
@@ -87,6 +89,10 @@ export async function trackCrearAnswer(input: TrackCrearAnswerInput): Promise<vo
     result.studyId = input.studyId;
   }
 
+  if (input.learningOpportunity) {
+    result.learningOpportunity = input.learningOpportunity;
+  }
+
   await trackEvent('envio_respuesta', {
     tallerId: input.tallerId,
     pasoId: input.pasoId,
@@ -113,11 +119,24 @@ export async function trackCrearStepComplete(input: TrackCrearStepInput): Promis
   });
 }
 
-export async function trackCrearHint(input: TrackCrearStepInput & { rama: string }): Promise<void> {
+export async function trackCrearHint(
+  input: TrackCrearStepInput & {
+    rama: string;
+    statementId?: string;
+    learningOpportunityId?: string;
+  }
+): Promise<void> {
   await trackEvent('solicito_pista', {
     tallerId: input.tallerId,
     pasoId: input.pasoId,
-    result: { rama: input.rama, ...(input.studyId ? { studyId: input.studyId } : {}) },
+    result: {
+      rama: input.rama,
+      ...(input.statementId ? { statementId: input.statementId } : {}),
+      ...(input.learningOpportunityId
+        ? { learningOpportunityId: input.learningOpportunityId }
+        : {}),
+      ...(input.studyId ? { studyId: input.studyId } : {}),
+    },
     checksum: input.checksum,
   });
 }

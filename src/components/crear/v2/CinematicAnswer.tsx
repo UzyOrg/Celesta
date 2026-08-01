@@ -22,6 +22,7 @@ interface CinematicAnswerProps {
   responseParts?: CrearResponsePart[];
   choiceLanguage?: 'es-MX' | 'en-US';
   continueLabel?: string;
+  choiceSubmitLabel?: string;
   submitLabel?: string;
   onContinue: () => void;
   onSubmitText: (text: string, parts?: CrearResponsePartAnswer[]) => void;
@@ -55,6 +56,7 @@ export function CinematicAnswer({
   responseParts = [],
   choiceLanguage = 'es-MX',
   continueLabel = 'Continuar',
+  choiceSubmitLabel = 'Comprobar',
   submitLabel = 'Enviar respuesta',
   onContinue,
   onSubmitText,
@@ -159,7 +161,7 @@ export function CinematicAnswer({
             </>
           ) : (
             <>
-              <span>Comprobar</span>
+              <span>{choiceSubmitLabel}</span>
               <ArrowRight size={18} />
             </>
           )}

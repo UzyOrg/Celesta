@@ -2,7 +2,7 @@
     { "id_taller": "DEV-TEST", "content_version": "dev", "updated_at": "2025-08-20T00:00:00Z" },
     { "id_taller": "BIO-001",  "content_version": "2025-09-30", "updated_at": "2025-09-30T22:00:00Z" },
     { "id_taller": "BIO-001-PRE",  "content_version": "2025-09-30", "updated_at": "2025-09-30T22:00:00Z" },
-    { "id_taller": "CREAR-ENGLISH-DEDUCTION-V1", "content_version": "2026-07-30", "updated_at": "2026-07-30T00:00:00Z" },
+    { "id_taller": "CREAR-ENGLISH-DEDUCTION-V1", "content_version": "2026-08-01", "updated_at": "2026-08-01T00:00:00Z" },
     { "id_taller": "CREAR-VIDEOJUEGO", "content_version": "2026-06-29", "updated_at": "2026-06-29T00:00:00Z" },
     { "id_taller": "CREAR-CANCION", "content_version": "2026-06-29", "updated_at": "2026-06-29T00:00:00Z" },
     { "id_taller": "CREAR-REDES", "content_version": "2026-06-29", "updated_at": "2026-06-29T00:00:00Z" }

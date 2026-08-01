@@ -1,6 +1,7 @@
 "use client";
 
 import type {
+  CrearLearningObservation,
   CrearLessonId,
   CrearResponseCategory,
   CrearResponsePartAnswer,
@@ -36,6 +37,7 @@ export interface CrearStudyState {
   latestOutcomes: Record<string, CrearStoredOutcome>;
   awaitingFeedback: Record<string, boolean>;
   assistance: Record<string, boolean>;
+  evidenceLedger: CrearLearningObservation[];
 }
 
 const STORAGE_PREFIX = 'celesta:crear:study';
@@ -85,6 +87,32 @@ function isStoredOutcome(value: unknown): value is CrearStoredOutcome {
   );
 }
 
+function isLearningObservation(value: unknown): value is CrearLearningObservation {
+  if (!isRecord(value)) return false;
+  const constructs = value.constructs;
+  return (
+    typeof value.id === 'string' &&
+    value.id.length > 0 &&
+    Array.isArray(constructs) &&
+    constructs.length === 1 &&
+    constructs.every((construct) =>
+      construct === 'evidence_comprehension' ||
+      construct === 'certainty_calibration' ||
+      construct === 'modal_form'
+    ) &&
+    (value.condition === 'supported' || value.condition === 'independent') &&
+    (value.novelty === 'same_case' || value.novelty === 'new_case') &&
+    (value.timing === 'immediate' || value.timing === 'delayed') &&
+    typeof value.stepId === 'string' &&
+    typeof value.branch === 'string' &&
+    typeof value.correct === 'boolean' &&
+    typeof value.assisted === 'boolean' &&
+    isNonNegativeInteger(value.attempt) &&
+    isFiniteTimestamp(value.recordedAt) &&
+    (value.statementId === undefined || typeof value.statementId === 'string')
+  );
+}
+
 function isRecordOf<T>(
   value: unknown,
   predicate: (entry: unknown) => entry is T
@@ -105,6 +133,7 @@ export function loadCrearStudyState(lessonId: CrearLessonId): CrearStudyState | 
     const latestOutcomes = parsed.latestOutcomes ?? {};
     const awaitingFeedback = parsed.awaitingFeedback ?? {};
     const assistance = parsed.assistance ?? {};
+    const evidenceLedger = parsed.evidenceLedger ?? [];
     if (
       parsed.lessonId !== lessonId ||
       typeof parsed.studyId !== 'string' ||
@@ -120,7 +149,9 @@ export function loadCrearStudyState(lessonId: CrearLessonId): CrearStudyState | 
       !isRecordOf(firstOutcomes, isStoredOutcome) ||
       !isRecordOf(latestOutcomes, isStoredOutcome) ||
       !isRecordOf(awaitingFeedback, (value): value is boolean => typeof value === 'boolean') ||
-      !isRecordOf(assistance, (value): value is boolean => typeof value === 'boolean')
+      !isRecordOf(assistance, (value): value is boolean => typeof value === 'boolean') ||
+      !Array.isArray(evidenceLedger) ||
+      !evidenceLedger.every(isLearningObservation)
     ) {
       return null;
     }
@@ -139,6 +170,7 @@ export function loadCrearStudyState(lessonId: CrearLessonId): CrearStudyState | 
       latestOutcomes,
       awaitingFeedback,
       assistance,
+      evidenceLedger,
     };
   } catch {
     return null;
@@ -166,6 +198,7 @@ export function getOrCreateCrearStudyState(
     latestOutcomes: {},
     awaitingFeedback: {},
     assistance: {},
+    evidenceLedger: [],
   };
   saveCrearStudyState(state);
   return state;

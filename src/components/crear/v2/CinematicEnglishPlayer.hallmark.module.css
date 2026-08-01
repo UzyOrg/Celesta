@@ -1,13 +1,13 @@
 /* Hallmark · pre-emit critique: P5 H5 E5 S5 R5 V5
- * macrostructure: clue swap → measured-term completion → voiced bridge → production
+ * macrostructure: case anchor → direct contrast → supported calibration → split independent proof → delayed retest
  * genre: atmospheric · tone: warm, cinematic, quiet · anchor: neutral ivory over blue-black film
  * idea: “chalk over film” · theme: custom · axes: dark / geometric-sans / neutral
  * nav: N9 Edge-aligned minimal (app utility rail) · footer: none (task flow)
  * contrast: pass (40–41) · slop: pass (42–45) · honest: pass (46)
  * chrome: pass (47) · tokens: pass (48) · responsive: pass (49)
  * icons: pass (30) · mobile: pass (34, 49, 50–57)
- * enrichment: user-owned wave film as the narrative stage
- * audience: Mexican prepa students · use: complete one low-stakes learning task
+ * enrichment: user-owned wave film + functional hand-built evidence SVGs
+ * audience: Mexican prepa students · use: reason from visible evidence, then express the decision
  * route: custom (bespoke) · studied: no
  */
 
@@ -295,6 +295,15 @@
   grid-template-columns: 3rem minmax(0, 1fr) 3rem;
 }
 
+.topBar[data-scene="retest"] {
+  grid-template-columns: 3rem minmax(0, 1fr) 3rem;
+}
+
+.topBar[data-scene="retest"] .retestPill {
+  grid-column: 2;
+  justify-self: center;
+}
+
 .arrivalHeaderModule {
   align-items: center;
   display: flex;
@@ -516,12 +525,12 @@
 }
 
 .sceneCopy[data-scene="arrival"] h1 {
-  font-size: clamp(1.6rem, 7.45vw, 1.75rem);
+  font-size: clamp(1.55rem, 7vw, 1.75rem);
   letter-spacing: -0.045em;
   line-height: 1.08;
   overflow-wrap: anywhere;
-  text-wrap: nowrap;
-  white-space: nowrap;
+  text-wrap: balance;
+  white-space: normal;
 }
 
 .sceneCopy[data-scene="arrival"] .sceneBody {
@@ -530,6 +539,165 @@
   line-height: 1.55;
   max-width: 45ch;
   white-space: normal;
+}
+
+.caseArtifact {
+  display: grid;
+  gap: var(--space-xs);
+  margin: 0 0 var(--space-lg);
+  min-width: 0;
+}
+
+.caseArtifactCanvas {
+  align-items: center;
+  background-color: var(--color-paper-translucent);
+  border-radius: var(--radius-surface);
+  display: flex;
+  height: clamp(7rem, 20vh, 9rem);
+  justify-content: center;
+  overflow: hidden;
+  padding: var(--space-xs) var(--space-md);
+}
+
+.caseArtifactCanvas svg {
+  display: block;
+  height: 100%;
+  overflow: visible;
+  width: 100%;
+}
+
+.artifactCaption {
+  align-items: start;
+  display: flex;
+  gap: var(--space-md);
+  justify-content: space-between;
+  min-width: 0;
+}
+
+.artifactCaption > span {
+  display: grid;
+  gap: var(--space-3xs);
+  min-width: 0;
+}
+
+.artifactCaption strong,
+.artifactCaption small {
+  line-height: 1.35;
+}
+
+.artifactCaption strong {
+  color: var(--color-ink-soft);
+  font-size: var(--text-sm);
+}
+
+.artifactCaption small {
+  color: var(--color-muted-quiet);
+  font-size: var(--text-xs);
+}
+
+.artifactCueCopy {
+  text-align: end;
+}
+
+.artifactCueCopy strong {
+  color: var(--color-accent);
+}
+
+.caseArtifact[data-compact="true"] {
+  margin: 0;
+}
+
+.caseArtifact[data-compact="true"] .caseArtifactCanvas {
+  background-color: transparent;
+  border-radius: var(--radius-sm);
+  height: 6rem;
+  padding: 0;
+}
+
+.caseArtifact[data-compact="true"] .artifactCaption {
+  display: none;
+}
+
+.artifactDesk,
+.artifactSheet path,
+.artifactModelLine,
+.artifactRoute,
+.artifactCuePresence path {
+  fill: none;
+  stroke: var(--color-rule-strong);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 3;
+}
+
+.artifactSheet rect,
+.artifactModelWall,
+.artifactSchool path,
+.artifactBus rect {
+  fill: var(--color-paper-high);
+  stroke: var(--color-rule-strong);
+  stroke-linejoin: round;
+  stroke-width: 2;
+}
+
+.artifactPaint,
+.artifactGlue {
+  fill: none;
+  stroke: var(--color-accent);
+  stroke-linecap: round;
+  stroke-width: 7;
+}
+
+.artifactPaintDrop,
+.artifactTool,
+.artifactBus circle {
+  fill: var(--color-accent);
+}
+
+.artifactModelBase {
+  fill: var(--color-paper-raised);
+  stroke: var(--color-rule-strong);
+  stroke-linejoin: round;
+  stroke-width: 2;
+}
+
+.artifactCuePaint,
+.artifactCueGlue,
+.artifactCueTrip,
+.artifactCuePresence circle,
+.artifactCueLocation path,
+.artifactCueLocation circle {
+  fill: none;
+  stroke: var(--color-accent);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 3;
+}
+
+.artifactCuePresence,
+.artifactCueLocation,
+.artifactCuePaint,
+.artifactCueGlue,
+.artifactCueTrip {
+  opacity: 0;
+}
+
+.caseArtifact[data-cue="paint"] .artifactCuePaint,
+.caseArtifact[data-cue="glue"] .artifactCueGlue,
+.caseArtifact[data-cue="presence"] .artifactCuePresence,
+.caseArtifact[data-cue="location"] .artifactCueLocation,
+.caseArtifact[data-cue="trip"] .artifactCueTrip {
+  opacity: 1;
+}
+
+.artifactSchool path,
+.artifactBus rect,
+.artifactBus circle {
+  stroke: var(--color-rule-strong);
+}
+
+.artifactBus circle {
+  stroke-width: 2;
 }
 
 .guideAction {
@@ -814,10 +982,10 @@
 }
 
 .formulaRail {
-  border-block: 1px solid var(--color-rule);
   display: grid;
+  gap: var(--space-xs);
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  padding-block: var(--space-sm);
+  padding-block: var(--space-xs) 0;
 }
 
 .formulaRail span {
@@ -825,11 +993,7 @@
   flex-direction: column;
   gap: var(--space-2xs);
   min-width: 0;
-  padding-inline: var(--space-xs);
-}
-
-.formulaRail span + span {
-  border-inline-start: 1px solid var(--color-rule);
+  padding-inline: var(--space-2xs);
 }
 
 .formulaRail b {
@@ -988,11 +1152,32 @@
 }
 
 .voicePresenceCompact {
-  margin-block-start: var(--space-md);
+  background-color: transparent;
+  border: 0;
+  border-radius: 0;
+  gap: var(--space-sm);
+  grid-template-columns: 2.75rem minmax(0, 1fr);
+  margin-block: var(--space-sm) var(--space-md);
+  padding: var(--space-xs) 0;
 }
 
-.voicePresenceCompact .voiceTranscript p {
-  -webkit-line-clamp: 2;
+.voicePresenceCompact[data-voice-state="playing"] {
+  background-color: transparent;
+  border-color: transparent;
+}
+
+.voicePresenceCompact .voiceControl {
+  background-color: transparent;
+  border-color: var(--color-rule-strong);
+  color: var(--color-ink);
+  height: 2.75rem;
+  width: 2.75rem;
+}
+
+.voicePresenceCompact .voiceLabel {
+  color: var(--color-ink-soft);
+  font-size: var(--text-sm);
+  font-weight: 700;
 }
 
 .visuallyHidden {
@@ -1181,8 +1366,16 @@
   --map-rule-color: var(--color-error);
 }
 
-.mapClueBlock {
+.mapEvidenceRow {
+  align-items: center;
+  display: grid;
+  gap: var(--space-sm);
+  grid-template-columns: minmax(5rem, 6rem) minmax(0, 1fr);
   margin-block-end: var(--space-md);
+  min-width: 0;
+}
+
+.mapClueBlock {
   min-width: 0;
   position: relative;
 }
@@ -1190,7 +1383,7 @@
 .mapClueViewport {
   align-items: start;
   display: grid;
-  min-height: 6.25rem;
+  min-height: 6rem;
   padding-inline-end: 3.25rem;
 }
 
@@ -1420,6 +1613,10 @@
   flex-direction: column;
   gap: var(--space-lg);
   min-height: 0;
+}
+
+.responseDock > .primaryAction {
+  margin-block-start: auto;
 }
 
 .choiceStack {

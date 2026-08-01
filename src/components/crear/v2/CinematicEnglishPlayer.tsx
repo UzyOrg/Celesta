@@ -23,6 +23,7 @@ import {
 } from '@/lib/workshopState';
 import { loadCrearLesson } from '@/lib/crear/loadLesson';
 import { classifyCrearLocally } from '@/lib/crear/localClassifier';
+import { buildCrearLearningObservations } from '@/lib/crear/learningEvidence';
 import {
   findBranch,
   getChoices,
@@ -60,6 +61,7 @@ import type {
 } from '@/lib/crear/types';
 import { DEFAULT_CREAR_LESSON_ID } from '@/lib/crear/types';
 import { CinematicAnswer } from './CinematicAnswer';
+import { CinematicCaseArtifact } from './CinematicCaseArtifact';
 import {
   CinematicCertaintyMap,
   type CrearCertaintyMapPhase,
@@ -379,7 +381,7 @@ function ConceptPrism({ step }: { step: CrearPaso }) {
                 aria-live="polite"
               >
                 <p className={styles.prismMeaning}>{activeConcept.description}</p>
-                <p className={styles.prismSentence} lang="en-US">{activeConcept.example}</p>
+                <p className={styles.prismSentence} lang="en-US">“{activeConcept.example}”</p>
               </motion.div>
             ) : null}
           </AnimatePresence>
@@ -734,6 +736,7 @@ export function CinematicEnglishPlayer() {
       mapping?: Record<string, CrearResponseCategory>;
       assisted?: boolean;
       targetCategory?: CrearResponseCategory;
+      statementId?: string;
     }
   ): void {
     const stepId = getStepId(step);
@@ -752,6 +755,15 @@ export function CinematicEnglishPlayer() {
         confidence,
         submittedAt: Date.now(),
       };
+      const learningObservations = buildCrearLearningObservations({
+        stepId,
+        opportunity: step.crear?.learningOpportunity,
+        branch,
+        correct,
+        assisted: details?.assisted ?? Boolean(current.assistance[stepId]),
+        attempt: attemptNumber,
+        statementId: details?.statementId,
+      });
       return saveCrearStudyState({
         ...current,
         attempts: { ...current.attempts, [stepId]: attemptNumber },
@@ -763,6 +775,35 @@ export function CinematicEnglishPlayer() {
           ...current.awaitingFeedback,
           [stepId]: step.crear?.revealFeedback !== false,
         },
+        evidenceLedger: [...current.evidenceLedger, ...learningObservations],
+      });
+    });
+  }
+
+  function persistLearningEvidence(
+    step: CrearPaso,
+    branch: string,
+    correct: boolean,
+    assisted: boolean,
+    attemptNumber: number,
+    statementId?: string
+  ): void {
+    const stepId = getStepId(step);
+    setStudy((current) => {
+      if (!current) return current;
+      const observations = buildCrearLearningObservations({
+        stepId,
+        opportunity: step.crear?.learningOpportunity,
+        branch,
+        correct,
+        assisted,
+        attempt: attemptNumber,
+        statementId,
+      });
+      if (observations.length === 0) return current;
+      return saveCrearStudyState({
+        ...current,
+        evidenceLedger: [...current.evidenceLedger, ...observations],
       });
     });
   }
@@ -908,6 +949,7 @@ export function CinematicEnglishPlayer() {
       attempt: attemptNumber,
       studyId: study.studyId,
       checksum: lesson.checksum,
+      learningOpportunity: step.crear?.learningOpportunity,
     });
   }
 
@@ -936,6 +978,7 @@ export function CinematicEnglishPlayer() {
       const branch = findBranch(currentStep, classification.rama);
       const correct = branch?.correcto ?? false;
       const score = branch?.score ?? 0;
+      const assisted = Boolean(study.assistance[getStepId(currentStep)]);
       persistAttempt(
         currentStep,
         classification.rama,
@@ -944,9 +987,19 @@ export function CinematicEnglishPlayer() {
         text,
         attemptNumber,
         classification.confianza,
-        parts
+        parts,
+        { assisted }
       );
-      queueAnswerTelemetry(currentStep, classification.rama, correct, score, text, attemptNumber, parts);
+      queueAnswerTelemetry(
+        currentStep,
+        classification.rama,
+        correct,
+        score,
+        text,
+        attemptNumber,
+        parts,
+        { assisted }
+      );
 
       if (branch?.pista) {
         void trackCrearHint({
@@ -979,8 +1032,28 @@ export function CinematicEnglishPlayer() {
     const branchId = correct ? 'correcto' : 'incorrecto';
     const score = correct ? 1 : 0;
     const answerText = choice?.texto ?? choiceId;
-    persistAttempt(currentStep, branchId, correct, score, answerText, attemptNumber, 1);
-    queueAnswerTelemetry(currentStep, branchId, correct, score, answerText, attemptNumber);
+    const assisted = Boolean(study.assistance[getStepId(currentStep)]);
+    persistAttempt(
+      currentStep,
+      branchId,
+      correct,
+      score,
+      answerText,
+      attemptNumber,
+      1,
+      undefined,
+      { assisted }
+    );
+    queueAnswerTelemetry(
+      currentStep,
+      branchId,
+      correct,
+      score,
+      answerText,
+      attemptNumber,
+      undefined,
+      { assisted }
+    );
 
     const retry = Boolean(
       currentStep.crear?.allowRetry &&
@@ -998,11 +1071,23 @@ export function CinematicEnglishPlayer() {
       });
     }
     setLastOutcome({ branch: branchId, correct, score });
+    if (currentStep.crear?.revealFeedback === false) {
+      advance(currentStep, resolveNextRef(currentStep, { rama: branchId, confianza: 1 }));
+      return;
+    }
     setFeedback(buildChoiceFeedback(currentStep, correct, attemptNumber));
   }
 
   function handleMapItemAttempt(mapAttempt: CrearCertaintyMapAttempt): void {
     if (!currentStep) return;
+    persistLearningEvidence(
+      currentStep,
+      mapAttempt.correct ? 'map_item_correcto' : 'map_item_incorrecto',
+      mapAttempt.correct,
+      mapAttempt.assisted,
+      mapAttempt.attempt,
+      mapAttempt.statementId
+    );
     queueAnswerTelemetry(
       currentStep,
       mapAttempt.correct ? 'map_item_correcto' : 'map_item_incorrecto',
@@ -1014,7 +1099,7 @@ export function CinematicEnglishPlayer() {
       {
         mapping: mapAttempt.assignments,
         assisted: mapAttempt.assisted,
-        statementId: mapAttempt.statementId,
+      statementId: mapAttempt.statementId,
       }
     );
   }
@@ -1101,7 +1186,8 @@ export function CinematicEnglishPlayer() {
   }
 
   function markAssistance(
-    reason: 'guide_opened' | 'map_retry' | 'answer_retry' | 'translation_opened'
+    reason: 'guide_opened' | 'map_retry' | 'answer_retry' | 'translation_opened',
+    statementId?: string
   ): void {
     if (!currentStep || !lesson || !study) return;
     const stepId = getStepId(currentStep);
@@ -1114,6 +1200,8 @@ export function CinematicEnglishPlayer() {
       tallerId: lesson.id_taller,
       pasoId: stepId,
       rama: reason,
+      statementId,
+      learningOpportunityId: currentStep.crear?.learningOpportunity?.id,
       checksum: lesson.checksum,
       studyId: study.studyId,
     });
@@ -1264,7 +1352,7 @@ export function CinematicEnglishPlayer() {
   const mode = getInputMode(currentStep);
   const prompt = getPrompt(currentStep);
   const display = currentStep.crear?.display;
-  const compactVoice = inputFocused || mode !== 'none';
+  const compactVoice = true;
   const hideMapSceneCopy = Boolean(
     mode === 'match'
       && currentStep.crear?.certaintyMap
@@ -1297,15 +1385,21 @@ export function CinematicEnglishPlayer() {
       responseParts={currentStep.crear?.responseParts}
       choiceLanguage={currentScene === 'practice' ? 'en-US' : 'es-MX'}
       continueLabel={
-        currentScene === 'closure'
+        currentStep.crear?.actionLabel ?? (currentScene === 'closure'
           ? 'Terminar por hoy'
           : currentScene === 'arrival'
             ? 'Estoy listo'
             : currentScene === 'transfer-bridge'
               ? 'Empezar el caso'
-              : 'Continuar'
+              : 'Continuar')
       }
-      submitLabel={currentStep.crear?.responseParts?.length ? 'Enviar mis respuestas' : 'Enviar respuesta'}
+      choiceSubmitLabel={
+        currentStep.crear?.revealFeedback === false ? 'Guardar decisión' : 'Comprobar'
+      }
+      submitLabel={
+        currentStep.crear?.actionLabel
+          ?? (currentStep.crear?.responseParts?.length ? 'Enviar mis respuestas' : 'Enviar respuesta')
+      }
       onContinue={handleContinue}
       onSubmitText={handleSubmitText}
       onSubmitChoice={handleSubmitChoice}
@@ -1376,7 +1470,9 @@ export function CinematicEnglishPlayer() {
                 <button className={styles.iconButton} type="button" onClick={() => setExitConfirm(true)} aria-label="Salir de la sesión">
                   <X size={20} />
                 </button>
-                <span className={styles.wordmark}>CELESTEA</span>
+                {currentStage !== 'recuerda' ? (
+                  <span className={styles.wordmark}>CELESTEA</span>
+                ) : null}
                 <PhaseRail stage={currentStage} />
               </>
             )}
@@ -1421,6 +1517,13 @@ export function CinematicEnglishPlayer() {
                     {display?.body ? <p className={styles.sceneBody}>{display.body}</p> : null}
                   </div>
                 </div>
+              ) : null}
+
+              {currentStep.crear?.caseArtifact && !hideMapSceneCopy ? (
+                <CinematicCaseArtifact
+                  artifact={currentStep.crear.caseArtifact}
+                  compact={currentScene !== 'arrival'}
+                />
               ) : null}
 
               {currentScene !== 'arrival' ? (

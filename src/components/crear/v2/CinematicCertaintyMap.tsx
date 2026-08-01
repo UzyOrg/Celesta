@@ -16,13 +16,17 @@ import {
   type CrearCertaintyMapSubmission,
   type CrearResponseCategory,
 } from '@/lib/crear/types';
+import { CinematicCaseArtifact } from './CinematicCaseArtifact';
 import styles from './CinematicEnglishPlayer.hallmark.module.css';
 
 interface CinematicCertaintyMapProps {
   config: CrearCertaintyMap;
   pending: boolean;
   assisted: boolean;
-  onAssistance: (reason: 'map_retry' | 'translation_opened') => void;
+  onAssistance: (
+    reason: 'map_retry' | 'translation_opened',
+    statementId?: string
+  ) => void;
   onAttempt: (attempt: CrearCertaintyMapAttempt) => void;
   onSubmit: (submission: CrearCertaintyMapSubmission) => void;
   onFocusChange?: (focused: boolean) => void;
@@ -207,7 +211,7 @@ export function CinematicCertaintyMap({
     setTranslationOpenId(opening ? activeStatement.id : null);
     if (opening && !translatedStatementIdsRef.current.has(activeStatement.id)) {
       translatedStatementIdsRef.current.add(activeStatement.id);
-      onAssistance('translation_opened');
+      onAssistance('translation_opened', activeStatement.id);
     }
   }
 
@@ -247,7 +251,7 @@ export function CinematicCertaintyMap({
       setHadIncorrectMap(true);
       if (!assistedStatementIdsRef.current.has(activeStatement.id)) {
         assistedStatementIdsRef.current.add(activeStatement.id);
-        onAssistance('map_retry');
+        onAssistance('map_retry', activeStatement.id);
       }
       return;
     }
@@ -356,52 +360,61 @@ export function CinematicCertaintyMap({
               exit={{ opacity: 0 }}
               transition={{ duration: prefersReducedMotion ? 0.1 : 0.22 }}
             >
-              <div className={styles.mapClueBlock}>
-                <div
-                  className={styles.mapClueViewport}
-                  data-testid="certainty-map-clue"
-                  aria-live="polite"
-                >
-                  <AnimatePresence mode="wait" initial={false}>
-                    <motion.p
-                      className={styles.mapClue}
-                      data-language={
-                        translationOpenId === activeStatement.id ? 'es' : 'en'
-                      }
-                      key={
-                        translationOpenId === activeStatement.id
-                          ? `${activeStatement.id}-es`
-                          : `${activeStatement.id}-en`
-                      }
-                      lang={
-                        translationOpenId === activeStatement.id ? 'es-MX' : 'en-US'
-                      }
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ duration: prefersReducedMotion ? 0.1 : 0.18 }}
-                    >
-                      {translationOpenId === activeStatement.id
-                        ? activeStatement.translationEs
-                        : activeStatement.clue}
-                    </motion.p>
-                  </AnimatePresence>
-                </div>
-                {activeStatement.translationEs ? (
-                  <button
-                    className={styles.translationAction}
-                    type="button"
-                    aria-label={
-                      translationOpenId === activeStatement.id
-                        ? 'Mostrar pista en inglés'
-                        : 'Mostrar pista en español'
-                    }
-                    aria-pressed={translationOpenId === activeStatement.id}
-                    onClick={toggleTranslation}
-                  >
-                    <Languages size={18} aria-hidden="true" />
-                  </button>
+              <div className={styles.mapEvidenceRow}>
+                {config.artifact ? (
+                  <CinematicCaseArtifact
+                    artifact={config.artifact}
+                    cue={activeStatement.visualCue}
+                    compact
+                  />
                 ) : null}
+                <div className={styles.mapClueBlock}>
+                  <div
+                    className={styles.mapClueViewport}
+                    data-testid="certainty-map-clue"
+                    aria-live="polite"
+                  >
+                    <AnimatePresence mode="wait" initial={false}>
+                      <motion.p
+                        className={styles.mapClue}
+                        data-language={
+                          translationOpenId === activeStatement.id ? 'es' : 'en'
+                        }
+                        key={
+                          translationOpenId === activeStatement.id
+                            ? `${activeStatement.id}-es`
+                            : `${activeStatement.id}-en`
+                        }
+                        lang={
+                          translationOpenId === activeStatement.id ? 'es-MX' : 'en-US'
+                        }
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: prefersReducedMotion ? 0.1 : 0.18 }}
+                      >
+                        {translationOpenId === activeStatement.id
+                          ? activeStatement.translationEs
+                          : activeStatement.clue}
+                      </motion.p>
+                    </AnimatePresence>
+                  </div>
+                  {activeStatement.translationEs ? (
+                    <button
+                      className={styles.translationAction}
+                      type="button"
+                      aria-label={
+                        translationOpenId === activeStatement.id
+                          ? 'Mostrar pista en inglés'
+                          : 'Mostrar pista en español'
+                      }
+                      aria-pressed={translationOpenId === activeStatement.id}
+                      onClick={toggleTranslation}
+                    >
+                      <Languages size={18} aria-hidden="true" />
+                    </button>
+                  ) : null}
+                </div>
               </div>
               <p
                 className={styles.mapSentence}

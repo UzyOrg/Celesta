@@ -3,7 +3,7 @@ import path from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
 
 const LESSON_ID = 'CREAR-ENGLISH-DEDUCTION-V1';
-const CONTENT_VERSION = '2026-07-30';
+const CONTENT_VERSION = '2026-08-01';
 const ARTIFACT_DIR = path.join(process.cwd(), 'test-artifacts');
 
 interface CapturedLearningEvent {
@@ -21,6 +21,13 @@ interface CapturedLearningEvent {
     statementId?: string;
     targetCategory?: string;
     texto?: string;
+    learningOpportunity?: {
+      id: string;
+      condition: string;
+      constructs: string[];
+      novelty: string;
+      timing: string;
+    };
   };
 }
 
@@ -69,6 +76,7 @@ async function seedStep(page: Page, stepIndex: number) {
         latestOutcomes: {},
         awaitingFeedback: {},
         assistance: {},
+        evidenceLedger: [],
       })
     );
   }, { lessonId: LESSON_ID, contentVersion: CONTENT_VERSION, index: stepIndex });
@@ -76,7 +84,7 @@ async function seedStep(page: Page, stepIndex: number) {
 
 async function reachGuidedMap(page: Page) {
   await page.goto('/crear');
-  await page.getByRole('button', { name: 'Estoy listo', exact: true }).click();
+  await page.getByRole('button', { name: 'Ver la primera pista', exact: true }).click();
   await page.getByRole('radio', {
     name: 'Expresa una conclusión basada en pistas.',
     exact: true,
@@ -111,11 +119,15 @@ test('Hallmark arrival reads as one quiet cinematic task at 375px', async ({ pag
   await page.goto('/crear');
 
   await expect(page.getByRole('heading', {
-    name: '¿Qué fue lo que pasó?',
+    name: 'El cartel cambió antes de la feria.',
     exact: true,
   })).toBeVisible();
   await expect(page.locator('[aria-label="Caso uno"]')).toHaveCount(0);
   await expect(page.getByText('Escuchar introducción', { exact: true })).toBeVisible();
+  await expect(page.getByLabel(
+    'Cartel de la feria. La pintura todavía está fresca.',
+    { exact: true }
+  )).toBeVisible();
 
   const voiceSurface = page.getByLabel('Voz de Celestea');
   expect(await voiceSurface.evaluate((element) => {
@@ -153,21 +165,19 @@ test('Hallmark arrival reads as one quiet cinematic task at 375px', async ({ pag
   )).toBeLessThan(0.35);
 
   const primaryAction = page.getByRole('button', {
-    name: 'Estoy listo',
+    name: 'Ver la primera pista',
     exact: true,
   });
   const title = page.getByRole('heading', {
-    name: '¿Qué fue lo que pasó?',
+    name: 'El cartel cambió antes de la feria.',
     exact: true,
   });
   const titleBox = await title.boundingBox();
-  expect(titleBox?.height).toBeLessThanOrEqual(36);
-  expect(await title.evaluate((element) => getComputedStyle(element).whiteSpace))
-    .toBe('nowrap');
+  expect(titleBox?.height).toBeLessThanOrEqual(70);
 
   const actionBox = await primaryAction.boundingBox();
   expect(actionBox?.height).toBeGreaterThanOrEqual(52);
-  expect(actionBox?.y).toBeGreaterThan(650);
+  expect(actionBox?.y).toBeGreaterThan(620);
 
   expect(await primaryAction.evaluate((element) => getComputedStyle(element).backgroundColor))
     .not.toBe('rgb(76, 199, 243)');
@@ -198,7 +208,7 @@ test('Hallmark arrival reads as one quiet cinematic task at 375px', async ({ pag
     expect(await primaryAction.evaluate((element) =>
       getComputedStyle(element).whiteSpace
     )).toBe('nowrap');
-    expect((await title.boundingBox())?.height).toBeLessThanOrEqual(40);
+    expect((await title.boundingBox())?.height).toBeLessThanOrEqual(74);
   }
 
   const desktopActionBox = await primaryAction.boundingBox();
@@ -222,7 +232,7 @@ test('completes a low-friction session and preserves transfer plus D7 evidence',
   await assignCorrectMap(page);
   await page.getByRole('button', { name: 'Comprobar', exact: true }).click();
   await expect(page.getByRole('heading', {
-    name: 'La misma idea, en otro caso.',
+    name: 'Nuevo caso. Misma pregunta.',
     exact: true,
   })).toBeVisible();
   await expect(page.getByLabel('Voz de Celestea').getByRole('button')).toBeVisible();
@@ -230,11 +240,11 @@ test('completes a low-friction session and preserves transfer plus D7 evidence',
     (element as HTMLAudioElement).duration
   )).toBeGreaterThan(10);
   await expect(page.getByRole('button', {
-    name: 'Empezar el caso',
+    name: 'Resolver el nuevo caso',
     exact: true,
   })).toBeEnabled();
-  await capture(page, 'celestea-v16-transfer-bridge-mobile.png');
-  await page.getByRole('button', { name: 'Empezar el caso', exact: true }).click();
+  await capture(page, 'celestea-v17-transfer-bridge-mobile.png');
+  await page.getByRole('button', { name: 'Resolver el nuevo caso', exact: true }).click();
 
   await expect(page.getByRole('heading', {
     name: 'La maqueta de la feria.',
@@ -246,28 +256,36 @@ test('completes a low-friction session and preserves transfer plus D7 evidence',
     exact: true,
   }).click();
   await expect(page.getByRole('heading', {
-    name: 'Escribe tu propia deducción.',
+    name: 'Primero, decide la certeza.',
     exact: true,
   })).toBeVisible();
+  await capture(page, 'celestea-v17-independent-certainty-mobile.png');
+  await page.getByRole('radio', { name: 'Es posible', exact: true }).click();
+  await page.getByRole('button', { name: 'Guardar decisión', exact: true }).click();
   await expect(page.getByRole('heading', {
-    name: 'La maqueta de la feria.',
+    name: 'Ahora dilo en inglés.',
     exact: true,
-  })).toHaveCount(0);
-  await expect(page.getByText('Ahora cambia de situación.', { exact: true })).toHaveCount(0);
+  })).toBeVisible();
+  await expect(page.getByText(
+    'Nora estuvo en el salón durante el recreo. Nadie vio en qué trabajó.',
+    { exact: true }
+  )).toBeVisible();
   const productionAction = page.getByRole('button', {
-    name: 'Enviar mi frase',
+    name: 'Guardar mi frase',
     exact: true,
   });
   const productionActionBox = await productionAction.boundingBox();
-  expect(productionActionBox?.y).toBeGreaterThan(680);
-  await capture(page, 'celestea-v16-production-mobile.png');
+  expect(productionActionBox?.y).toBeGreaterThan(620);
+  await capture(page, 'celestea-v17-production-mobile.png');
   await page.getByRole('textbox', {
-    name: 'Nora estuvo en el salón durante el recreo. Nadie vio en qué trabajó. Escribe una posibilidad en inglés.',
+    name: 'Escribe una deducción en inglés sobre Nora.',
     exact: true,
   }).fill('Nora might have worked on the model.');
-  await page.getByRole('button', { name: 'Enviar mi frase', exact: true }).click();
+  await expect(page.getByPlaceholder('Escribe una frase sobre Nora.', { exact: true }))
+    .toBeVisible();
+  await page.getByRole('button', { name: 'Guardar mi frase', exact: true }).click();
   await expect(page.getByRole('heading', {
-    name: 'Aplicaste la idea en una pista nueva',
+    name: 'Tu frase conserva la posibilidad',
     exact: true,
   })).toBeVisible();
 
@@ -277,14 +295,36 @@ test('completes a low-friction session and preserves transfer plus D7 evidence',
   expect(transferState.firstOutcomes.transfer).toMatchObject({
     correct: true,
     assisted: false,
-    targetCategory: 'posible',
-    text: 'Nora might have worked on the model.',
     mapping: {
       elena: 'casi_seguro',
       leo: 'posible',
       mara: 'imposible',
     },
   });
+  expect(transferState.firstOutcomes['transfer-check-certainty']).toMatchObject({
+    correct: true,
+    assisted: false,
+    text: 'Es posible',
+  });
+  expect(transferState.firstOutcomes['transfer-production']).toMatchObject({
+    correct: true,
+    assisted: false,
+    text: 'Nora might have worked on the model.',
+  });
+  expect(transferState.evidenceLedger).toEqual(expect.arrayContaining([
+    expect.objectContaining({
+      id: 'independent-transfer-certainty',
+      constructs: ['certainty_calibration'],
+      condition: 'independent',
+      correct: true,
+    }),
+    expect.objectContaining({
+      id: 'independent-transfer-form',
+      constructs: ['modal_form'],
+      condition: 'independent',
+      correct: true,
+    }),
+  ]));
 
   await page.getByRole('button', { name: 'Continuar', exact: true }).click();
   await expect(page.getByRole('heading', {
@@ -293,11 +333,16 @@ test('completes a low-friction session and preserves transfer plus D7 evidence',
   })).toBeVisible();
   await page.getByRole('button', { name: 'Terminar por hoy', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Una semana después.', exact: true })).toBeVisible();
+  await expect(page.getByText('CELESTEA', { exact: true })).toHaveCount(0);
+  await capture(page, 'celestea-v17-d7-certainty-mobile.png');
+  await page.getByRole('radio', { name: 'Queda descartado', exact: true }).click();
+  await page.getByRole('button', { name: 'Guardar decisión', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Ahora dilo en inglés.', exact: true })).toBeVisible();
   await page.getByRole('textbox', {
-    name: 'Emi estaba en una excursión cuando alguien movió el cartel del salón. Escribe en inglés qué no pudo haber hecho Emi.',
+    name: 'Escribe una deducción en inglés sobre Emi.',
     exact: true,
   }).fill("Emi can't have moved the poster.");
-  await page.getByRole('button', { name: 'Enviar respuesta', exact: true }).click();
+  await page.getByRole('button', { name: 'Terminar revisión', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'La idea sigue contigo', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Terminar', exact: true }).click();
 
@@ -311,17 +356,67 @@ test('completes a low-friction session and preserves transfer plus D7 evidence',
   )).toHaveLength(4);
   const transferEvent = telemetry.find(
     (event) => event.verbo === 'envio_respuesta'
-      && event.paso_id === 'transfer'
+      && event.paso_id === 'transfer-production'
       && event.result?.rama === 'correcto'
   );
   expect(transferEvent?.result).toMatchObject({
     assisted: false,
     correcto: true,
     fase: 'transfer',
-    targetCategory: 'posible',
     texto: 'Nora might have worked on the model.',
+    learningOpportunity: {
+      id: 'independent-transfer-form',
+      constructs: ['modal_form'],
+      condition: 'independent',
+      novelty: 'new_case',
+      timing: 'immediate',
+    },
   });
   expect(consoleErrors, `Missing resources: ${missingResources.join(', ')}`).toEqual([]);
+});
+
+test('keeps the independent production cue and primary action inside common mobile viewports', async ({ page }) => {
+  await mockTelemetry(page);
+  await seedStep(page, 7);
+
+  for (const viewport of [
+    { width: 320, height: 812 },
+    { width: 375, height: 812 },
+    { width: 414, height: 896 },
+    { width: 768, height: 1024 },
+  ]) {
+    await page.setViewportSize(viewport);
+    await page.goto('/crear');
+    await expect(page.getByText(
+      'Nora estuvo en el salón durante el recreo. Nadie vio en qué trabajó.',
+      { exact: true }
+    )).toBeVisible();
+
+    const primaryAction = page.getByRole('button', {
+      name: 'Guardar mi frase',
+      exact: true,
+    });
+    const actionBox = await primaryAction.boundingBox();
+    expect((actionBox?.y ?? 0) + (actionBox?.height ?? 0))
+      .toBeLessThanOrEqual(viewport.height);
+
+    const horizontalOverflow = await page.evaluate(() =>
+      document.documentElement.scrollWidth - document.documentElement.clientWidth
+    );
+    expect(horizontalOverflow).toBeLessThanOrEqual(1);
+  }
+
+  await page.setViewportSize({ width: 320, height: 812 });
+  await page.addStyleTag({ content: 'html { font-size: 125% !important; }' });
+  const scaledAction = page.getByRole('button', {
+    name: 'Guardar mi frase',
+    exact: true,
+  });
+  await scaledAction.scrollIntoViewIfNeeded();
+  await expect(scaledAction).toBeVisible();
+  expect(await page.evaluate(() =>
+    document.documentElement.scrollWidth - document.documentElement.clientWidth
+  )).toBeLessThanOrEqual(1);
 });
 
 test('keeps the learning guide available and marks its use as assisted', async ({ page }) => {
@@ -472,25 +567,27 @@ test('does not convert a miscalibrated transfer sentence into success', async ({
     name: 'Comprobar',
     exact: true,
   }).click();
+  await page.getByRole('radio', { name: 'Es posible', exact: true }).click();
+  await page.getByRole('button', { name: 'Guardar decisión', exact: true }).click();
   await page.getByRole('textbox').fill('Nora must have worked on the model.');
-  await page.getByRole('button', { name: 'Enviar mi frase', exact: true }).click();
+  await page.getByRole('button', { name: 'Guardar mi frase', exact: true }).click();
 
   await expect(page.getByRole('heading', {
-    name: 'La pista deja una posibilidad abierta',
+    name: 'La forma cambió tu certeza',
     exact: true,
   })).toBeVisible();
   const state = await page.evaluate((lessonId) =>
     JSON.parse(localStorage.getItem(`celesta:crear:study:${lessonId}`) ?? '{}'),
   LESSON_ID);
-  expect(state.firstOutcomes.transfer.correct).toBe(false);
-  expect(state.firstOutcomes.transfer.branch).toBe('misconcepcion_certeza');
+  expect(state.firstOutcomes['transfer-production'].correct).toBe(false);
+  expect(state.firstOutcomes['transfer-production'].branch).toBe('misconcepcion_certeza');
 });
 
 test('local classifier distinguishes the authored transfer and D7 targets', async ({ request }) => {
   const transfer = await request.post('/api/classify', {
     data: {
       tallerId: LESSON_ID,
-      pasoRefId: 'transfer',
+      pasoRefId: 'transfer-production',
       texto: 'Nora might have worked on the model.',
     },
   });
@@ -500,7 +597,7 @@ test('local classifier distinguishes the authored transfer and D7 targets', asyn
   const wrongStrength = await request.post('/api/classify', {
     data: {
       tallerId: LESSON_ID,
-      pasoRefId: 'transfer',
+      pasoRefId: 'transfer-production',
       texto: 'Nora must have worked on the model.',
     },
   });
@@ -510,7 +607,7 @@ test('local classifier distinguishes the authored transfer and D7 targets', asyn
   const retest = await request.post('/api/classify', {
     data: {
       tallerId: LESSON_ID,
-      pasoRefId: 'retest',
+      pasoRefId: 'retest-production',
       texto: "Emi can't have moved the poster.",
     },
   });
@@ -518,7 +615,7 @@ test('local classifier distinguishes the authored transfer and D7 targets', asyn
   expect(await retest.json()).toMatchObject({ rama: 'correcto' });
 });
 
-test('lesson 1.6 integrates the voiced transfer bridge and familiar contexts', async () => {
+test('lesson 1.7 separates certainty from form and records authored evidence targets', async () => {
   const lessonPath = path.join(process.cwd(), 'public/workshops', `${LESSON_ID}.json`);
   const lesson = JSON.parse(fs.readFileSync(lessonPath, 'utf8')) as {
     version: string;
@@ -528,10 +625,7 @@ test('lesson 1.6 integrates the voiced transfer bridge and familiar contexts', a
       ref_id: string;
       crear?: {
         audio?: { text: string };
-        certaintyMap?: {
-          production?: { category: string };
-          statements: unknown[];
-        };
+        certaintyMap?: { artifact?: { kind: string }; statements: unknown[] };
         evidencePresentation?: unknown;
         guideAvailable?: boolean;
         input?: string;
@@ -540,7 +634,7 @@ test('lesson 1.6 integrates the voiced transfer bridge and familiar contexts', a
     }>;
   };
 
-  expect(lesson.version).toBe('1.6.1');
+  expect(lesson.version).toBe('1.7.0');
   expect(lesson.content_version).toBe(CONTENT_VERSION);
   expect(lesson.metadata.duracion_estimada_min).toBe(5);
   expect(lesson.pasos.map((step) => step.ref_id)).toEqual([
@@ -550,13 +644,16 @@ test('lesson 1.6 integrates the voiced transfer bridge and familiar contexts', a
     'guided-map',
     'transfer-bridge',
     'transfer',
+    'transfer-check-certainty',
+    'transfer-production',
     'close',
-    'retest',
+    'retest-certainty',
+    'retest-production',
   ]);
   expect(lesson.pasos.some((step) => step.crear?.responseParts?.length)).toBe(false);
   expect(lesson.pasos.find((step) => step.ref_id === 'transfer')?.crear?.certaintyMap)
     .toMatchObject({
-      production: { category: 'posible' },
+      artifact: { kind: 'model' },
       statements: [
         {
           sentenceStart: 'Elena',
@@ -586,7 +683,7 @@ test('lesson 1.6 integrates the voiced transfer bridge and familiar contexts', a
     .toContain('Ahora cambia el caso, no la idea');
   expect(lesson.pasos.find((step) => step.ref_id === 'transfer')?.crear?.guideAvailable)
     .toBe(true);
-  expect(lesson.pasos.find((step) => step.ref_id === 'retest')?.crear?.guideAvailable)
+  expect(lesson.pasos.find((step) => step.ref_id === 'retest-production')?.crear?.guideAvailable)
     .not.toBe(true);
 });
 

@@ -87,6 +87,55 @@ export interface CrearEvidenceItem {
   value: string;
 }
 
+export type CrearCaseArtifactKind = 'poster' | 'model' | 'trip';
+
+export type CrearVisualCueKind =
+  | 'paint'
+  | 'glue'
+  | 'presence'
+  | 'location'
+  | 'trip';
+
+export interface CrearVisualCue {
+  kind: CrearVisualCueKind;
+  label: string;
+  detail: string;
+}
+
+export interface CrearCaseArtifact {
+  kind: CrearCaseArtifactKind;
+  label: string;
+  status: string;
+  cue?: CrearVisualCue;
+}
+
+export type CrearLearningConstruct =
+  | 'evidence_comprehension'
+  | 'certainty_calibration'
+  | 'modal_form';
+
+export type CrearLearningCondition = 'supported' | 'independent';
+export type CrearLearningNovelty = 'same_case' | 'new_case';
+export type CrearLearningTiming = 'immediate' | 'delayed';
+
+export interface CrearLearningOpportunity {
+  id: string;
+  constructs: CrearLearningConstruct[];
+  condition: CrearLearningCondition;
+  novelty: CrearLearningNovelty;
+  timing: CrearLearningTiming;
+}
+
+export interface CrearLearningObservation extends CrearLearningOpportunity {
+  stepId: string;
+  branch: string;
+  correct: boolean;
+  assisted: boolean;
+  attempt: number;
+  recordedAt: number;
+  statementId?: string;
+}
+
 export type CrearResponseCategory = 'casi_seguro' | 'posible' | 'imposible';
 
 export interface CrearEvidencePresentation {
@@ -120,6 +169,7 @@ export interface CrearCertaintyStatement {
   id: string;
   clue: string;
   translationEs?: string;
+  visualCue?: CrearVisualCue;
   sentenceStart: string;
   sentenceEnd: string;
   correctCategory: CrearResponseCategory;
@@ -135,6 +185,7 @@ export interface CrearProductionPrompt {
 
 export interface CrearCertaintyMap {
   instruction: string;
+  artifact?: CrearCaseArtifact;
   categories: CrearCertaintyCategory[];
   statements: CrearCertaintyStatement[];
   production?: CrearProductionPrompt;
@@ -190,6 +241,9 @@ export interface CrearStepMeta {
   stage?: CrearExperienceStage;
   scene?: CrearScene;
   display?: CrearDisplayCopy;
+  actionLabel?: string;
+  caseArtifact?: CrearCaseArtifact;
+  learningOpportunity?: CrearLearningOpportunity;
   evidence?: CrearEvidenceItem[];
   evidencePresentation?: CrearEvidencePresentation;
   responseParts?: CrearResponsePart[];
@@ -244,6 +298,7 @@ export interface CrearTelemetryResult extends Record<string, unknown> {
   targetCategory?: CrearResponseCategory;
   statementId?: string;
   attempt?: number;
+  learningOpportunity?: CrearLearningOpportunity;
   /** @deprecated Compatibility with events emitted before content version 2026-07-19. */
   intento?: number;
   /**
