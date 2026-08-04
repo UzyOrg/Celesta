@@ -55,6 +55,7 @@ import type {
   CrearCertaintyMapSubmission,
   CrearExperienceStage,
   CrearPaso,
+  CrearPrecheckAttempt,
   CrearResponseCategory,
   CrearResponsePartAnswer,
   CrearWorkshop,
@@ -66,6 +67,7 @@ import {
   CinematicCertaintyMap,
   type CrearCertaintyMapPhase,
 } from './CinematicCertaintyMap';
+import { CinematicPrecheck } from './CinematicPrecheck';
 import { CinematicVoice } from './CinematicVoice';
 import { useCinematicNarration } from './useCinematicNarration';
 import styles from './CinematicEnglishPlayer.hallmark.module.css';
@@ -89,11 +91,9 @@ interface NavigatorWithConnection extends Navigator {
   connection?: { saveData?: boolean };
 }
 
-const EXPERIENCE_STAGES: Array<{ id: Exclude<CrearExperienceStage, 'recuerda'>; label: string }> = [
-  { id: 'descubre', label: 'Descubre' },
-  { id: 'practica', label: 'Practica' },
-  { id: 'aplica', label: 'Aplica' },
-];
+function isRetestStage(stage: CrearExperienceStage | undefined): boolean {
+  return stage === 'recuerda';
+}
 
 function buildBranchFeedback(
   step: CrearPaso,
@@ -160,30 +160,37 @@ function effectiveRetestDelayHours(step: CrearPaso): number | null {
   return Number.isFinite(override) && override >= 0 ? override : step.crear.retestDelayHours;
 }
 
-function PhaseRail({ stage }: { stage: CrearExperienceStage }) {
-  if (stage === 'recuerda') {
-    return (
-      <span className={styles.retestPill}>
-        <CalendarClock size={14} />
-        Día 7
-      </span>
-    );
-  }
+function getPrecheckItemStateKey(step: CrearPaso, itemId: string): string {
+  return `${getStepId(step)}:${itemId}`;
+}
 
-  const currentIndex = EXPERIENCE_STAGES.findIndex((item) => item.id === stage);
+/**
+ * Answers only "where am I and how much is left", never "how well am I doing".
+ * Position is spatial: no counters, no stage names, no score. The extent of the
+ * session is visible from the first task so the transfer case arrives as an
+ * anticipated step instead of an unannounced second round.
+ */
+function SessionProgress({ position, total }: { position: number; total: number }) {
+  const safeTotal = Math.max(1, total);
+  const safePosition = Math.min(Math.max(1, position), safeTotal);
+  const ratio = safePosition / safeTotal;
   return (
-    <nav className={styles.phaseRail} aria-label="Fases de la experiencia">
-      {EXPERIENCE_STAGES.map((item, index) => (
+    <div
+      className={styles.sessionProgress}
+      role="progressbar"
+      aria-valuemin={1}
+      aria-valuemax={safeTotal}
+      aria-valuenow={safePosition}
+      aria-valuetext={`Paso ${safePosition} de ${safeTotal}`}
+      aria-label="Avance de la sesión"
+    >
+      <span className={styles.sessionProgressTrack} aria-hidden="true">
         <span
-          className={styles.phaseItem}
-          data-state={index === currentIndex ? 'active' : index < currentIndex ? 'complete' : 'upcoming'}
-          key={item.id}
-        >
-          <span className={styles.phaseDot}>{index < currentIndex ? <Check size={10} /> : null}</span>
-          <span>{item.label}</span>
-        </span>
-      ))}
-    </nav>
+          className={styles.sessionProgressFill}
+          style={{ transform: `scaleX(${ratio})` }}
+        />
+      </span>
+    </div>
   );
 }
 
@@ -527,6 +534,7 @@ export function CinematicEnglishPlayer() {
   const exitContinueRef = useRef<HTMLButtonElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
   const bootedRef = useRef(false);
+  const stepInteractiveAtRef = useRef<number | null>(null);
   const [lesson, setLesson] = useState<CrearWorkshop | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -554,6 +562,24 @@ export function CinematicEnglishPlayer() {
   const guideUnlocked = Boolean(
     guideStep && lesson && currentIndex > lesson.pasos.indexOf(guideStep)
   );
+  /**
+   * Day 1 and the Day 7 retest are separate sittings, so progress is measured
+   * inside the current sitting. Otherwise the Day 1 bar could never reach its
+   * end and the student would leave without any sense of closure.
+   */
+  const sessionProgress = useMemo(() => {
+    if (!lesson) return null;
+    const inRetest = isRetestStage(currentStage);
+    const sessionSteps = lesson.pasos.filter(
+      (step) => isRetestStage(step.crear?.stage) === inRetest
+    );
+    if (sessionSteps.length === 0) return null;
+    const position = sessionSteps.findIndex(
+      (step) => currentStep && getStepId(step) === getStepId(currentStep)
+    );
+    if (position < 0) return null;
+    return { position: position + 1, total: sessionSteps.length };
+  }, [lesson, currentStep, currentStage]);
   const audioAssetsReady = Boolean(
     lesson && lesson.audio_asset_version === lesson.content_version
   );
@@ -570,6 +596,20 @@ export function CinematicEnglishPlayer() {
     currentStep.crear.evidencePresentation &&
     currentStep.crear.evidence?.length
   );
+  const precheckAnswers = useMemo(() => {
+    const precheck = currentStep?.crear?.precheck;
+    if (!currentStep || !study || !precheck) return {};
+
+    return precheck.items.reduce<Record<string, CrearResponseCategory>>((answers, item) => {
+      const answer = study.latestOutcomes[
+        getPrecheckItemStateKey(currentStep, item.id)
+      ]?.mapping?.[item.id];
+      if (answer && precheck.options.some((option) => option.id === answer)) {
+        answers[item.id] = answer;
+      }
+      return answers;
+    }, {});
+  }, [currentStep, study]);
 
   useEffect(() => {
     if (bootedRef.current) return;
@@ -741,6 +781,7 @@ export function CinematicEnglishPlayer() {
 
   useEffect(() => {
     if (currentStep && !feedback) {
+      stepInteractiveAtRef.current = Date.now();
       window.scrollTo({ top: 0, behavior: 'auto' });
       window.setTimeout(
         () => headingRef.current?.focus({ preventScroll: true }),
@@ -748,6 +789,11 @@ export function CinematicEnglishPlayer() {
       );
     }
   }, [currentStep, feedback, prefersReducedMotion]);
+
+  function getStepLatencyMs(): number | undefined {
+    if (stepInteractiveAtRef.current === null) return undefined;
+    return Math.max(0, Date.now() - stepInteractiveAtRef.current);
+  }
 
   const retestLocked = useMemo(() => {
     if (!currentStep || !study || typeof currentStep.crear?.retestDelayHours !== 'number') return false;
@@ -780,9 +826,11 @@ export function CinematicEnglishPlayer() {
       assisted?: boolean;
       targetCategory?: CrearResponseCategory;
       statementId?: string;
+      stateKey?: string;
     }
   ): void {
     const stepId = getStepId(step);
+    const stateKey = details?.stateKey ?? stepId;
     setStudy((current) => {
       if (!current) return current;
       const outcome = {
@@ -809,14 +857,14 @@ export function CinematicEnglishPlayer() {
       });
       return saveCrearStudyState({
         ...current,
-        attempts: { ...current.attempts, [stepId]: attemptNumber },
-        firstOutcomes: current.firstOutcomes[stepId]
+        attempts: { ...current.attempts, [stateKey]: attemptNumber },
+        firstOutcomes: current.firstOutcomes[stateKey]
           ? current.firstOutcomes
-          : { ...current.firstOutcomes, [stepId]: outcome },
-        latestOutcomes: { ...current.latestOutcomes, [stepId]: outcome },
+          : { ...current.firstOutcomes, [stateKey]: outcome },
+        latestOutcomes: { ...current.latestOutcomes, [stateKey]: outcome },
         awaitingFeedback: {
           ...current.awaitingFeedback,
-          [stepId]: step.crear?.revealFeedback !== false,
+          [stateKey]: step.crear?.revealFeedback !== false,
         },
         evidenceLedger: [...current.evidenceLedger, ...learningObservations],
       });
@@ -973,6 +1021,7 @@ export function CinematicEnglishPlayer() {
       assisted?: boolean;
       targetCategory?: CrearResponseCategory;
       statementId?: string;
+      latencyMs?: number;
     }
   ) {
     if (!lesson || !study) return;
@@ -988,6 +1037,7 @@ export function CinematicEnglishPlayer() {
       assisted: details?.assisted,
       targetCategory: details?.targetCategory,
       statementId: details?.statementId,
+      latencyMs: details?.latencyMs,
       score,
       attempt: attemptNumber,
       studyId: study.studyId,
@@ -1015,6 +1065,7 @@ export function CinematicEnglishPlayer() {
     setPending(true);
     const attemptNumber = attempt + 1;
     setAttempt(attemptNumber);
+    const latencyMs = getStepLatencyMs();
 
     try {
       const classification = await classifyText(currentStep, text, parts);
@@ -1041,7 +1092,7 @@ export function CinematicEnglishPlayer() {
         text,
         attemptNumber,
         parts,
-        { assisted }
+        { assisted, latencyMs }
       );
 
       if (branch?.pista) {
@@ -1070,6 +1121,7 @@ export function CinematicEnglishPlayer() {
     if (!currentStep || !lesson || !study) return;
     const attemptNumber = attempt + 1;
     setAttempt(attemptNumber);
+    const latencyMs = getStepLatencyMs();
     const correct = getCorrectChoiceId(currentStep) === choiceId;
     const choice = getChoices(currentStep).find((item) => item.id === choiceId);
     const branchId = correct ? 'correcto' : 'incorrecto';
@@ -1095,7 +1147,7 @@ export function CinematicEnglishPlayer() {
       answerText,
       attemptNumber,
       undefined,
-      { assisted }
+      { assisted, latencyMs }
     );
 
     const retry = Boolean(
@@ -1142,9 +1194,60 @@ export function CinematicEnglishPlayer() {
       {
         mapping: mapAttempt.assignments,
         assisted: mapAttempt.assisted,
-      statementId: mapAttempt.statementId,
+        statementId: mapAttempt.statementId,
+        latencyMs: mapAttempt.latencyMs,
       }
     );
+  }
+
+  function handlePrecheckAttempt(precheckAttempt: CrearPrecheckAttempt): void {
+    if (!currentStep || !lesson || !study || !currentStep.crear?.precheck) return;
+    const choice = currentStep.crear.precheck.options.find(
+      (option) => option.id === precheckAttempt.category
+    );
+    const stateKey = getPrecheckItemStateKey(currentStep, precheckAttempt.itemId);
+    const attemptNumber = (study.attempts[stateKey] ?? 0) + 1;
+    const branch = precheckAttempt.correct ? 'precheck_correcto' : 'precheck_incorrecto';
+    const score = precheckAttempt.correct ? 1 : 0;
+    const answerText = choice?.label ?? precheckAttempt.category;
+    const mapping = { [precheckAttempt.itemId]: precheckAttempt.category };
+
+    persistAttempt(
+      currentStep,
+      branch,
+      precheckAttempt.correct,
+      score,
+      answerText,
+      attemptNumber,
+      1,
+      undefined,
+      {
+        mapping,
+        assisted: false,
+        statementId: precheckAttempt.itemId,
+        stateKey,
+      }
+    );
+    queueAnswerTelemetry(
+      currentStep,
+      branch,
+      precheckAttempt.correct,
+      score,
+      answerText,
+      attemptNumber,
+      undefined,
+      {
+        mapping,
+        assisted: false,
+        statementId: precheckAttempt.itemId,
+        latencyMs: precheckAttempt.latencyMs,
+      }
+    );
+  }
+
+  function handlePrecheckComplete(): void {
+    if (!currentStep) return;
+    advance(currentStep, currentStep.crear?.nextRefId ?? null);
   }
 
   async function handleSubmitMap(submission: CrearCertaintyMapSubmission) {
@@ -1171,6 +1274,9 @@ export function CinematicEnglishPlayer() {
         mapping: submission.assignments,
         assisted: submission.assisted,
         ...(targetCategory ? { targetCategory } : {}),
+        ...(typeof submission.latencyMs === 'number'
+          ? { latencyMs: submission.latencyMs }
+          : {}),
       };
 
       persistAttempt(
@@ -1363,7 +1469,6 @@ export function CinematicEnglishPlayer() {
           <button className={styles.iconButton} type="button" onClick={() => setExitConfirm(true)} aria-label="Salir">
             <X size={20} />
           </button>
-          <span className={styles.wordmark}>CELESTEA</span>
           <span className={styles.retestPill}><CalendarClock size={14} /> Día 7</span>
         </header>
         <section className={styles.gateScene} aria-hidden={exitConfirm ? true : undefined}>
@@ -1404,7 +1509,16 @@ export function CinematicEnglishPlayer() {
   const sceneTransition = prefersReducedMotion
     ? { duration: 0.12 }
     : { duration: 0.52, ease: [0.22, 1, 0.36, 1] as const };
-  const answerElement = mode === 'match' && currentStep.crear?.certaintyMap ? (
+  const answerElement = currentStep.crear?.precheck ? (
+    <CinematicPrecheck
+      key={getStepId(currentStep)}
+      config={currentStep.crear.precheck}
+      pending={pending}
+      initialAnswers={precheckAnswers}
+      onAttempt={handlePrecheckAttempt}
+      onComplete={handlePrecheckComplete}
+    />
+  ) : mode === 'match' && currentStep.crear?.certaintyMap ? (
     <CinematicCertaintyMap
       key={getStepId(currentStep)}
       config={currentStep.crear.certaintyMap}
@@ -1513,10 +1627,12 @@ export function CinematicEnglishPlayer() {
                 <button className={styles.iconButton} type="button" onClick={() => setExitConfirm(true)} aria-label="Salir de la sesión">
                   <X size={20} />
                 </button>
-                {currentStage !== 'recuerda' ? (
-                  <span className={styles.wordmark}>CELESTEA</span>
+                {sessionProgress ? (
+                  <SessionProgress
+                    position={sessionProgress.position}
+                    total={sessionProgress.total}
+                  />
                 ) : null}
-                <PhaseRail stage={currentStage} />
               </>
             )}
           </header>
@@ -1602,16 +1718,13 @@ export function CinematicEnglishPlayer() {
               {audio
                 && audioAssetsReady
                 && currentScene !== 'contrast'
+                && currentScene !== 'arrival'
                 && (!hasStructuredEvidenceFlow || structuredView === 'explore') ? (
                 <CinematicVoice
                   audio={audio}
                   compact={compactVoice}
                   presentation={
-                    currentScene === 'arrival'
-                      ? 'intro'
-                      : currentScene === 'transfer-bridge'
-                        ? 'bridge'
-                        : 'default'
+                    currentScene === 'transfer-bridge' ? 'bridge' : 'default'
                   }
                   status={narration.status}
                   onToggle={narration.toggle}

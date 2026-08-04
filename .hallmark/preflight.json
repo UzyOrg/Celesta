@@ -1,14 +1,16 @@
 {
-  "scannedAt": "2026-08-01",
-  "scope": "Celestea /crear learning flow 1.8: concrete case promise, compact diagnostic contrast, visible evidence, and delayed retest",
+  "scannedAt": "2026-08-02",
+  "scope": "Celestea /crear learning flow 1.9.1: concise case promise, neutral three-touch baseline, direct diagnostic contrast, visible evidence, and delayed retest",
   "framework": "Next.js 15 App Router",
   "styling": "CSS Modules",
   "fontStack": "Bricolage Grotesque display with Plus Jakarta Sans body",
   "palette": "Neutral ivory chalk over the founder-owned blue-black wave film",
-  "motion": "Framer Motion 11: transform-only fixed-slot term travel, short scene continuity, compact voice state, and reduced-motion support",
+  "motion": "Framer Motion 11: transform-only fixed-slot term travel, short scene continuity, one-question baseline continuity that reduces to opacity, compact voice state, and reduced-motion support",
   "spacing": "Existing Celestea 4/8px-derived token rhythm",
   "preserve": [
     "Celestea chalk-over-film identity",
+    "a neutral Spanish three-touch baseline before English modal labels",
+    "no correctness disclosure during the baseline",
     "one-clue-at-a-time guided practice",
     "three permanent semantic option positions",
     "stable sentence target height and term-to-rule spacing",
@@ -16,7 +18,9 @@
     "founder-owned wave fade and poster",
     "authored branching and local-first runtime",
     "consultable guidance with assistance tracking",
-    "one comparison surface with integrated authored audio and diagnostic distractors",
+    "one comparison surface with integrated authored audio and direct diagnostic prompt",
+    "an eyewitness-backed must-have clue that cannot be confused with might-have",
+    "a segmented in-flow progress bar with a visible phase count",
     "transfer plus the seven-day retest"
   ],
   "avoid": [
@@ -32,6 +36,8 @@
     "production prompts that hide the source evidence",
     "a single response masquerading as proof of mastery",
     "immediate correctness disclosure on independent transfer or retest",
+    "English modal labels or corrective feedback before the baseline is complete",
+    "a baseline task that needs normal scrolling on a common phone",
     "forced waiting inside the live practice session"
   ]
 }

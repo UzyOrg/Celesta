@@ -3,10 +3,11 @@ import path from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
 
 const LESSON_ID = 'CREAR-ENGLISH-DEDUCTION-V1';
-const CONTENT_VERSION = '2026-08-01-contrast';
+const CONTENT_VERSION = '2026-08-03-baseline-clarity';
 const ARTIFACT_DIR = path.join(process.cwd(), 'test-artifacts');
 
 interface CapturedLearningEvent {
+  client_event_id: string;
   paso_id: string;
   verbo: string;
   result?: {
@@ -15,6 +16,7 @@ interface CapturedLearningEvent {
     correcto?: boolean;
     fase?: string;
     intento?: number;
+    latencyMs?: number;
     mapping?: Record<string, string>;
     rama?: string;
     score?: number;
@@ -61,8 +63,12 @@ async function mockTelemetry(page: Page): Promise<CapturedLearningEvent[]> {
 async function seedStep(page: Page, stepIndex: number) {
   await page.addInitScript(({ lessonId, contentVersion, index }) => {
     const now = Date.now();
+    const storageKey = `celesta:crear:study:${lessonId}`;
+    // The init script runs again on reload. Preserve the learner's decision so
+    // this helper can exercise the real resume path instead of reseeding it.
+    if (localStorage.getItem(storageKey)) return;
     localStorage.setItem(
-      `celesta:crear:study:${lessonId}`,
+      storageKey,
       JSON.stringify({
         studyId: `study-step-${index}`,
         lessonId,
@@ -85,8 +91,10 @@ async function seedStep(page: Page, stepIndex: number) {
 async function seedLockedRetest(page: Page) {
   await page.addInitScript(({ lessonId, contentVersion }) => {
     const now = Date.now();
+    const storageKey = `celesta:crear:study:${lessonId}`;
+    if (localStorage.getItem(storageKey)) return;
     localStorage.setItem(
-      `celesta:crear:study:${lessonId}`,
+      storageKey,
       JSON.stringify({
         studyId: 'study-locked-retest',
         lessonId,
@@ -94,7 +102,7 @@ async function seedLockedRetest(page: Page) {
         startedAt: now - 60_000,
         updatedAt: now,
         phase: 'waiting_retest',
-        stepIndex: 9,
+        stepIndex: 10,
         retestDueAt: now + 7 * 24 * 60 * 60 * 1000,
         attempts: {},
         firstOutcomes: {},
@@ -110,8 +118,17 @@ async function seedLockedRetest(page: Page) {
 async function reachGuidedMap(page: Page) {
   await page.goto('/crear');
   await page.getByRole('button', { name: 'Ver la primera pista', exact: true }).click();
+  const precheckAnswers = ['Es seguro', 'Podría ser', 'No puede ser'];
+  for (let index = 0; index < precheckAnswers.length; index += 1) {
+    const answer = precheckAnswers[index]!;
+    await page.getByRole('radio', { name: answer, exact: true }).click();
+    await page.getByRole('button', {
+      name: index === 2 ? 'Ver la comparación' : 'Siguiente',
+      exact: true,
+    }).click();
+  }
   await page.getByRole('radio', {
-    name: 'Deduce algo por una pista.',
+    name: 'Es seguro que Valeria pintó el póster.',
     exact: true,
   }).click();
   await page.getByRole('button', { name: 'Comprobar', exact: true }).click();
@@ -123,8 +140,10 @@ async function reachGuidedMap(page: Page) {
   })).toBeVisible();
 }
 
-async function assignCorrectMap(page: Page) {
-  const terms = ['MUST HAVE', 'MIGHT HAVE', "CAN'T HAVE"] as const;
+async function assignCorrectMap(
+  page: Page,
+  terms: readonly string[] = ['MUST HAVE', 'MIGHT HAVE', "CAN'T HAVE"]
+) {
   for (let index = 0; index < terms.length; index += 1) {
     const term = terms[index];
     await page.getByRole('button', {
@@ -137,7 +156,7 @@ async function assignCorrectMap(page: Page) {
   }
 }
 
-test('Hallmark arrival reads as one quiet cinematic task at 375px', async ({ page }) => {
+test('Hallmark arrival reads as one quiet cinematic task across mobile widths', async ({ page }) => {
   await mockTelemetry(page);
   await seedStep(page, 0);
   await page.setViewportSize({ width: 375, height: 812 });
@@ -148,23 +167,11 @@ test('Hallmark arrival reads as one quiet cinematic task at 375px', async ({ pag
     exact: true,
   })).toBeVisible();
   await expect(page.locator('[aria-label="Caso uno"]')).toHaveCount(0);
-  await expect(page.getByText('Escuchar introducción', { exact: true })).toBeVisible();
+  await expect(page.getByText('Escuchar introducción', { exact: true })).toHaveCount(0);
   await expect(page.getByLabel(
-    'Cartel de la feria. La pintura todavía está fresca.',
+    'Cartel de la feria. Está en el salón y la pintura todavía está fresca.',
     { exact: true }
   )).toBeVisible();
-
-  const voiceSurface = page.getByLabel('Voz de Celestea');
-  expect(await voiceSurface.evaluate((element) => {
-    const style = getComputedStyle(element);
-    return {
-      background: style.backgroundColor,
-      borderTopWidth: style.borderTopWidth,
-    };
-  })).toEqual({
-    background: 'rgba(0, 0, 0, 0)',
-    borderTopWidth: '0px',
-  });
 
   const video = page.locator('video');
   await expect(video).toBeVisible();
@@ -219,6 +226,17 @@ test('Hallmark arrival reads as one quiet cinematic task at 375px', async ({ pag
   await page.waitForTimeout(150);
   await capture(page, 'celestea-hallmark-arrival-375.png');
 
+  await page.setViewportSize({ width: 320, height: 700 });
+  await page.reload();
+  const narrowTitle = page.getByRole('heading', {
+    name: 'El cartel cambió antes de la feria.',
+    exact: true,
+  });
+  await expect(narrowTitle).toBeVisible();
+  expect((await narrowTitle.boundingBox())?.height).toBeLessThanOrEqual(30);
+  await expect(page.getByText('Escuchar introducción', { exact: true })).toHaveCount(0);
+  await capture(page, 'celestea-hallmark-arrival-320.png');
+
   for (const viewport of [
     { width: 320, height: 812 },
     { width: 414, height: 896 },
@@ -241,14 +259,114 @@ test('Hallmark arrival reads as one quiet cinematic task at 375px', async ({ pag
     .toBeLessThanOrEqual(800);
 });
 
-test('contrast is one compact diagnostic task at common mobile widths', async ({ page }) => {
-  await mockTelemetry(page);
+test('precheck captures three neutral certainty decisions before the explanation', async ({ page }) => {
+  const telemetry = await mockTelemetry(page);
   await seedStep(page, 1);
   await page.setViewportSize({ width: 375, height: 812 });
   await page.goto('/crear');
 
   await expect(page.getByRole('heading', {
-    name: '¿Lo vio o lo dedujo?',
+    name: 'Son tres decisiones rápidas antes de ver cómo expresarlo en inglés.',
+    exact: true,
+  })).toBeVisible();
+  expect(await page.getByRole('heading', {
+    name: 'Son tres decisiones rápidas antes de ver cómo expresarlo en inglés.',
+    exact: true,
+  }).evaluate((element) => getComputedStyle(element).fontSize)).toBe('22px');
+  await expect(page.getByText('Decide solo con la pista', { exact: true })).toHaveCount(0);
+  await expect(page.getByText('Sofía tenía pintura azul fresca en las manos. El cartel tenía la misma pintura.', {
+    exact: true,
+  })).toBeVisible();
+  await expect(page.getByText('MUST HAVE', { exact: true })).toHaveCount(0);
+  await expect(page.getByText('MIGHT HAVE', { exact: true })).toHaveCount(0);
+  await expect(page.getByText("CAN'T HAVE", { exact: true })).toHaveCount(0);
+
+  const nextAction = page.getByRole('button', { name: 'Siguiente', exact: true });
+  await expect(nextAction).toBeDisabled();
+  for (const option of ['Es seguro', 'Podría ser', 'No puede ser']) {
+    const radio = page.getByRole('radio', { name: option, exact: true });
+    await expect(radio).toBeVisible();
+    expect((await radio.locator('..').boundingBox())?.height).toBeGreaterThanOrEqual(51.5);
+  }
+
+  await page.getByRole('radio', { name: 'Podría ser', exact: true }).click();
+  await expect(nextAction).toBeEnabled();
+  await capture(page, 'celestea-hallmark-precheck-375.png');
+
+  for (const viewport of [
+    { width: 320, height: 812 },
+    { width: 375, height: 812 },
+    { width: 414, height: 896 },
+    { width: 768, height: 1024 },
+  ]) {
+    await page.setViewportSize(viewport);
+    const overflow = await page.evaluate(() => ({
+      horizontal: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      vertical: document.documentElement.scrollHeight - window.innerHeight,
+    }));
+    expect(overflow.horizontal).toBeLessThanOrEqual(1);
+    expect(overflow.vertical).toBeLessThanOrEqual(1);
+    const actionBox = await nextAction.boundingBox();
+    expect((actionBox?.y ?? 0) + (actionBox?.height ?? 0)).toBeLessThanOrEqual(viewport.height);
+    if (viewport.width !== 375) {
+      await capture(page, `celestea-hallmark-precheck-${viewport.width}.png`);
+    }
+  }
+
+  await page.setViewportSize({ width: 375, height: 812 });
+  await nextAction.click();
+  await expect(page.locator('[role="dialog"]')).toHaveCount(0);
+  await expect(page.getByText('Mateo se quedó en el salón durante el recreo. Nadie vio en qué trabajó.', {
+    exact: true,
+  })).toBeVisible();
+
+  await page.reload();
+  await expect(page.getByText('2 de 3', { exact: true })).toBeVisible();
+  await expect(page.getByText('Mateo se quedó en el salón durante el recreo. Nadie vio en qué trabajó.', {
+    exact: true,
+  })).toBeVisible();
+
+  await page.getByRole('radio', { name: 'Podría ser', exact: true }).click();
+  await page.getByRole('button', { name: 'Siguiente', exact: true }).click();
+  await page.getByRole('radio', { name: 'No puede ser', exact: true }).click();
+  await page.getByRole('button', { name: 'Ver la comparación', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Observa las dos frases.', exact: true })).toBeVisible();
+
+  // Delivery is intentionally at-least-once: a reload can race an IndexedDB
+  // flush. The ingest endpoint de-duplicates by this stable client id.
+  const uniquePrecheckEvents = () => Array.from(new Map(
+    telemetry
+      .filter((event) => event.verbo === 'envio_respuesta' && event.paso_id === 'precheck')
+      .map((event) => [event.client_event_id, event])
+  ).values());
+  await expect.poll(uniquePrecheckEvents).toHaveLength(3);
+  const precheckEvents = uniquePrecheckEvents();
+  expect(precheckEvents.map((event) => event.result?.statementId)).toEqual(['sofia', 'mateo', 'renata']);
+  expect(precheckEvents.map((event) => event.result?.correcto)).toEqual([false, true, true]);
+  for (const event of precheckEvents) {
+    expect(event.result).toMatchObject({
+      fase: 'pre_check',
+      assisted: false,
+      latencyMs: expect.any(Number),
+      learningOpportunity: {
+        id: 'baseline-certainty-calibration',
+        constructs: ['certainty_calibration'],
+        condition: 'independent',
+        novelty: 'same_case',
+        timing: 'immediate',
+      },
+    });
+  }
+});
+
+test('contrast is one compact diagnostic task at common mobile widths', async ({ page }) => {
+  await mockTelemetry(page);
+  await seedStep(page, 2);
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.goto('/crear');
+
+  await expect(page.getByRole('heading', {
+    name: 'Observa las dos frases.',
     exact: true,
   })).toBeVisible();
   await expect(page.getByRole('article', { name: 'Frase A', exact: true }))
@@ -266,9 +384,9 @@ test('contrast is one compact diagnostic task at common mobile widths', async ({
   )).toHaveCount(0);
 
   const choices = [
-    'Cuenta algo que vio.',
-    'Deduce algo por una pista.',
-    'Habla de una obligación.',
+    'Valeria pintó el póster.',
+    'Es seguro que Valeria pintó el póster.',
+    'Valeria debe pintar el póster.',
   ];
   for (const choice of choices) {
     const radio = page.getByRole('radio', { name: choice, exact: true });
@@ -278,7 +396,7 @@ test('contrast is one compact diagnostic task at common mobile widths', async ({
   }
 
   await page.getByRole('radio', {
-    name: 'Deduce algo por una pista.',
+    name: 'Es seguro que Valeria pintó el póster.',
     exact: true,
   }).click();
   await expect(page.getByRole('button', { name: 'Comprobar', exact: true }))
@@ -370,7 +488,7 @@ test('completes a low-friction session and preserves transfer plus D7 evidence',
   await assignCorrectMap(page);
   await page.getByRole('button', { name: 'Comprobar', exact: true }).click();
   await expect(page.getByRole('heading', {
-    name: 'Nuevo caso. Misma pregunta.',
+    name: 'Primera parte completada.',
     exact: true,
   })).toBeVisible();
   await expect(page.getByLabel('Voz de Celestea').getByRole('button')).toBeVisible();
@@ -378,17 +496,17 @@ test('completes a low-friction session and preserves transfer plus D7 evidence',
     (element as HTMLAudioElement).duration
   )).toBeGreaterThan(10);
   await expect(page.getByRole('button', {
-    name: 'Resolver el nuevo caso',
+    name: 'Continuar al caso nuevo',
     exact: true,
   })).toBeEnabled();
   await capture(page, 'celestea-v17-transfer-bridge-mobile.png');
-  await page.getByRole('button', { name: 'Resolver el nuevo caso', exact: true }).click();
+  await page.getByRole('button', { name: 'Continuar al caso nuevo', exact: true }).click();
 
   await expect(page.getByRole('heading', {
     name: 'La maqueta de la feria.',
     exact: true,
   })).toBeVisible();
-  await assignCorrectMap(page);
+  await assignCorrectMap(page, ['MUST HAVE']);
   await page.getByRole('button', {
     name: 'Comprobar',
     exact: true,
@@ -416,10 +534,10 @@ test('completes a low-friction session and preserves transfer plus D7 evidence',
   expect(productionActionBox?.y).toBeGreaterThan(620);
   await capture(page, 'celestea-v17-production-mobile.png');
   await page.getByRole('textbox', {
-    name: 'Escribe una deducción en inglés sobre Nora.',
+    name: 'Escribe en inglés tu deducción sobre Nora y la maqueta.',
     exact: true,
   }).fill('Nora might have worked on the model.');
-  await expect(page.getByPlaceholder('Escribe una frase sobre Nora.', { exact: true }))
+  await expect(page.getByPlaceholder('Nora … the model.', { exact: true }))
     .toBeVisible();
   await page.getByRole('button', { name: 'Guardar mi frase', exact: true }).click();
   await expect(page.getByRole('heading', {
@@ -435,8 +553,6 @@ test('completes a low-friction session and preserves transfer plus D7 evidence',
     assisted: false,
     mapping: {
       elena: 'casi_seguro',
-      leo: 'posible',
-      mara: 'imposible',
     },
   });
   expect(transferState.firstOutcomes['transfer-check-certainty']).toMatchObject({
@@ -477,7 +593,7 @@ test('completes a low-friction session and preserves transfer plus D7 evidence',
   await page.getByRole('button', { name: 'Guardar decisión', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Ahora dilo en inglés.', exact: true })).toBeVisible();
   await page.getByRole('textbox', {
-    name: 'Escribe una deducción en inglés sobre Emi.',
+    name: 'Escribe en inglés tu deducción sobre Emi y el cartel.',
     exact: true,
   }).fill("Emi can't have moved the poster.");
   await page.getByRole('button', { name: 'Terminar revisión', exact: true }).click();
@@ -489,9 +605,11 @@ test('completes a low-friction session and preserves transfer plus D7 evidence',
     'Pudiste escribir una deducción en un caso nuevo.',
     { exact: true }
   )).toBeVisible();
+  // One statement-level observation plus one aggregate event for the single
+  // supported transfer item.
   await expect.poll(() => telemetry.filter(
     (event) => event.verbo === 'envio_respuesta' && event.paso_id === 'transfer'
-  )).toHaveLength(4);
+  )).toHaveLength(2);
   const transferEvent = telemetry.find(
     (event) => event.verbo === 'envio_respuesta'
       && event.paso_id === 'transfer-production'
@@ -502,6 +620,7 @@ test('completes a low-friction session and preserves transfer plus D7 evidence',
     correcto: true,
     fase: 'transfer',
     texto: 'Nora might have worked on the model.',
+    latencyMs: expect.any(Number),
     learningOpportunity: {
       id: 'independent-transfer-form',
       constructs: ['modal_form'],
@@ -515,7 +634,7 @@ test('completes a low-friction session and preserves transfer plus D7 evidence',
 
 test('keeps the independent production cue and primary action inside common mobile viewports', async ({ page }) => {
   await mockTelemetry(page);
-  await seedStep(page, 7);
+  await seedStep(page, 8);
 
   for (const viewport of [
     { width: 320, height: 812 },
@@ -559,7 +678,7 @@ test('keeps the independent production cue and primary action inside common mobi
 
 test('keeps the learning guide available and marks its use as assisted', async ({ page }) => {
   const telemetry = await mockTelemetry(page);
-  await seedStep(page, 3);
+  await seedStep(page, 4);
   await page.goto('/crear');
 
   await page.getByRole('button', { name: 'Ayuda', exact: true }).click();
@@ -587,12 +706,12 @@ test('keeps the learning guide available and marks its use as assisted', async (
 
 test('swaps one clue into Spanish without a side stripe or layout jump', async ({ page }) => {
   const telemetry = await mockTelemetry(page);
-  await seedStep(page, 3);
+  await seedStep(page, 4);
   await page.setViewportSize({ width: 375, height: 812 });
   await page.goto('/crear');
 
   const englishClue = page.getByText(
-    'Valeria had fresh blue paint on her hands. The poster had the same paint.',
+    'A classmate saw Valeria paint the poster. It still had fresh blue paint.',
     { exact: true }
   );
   await expect(englishClue).toBeVisible();
@@ -606,7 +725,7 @@ test('swaps one clue into Spanish without a side stripe or layout jump', async (
   expect(translationActionBox?.height).toBeGreaterThanOrEqual(44);
   await translationAction.click();
   await expect(page.getByText(
-    'Valeria tenía pintura azul fresca en las manos. El cartel tenía la misma pintura.',
+    'Una compañera vio a Valeria pintarlo. El cartel aún tenía pintura fresca.',
     { exact: true }
   )).toBeVisible();
   await expect(englishClue).toHaveCount(0);
@@ -638,7 +757,7 @@ test('swaps one clue into Spanish without a side stripe or layout jump', async (
 
 test('turns a corrected map into assisted evidence instead of a false independent success', async ({ page }) => {
   const telemetry = await mockTelemetry(page);
-  await seedStep(page, 3);
+  await seedStep(page, 4);
   await page.goto('/crear');
 
   await page.getByRole('button', {
@@ -647,7 +766,7 @@ test('turns a corrected map into assisted evidence instead of a false independen
   }).click();
   await page.getByRole('button', { name: 'Siguiente', exact: true }).click();
   await expect(page.getByText(
-    'La pintura conecta directamente a Valeria con el cartel: la evidencia es fuerte.',
+    'Una compañera vio a Valeria pintarlo: la evidencia hace que sea casi seguro.',
     { exact: true }
   )).toBeVisible();
   await page.getByRole('button', {
@@ -698,9 +817,9 @@ test('turns a corrected map into assisted evidence instead of a false independen
 
 test('does not convert a miscalibrated transfer sentence into success', async ({ page }) => {
   await mockTelemetry(page);
-  await seedStep(page, 5);
+  await seedStep(page, 6);
   await page.goto('/crear');
-  await assignCorrectMap(page);
+  await assignCorrectMap(page, ['MUST HAVE']);
   await page.getByRole('button', {
     name: 'Comprobar',
     exact: true,
@@ -751,9 +870,29 @@ test('local classifier distinguishes the authored transfer and D7 targets', asyn
   });
   expect(retest.ok()).toBe(true);
   expect(await retest.json()).toMatchObject({ rama: 'correcto' });
+
+  const transferPronoun = await request.post('/api/classify', {
+    data: {
+      tallerId: LESSON_ID,
+      pasoRefId: 'transfer-production',
+      texto: 'She might have worked on the model.',
+    },
+  });
+  expect(transferPronoun.ok()).toBe(true);
+  expect(await transferPronoun.json()).toMatchObject({ rama: 'correcto' });
+
+  const retestPronoun = await request.post('/api/classify', {
+    data: {
+      tallerId: LESSON_ID,
+      pasoRefId: 'retest-production',
+      texto: 'They cannot have moved the poster.',
+    },
+  });
+  expect(retestPronoun.ok()).toBe(true);
+  expect(await retestPronoun.json()).toMatchObject({ rama: 'correcto' });
 });
 
-test('lesson 1.8 separates certainty from form and records authored evidence targets', async () => {
+test('lesson 1.11.0 adds a neutral baseline before certainty and form evidence', async () => {
   const lessonPath = path.join(process.cwd(), 'public/workshops', `${LESSON_ID}.json`);
   const lesson = JSON.parse(fs.readFileSync(lessonPath, 'utf8')) as {
     version: string;
@@ -764,6 +903,7 @@ test('lesson 1.8 separates certainty from form and records authored evidence tar
       crear?: {
         audio?: { text: string };
         certaintyMap?: { artifact?: { kind: string }; statements: unknown[] };
+        precheck?: { items: unknown[]; options: unknown[] };
         evidencePresentation?: unknown;
         guideAvailable?: boolean;
         input?: string;
@@ -772,11 +912,12 @@ test('lesson 1.8 separates certainty from form and records authored evidence tar
     }>;
   };
 
-  expect(lesson.version).toBe('1.8.0');
+  expect(lesson.version).toBe('1.11.0');
   expect(lesson.content_version).toBe(CONTENT_VERSION);
   expect(lesson.metadata.duracion_estimada_min).toBe(5);
   expect(lesson.pasos.map((step) => step.ref_id)).toEqual([
     'arrival',
+    'precheck',
     'contrast',
     'prism',
     'guided-map',
@@ -788,6 +929,11 @@ test('lesson 1.8 separates certainty from form and records authored evidence tar
     'retest-certainty',
     'retest-production',
   ]);
+  expect(lesson.pasos.find((step) => step.ref_id === 'precheck')?.crear?.precheck)
+    .toMatchObject({
+      items: expect.any(Array),
+      options: expect.any(Array),
+    });
   expect(lesson.pasos.some((step) => step.crear?.responseParts?.length)).toBe(false);
   expect(lesson.pasos.find((step) => step.ref_id === 'transfer')?.crear?.certaintyMap)
     .toMatchObject({
@@ -799,20 +945,12 @@ test('lesson 1.8 separates certainty from form and records authored evidence tar
           translationEs: expect.any(String),
           feedbackIncorrecto: expect.any(String),
         },
-        {
-          sentenceStart: 'Leo',
-          sentenceEnd: 'worked on the model.',
-          translationEs: expect.any(String),
-          feedbackIncorrecto: expect.any(String),
-        },
-        {
-          sentenceStart: 'Mara',
-          sentenceEnd: 'worked on the model.',
-          translationEs: expect.any(String),
-          feedbackIncorrecto: expect.any(String),
-        },
       ],
     });
+  // Supported transfer stays at one statement on purpose: it models the idea on a
+  // new case without repeating the three-way sort the learner already completed.
+  expect(lesson.pasos.find((step) => step.ref_id === 'transfer')?.crear?.certaintyMap?.statements)
+    .toHaveLength(1);
   expect(lesson.pasos.find((step) => step.ref_id === 'transfer')?.crear?.evidencePresentation)
     .toBeUndefined();
   expect(lesson.pasos.find((step) => step.ref_id === 'guided-map')?.crear?.guideAvailable)
@@ -828,7 +966,7 @@ test('lesson 1.8 separates certainty from form and records authored evidence tar
 test('mobile map stays readable, tappable and motion-safe at 375px', async ({ page }) => {
   await mockTelemetry(page);
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  await seedStep(page, 3);
+  await seedStep(page, 4);
   await page.setViewportSize({ width: 375, height: 812 });
   await page.goto('/crear');
 
@@ -847,7 +985,7 @@ test('mobile map stays readable, tappable and motion-safe at 375px', async ({ pa
     { exact: true }
   )).toHaveCount(0);
   expect(await page.getByText(
-    'Valeria had fresh blue paint on her hands. The poster had the same paint.',
+    'A classmate saw Valeria paint the poster. It still had fresh blue paint.',
     { exact: true }
   ).evaluate((element) => getComputedStyle(element).fontSize)).toBe('16px');
 
@@ -920,7 +1058,7 @@ test('mobile map stays readable, tappable and motion-safe at 375px', async ({ pa
 
 test('mobile map accepts a real pointer drag without making drag mandatory', async ({ page }) => {
   await mockTelemetry(page);
-  await seedStep(page, 3);
+  await seedStep(page, 4);
   await page.setViewportSize({ width: 375, height: 812 });
   await page.goto('/crear');
 
@@ -958,7 +1096,7 @@ test('mobile map accepts a real pointer drag without making drag mandatory', asy
 
 test('keeps fixed slots and animates all initial selections plus directed swaps', async ({ page }) => {
   await mockTelemetry(page);
-  await seedStep(page, 3);
+  await seedStep(page, 4);
   await page.setViewportSize({ width: 375, height: 812 });
   await page.goto('/crear');
 

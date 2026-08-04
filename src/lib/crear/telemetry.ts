@@ -22,6 +22,7 @@ interface TrackCrearAnswerInput {
   targetCategory?: CrearResponseCategory;
   statementId?: string;
   score?: number;
+  latencyMs?: number;
   checksum?: string;
   intento?: number;
   attempt?: number;
@@ -77,6 +78,10 @@ export async function trackCrearAnswer(input: TrackCrearAnswerInput): Promise<vo
 
   if (typeof input.score === 'number') {
     result.score = input.score;
+  }
+
+  if (typeof input.latencyMs === 'number' && Number.isFinite(input.latencyMs)) {
+    result.latencyMs = Math.max(0, Math.round(input.latencyMs));
   }
 
   const attempt = input.attempt ?? input.intento;

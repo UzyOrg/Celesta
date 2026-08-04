@@ -14,6 +14,7 @@ export type CrearExperienceStage = 'descubre' | 'practica' | 'aplica' | 'recuerd
 
 export type CrearScene =
   | 'arrival'
+  | 'precheck'
   | 'signal'
   | 'contrast'
   | 'prism'
@@ -197,6 +198,8 @@ export interface CrearCertaintyMapSubmission {
   assignments: Record<string, CrearResponseCategory>;
   productionText?: string;
   assisted: boolean;
+  /** Time from the active task becoming available until submission, in ms. */
+  latencyMs?: number;
 }
 
 export interface CrearCertaintyMapAttempt {
@@ -206,6 +209,38 @@ export interface CrearCertaintyMapAttempt {
   attempt: number;
   assignments: Record<string, CrearResponseCategory>;
   assisted: boolean;
+  /** Time from this clue becoming available until the decision, in ms. */
+  latencyMs?: number;
+}
+
+/**
+ * A short, pre-instruction baseline. Its language stays neutral so it can
+ * measure evidence calibration without teaching the English modal mapping.
+ */
+export interface CrearPrecheckOption {
+  id: CrearResponseCategory;
+  label: string;
+}
+
+export interface CrearPrecheckItem {
+  id: string;
+  clue: string;
+  prompt: string;
+  correctCategory: CrearResponseCategory;
+}
+
+export interface CrearPrecheck {
+  options: CrearPrecheckOption[];
+  items: CrearPrecheckItem[];
+  completeLabel?: string;
+}
+
+export interface CrearPrecheckAttempt {
+  itemId: string;
+  category: CrearResponseCategory;
+  correct: boolean;
+  /** Time from this baseline item becoming available until it is saved. */
+  latencyMs?: number;
 }
 
 export interface CrearConceptCard {
@@ -248,6 +283,7 @@ export interface CrearStepMeta {
   evidence?: CrearEvidenceItem[];
   evidencePresentation?: CrearEvidencePresentation;
   responseParts?: CrearResponsePart[];
+  precheck?: CrearPrecheck;
   certaintyMap?: CrearCertaintyMap;
   guideAvailable?: boolean;
   concepts?: CrearConceptCard[];
@@ -293,6 +329,8 @@ export interface CrearTelemetryResult extends Record<string, unknown> {
   rama: string;
   texto?: string;
   score?: number;
+  /** Client-measured active-task latency; excludes queued/network delivery time. */
+  latencyMs?: number;
   partes?: CrearResponsePartAnswer[];
   mapping?: Record<string, CrearResponseCategory>;
   assisted?: boolean;

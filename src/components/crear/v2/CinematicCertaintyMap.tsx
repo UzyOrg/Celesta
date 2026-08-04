@@ -100,6 +100,8 @@ export function CinematicCertaintyMap({
   const travelerSequenceRef = useRef(0);
   const didDragRef = useRef(false);
   const statementAttemptsRef = useRef<Record<string, number>>({});
+  const activeStatementStartedAtRef = useRef<number | null>(null);
+  const productionStartedAtRef = useRef<number | null>(null);
   const assistedStatementIdsRef = useRef<Set<string>>(new Set());
   const translatedStatementIdsRef = useRef<Set<string>>(new Set());
 
@@ -117,6 +119,16 @@ export function CinematicCertaintyMap({
   useEffect(() => {
     onPhaseChange?.(phase);
   }, [onPhaseChange, phase]);
+
+  useEffect(() => {
+    if (activeStatement) {
+      activeStatementStartedAtRef.current = Date.now();
+    }
+  }, [activeStatement?.id]);
+
+  useEffect(() => {
+    productionStartedAtRef.current = phase === 'produce' ? Date.now() : null;
+  }, [phase]);
 
   function createTraveler(
     category: CrearResponseCategory,
@@ -244,6 +256,9 @@ export function CinematicCertaintyMap({
       attempt: nextAttempt,
       assignments,
       assisted: effectiveAssistance,
+      latencyMs: activeStatementStartedAtRef.current === null
+        ? undefined
+        : Math.max(0, Date.now() - activeStatementStartedAtRef.current),
     });
 
     if (!correct) {
@@ -271,6 +286,9 @@ export function CinematicCertaintyMap({
     onSubmit({
       assignments,
       assisted: effectiveAssistance,
+      latencyMs: activeStatementStartedAtRef.current === null
+        ? undefined
+        : Math.max(0, Date.now() - activeStatementStartedAtRef.current),
     });
   }
 
@@ -310,6 +328,9 @@ export function CinematicCertaintyMap({
             assignments,
             productionText: productionText.trim(),
             assisted: effectiveAssistance,
+            latencyMs: productionStartedAtRef.current === null
+              ? undefined
+              : Math.max(0, Date.now() - productionStartedAtRef.current),
           })}
         >
           {pending ? (
@@ -330,24 +351,30 @@ export function CinematicCertaintyMap({
 
   return (
     <section className={styles.certaintyMap} data-phase="match" aria-busy={pending}>
-      <div className={styles.mapInstruction}>
-        <p>Pista {activeIndex + 1} de {config.statements.length}</p>
-      </div>
+      {/* A single-item map needs no position: "Pista 1 de 1" and a lone dot
+        * are extraneous load, not orientation. */}
+      {config.statements.length > 1 ? (
+        <>
+          <div className={styles.mapInstruction}>
+            <p>Pista {activeIndex + 1} de {config.statements.length}</p>
+          </div>
 
-      <div className={styles.mapProgress} aria-hidden="true">
-        {config.statements.map((statement, index) => (
-          <span
-            data-state={
-              assignments[statement.id]
-                ? 'complete'
-                : index === activeIndex
-                  ? 'active'
-                  : 'upcoming'
-            }
-            key={statement.id}
-          />
-        ))}
-      </div>
+          <div className={styles.mapProgress} aria-hidden="true">
+            {config.statements.map((statement, index) => (
+              <span
+                data-state={
+                  assignments[statement.id]
+                    ? 'complete'
+                    : index === activeIndex
+                      ? 'active'
+                      : 'upcoming'
+                }
+                key={statement.id}
+              />
+            ))}
+          </div>
+        </>
+      ) : null}
 
       <AnimatePresence mode="wait" initial={false}>
           {activeStatement ? (

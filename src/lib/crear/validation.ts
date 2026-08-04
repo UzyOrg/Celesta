@@ -14,6 +14,7 @@ const FASES = new Set(['pre_check', 'practica', 'post', 'transfer', 'teach_back'
 const STAGES = new Set(['descubre', 'practica', 'aplica', 'recuerda']);
 const SCENES = new Set([
   'arrival',
+  'precheck',
   'signal',
   'contrast',
   'prism',
@@ -264,6 +265,66 @@ function validateMeta(meta: CrearStepMeta, refId: string): void {
       );
     }
   }
+  if (meta.precheck !== undefined) {
+    if (meta.scene !== 'precheck' || meta.input !== 'choice') {
+      throw new Error(`CREAR JSON: ${refId}.crear.precheck requires the precheck choice scene`);
+    }
+    if (!meta.learningOpportunity) {
+      throw new Error(`CREAR JSON: ${refId}.crear.precheck requires a learning opportunity`);
+    }
+
+    const precheck = meta.precheck;
+    if (!Array.isArray(precheck.options) || precheck.options.length !== RESPONSE_CATEGORIES.length) {
+      throw new Error(`CREAR JSON: ${refId}.crear.precheck.options must contain three items`);
+    }
+    const optionIds = precheck.options.map((option, index) => {
+      if (
+        !option ||
+        !RESPONSE_CATEGORY_SET.has(option.id) ||
+        typeof option.label !== 'string' ||
+        !option.label.trim()
+      ) {
+        throw new Error(`CREAR JSON: ${refId}.crear.precheck.options[${index}] is invalid`);
+      }
+      return option.id;
+    });
+    if (
+      new Set(optionIds).size !== RESPONSE_CATEGORIES.length ||
+      RESPONSE_CATEGORIES.some((category) => !optionIds.includes(category))
+    ) {
+      throw new Error(`CREAR JSON: ${refId}.crear.precheck.options must author each category once`);
+    }
+
+    if (!Array.isArray(precheck.items) || precheck.items.length !== RESPONSE_CATEGORIES.length) {
+      throw new Error(`CREAR JSON: ${refId}.crear.precheck.items must contain three items`);
+    }
+    const itemIds = new Set<string>();
+    precheck.items.forEach((item, index) => {
+      if (
+        !item ||
+        typeof item.id !== 'string' ||
+        !item.id.trim() ||
+        itemIds.has(item.id) ||
+        typeof item.clue !== 'string' ||
+        !item.clue.trim() ||
+        typeof item.prompt !== 'string' ||
+        !item.prompt.trim() ||
+        !RESPONSE_CATEGORY_SET.has(item.correctCategory)
+      ) {
+        throw new Error(`CREAR JSON: ${refId}.crear.precheck.items[${index}] is invalid`);
+      }
+      itemIds.add(item.id);
+    });
+    if (
+      precheck.completeLabel !== undefined &&
+      (typeof precheck.completeLabel !== 'string' || !precheck.completeLabel.trim())
+    ) {
+      throw new Error(`CREAR JSON: ${refId}.crear.precheck.completeLabel must be non-empty`);
+    }
+  }
+  if (meta.scene === 'precheck' && meta.precheck === undefined) {
+    throw new Error(`CREAR JSON: ${refId}.crear.scene precheck requires a precheck config`);
+  }
   if (meta.formula !== undefined) {
     if (
       !Array.isArray(meta.formula) ||
@@ -317,8 +378,19 @@ function validateMeta(meta: CrearStepMeta, refId: string): void {
         `CREAR JSON: ${refId}.crear.certaintyMap.categories must author each category once`
       );
     }
-    if (!Array.isArray(map.statements) || map.statements.length !== RESPONSE_CATEGORIES.length) {
-      throw new Error(`CREAR JSON: ${refId}.crear.certaintyMap.statements must contain three items`);
+    /**
+     * The bank always offers the three categories, so a map may probe fewer
+     * than three statements without leaking the answer by elimination. Item
+     * count is a dosage decision; the category set is not.
+     */
+    if (
+      !Array.isArray(map.statements) ||
+      map.statements.length < 1 ||
+      map.statements.length > RESPONSE_CATEGORIES.length
+    ) {
+      throw new Error(
+        `CREAR JSON: ${refId}.crear.certaintyMap.statements must contain between one and three items`
+      );
     }
     const statementIds = new Set<string>();
     map.statements.forEach((statement, index) => {
@@ -357,6 +429,12 @@ function validateMeta(meta: CrearStepMeta, refId: string): void {
       }
       statementIds.add(statement.id);
     });
+    const statementCategories = map.statements.map((statement) => statement.correctCategory);
+    if (new Set(statementCategories).size !== statementCategories.length) {
+      throw new Error(
+        `CREAR JSON: ${refId}.crear.certaintyMap.statements must not repeat a category`
+      );
+    }
     for (const field of ['successTitle', 'successBody'] as const) {
       if (typeof map[field] !== 'string' || !map[field].trim()) {
         throw new Error(`CREAR JSON: ${refId}.crear.certaintyMap.${field} must be non-empty`);

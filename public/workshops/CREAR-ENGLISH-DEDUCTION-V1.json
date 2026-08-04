@@ -1,9 +1,9 @@
 {
   "id_taller": "CREAR-ENGLISH-DEDUCTION-V1",
-  "version": "1.8.0",
+  "version": "1.11.0",
   "schema_version": "0.1",
-  "content_version": "2026-08-01-contrast",
-  "audio_asset_version": "2026-08-01-contrast",
+  "content_version": "2026-08-03-baseline-clarity",
+  "audio_asset_version": "2026-08-03-baseline-clarity",
   "titulo": "La maqueta de la feria",
   "metadata": {
     "grado": "Prepa",
@@ -35,14 +35,14 @@
           "eyebrow": "",
           "moduleLabel": "Módulo de inglés",
           "levelLabel": "B1+ / B2",
-          "learningGoal": "Tu reto es descubrir quién pudo haber trabajado en el cartel y explicarlo en inglés.",
-          "headline": "El cartel cambió antes de la feria.",
-          "body": "Nadie vio quién trabajó en él. Te mostraré una pista a la vez."
+        "learningGoal": "",
+        "headline": "El cartel cambió antes de la feria.",
+        "body": "Tu reto es descubrir quién pudo haber trabajado en el cartel y explicarlo en inglés."
         },
         "caseArtifact": {
           "kind": "poster",
           "label": "Cartel de la feria",
-          "status": "La pintura todavía está fresca."
+          "status": "Está en el salón y la pintura todavía está fresca."
         },
         "audio": {
           "src": "/audio/crear/english-deduction/arrival-v17.wav",
@@ -52,24 +52,83 @@
         },
         "actionLabel": "Ver la primera pista",
         "input": "none",
-        "nextRefId": "contrast"
+        "nextRefId": "precheck"
       }
     },
     {
       "paso_numero": 2,
+      "ref_id": "precheck",
+      "tipo_paso": "instruccion",
+      "titulo_paso": "Decisiones iniciales",
+      "instruccion": {
+        "texto": "Decide qué permite afirmar cada pista antes de ver la explicación en inglés."
+      },
+      "bloquea_avance_si_falla": false,
+      "puntaje": 0,
+      "crear": {
+        "fase": "pre_check",
+        "stage": "descubre",
+        "scene": "precheck",
+        "display": {
+          "eyebrow": "",
+          "headline": "Son tres decisiones rápidas antes de ver cómo expresarlo en inglés.",
+          "body": "Aquí no se califica nada: es tu lectura antes de ver la explicación."
+        },
+        "input": "choice",
+        "learningOpportunity": {
+          "id": "baseline-certainty-calibration",
+          "constructs": ["certainty_calibration"],
+          "condition": "independent",
+          "novelty": "same_case",
+          "timing": "immediate"
+        },
+        "precheck": {
+          "options": [
+            { "id": "casi_seguro", "label": "Es seguro" },
+            { "id": "posible", "label": "Podría ser" },
+            { "id": "imposible", "label": "No puede ser" }
+          ],
+          "items": [
+            {
+              "id": "sofia",
+              "clue": "Sofía tenía pintura azul fresca en las manos. El cartel tenía la misma pintura.",
+              "prompt": "¿Sofía fue culpable?",
+              "correctCategory": "casi_seguro"
+            },
+            {
+              "id": "mateo",
+              "clue": "Mateo se quedó en el salón durante el recreo. Nadie vio en qué trabajó.",
+              "prompt": "Sobre Mateo, dirías que…",
+              "correctCategory": "posible"
+            },
+            {
+              "id": "renata",
+              "clue": "Renata estaba en otro plantel cuando cambiaron el cartel.",
+              "prompt": "Sobre Renata, dirías que…",
+              "correctCategory": "imposible"
+            }
+          ],
+          "completeLabel": "Ver la comparación"
+        },
+        "revealFeedback": false,
+        "nextRefId": "contrast"
+      }
+    },
+    {
+      "paso_numero": 3,
       "ref_id": "contrast",
       "tipo_paso": "opcion_multiple",
       "titulo_paso": "Compara las frases",
       "opcion_multiple": {
-        "pregunta": "En la frase B, ¿qué hace quien habla?",
+        "pregunta": "¿Qué comunica la frase B?",
         "opciones": [
-          { "id": "fact", "texto": "Cuenta algo que vio." },
-          { "id": "inference", "texto": "Deduce algo por una pista." },
-          { "id": "obligation", "texto": "Habla de una obligación." }
+          { "id": "fact", "texto": "Valeria pintó el póster." },
+          { "id": "inference", "texto": "Es seguro que Valeria pintó el póster." },
+          { "id": "obligation", "texto": "Valeria debe pintar el póster." }
         ],
         "respuesta_correcta": "inference",
-        "feedback_correcto": "Exacto. “Must have” muestra que la persona no lo vio: usa una pista para deducir qué ocurrió.",
-        "feedback_incorrecto": "La persona no vio a Valeria y “must have” aquí no expresa una obligación. Usa una pista para deducir qué ocurrió."
+        "feedback_correcto": "Exacto. \"Must have\" expresa una deducción fuerte: es casi seguro que Valeria pintó el póster. No es un hecho ni una obligación.",
+        "feedback_incorrecto": "La frase B no solo afirma un hecho como la A (\"Valeria pintó el póster\") ni es una obligación (\"Valeria debe pintar el póster\"): \"must have\" expresa una deducción fuerte, casi segura."
       },
       "bloquea_avance_si_falla": false,
       "puntaje": 1,
@@ -79,7 +138,7 @@
         "scene": "contrast",
         "display": {
           "eyebrow": "",
-          "headline": "¿Lo vio o lo dedujo?"
+          "headline": "Observa las dos frases."
         },
         "comparison": {
           "leftLabel": "A",
@@ -108,7 +167,7 @@
       }
     },
     {
-      "paso_numero": 3,
+      "paso_numero": 4,
       "ref_id": "prism",
       "tipo_paso": "instruccion",
       "titulo_paso": "Tres niveles de certeza",
@@ -123,32 +182,32 @@
         "scene": "prism",
         "display": {
           "eyebrow": "",
-          "headline": "La pista cambia cuánta seguridad expresas.",
-          "body": "Toca un nivel para consultar la regla y un ejemplo."
+          "headline": "Depende de qué tan seguro estás.",
+          "body": ""
         },
         "concepts": [
           {
             "id": "must",
             "term": "MUST HAVE",
             "meaning": "Casi seguro",
-            "description": "Crees que ocurrió. Tienes razones fuertes para pensarlo, aunque no lo viste.",
-            "example": "Valeria must have painted the poster.",
+            "description": "La evidencia es muy fuerte y casi no deja otra explicación.",
+            "example": "Sofía must have fixed the projector.",
             "strength": "strong"
           },
           {
             "id": "might",
             "term": "MIGHT HAVE",
             "meaning": "Es posible",
-            "description": "Es una posibilidad. Puede haber ocurrido, pero no estás seguro.",
-            "example": "Mateo might have helped with the poster.",
+            "description": "La evidencia deja abierta más de una posibilidad.",
+            "example": "Bruno might have fixed the projector.",
             "strength": "open"
           },
           {
             "id": "cant",
             "term": "CAN'T HAVE",
             "meaning": "Descartado",
-            "description": "Crees que no ocurrió. La información disponible lo descarta.",
-            "example": "Iker can't have helped with the poster.",
+            "description": "La evidencia descarta que haya ocurrido.",
+            "example": "Nadia can't have fixed the projector.",
             "strength": "ruled_out"
           }
         ],
@@ -179,7 +238,7 @@
       }
     },
     {
-      "paso_numero": 4,
+      "paso_numero": 5,
       "ref_id": "guided-map",
       "tipo_paso": "instruccion",
       "titulo_paso": "Completa las deducciones",
@@ -232,17 +291,17 @@
           "statements": [
             {
               "id": "valeria",
-              "clue": "Valeria had fresh blue paint on her hands. The poster had the same paint.",
-              "translationEs": "Valeria tenía pintura azul fresca en las manos. El cartel tenía la misma pintura.",
+              "clue": "A classmate saw Valeria paint the poster. It still had fresh blue paint.",
+              "translationEs": "Una compañera vio a Valeria pintarlo. El cartel aún tenía pintura fresca.",
               "visualCue": {
                 "kind": "paint",
                 "label": "Pintura fresca",
-                "detail": "El mismo azul en sus manos y en el cartel."
+                "detail": "La vieron pintarlo y la pintura todavía está fresca."
               },
               "sentenceStart": "Valeria",
               "sentenceEnd": "painted the poster.",
               "correctCategory": "casi_seguro",
-              "feedbackIncorrecto": "La pintura conecta directamente a Valeria con el cartel: la evidencia es fuerte."
+              "feedbackIncorrecto": "Una compañera vio a Valeria pintarlo: la evidencia hace que sea casi seguro."
             },
             {
               "id": "mateo",
@@ -273,15 +332,15 @@
               "feedbackIncorrecto": "El partido lo coloca fuera de la escuela: esta acción queda descartada."
             }
           ],
-          "successTitle": "Elegiste las tres expresiones",
-          "successBody": "Usaste la información para decidir cuánta seguridad comunica cada frase."
+          "successTitle": "Ya distingues las tres fuerzas de evidencia",
+          "successBody": "Falta lo que importa: usarlas en un caso que no practicaste."
         },
         "revealFeedback": false,
         "nextRefId": "transfer-bridge"
       }
     },
     {
-      "paso_numero": 5,
+      "paso_numero": 6,
       "ref_id": "transfer-bridge",
       "tipo_paso": "instruccion",
       "titulo_paso": "Puente hacia la transferencia",
@@ -296,8 +355,8 @@
         "scene": "transfer-bridge",
         "display": {
           "eyebrow": "",
-          "headline": "Nuevo caso. Misma pregunta.",
-          "body": "¿Qué tan segura es tu conclusión? Ahora las pistas hablan de una maqueta."
+          "headline": "Primera parte completada.",
+          "body": "Ya resolviste tres deducciones con ayuda. Ahora pondrás la misma idea a prueba en un caso nuevo."
         },
         "audio": {
           "src": "/audio/crear/english-deduction/transfer-bridge.wav",
@@ -305,13 +364,13 @@
           "lang": "es-MX",
           "label": "Celestea · Nuevo caso"
         },
-        "actionLabel": "Resolver el nuevo caso",
+        "actionLabel": "Continuar al caso nuevo",
         "input": "none",
         "nextRefId": "transfer"
       }
     },
     {
-      "paso_numero": 6,
+      "paso_numero": 7,
       "ref_id": "transfer",
       "tipo_paso": "transferencia",
       "titulo_paso": "La maqueta de la feria",
@@ -347,7 +406,7 @@
           "artifact": {
             "kind": "model",
             "label": "Maqueta de la feria",
-            "status": "Tres pistas sobre el mismo proyecto."
+            "status": "Una pista sobre el proyecto."
           },
           "categories": [
             {
@@ -380,45 +439,17 @@
               "sentenceEnd": "worked on the model.",
               "correctCategory": "casi_seguro",
               "feedbackIncorrecto": "El mismo pegamento conecta directamente a Elena con la maqueta: la evidencia es fuerte."
-            },
-            {
-              "id": "leo",
-              "clue": "Leo stayed in the classroom during lunch. No one saw what he worked on.",
-              "translationEs": "Leo se quedó en el salón durante el recreo. Nadie vio en qué trabajó.",
-              "visualCue": {
-                "kind": "presence",
-                "label": "Estuvo en el salón",
-                "detail": "Nadie vio en qué trabajó."
-              },
-              "sentenceStart": "Leo",
-              "sentenceEnd": "worked on the model.",
-              "correctCategory": "posible",
-              "feedbackIncorrecto": "Leo estaba ahí, pero nadie vio qué hizo: la pista solo deja una posibilidad."
-            },
-            {
-              "id": "mara",
-              "clue": "Mara left school before the model arrived.",
-              "translationEs": "Mara salió de la escuela antes de que llegara la maqueta.",
-              "visualCue": {
-                "kind": "location",
-                "label": "Ya se había ido",
-                "detail": "La maqueta llegó después."
-              },
-              "sentenceStart": "Mara",
-              "sentenceEnd": "worked on the model.",
-              "correctCategory": "imposible",
-              "feedbackIncorrecto": "Mara ya se había ido cuando llegó la maqueta: esta acción queda descartada."
             }
           ],
-          "successTitle": "Completaste las tres deducciones",
-          "successBody": "Ahora resolverás una pista sin ver la respuesta en inglés."
+          "successTitle": "La idea funcionó en un caso nuevo",
+          "successBody": "Eso fue con apoyo. Lo siguiente es una pista nueva, por tu cuenta."
         },
         "revealFeedback": false,
         "nextRefId": "transfer-check-certainty"
       }
     },
     {
-      "paso_numero": 7,
+      "paso_numero": 8,
       "ref_id": "transfer-check-certainty",
       "tipo_paso": "opcion_multiple",
       "titulo_paso": "Decide la certeza",
@@ -468,13 +499,13 @@
       }
     },
     {
-      "paso_numero": 8,
+      "paso_numero": 9,
       "ref_id": "transfer-production",
       "tipo_paso": "pregunta_abierta_validada",
       "titulo_paso": "Expresa la deducción",
       "pregunta_abierta_validada": {
-        "pregunta": "Escribe una deducción en inglés sobre Nora.",
-        "placeholder": "Escribe una frase sobre Nora.",
+        "pregunta": "Escribe en inglés tu deducción sobre Nora y la maqueta.",
+        "placeholder": "Nora … the model.",
         "validacion": {
           "tipo": "palabras_clave",
           "criterio": ["nora", "might have"],
@@ -528,7 +559,7 @@
               ],
               "match": {
                 "allGroups": [
-                  ["nora"],
+                  ["nora", "she", "he", "they"],
                   ["might have", "may have", "could have"],
                   ["worked", "helped", "built", "painted", "made", "changed", "fixed", "finished", "designed", "glued"]
                 ],
@@ -586,7 +617,7 @@
       }
     },
     {
-      "paso_numero": 9,
+      "paso_numero": 10,
       "ref_id": "close",
       "tipo_paso": "instruccion",
       "titulo_paso": "Cierre",
@@ -615,7 +646,7 @@
       }
     },
     {
-      "paso_numero": 10,
+      "paso_numero": 11,
       "ref_id": "retest-certainty",
       "tipo_paso": "opcion_multiple",
       "titulo_paso": "Revisión de certeza",
@@ -666,13 +697,13 @@
       }
     },
     {
-      "paso_numero": 11,
+      "paso_numero": 12,
       "ref_id": "retest-production",
       "tipo_paso": "pregunta_abierta_validada",
       "titulo_paso": "Revisión de forma",
       "pregunta_abierta_validada": {
-        "pregunta": "Escribe una deducción en inglés sobre Emi.",
-        "placeholder": "Escribe una frase sobre Emi.",
+        "pregunta": "Escribe en inglés tu deducción sobre Emi y el cartel.",
+        "placeholder": "Emi … the poster.",
         "validacion": {
           "tipo": "palabras_clave",
           "criterio": ["emi", "can't have"],
@@ -726,7 +757,7 @@
               ],
               "match": {
                 "allGroups": [
-                  ["emi"],
+                  ["emi", "she", "he", "they"],
                   ["can't have", "cannot have", "couldn't have", "could not have"],
                   ["moved", "changed", "taken", "removed", "touched", "worked", "helped"]
                 ],
