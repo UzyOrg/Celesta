@@ -1718,7 +1718,6 @@ export function CinematicEnglishPlayer() {
               {audio
                 && audioAssetsReady
                 && currentScene !== 'contrast'
-                && currentScene !== 'arrival'
                 && (!hasStructuredEvidenceFlow || structuredView === 'explore') ? (
                 <CinematicVoice
                   audio={audio}

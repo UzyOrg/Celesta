@@ -2247,6 +2247,37 @@
 
 .pageShell[data-scene="arrival"] .voicePresence {
   animation-delay: 200ms;
+  border: 0;
+  background-color: transparent;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  margin-block: var(--space-lg) var(--space-md);
+  padding: 0;
+  place-items: center;
+}
+
+.pageShell[data-scene="arrival"] .voicePresence .voiceControl {
+  background-color: transparent;
+  border-color: var(--color-rule-strong);
+  color: var(--color-ink);
+  height: 2.75rem;
+  width: 2.75rem;
+}
+
+.pageShell[data-scene="arrival"] .voicePresence .liveDot {
+  display: none;
+}
+
+.pageShell[data-scene="arrival"] .voicePresence .voiceTranscript {
+  text-align: center;
+  width: auto;
+}
+
+.pageShell[data-scene="arrival"] .voicePresence .voiceLabel {
+  color: var(--color-ink-soft);
+  font-size: var(--text-sm);
+  font-weight: 700;
 }
 
 .pageShell[data-scene="arrival"] .actionDock {

@@ -18,7 +18,6 @@ interface TransitionRequest {
 }
 
 const speechFallbackEnabled = process.env.NEXT_PUBLIC_CREAR_TTS_FALLBACK === '1';
-const AUDIO_FADE_MS = 180;
 const AUDIO_EXIT_FADE_MS = 100;
 
 function resolveAudioSource(src: string): string {
@@ -120,24 +119,23 @@ export function useCinematicNarration({
     window.speechSynthesis.speak(utterance);
   }, [stopFallback]);
 
-  const playCurrent = useCallback(async (line: CrearAudioLine, fadeIn: boolean) => {
+  const playCurrent = useCallback(async (line: CrearAudioLine) => {
     const player = audioRef.current;
     if (!player) return;
 
     stopFallback();
     if (player.ended || status === 'ended') player.currentTime = 0;
-    player.volume = fadeIn ? 0 : 1;
+    player.volume = 1;
 
     try {
       await player.play();
       setStatus('playing');
-      if (fadeIn) fadeTo(1, AUDIO_FADE_MS);
     } catch {
       player.volume = 1;
       setStatus('paused');
-      if (!fadeIn) speakWithFallback(line);
+      speakWithFallback(line);
     }
-  }, [fadeTo, speakWithFallback, status, stopFallback]);
+  }, [speakWithFallback, status, stopFallback]);
 
   const pause = useCallback(() => {
     cancelTimers();
@@ -169,7 +167,7 @@ export function useCinematicNarration({
       setStatus('playing');
       return;
     }
-    await playCurrent(audio, false);
+    await playCurrent(audio);
   }, [audio, cancelTimers, pause, playCurrent, status]);
 
   const prepareTransition = useCallback((request: TransitionRequest) => {
@@ -188,10 +186,10 @@ export function useCinematicNarration({
       const primedPlayer = audioRef.current;
       if (!primedPlayer || pageHidden) return;
 
-      // Start the persistent media element inside the navigation gesture at
-      // volume zero. This preserves autoplay permission across the visual
+      // Start the persistent media element inside the navigation gesture
+      // at full volume. This preserves autoplay permission across the visual
       // transition, including browsers with strict media policies.
-      primedPlayer.volume = 0;
+      primedPlayer.volume = 1;
       void primedPlayer.play()
         .then(() => setStatus('playing'))
         .catch(() => setStatus('paused'));
@@ -199,10 +197,9 @@ export function useCinematicNarration({
       transitionTimerRef.current = window.setTimeout(() => {
         transitionTimerRef.current = null;
         if (primedPlayer.paused) {
-          void playCurrent(request.audio!, true);
+          void playCurrent(request.audio!);
           return;
         }
-        fadeTo(1, AUDIO_FADE_MS);
       }, Math.max(0, audibleDelayMs));
     };
 
