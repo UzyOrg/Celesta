@@ -45,7 +45,7 @@
           "status": "Está en el salón y la pintura todavía está fresca."
         },
         "audio": {
-          "src": "/audio/crear/english-deduction/arrival-v17.wav",
+          "src": "/audio/crear/english-deduction/arrival.mp3",
           "text": "El cartel de la feria cambió antes de la entrega y nadie vio quién trabajó en él. Vas a usar pistas para distinguir lo casi seguro, lo posible y lo imposible, y decirlo en inglés. Empecemos con una comparación breve.",
           "lang": "es-MX",
           "label": "Escuchar el caso"
@@ -359,7 +359,7 @@
           "body": "Ya resolviste tres deducciones con ayuda. Ahora pondrás la misma idea a prueba en un caso nuevo."
         },
         "audio": {
-          "src": "/audio/crear/english-deduction/transfer-bridge.wav",
+          "src": "/audio/crear/english-deduction/transfer.mp3",
           "text": "Bien. Ya resolviste tres deducciones con ayuda. Ahora cambia el caso, no la idea. Vas a investigar una maqueta para la feria y usarás lo que acabas de aprender. Verás una pista a la vez. Cuando quieras, empieza.",
           "lang": "es-MX",
           "label": "Celestea · Nuevo caso"

@@ -51,3 +51,19 @@ CELESTA_*.md
 FASE*.md
 TEACHER_*.md
 !README.md
+
+# Windsurf IDE skills (tooling, not product code)
+.windsurf/skills/
+
+# Hallmark audit artifacts (temporal development tooling)
+.hallmark/
+
+# Audio source files (.wav) — production uses .mp3
+*.wav
+
+# Legacy placeholder images (not referenced in any component)
+public/ph_student.png
+public/ph_student.webp
+public/ph_teacher.png
+public/student_workshop.png
+public/teacher_dashboard.png

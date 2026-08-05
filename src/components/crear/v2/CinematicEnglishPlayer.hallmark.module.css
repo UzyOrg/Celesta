@@ -1785,17 +1785,6 @@
   outline-offset: 2px;
 }
 
-.pageShell[data-scene="contrast"] .choiceIndicator {
-  background-color: transparent;
-  border: 0;
-  color: var(--color-accent);
-}
-
-.pageShell[data-scene="contrast"] .choiceAction[data-selected="true"] .choiceIndicator {
-  background-color: transparent;
-  border-color: transparent;
-}
-
 .pageShell[data-scene="precheck"] .sceneCopy h1 {
   font-size: var(--text-lg);
   letter-spacing: -0.025em;
