@@ -1,5 +1,7 @@
 node_modules
 .next
+# Alternate build dirs (NEXT_DIST_DIR): playwright, retest walkthrough, verify runs
+.next-*
 dist
 build
 .env
@@ -16,6 +18,9 @@ coverage
 test-artifacts/
 test-results/
 *.tsbuildinfo
+# Autogenerado por Next en cada build; su contenido sigue al distDir activo,
+# así que trackearlo produce churn cada vez que corren los E2E.
+next-env.d.ts
 
 # Supabase migrations (ejecutar manualmente en cada instancia)
 lib/supabase/migrations/
@@ -52,8 +57,13 @@ FASE*.md
 TEACHER_*.md
 !README.md
 
-# Windsurf IDE skills (tooling, not product code)
-.windsurf/skills/
+# Agent/IDE tooling (local, not product code)
+.claude/
+.windsurf/
+
+# Documentos de Notion exportados (00–08). La verdad narrativa vive en Notion;
+# el repo solo guarda contratos que un agente de código debe obedecer.
+[0-9][0-9] · *.md
 
 # Hallmark audit artifacts (temporal development tooling)
 .hallmark/

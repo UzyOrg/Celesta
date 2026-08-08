@@ -6,6 +6,7 @@ create table if not exists public.eventos_de_aprendizaje (
   client_event_id text not null unique,
   actor_sid text not null,
   student_session_id text,
+  student_alias text,
   class_token text,
   taller_id text not null,
   paso_id text not null,
@@ -19,6 +20,7 @@ create table if not exists public.eventos_de_aprendizaje (
 create index if not exists eventos_de_aprendizaje_class_token_idx on public.eventos_de_aprendizaje (class_token);
 create index if not exists eventos_de_aprendizaje_actor_sid_idx on public.eventos_de_aprendizaje (actor_sid);
 create index if not exists eventos_de_aprendizaje_session_idx on public.eventos_de_aprendizaje (student_session_id);
+create index if not exists eventos_de_aprendizaje_alias_idx on public.eventos_de_aprendizaje (student_alias);
 create index if not exists eventos_de_aprendizaje_taller_id_idx on public.eventos_de_aprendizaje (taller_id);
 create index if not exists eventos_de_aprendizaje_ts_idx on public.eventos_de_aprendizaje (ts desc);
 
