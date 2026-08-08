@@ -32,6 +32,13 @@ export interface CrearStudyState {
   phase: CrearStudyPhase;
   stepIndex: number;
   retestDueAt?: number;
+  /**
+   * Set once `taller_completado` has actually been sent. `phase === 'completed'`
+   * alone is not enough to guard the report: it is what gets read back from
+   * localStorage on every future page load of an already-finished study, so
+   * without this flag every reopen would re-emit the completion event.
+   */
+  completionReported?: boolean;
   attempts: Record<string, number>;
   firstOutcomes: Record<string, CrearStoredOutcome>;
   latestOutcomes: Record<string, CrearStoredOutcome>;
@@ -150,6 +157,7 @@ export function loadCrearStudyState(lessonId: CrearLessonId): CrearStudyState | 
       !isStudyPhase(parsed.phase) ||
       !isNonNegativeInteger(parsed.stepIndex) ||
       (parsed.retestDueAt !== undefined && !isFiniteTimestamp(parsed.retestDueAt)) ||
+      (parsed.completionReported !== undefined && typeof parsed.completionReported !== 'boolean') ||
       !isRecordOf(attempts, isNonNegativeInteger) ||
       !isRecordOf(firstOutcomes, isStoredOutcome) ||
       !isRecordOf(latestOutcomes, isStoredOutcome) ||
@@ -170,6 +178,9 @@ export function loadCrearStudyState(lessonId: CrearLessonId): CrearStudyState | 
       phase: parsed.phase,
       stepIndex: parsed.stepIndex,
       ...(parsed.retestDueAt === undefined ? {} : { retestDueAt: parsed.retestDueAt }),
+      ...(parsed.completionReported === undefined
+        ? {}
+        : { completionReported: parsed.completionReported }),
       attempts,
       firstOutcomes,
       latestOutcomes,

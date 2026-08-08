@@ -894,14 +894,21 @@ export function CinematicEnglishPlayer() {
   /**
    * Emits the completion event once the study state has settled, so the
    * projection sees the day 7 observation that `completeLesson` cannot.
-   * Keyed by study so a reload of an already-completed study stays silent, and
-   * so StrictMode's double effect invocation reports once.
+   *
+   * Guarded two ways: `study.completionReported` is persisted to localStorage,
+   * so a returning learner reopening an already-finished study — which boots
+   * straight into `phase: 'completed'` — does not re-emit the event on every
+   * page load. `completionReportedRef` is the synchronous companion for the
+   * same tick: `persistStudy` below is a state update, not an immediate write,
+   * so a second effect invocation before it commits (StrictMode's double call
+   * in dev) would otherwise still see `completionReported` as unset.
    */
   useEffect(() => {
-    if (!lesson || !study || study.phase !== 'completed') return;
+    if (!lesson || !study || study.phase !== 'completed' || study.completionReported) return;
     const reportKey = `${study.studyId}:${study.contentVersion}`;
     if (completionReportedRef.current === reportKey) return;
     completionReportedRef.current = reportKey;
+    persistStudy({ completionReported: true });
     void trackCrearComplete({
       tallerId: lesson.id_taller,
       pasoId: getStepId(lesson.pasos[study.stepIndex] ?? lesson.pasos[lesson.pasos.length - 1]!),
