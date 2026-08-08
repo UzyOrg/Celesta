@@ -3,9 +3,11 @@
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { ArrowRight, Check, Loader2 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { seededShuffle } from '@/lib/crear/shuffle';
 import type {
   CrearPrecheck,
   CrearPrecheckAttempt,
+  CrearPrecheckItem,
   CrearResponseCategory,
 } from '@/lib/crear/types';
 import styles from './CinematicPrecheck.module.css';
@@ -23,6 +25,8 @@ export type CinematicPrecheckPreviewState =
 interface CinematicPrecheckProps {
   config: CrearPrecheck;
   pending: boolean;
+  /** Seeds the per-learner item order; stable for the life of a study. */
+  orderSeed?: string;
   initialAnswers?: Record<string, CrearResponseCategory>;
   onAttempt: (attempt: CrearPrecheckAttempt) => void;
   onComplete: () => void;
@@ -31,32 +35,45 @@ interface CinematicPrecheckProps {
 }
 
 function firstUnansweredIndex(
-  config: CrearPrecheck,
+  items: readonly CrearPrecheckItem[],
   answers: Record<string, CrearResponseCategory>
 ): number {
-  const index = config.items.findIndex((item) => !answers[item.id]);
-  return index === -1 ? config.items.length : index;
+  const index = items.findIndex((item) => !answers[item.id]);
+  return index === -1 ? items.length : index;
 }
 
 export function CinematicPrecheck({
   config,
   pending,
+  orderSeed = '',
   initialAnswers = {},
   onAttempt,
   onComplete,
   previewState,
 }: CinematicPrecheckProps) {
   const prefersReducedMotion = useReducedMotion();
+  /**
+   * Items rotate per learner; the three certainty options never do. The
+   * options are a scale — casi seguro, podría ser, no puede ser — and
+   * scrambling a scale costs more in reading effort than it buys in
+   * counterbalancing. The diagonal lived in the item order, so that is what
+   * moves.
+   */
+  const items = useMemo(
+    () => seededShuffle(config.items, `${orderSeed}:precheck`),
+    [config.items, orderSeed]
+  );
+  const shownOrder = useMemo(() => items.map((item) => item.id), [items]);
   const [answers, setAnswers] = useState<Record<string, CrearResponseCategory>>(initialAnswers);
-  const [activeIndex, setActiveIndex] = useState(() => firstUnansweredIndex(config, initialAnswers));
+  const [activeIndex, setActiveIndex] = useState(() => firstUnansweredIndex(items, initialAnswers));
   const activeStartedAtRef = useRef<number | null>(null);
   const questionRef = useRef<HTMLParagraphElement>(null);
   const shouldFocusQuestionRef = useRef(false);
   const advanceLockRef = useRef(false);
 
-  const activeItem = config.items[activeIndex];
+  const activeItem = items[activeIndex];
   const selectedCategory = activeItem ? answers[activeItem.id] : undefined;
-  const completedCount = Math.min(activeIndex, config.items.length);
+  const completedCount = Math.min(activeIndex, items.length);
   const isComplete = !activeItem;
   const isPreviewError = previewState === 'error';
   const isPreviewSuccess = previewState === 'success';
@@ -64,7 +81,7 @@ export function CinematicPrecheck({
   const visualState = pending ? 'loading' : previewState;
   const actionLabel = isComplete
     ? (config.completeLabel ?? 'Ver la comparación')
-    : activeIndex === config.items.length - 1
+    : activeIndex === items.length - 1
       ? (config.completeLabel ?? 'Ver la comparación')
       : 'Siguiente';
 
@@ -101,12 +118,14 @@ export function CinematicPrecheck({
       itemId: activeItem.id,
       category: selectedCategory,
       correct,
+      ...(activeItem.cueFrame ? { cueFrame: activeItem.cueFrame } : {}),
+      shownOrder,
       latencyMs: activeStartedAtRef.current === null
         ? undefined
         : Math.max(0, Date.now() - activeStartedAtRef.current),
     });
 
-    if (activeIndex === config.items.length - 1) {
+    if (activeIndex === items.length - 1) {
       onComplete();
       return;
     }
@@ -127,10 +146,14 @@ export function CinematicPrecheck({
     >
       <div className={styles.precheckTop}>
         <div className={styles.progressRow} aria-live="polite">
-          <p>{isComplete ? '3 de 3' : `${activeIndex + 1} de ${config.items.length}`}</p>
+          <p>
+            {isComplete
+              ? `${items.length} de ${items.length}`
+              : `${activeIndex + 1} de ${items.length}`}
+          </p>
         </div>
         <div className={styles.progressTrack} aria-hidden="true">
-          {config.items.map((item, index) => (
+          {items.map((item, index) => (
             <span
               data-state={index < completedCount ? 'complete' : index === activeIndex ? 'active' : 'upcoming'}
               key={item.id}
@@ -143,6 +166,8 @@ export function CinematicPrecheck({
             {activeItem ? (
               <motion.div
                 className={styles.question}
+                data-testid="precheck-item"
+                data-item-id={activeItem.id}
                 key={activeItem.id}
                 initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, x: 10 }}
                 animate={{ opacity: 1, x: 0 }}

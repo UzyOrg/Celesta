@@ -75,6 +75,38 @@ function TripArtifact() {
   );
 }
 
+/**
+ * The third case had to stop being a bus. Its clue is now "stayed in the art
+ * workshop, nobody saw" — a presence the learner must not resolve — and the
+ * route-away-from-school drawing answered that question before it was asked.
+ * Built from the classes the other two artifacts already use, so the cue
+ * overlays keep working without a CSS change.
+ */
+function MuralArtifact() {
+  return (
+    <svg viewBox="0 0 320 150" role="img" aria-label="Mural pintado en el muro de la entrada">
+      <path className={styles.artifactDesk} d="M20 130h280" />
+      <g className={styles.artifactSheet}>
+        <rect x="58" y="24" width="204" height="98" rx="3" />
+        <path d="M58 96h204" />
+      </g>
+      <path className={styles.artifactPaint} d="M74 92c26-30 48 6 74-18 21-19 40 4 60-14" />
+      <path className={styles.artifactPaint} d="M92 70c14-14 27 6 41-6" />
+      <circle className={styles.artifactPaintDrop} cx="126" cy="104" r="5" />
+      <path className={styles.artifactTool} d="M34 122l30-30 9 9-27 33z" />
+      <circle className={styles.artifactCuePaint} cx="126" cy="104" r="16" />
+      <g className={styles.artifactCuePresence}>
+        <circle cx="276" cy="44" r="18" />
+        <path d="M276 34v11l8 5" />
+      </g>
+      <g className={styles.artifactCueLocation}>
+        <path d="M40 38c0-10 8-18 18-18s18 8 18 18c0 14-18 31-18 31S40 52 40 38z" />
+        <circle cx="58" cy="38" r="5" />
+      </g>
+    </svg>
+  );
+}
+
 export function CinematicCaseArtifact({
   artifact,
   cue = artifact.cue,
@@ -92,12 +124,15 @@ export function CinematicCaseArtifact({
         {artifact.kind === 'poster' ? <PosterArtifact /> : null}
         {artifact.kind === 'model' ? <ModelArtifact /> : null}
         {artifact.kind === 'trip' ? <TripArtifact /> : null}
+        {artifact.kind === 'mural' ? <MuralArtifact /> : null}
       </div>
       <figcaption className={styles.artifactCaption}>
-        <span>
-          <strong>{artifact.label}</strong>
-          <small>{artifact.status}</small>
-        </span>
+        {!compact ? (
+          <span className={styles.artifactRotulo}>
+            <strong>{artifact.label}</strong>
+            <small>{artifact.status}</small>
+          </span>
+        ) : null}
         {cue ? (
           <span className={styles.artifactCueCopy} aria-live="polite">
             <strong>{cue.label}</strong>

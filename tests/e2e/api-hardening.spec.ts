@@ -40,7 +40,13 @@ test('replaces a corrupt CREAR navigation state instead of coercing it', async (
 
   const response = await page.goto('/crear');
   expect(response?.status()).toBe(200);
-  await expect(page.getByRole('heading', { name: '¿Qué fue lo que pasó?' })).toBeVisible();
+  // A corrupt state must land on the arrival scene, not on a coerced step.
+  // Anchored to the authored arrival headline so a copy bump fails loudly here
+  // instead of letting the state-recovery assertion below go unverified.
+  await expect(page.getByRole('heading', {
+    name: 'El cartel cambió antes de la feria.',
+    exact: true,
+  })).toBeVisible();
 
   const storedStepIndex = await page.evaluate(() => {
     const raw = localStorage.getItem('celesta:crear:study:CREAR-ENGLISH-DEDUCTION-V1');

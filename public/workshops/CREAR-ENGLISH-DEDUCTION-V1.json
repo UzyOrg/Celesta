@@ -1,9 +1,9 @@
 {
   "id_taller": "CREAR-ENGLISH-DEDUCTION-V1",
-  "version": "1.11.0",
+  "version": "1.17.0",
   "schema_version": "0.1",
-  "content_version": "2026-08-03-baseline-clarity",
-  "audio_asset_version": "2026-08-03-baseline-clarity",
+  "content_version": "2026-08-07-medicion-separada",
+  "audio_asset_version": "2026-08-07-medicion-separada",
   "titulo": "La maqueta de la feria",
   "metadata": {
     "grado": "Prepa",
@@ -75,6 +75,7 @@
           "body": "Aquí no se califica nada: es tu lectura antes de ver la explicación."
         },
         "input": "choice",
+        "guideAvailable": false,
         "learningOpportunity": {
           "id": "baseline-certainty-calibration",
           "constructs": ["certainty_calibration"],
@@ -84,7 +85,7 @@
         },
         "precheck": {
           "options": [
-            { "id": "casi_seguro", "label": "Es seguro" },
+            { "id": "casi_seguro", "label": "Casi seguro" },
             { "id": "posible", "label": "Podría ser" },
             { "id": "imposible", "label": "No puede ser" }
           ],
@@ -92,30 +93,90 @@
             {
               "id": "sofia",
               "clue": "Sofía tenía pintura azul fresca en las manos. El cartel tenía la misma pintura.",
-              "prompt": "¿Sofía fue culpable?",
-              "correctCategory": "casi_seguro"
+              "prompt": "Sobre Sofía, dirías que…",
+              "correctCategory": "casi_seguro",
+              "cueFrame": "physical_trace"
             },
             {
-              "id": "mateo",
-              "clue": "Mateo se quedó en el salón durante el recreo. Nadie vio en qué trabajó.",
-              "prompt": "Sobre Mateo, dirías que…",
-              "correctCategory": "posible"
+              "id": "tadeo",
+              "clue": "Tadeo se quedó en la biblioteca a la hora de la salida. Nadie vio qué estaba haciendo.",
+              "prompt": "Sobre Tadeo, dirías que…",
+              "correctCategory": "posible",
+              "cueFrame": "presence_unobserved"
             },
             {
               "id": "renata",
               "clue": "Renata estaba en otro plantel cuando cambiaron el cartel.",
               "prompt": "Sobre Renata, dirías que…",
-              "correctCategory": "imposible"
+              "correctCategory": "imposible",
+              "cueFrame": "absence_elsewhere"
             }
           ],
           "completeLabel": "Ver la comparación"
         },
         "revealFeedback": false,
-        "nextRefId": "contrast"
+        "nextRefId": "precheck-production"
       }
     },
     {
       "paso_numero": 3,
+      "ref_id": "precheck-production",
+      "tipo_paso": "pregunta_abierta_validada",
+      "titulo_paso": "Intento inicial en inglés",
+      "pregunta_abierta_validada": {
+        "pregunta": "¿Podrías escribir en inglés qué tan seguro es que Camila haya sido quien lo borró?",
+        "placeholder": "Camila … the board.",
+        "validacion": {
+          "tipo": "palabras_clave",
+          "criterio": [],
+          "feedback_correcto": "",
+          "feedback_incorrecto": ""
+        }
+      },
+      "bloquea_avance_si_falla": false,
+      "puntaje": 0,
+      "crear": {
+        "fase": "pre_check",
+        "stage": "descubre",
+        "scene": "precheck",
+        "display": {
+          "eyebrow": "",
+          "headline": "Antes de empezar, un intento.",
+          "body": "Camila llegó con gis en las manos y el pizarrón estaba borrado."
+        },
+        "input": "text",
+        "minChars": 0,
+        "allowRetry": false,
+        "revealFeedback": false,
+        "guideAvailable": false,
+        "baselineProduction": {
+          "gatePrompt": "¿Podrías escribir en inglés qué tan seguro es que Camila haya sido quien lo borró?",
+          "gateYesLabel": "Sí",
+          "gateNoLabel": "Todavía no",
+          "attemptPrompt": "Inténtalo como puedas.",
+          "attemptPromptNo": "Inténtalo como puedas. Esto no se califica.",
+          "emptySubmitLabel": "Continuar sin escribir",
+          "submitLabel": "Guardar y continuar",
+          "blockedHint": "Si no te sale, elige “Todavía no”. También es una respuesta."
+        },
+        "productionTarget": {
+          "category": "casi_seguro",
+          "subject": ["camila", "she", "he", "they"],
+          "participles": ["erased", "cleaned", "wiped", "rubbed", "removed", "deleted"]
+        },
+        "learningOpportunity": {
+          "id": "baseline-modal-form",
+          "constructs": ["modal_form"],
+          "condition": "independent",
+          "novelty": "same_case",
+          "timing": "immediate",
+          "cueFrame": "physical_trace"
+        },
+        "nextRefId": "contrast"
+      }
+    },
+    {
+      "paso_numero": 4,
       "ref_id": "contrast",
       "tipo_paso": "opcion_multiple",
       "titulo_paso": "Compara las frases",
@@ -123,7 +184,7 @@
         "pregunta": "¿Qué comunica la frase B?",
         "opciones": [
           { "id": "fact", "texto": "Valeria pintó el póster." },
-          { "id": "inference", "texto": "Es seguro que Valeria pintó el póster." },
+          { "id": "inference", "texto": "Es casi seguro que Valeria pintó el póster." },
           { "id": "obligation", "texto": "Valeria debe pintar el póster." }
         ],
         "respuesta_correcta": "inference",
@@ -154,12 +215,14 @@
           "label": "Escuchar las frases"
         },
         "input": "choice",
+        "guideAvailable": false,
         "learningOpportunity": {
           "id": "notice-fact-versus-inference",
           "constructs": ["evidence_comprehension"],
           "condition": "supported",
           "novelty": "same_case",
-          "timing": "immediate"
+          "timing": "immediate",
+          "evidentiary": false
         },
         "allowRetry": true,
         "maxAttempts": 2,
@@ -167,7 +230,7 @@
       }
     },
     {
-      "paso_numero": 4,
+      "paso_numero": 5,
       "ref_id": "prism",
       "tipo_paso": "instruccion",
       "titulo_paso": "Tres niveles de certeza",
@@ -182,7 +245,7 @@
         "scene": "prism",
         "display": {
           "eyebrow": "",
-          "headline": "Depende de qué tan seguro estás.",
+          "headline": "La forma cambia según la fuerza de la evidencia.",
           "body": ""
         },
         "concepts": [
@@ -219,12 +282,12 @@
           },
           {
             "value": "might have",
-            "label": "qué tan seguro estás",
+            "label": "fuerza de la evidencia + have",
             "lang": "en-US"
           },
           {
             "value": "moved it",
-            "label": "acción pasada",
+            "label": "acción en participio",
             "lang": "en-US"
           }
         ],
@@ -238,7 +301,7 @@
       }
     },
     {
-      "paso_numero": 5,
+      "paso_numero": 6,
       "ref_id": "guided-map",
       "tipo_paso": "instruccion",
       "titulo_paso": "Completa las deducciones",
@@ -269,7 +332,7 @@
           "artifact": {
             "kind": "poster",
             "label": "Cartel de la feria",
-            "status": "Tres pistas sobre la misma entrega."
+            "status": "Primer caso: quién trabajó en el cartel."
           },
           "categories": [
             {
@@ -301,6 +364,7 @@
               "sentenceStart": "Valeria",
               "sentenceEnd": "painted the poster.",
               "correctCategory": "casi_seguro",
+              "cueFrame": "physical_trace",
               "feedbackIncorrecto": "Una compañera vio a Valeria pintarlo: la evidencia hace que sea casi seguro."
             },
             {
@@ -315,6 +379,7 @@
               "sentenceStart": "Mateo",
               "sentenceEnd": "helped with the poster.",
               "correctCategory": "posible",
+              "cueFrame": "presence_unobserved",
               "feedbackIncorrecto": "Estar ahí lo hace posible, pero nadie vio qué hizo: no puedes asegurarlo."
             },
             {
@@ -329,6 +394,7 @@
               "sentenceStart": "Iker",
               "sentenceEnd": "helped with the poster.",
               "correctCategory": "imposible",
+              "cueFrame": "absence_elsewhere",
               "feedbackIncorrecto": "El partido lo coloca fuera de la escuela: esta acción queda descartada."
             }
           ],
@@ -340,7 +406,7 @@
       }
     },
     {
-      "paso_numero": 6,
+      "paso_numero": 7,
       "ref_id": "transfer-bridge",
       "tipo_paso": "instruccion",
       "titulo_paso": "Puente hacia la transferencia",
@@ -355,8 +421,8 @@
         "scene": "transfer-bridge",
         "display": {
           "eyebrow": "",
-          "headline": "Primera parte completada.",
-          "body": "Ya resolviste tres deducciones con ayuda. Ahora pondrás la misma idea a prueba en un caso nuevo."
+          "headline": "Cambia el caso, no la idea.",
+          "body": "Ya resolviste el cartel con ayuda. Ahora la maqueta de la feria, con menos apoyo."
         },
         "audio": {
           "src": "/audio/crear/english-deduction/transfer.mp3",
@@ -370,7 +436,7 @@
       }
     },
     {
-      "paso_numero": 7,
+      "paso_numero": 8,
       "ref_id": "transfer",
       "tipo_paso": "transferencia",
       "titulo_paso": "La maqueta de la feria",
@@ -399,14 +465,15 @@
           "constructs": ["certainty_calibration"],
           "condition": "supported",
           "novelty": "new_case",
-          "timing": "immediate"
+          "timing": "immediate",
+          "cueFrame": "physical_trace"
         },
         "certaintyMap": {
           "instruction": "Toca una expresión o arrástrala al espacio.",
           "artifact": {
             "kind": "model",
             "label": "Maqueta de la feria",
-            "status": "Una pista sobre el proyecto."
+            "status": "Segundo caso: quién trabajó en la maqueta."
           },
           "categories": [
             {
@@ -438,6 +505,7 @@
               "sentenceStart": "Elena",
               "sentenceEnd": "worked on the model.",
               "correctCategory": "casi_seguro",
+              "cueFrame": "physical_trace",
               "feedbackIncorrecto": "El mismo pegamento conecta directamente a Elena con la maqueta: la evidencia es fuerte."
             }
           ],
@@ -449,12 +517,12 @@
       }
     },
     {
-      "paso_numero": 8,
+      "paso_numero": 9,
       "ref_id": "transfer-check-certainty",
       "tipo_paso": "opcion_multiple",
       "titulo_paso": "Decide la certeza",
       "opcion_multiple": {
-        "pregunta": "Con esta pista, ¿qué tan segura puede ser tu conclusión?",
+        "pregunta": "¿Qué tan seguro es que Nora haya sido quien trabajó en la maqueta?",
         "opciones": [
           { "id": "casi_seguro", "texto": "Es casi seguro" },
           { "id": "posible", "texto": "Es posible" },
@@ -472,26 +540,28 @@
         "scene": "transfer",
         "display": {
           "eyebrow": "",
-          "headline": "Primero, decide la certeza.",
-          "body": "Nora estuvo en el salón durante el recreo. Nadie vio en qué trabajó."
+          "headline": "¿Qué tan seguro es?",
+          "body": "Nora stayed in the classroom during recess. Nobody saw what she was doing."
         },
         "caseArtifact": {
           "kind": "model",
           "label": "Maqueta de la feria",
-          "status": "Una pista nueva sobre Nora.",
+          "status": "Segundo caso: quién trabajó en la maqueta.",
           "cue": {
             "kind": "presence",
             "label": "Estuvo en el salón",
-            "detail": "Nadie vio en qué trabajó."
+            "detail": "Nora se quedó en el salón durante el recreo. Nadie vio qué estaba haciendo."
           }
         },
         "input": "choice",
+        "guideAvailable": false,
         "learningOpportunity": {
           "id": "independent-transfer-certainty",
           "constructs": ["certainty_calibration"],
           "condition": "independent",
           "novelty": "new_case",
-          "timing": "immediate"
+          "timing": "immediate",
+          "cueFrame": "presence_unobserved"
         },
         "revealFeedback": false,
         "allowRetry": false,
@@ -499,12 +569,12 @@
       }
     },
     {
-      "paso_numero": 9,
+      "paso_numero": 10,
       "ref_id": "transfer-production",
       "tipo_paso": "pregunta_abierta_validada",
       "titulo_paso": "Expresa la deducción",
       "pregunta_abierta_validada": {
-        "pregunta": "Escribe en inglés tu deducción sobre Nora y la maqueta.",
+        "pregunta": "Escríbelo como hemos practicado",
         "placeholder": "Nora … the model.",
         "validacion": {
           "tipo": "palabras_clave",
@@ -522,28 +592,35 @@
         "display": {
           "eyebrow": "",
           "headline": "Ahora dilo en inglés.",
-          "body": "Nora estuvo en el salón durante el recreo. Nadie vio en qué trabajó."
+          "body": "Es … que Nora haya trabajado en la maqueta."
         },
         "caseArtifact": {
           "kind": "model",
           "label": "Maqueta de la feria",
-          "status": "La pista sobre Nora sigue disponible.",
+          "status": "Segundo caso: quién trabajó en la maqueta.",
           "cue": {
             "kind": "presence",
             "label": "Estuvo en el salón",
-            "detail": "Nadie vio en qué trabajó."
+            "detail": "Nora se quedó en el salón durante el recreo. Nadie vio qué estaba haciendo."
           }
         },
         "input": "text",
         "actionLabel": "Guardar mi frase",
         "minChars": 14,
         "allowRetry": false,
+        "guideAvailable": false,
         "learningOpportunity": {
           "id": "independent-transfer-form",
           "constructs": ["modal_form"],
           "condition": "independent",
           "novelty": "new_case",
-          "timing": "immediate"
+          "timing": "immediate",
+          "cueFrame": "presence_unobserved"
+        },
+        "productionTarget": {
+          "category": "posible",
+          "subject": ["nora", "she", "he", "they"],
+          "participles": ["worked", "helped", "built", "painted", "made", "changed", "fixed", "finished", "designed", "glued"]
         },
         "classifier": {
           "fallbackRama": "no_claro",
@@ -559,11 +636,11 @@
               ],
               "match": {
                 "allGroups": [
-                  ["nora", "she", "he", "they"],
+                  ["nora", "she", "he", "they", "ella"],
                   ["might have", "may have", "could have"],
                   ["worked", "helped", "built", "painted", "made", "changed", "fixed", "finished", "designed", "glued"]
                 ],
-                "none": ["nora must have", "nora can't have", "nora cannot have"]
+                "none": ["must", "can't", "cannot", "couldn't", "could not"]
               },
               "correcto": true,
               "score": 2,
@@ -574,10 +651,19 @@
             },
             {
               "rama": "misconcepcion_certeza",
-              "descripcion": "Turns the open possibility into certainty or impossibility.",
-              "ejemplos": ["Nora must have worked on it", "Nora can't have helped"],
+              "descripcion": "Turns the open possibility into certainty or impossibility, however the modal is spelled and whether the subject is the name or a pronoun.",
+              "ejemplos": [
+                "Nora must have worked on it",
+                "Nora must to have worked on it",
+                "Nora must had worked on it",
+                "She must have worked on the model",
+                "Nora can't have helped"
+              ],
               "match": {
-                "any": ["nora must have", "nora can't have", "nora cannot have"]
+                "allGroups": [
+                  ["nora", "she", "he", "they", "ella"],
+                  ["must", "can't", "cannot", "couldn't", "could not"]
+                ]
               },
               "correcto": false,
               "score": 0.5,
@@ -588,16 +674,81 @@
             },
             {
               "rama": "misconcepcion_forma",
-              "descripcion": "The intended possibility is visible, but modal plus have plus participle is malformed.",
-              "ejemplos": ["Nora might changed it", "Nora could has edited it"],
+              "descripcion": "The intended possibility is visible, but the auxiliary after the modal is wrong.",
+              "ejemplos": ["Nora might changed it", "Nora could has edited it", "She might has helped"],
               "match": {
-                "any": ["nora might changed", "nora may changed", "nora could changed", "nora might has", "nora could has"]
+                "allGroups": [
+                  ["nora", "she", "he", "they", "ella"],
+                  ["might changed", "may changed", "could changed", "might has", "may has", "could has", "might had", "may had", "could had"]
+                ]
               },
               "correcto": false,
               "score": 0.5,
               "feedback": {
                 "title": "La certeza está; falta ajustar la forma",
                 "body": "Después de might, may o could, usa have y una acción en participio."
+              }
+            },
+            {
+              "rama": "misconcepcion_forma_general",
+              "descripcion": "Possibility modal is present but modal + have + past participle is malformed.",
+              "prioridad": 70,
+              "ejemplos": [
+                "Nora might have work on the model",
+                "Nora might of worked on the model",
+                "Nora might worked on the model",
+                "Nora could has helped"
+              ],
+              "match": {
+                "allGroups": [
+                  ["nora", "she", "he", "they", "ella"],
+                  ["might", "may", "could"]
+                ],
+                "none": ["maybe"]
+              },
+              "correcto": false,
+              "score": 1,
+              "feedback": {
+                "title": "La certeza está bien; falta ajustar la forma",
+                "body": "Después de might, may o could va have y luego la acción en participio: Nora might have worked on the model."
+              }
+            },
+            {
+              "rama": "significado_sin_forma",
+              "descripcion": "Communicatively valid possibility, in English or Spanish, without the target structure.",
+              "prioridad": 60,
+              "ejemplos": [
+                "Maybe Nora worked on the model",
+                "Perhaps Nora helped with it",
+                "I think Nora worked on the model",
+                "Tal vez Nora trabajó en la maqueta"
+              ],
+              "match": {
+                "allGroups": [
+                  ["nora", "she", "he", "they", "ella"],
+                  [
+                    "maybe",
+                    "perhaps",
+                    "possibly",
+                    "probably",
+                    "i think",
+                    "it is possible",
+                    "it's possible",
+                    "tal vez",
+                    "quizá",
+                    "quizás",
+                    "pudo haber",
+                    "podría haber",
+                    "creo que",
+                    "es posible"
+                  ]
+                ]
+              },
+              "correcto": false,
+              "score": 1,
+              "feedback": {
+                "title": "Tu deducción expresa bien la posibilidad",
+                "body": "La idea está clara. Para practicar la estructura de esta lección puedes decir: Nora might have worked on the model."
               }
             },
             {
@@ -617,7 +768,7 @@
       }
     },
     {
-      "paso_numero": 10,
+      "paso_numero": 11,
       "ref_id": "close",
       "tipo_paso": "instruccion",
       "titulo_paso": "Cierre",
@@ -633,7 +784,7 @@
         "display": {
           "eyebrow": "",
           "headline": "Terminaste por hoy.",
-          "body": "Guardamos tu frase. En siete días verás una pista nueva para descubrir qué recuerdas."
+          "body": "Vuelves en siete días."
         },
         "audio": {
           "src": "/audio/crear/english-deduction/close.mp3",
@@ -646,20 +797,20 @@
       }
     },
     {
-      "paso_numero": 11,
+      "paso_numero": 12,
       "ref_id": "retest-certainty",
       "tipo_paso": "opcion_multiple",
       "titulo_paso": "Revisión de certeza",
       "opcion_multiple": {
-        "pregunta": "Con esta pista, ¿qué tan segura puede ser tu conclusión?",
+        "pregunta": "¿Qué tan seguro es que Emi haya sido quien pintó el mural?",
         "opciones": [
           { "id": "casi_seguro", "texto": "Es casi seguro" },
           { "id": "posible", "texto": "Es posible" },
           { "id": "imposible", "texto": "Queda descartado" }
         ],
-        "respuesta_correcta": "imposible",
-        "feedback_correcto": "La excursión permite descartar que Emi moviera el cartel.",
-        "feedback_incorrecto": "Emi estaba fuera cuando alguien movió el cartel."
+        "respuesta_correcta": "posible",
+        "feedback_correcto": "La pista deja una posibilidad abierta.",
+        "feedback_incorrecto": "Estar en el taller no demuestra qué hizo Emi."
       },
       "bloquea_avance_si_falla": false,
       "puntaje": 1,
@@ -670,25 +821,27 @@
         "display": {
           "eyebrow": "",
           "headline": "Una semana después.",
-          "body": "Emi estaba en una excursión cuando alguien movió el cartel del salón."
+          "body": "Emi stayed in the art workshop after school. Nobody saw what she was working on."
         },
         "caseArtifact": {
-          "kind": "trip",
-          "label": "Excursión escolar",
-          "status": "Emi estaba lejos de la escuela.",
+          "kind": "mural",
+          "label": "Mural de la entrada",
+          "status": "Tercer caso: quién pintó el mural.",
           "cue": {
-            "kind": "trip",
-            "label": "Fuera de la escuela",
-            "detail": "El cartel se movió durante la excursión."
+            "kind": "presence",
+            "label": "Estuvo en el taller",
+            "detail": "Emi se quedó en el taller de arte después de clases. Nadie vio en qué estaba trabajando."
           }
         },
         "input": "choice",
+        "guideAvailable": false,
         "learningOpportunity": {
           "id": "delayed-independent-certainty",
           "constructs": ["certainty_calibration"],
           "condition": "independent",
           "novelty": "new_case",
-          "timing": "delayed"
+          "timing": "delayed",
+          "cueFrame": "presence_unobserved"
         },
         "revealFeedback": false,
         "allowRetry": false,
@@ -697,18 +850,18 @@
       }
     },
     {
-      "paso_numero": 12,
+      "paso_numero": 13,
       "ref_id": "retest-production",
       "tipo_paso": "pregunta_abierta_validada",
       "titulo_paso": "Revisión de forma",
       "pregunta_abierta_validada": {
-        "pregunta": "Escribe en inglés tu deducción sobre Emi y el cartel.",
-        "placeholder": "Emi … the poster.",
+        "pregunta": "Escríbelo como hemos practicado",
+        "placeholder": "Emi … the mural.",
         "validacion": {
           "tipo": "palabras_clave",
-          "criterio": ["emi", "can't have"],
-          "feedback_correcto": "Usaste una pista para descartar una acción una semana después.",
-          "feedback_incorrecto": "La excursión permite descartar que Emi moviera el cartel."
+          "criterio": ["emi", "might have"],
+          "feedback_correcto": "Conservaste la posibilidad una semana después.",
+          "feedback_incorrecto": "La frase debe mostrar la misma certeza que elegiste."
         }
       },
       "bloquea_avance_si_falla": false,
@@ -720,28 +873,35 @@
         "display": {
           "eyebrow": "",
           "headline": "Ahora dilo en inglés.",
-          "body": "Emi estaba de excursión cuando alguien movió el cartel del salón."
+          "body": "Es … que Emi haya pintado el mural."
         },
         "caseArtifact": {
-          "kind": "trip",
-          "label": "Excursión escolar",
-          "status": "La pista sobre Emi sigue disponible.",
+          "kind": "mural",
+          "label": "Mural de la entrada",
+          "status": "Tercer caso: quién pintó el mural.",
           "cue": {
-            "kind": "trip",
-            "label": "Fuera de la escuela",
-            "detail": "El cartel se movió durante la excursión."
+            "kind": "presence",
+            "label": "Estuvo en el taller",
+            "detail": "Emi se quedó en el taller de arte después de clases. Nadie vio en qué estaba trabajando."
           }
         },
         "input": "text",
         "actionLabel": "Terminar revisión",
         "minChars": 14,
         "allowRetry": false,
+        "guideAvailable": false,
         "learningOpportunity": {
           "id": "delayed-independent-form",
           "constructs": ["modal_form"],
           "condition": "independent",
           "novelty": "new_case",
-          "timing": "delayed"
+          "timing": "delayed",
+          "cueFrame": "presence_unobserved"
+        },
+        "productionTarget": {
+          "category": "posible",
+          "subject": ["emi", "she", "he", "they"],
+          "participles": ["painted", "worked", "helped", "made", "finished", "designed", "drawn", "started"]
         },
         "classifier": {
           "fallbackRama": "no_claro",
@@ -749,55 +909,130 @@
           "ramas": [
             {
               "rama": "correcto",
-              "descripcion": "Uses an impossibility past modal and attributes the excluded action to Emi.",
+              "descripcion": "Uses a possibility modal and a plausible past action about Emi.",
               "ejemplos": [
-                "Emi can't have moved the poster.",
-                "Emi cannot have changed the classroom display.",
-                "Emi couldn't have taken down the poster."
+                "Emi might have painted the mural.",
+                "Emi may have helped with the mural.",
+                "Emi could have worked on it."
               ],
               "match": {
                 "allGroups": [
-                  ["emi", "she", "he", "they"],
-                  ["can't have", "cannot have", "couldn't have", "could not have"],
-                  ["moved", "changed", "taken", "removed", "touched", "worked", "helped"]
+                  ["emi", "she", "he", "they", "ella"],
+                  ["might have", "may have", "could have"],
+                  ["painted", "worked", "helped", "made", "finished", "designed", "drawn", "started"]
                 ],
-                "none": ["emi must have", "emi might have", "emi may have"]
+                "none": ["must", "can't", "cannot", "couldn't", "could not"]
               },
               "correcto": true,
               "score": 2,
               "feedback": {
                 "title": "La idea sigue contigo",
-                "body": "Usaste una pista nueva para descartar una acción una semana después.",
+                "body": "Una semana después conservaste la posibilidad en vez de convertirla en certeza.",
                 "actionLabel": "Terminar"
               }
             },
             {
               "rama": "misconcepcion_certeza",
-              "descripcion": "Uses certainty or possibility despite evidence that rules Emi out.",
-              "ejemplos": ["Emi must have pushed it", "Emi might have changed it"],
+              "descripcion": "Turns the open possibility into certainty or impossibility, however the modal is spelled and whether the subject is the name or a pronoun.",
+              "ejemplos": [
+                "Emi must have painted it",
+                "Emi must to have painted it",
+                "She must have painted the mural",
+                "Emi can't have painted it"
+              ],
               "match": {
-                "any": ["emi must have", "emi might have", "emi may have", "emi could have"]
+                "allGroups": [
+                  ["emi", "she", "he", "they", "ella"],
+                  ["must", "can't", "cannot", "couldn't", "could not"]
+                ]
               },
               "correcto": false,
               "score": 0.5,
               "feedback": {
-                "title": "La pista permite descartar",
-                "body": "Emi estaba fuera de la escuela. La frase debe mostrar que esa acción no pudo ocurrir.",
+                "title": "La forma cambió tu certeza",
+                "body": "La pista deja abierta una posibilidad; no permite asegurarla ni descartarla.",
                 "actionLabel": "Terminar"
               }
             },
             {
               "rama": "misconcepcion_forma",
-              "descripcion": "The intended impossibility is visible, but the past modal construction is malformed.",
-              "ejemplos": ["Emi can't pushed it", "Emi cannot has changed it"],
+              "descripcion": "The intended possibility is visible, but the auxiliary after the modal is wrong.",
+              "ejemplos": ["Emi might painted it", "Emi could has helped", "She might has painted it"],
               "match": {
-                "any": ["emi can't pushed", "emi cannot changed", "emi cannot has", "emi couldn't pushed"]
+                "allGroups": [
+                  ["emi", "she", "he", "they", "ella"],
+                  ["might painted", "may painted", "could painted", "might has", "may has", "could has", "might had", "may had", "could had"]
+                ]
               },
               "correcto": false,
               "score": 0.5,
               "feedback": {
-                "title": "Recordaste que queda descartado",
-                "body": "La forma completa es can't have y después la acción en pasado.",
+                "title": "La certeza está; falta ajustar la forma",
+                "body": "Después de might, may o could, usa have y una acción en participio.",
+                "actionLabel": "Terminar"
+              }
+            },
+            {
+              "rama": "misconcepcion_forma_general",
+              "descripcion": "Possibility modal is present but modal + have + past participle is malformed.",
+              "prioridad": 70,
+              "ejemplos": [
+                "Emi might have paint the mural",
+                "Emi might of painted it",
+                "Emi might painted the mural",
+                "Emi could has helped"
+              ],
+              "match": {
+                "allGroups": [
+                  ["emi", "she", "he", "they", "ella"],
+                  ["might", "may", "could"]
+                ],
+                "none": ["maybe"]
+              },
+              "correcto": false,
+              "score": 1,
+              "feedback": {
+                "title": "La certeza está bien; falta ajustar la forma",
+                "body": "Después de might, may o could va have y luego la acción en participio: Emi might have painted the mural.",
+                "actionLabel": "Terminar"
+              }
+            },
+            {
+              "rama": "significado_sin_forma",
+              "descripcion": "Communicatively valid possibility, in English or Spanish, without the target structure.",
+              "prioridad": 60,
+              "ejemplos": [
+                "Maybe Emi painted the mural",
+                "Perhaps Emi helped with it",
+                "I think Emi painted it",
+                "Tal vez Emi pintó el mural"
+              ],
+              "match": {
+                "allGroups": [
+                  ["emi", "she", "he", "they", "ella"],
+                  [
+                    "maybe",
+                    "perhaps",
+                    "possibly",
+                    "probably",
+                    "i think",
+                    "it is possible",
+                    "it's possible",
+                    "tal vez",
+                    "quizá",
+                    "quizás",
+                    "pudo haber",
+                    "podría haber",
+                    "creo que",
+                    "es posible"
+                  ]
+                ]
+              },
+              "correcto": false,
+              "score": 1,
+              "feedback": {
+                "title": "Tu deducción expresa bien la posibilidad",
+                "body": "La idea está clara. Para practicar la estructura de esta lección puedes decir: Emi might have painted the mural.",
                 "actionLabel": "Terminar"
               }
             },

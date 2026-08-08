@@ -9,14 +9,14 @@ import {
   type CrearResponsePart,
   type CrearResponsePartAnswer,
 } from '@/lib/crear/types';
-import type { ChoiceOption } from '../AnswerComposer';
+import type { CrearChoiceOption } from '@/lib/crear/stepHelpers';
 import styles from './CinematicEnglishPlayer.hallmark.module.css';
 
 interface CinematicAnswerProps {
   mode: CrearInputMode;
   prompt: string;
   placeholder?: string;
-  choices?: ChoiceOption[];
+  choices?: CrearChoiceOption[];
   pending: boolean;
   minChars?: number;
   responseParts?: CrearResponsePart[];

@@ -23,6 +23,8 @@ import {
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 
 export const runtime = 'nodejs';
+/** The model call aborts at 4.5s; this is the ceiling for the whole request. */
+export const maxDuration = 10;
 
 const CrearLessonIdSchema = z.enum(
   [...ALL_CREAR_LESSON_IDS] as [CrearLessonId, ...CrearLessonId[]]
@@ -50,6 +52,28 @@ const ModelResponseSchema = z.object({
 interface LocalClassification {
   rama: string;
   confianza: number;
+}
+
+/**
+ * Above this, a local branch that matched an authored structural rule is
+ * treated as deterministic evidence rather than a guess.
+ */
+const LOCAL_STRUCTURAL_CONFIDENCE = 0.8;
+
+function isStructuralLocalMatch(
+  local: LocalClassification,
+  classifier: { ramas: CrearClassifierBranch[]; fallbackRama: string }
+): boolean {
+  if (local.rama === classifier.fallbackRama) return false;
+  if (local.confianza < LOCAL_STRUCTURAL_CONFIDENCE) return false;
+  const branch = classifier.ramas.find((candidate) => candidate.rama === local.rama);
+  const match = branch?.match;
+  return Boolean(
+    match &&
+    ((match.all?.length ?? 0) > 0 ||
+      (match.allGroups?.length ?? 0) > 0 ||
+      (match.any?.length ?? 0) > 0)
+  );
 }
 
 interface OpenAIChatChoice {
@@ -187,31 +211,66 @@ export async function POST(req: Request) {
 
     const structureResult = classifyCrearResponseStructure(body.partes, classifier);
     if (structureResult) {
-      return NextResponse.json(structureResult);
+      return NextResponse.json({
+        ...structureResult,
+        source: 'local',
+        localRama: structureResult.rama,
+        localConfianza: structureResult.confianza,
+      } satisfies ClassifyResponse);
     }
 
     const local = classifyCrearLocally(body.texto, classifier, body.partes);
-    let classification = local;
+    let model: LocalClassification | null = null;
 
     try {
-      const modelClassification = await classifyWithModel(
-        body.texto,
-        classifier.ramas,
-        body.partes
-      );
-      if (modelClassification) {
-        classification = modelClassification;
-      }
+      model = await classifyWithModel(body.texto, classifier.ramas, body.partes);
     } catch (error) {
       console.error('[api/classify] model_error', (error as Error).message);
     }
 
-    const response = sanitizeClassification(
-      classification,
-      classifier.ramas,
-      classifier.fallbackRama,
-      classifier.minConfianza
+    /**
+     * The model no longer overwrites local silently. A deterministic rule that
+     * already matched the authored structure outranks a model answer that
+     * disagrees with it, and the disagreement itself is recorded: where the
+     * regex and the model diverge is where the learner wrote something the
+     * author did not anticipate.
+     */
+    const agreed = model ? model.rama === local.rama : undefined;
+    const preferLocal = Boolean(
+      model && !agreed && isStructuralLocalMatch(local, classifier)
     );
+    const chosen = model && !preferLocal ? model : local;
+    const source: 'model' | 'local' = model && !preferLocal ? 'model' : 'local';
+
+    if (model && !agreed) {
+      console.info(
+        '[api/classify] disagreement',
+        JSON.stringify({
+          pasoRefId: body.pasoRefId,
+          localRama: local.rama,
+          localConfianza: local.confianza,
+          modelRama: model.rama,
+          modelConfianza: model.confianza,
+          source,
+          needsHumanReview: true,
+        })
+      );
+    }
+
+    const response: ClassifyResponse = {
+      ...sanitizeClassification(
+        chosen,
+        classifier.ramas,
+        classifier.fallbackRama,
+        classifier.minConfianza
+      ),
+      source,
+      localRama: local.rama,
+      localConfianza: local.confianza,
+      ...(model
+        ? { modelRama: model.rama, modelConfianza: model.confianza, agreed }
+        : {}),
+    };
 
     return NextResponse.json(response);
   } catch (error) {

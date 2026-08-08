@@ -23,7 +23,10 @@ import {
 } from '@/lib/workshopState';
 import { loadCrearLesson } from '@/lib/crear/loadLesson';
 import { classifyCrearLocally } from '@/lib/crear/localClassifier';
+import { aggregateCrearConstructStates } from '@/lib/crear/constructState';
 import { buildCrearLearningObservations } from '@/lib/crear/learningEvidence';
+import { readModalForm, type CrearModalFormReading } from '@/lib/crear/modalForm';
+import { seededShuffle } from '@/lib/crear/shuffle';
 import {
   findBranch,
   getChoices,
@@ -50,9 +53,12 @@ import {
 } from '@/lib/crear/telemetry';
 import type {
   ClassifyResponse,
+  CrearBaselineGate,
   CrearClassifierBranch,
+  CrearClassifierSource,
   CrearCertaintyMapAttempt,
   CrearCertaintyMapSubmission,
+  CrearCueFrame,
   CrearExperienceStage,
   CrearPaso,
   CrearPrecheckAttempt,
@@ -62,6 +68,7 @@ import type {
 } from '@/lib/crear/types';
 import { DEFAULT_CREAR_LESSON_ID } from '@/lib/crear/types';
 import { CinematicAnswer } from './CinematicAnswer';
+import { CinematicBaselineProduction } from './CinematicBaselineProduction';
 import { CinematicCaseArtifact } from './CinematicCaseArtifact';
 import {
   CinematicCertaintyMap,
@@ -93,6 +100,27 @@ interface NavigatorWithConnection extends Navigator {
 
 function isRetestStage(stage: CrearExperienceStage | undefined): boolean {
   return stage === 'recuerda';
+}
+
+const CERTAINTY_SCALE_IDS: readonly CrearResponseCategory[] = [
+  'casi_seguro',
+  'posible',
+  'imposible',
+];
+
+/**
+ * A step whose three options *are* the certainty scale. Those keep their
+ * authored order — casi seguro, es posible, queda descartado is a scale, and
+ * scrambling a scale taxes reading for no measurement gain. Everything else
+ * (the contrast question, whose options are unrelated readings) is rotated per
+ * learner so no answer can be found by position.
+ */
+function isCertaintyScaleStep(step: CrearPaso): boolean {
+  const ids = getChoices(step).map((choice) => choice.id);
+  return (
+    ids.length === CERTAINTY_SCALE_IDS.length &&
+    CERTAINTY_SCALE_IDS.every((id) => ids.includes(id))
+  );
 }
 
 function buildBranchFeedback(
@@ -154,9 +182,17 @@ function buildChoiceFeedback(
   };
 }
 
+/**
+ * The override exists so a walkthrough can reach the retest without waiting
+ * seven days. It must stay fail-closed: `Number('')` is `0`, so an env var
+ * defined-but-empty in a deploy would silently collapse the D7 gate to zero
+ * and make every retest look durable. Only a non-empty numeric value counts.
+ */
 function effectiveRetestDelayHours(step: CrearPaso): number | null {
   if (typeof step.crear?.retestDelayHours !== 'number') return null;
-  const override = Number(process.env.NEXT_PUBLIC_CREAR_RETEST_DELAY_HOURS);
+  const raw = process.env.NEXT_PUBLIC_CREAR_RETEST_DELAY_HOURS?.trim();
+  if (!raw) return step.crear.retestDelayHours;
+  const override = Number(raw);
   return Number.isFinite(override) && override >= 0 ? override : step.crear.retestDelayHours;
 }
 
@@ -400,8 +436,40 @@ function ConceptPrism({ step }: { step: CrearPaso }) {
 
   if (concepts.length === 0 && formula.length === 0) return null;
 
+  /**
+   * Structure first, then the three forces. The rail segments one sentence into
+   * its labelled parts and its middle slot swaps on every choice, so it teaches
+   * the same rule the deleted paragraph stated — better, and only once. Putting
+   * it last meant the good explanation arrived after the attention was spent.
+   */
   return (
     <div className={styles.prismWrap}>
+      {formula.length > 0 ? (
+        <p
+          className={styles.formulaRail}
+          role="group"
+          aria-label="Partes de una deducción sobre el pasado"
+        >
+          {formula.map((part, index) => (
+            <span
+              className={styles.formulaPart}
+              data-slot={index === 1 ? 'force' : 'fixed'}
+              key={`${part.value}-${part.label}`}
+            >
+              <b lang={part.lang}>
+                {index === 0 && activeExampleParts
+                  ? activeExampleParts.subject
+                  : index === 1 && activeConcept
+                    ? activeConcept.term.toLowerCase()
+                    : index === 2 && activeExampleParts
+                      ? activeExampleParts.action
+                      : part.value}
+              </b>
+              <small>{part.label}</small>
+            </span>
+          ))}
+        </p>
+      ) : null}
       {concepts.length > 0 ? (
         <>
           <div className={styles.prismSelector} aria-label="Tres niveles de seguridad">
@@ -431,29 +499,10 @@ function ConceptPrism({ step }: { step: CrearPaso }) {
                 aria-live="polite"
               >
                 <p className={styles.prismMeaning}>{activeConcept.description}</p>
-                <p className={styles.prismSentence} lang="en-US">“{activeConcept.example}”</p>
               </motion.div>
             ) : null}
           </AnimatePresence>
         </>
-      ) : null}
-      {formula.length > 0 ? (
-        <div className={styles.formulaRail} aria-label="Partes de una deducción sobre el pasado">
-          {formula.map((part, index) => (
-            <span key={`${part.value}-${part.label}`}>
-              <b lang={part.lang}>
-                {index === 0 && activeExampleParts
-                  ? activeExampleParts.subject
-                  : index === 1 && activeConcept
-                    ? activeConcept.term.toLowerCase()
-                    : index === 2 && activeExampleParts
-                      ? activeExampleParts.action
-                      : part.value}
-              </b>
-              <small>{part.label}</small>
-            </span>
-          ))}
-        </div>
       ) : null}
     </div>
   );
@@ -534,7 +583,9 @@ export function CinematicEnglishPlayer() {
   const exitContinueRef = useRef<HTMLButtonElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
   const bootedRef = useRef(false);
+  const completionReportedRef = useRef<string | null>(null);
   const stepInteractiveAtRef = useRef<number | null>(null);
+  const baselineAttemptStartedAtRef = useRef<number | null>(null);
   const [lesson, setLesson] = useState<CrearWorkshop | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -549,6 +600,12 @@ export function CinematicEnglishPlayer() {
   const [inputFocused, setInputFocused] = useState(false);
   const [exitConfirm, setExitConfirm] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
+  /**
+   * Steps whose guide the learner actually opened. `study.assistance` cannot
+   * answer this: it also turns on for a retry or a translation, so using it
+   * per clue marked clue 3 assisted because clue 1 was wrong.
+   */
+  const [guideUsedSteps, setGuideUsedSteps] = useState<Set<string>>(() => new Set());
   const [pageHidden, setPageHidden] = useState(false);
   const [liteMode, setLiteMode] = useState(false);
   const [clockNow, setClockNow] = useState(() => Date.now());
@@ -558,6 +615,13 @@ export function CinematicEnglishPlayer() {
   const currentStep = lesson?.pasos[currentIndex] ?? null;
   const currentStage = currentStep?.crear?.stage ?? 'descubre';
   const currentScene = currentStep?.crear?.scene ?? 'signal';
+  const orderSeed = study?.studyId ?? '';
+  const shownChoices = useMemo(() => {
+    if (!currentStep) return [];
+    const choices = getChoices(currentStep);
+    if (choices.length < 2 || isCertaintyScaleStep(currentStep)) return choices;
+    return seededShuffle(choices, `${orderSeed}:${getStepId(currentStep)}`);
+  }, [currentStep, orderSeed]);
   const guideStep = lesson?.pasos.find((step) => step.crear?.scene === 'prism') ?? null;
   const guideUnlocked = Boolean(
     guideStep && lesson && currentIndex > lesson.pasos.indexOf(guideStep)
@@ -621,17 +685,53 @@ export function CinematicEnglishPlayer() {
       try {
         const loaded = await loadCrearLesson(DEFAULT_CREAR_LESSON_ID);
         const sid = getOrCreateSessionId();
-        const nextStudy = getOrCreateCrearStudyState(
+        let nextStudy = getOrCreateCrearStudyState(
           DEFAULT_CREAR_LESSON_ID,
           loaded.content_version ?? 'dev'
         );
+
+        /**
+         * The day 7 retest is the most valuable measurement in the design and
+         * the most fragile: its due date lives in localStorage, which a shared
+         * or reset device loses. `?retest=1` opens the gate from a link so a
+         * lost browser state cannot cost the cohort a whole learner.
+         */
+        const retestBypass =
+          new URLSearchParams(window.location.search).get('retest') === '1';
+        const retestStepIndex = loaded.pasos.findIndex(
+          (step) => typeof step.crear?.retestDelayHours === 'number'
+        );
+        /**
+         * The bypass only reopens a retest that was actually earned. It writes
+         * `stepIndex` to storage, so firing it on a learner who has not
+         * finished day 1 — a link forwarded in a group chat, a curious tap —
+         * threw away their position and dropped them into a measurement of
+         * something they had never been taught.
+         */
+        const earnedRetest =
+          nextStudy.phase === 'waiting_retest' ||
+          nextStudy.phase === 'completed' ||
+          typeof nextStudy.retestDueAt === 'number';
+        const openRetestGate = retestBypass && retestStepIndex >= 0 && earnedRetest;
+        if (openRetestGate) {
+          const reopened: CrearStudyState = {
+            ...nextStudy,
+            phase: 'initial',
+            stepIndex: retestStepIndex,
+          };
+          delete reopened.retestDueAt;
+          nextStudy = saveCrearStudyState(reopened);
+        }
+
         const saved = loadWorkshopProgress(sid, loaded.id_taller);
         const savedMatchesStudy = Boolean(
           saved && saved.ultima_actualizacion >= nextStudy.startedAt
         );
-        const candidateIndex = savedMatchesStudy
-          ? Math.max(nextStudy.stepIndex, saved?.paso_actual ?? 0)
-          : nextStudy.stepIndex;
+        const candidateIndex = openRetestGate
+          ? retestStepIndex
+          : savedMatchesStudy
+            ? Math.max(nextStudy.stepIndex, saved?.paso_actual ?? 0)
+            : nextStudy.stepIndex;
         const safeIndex = candidateIndex >= 0 && candidateIndex < loaded.pasos.length ? candidateIndex : 0;
         const firstStep = loaded.pasos[safeIndex] ?? loaded.pasos[0];
 
@@ -640,7 +740,8 @@ export function CinematicEnglishPlayer() {
         setStudy(nextStudy);
         setCurrentIndex(safeIndex);
         setCompleted(
-          nextStudy.phase === 'completed' || (savedMatchesStudy && saved?.completado === true)
+          !openRetestGate &&
+          (nextStudy.phase === 'completed' || (savedMatchesStudy && saved?.completado === true))
         );
         setAttempt(nextStudy.attempts[getStepId(firstStep)] ?? 0);
 
@@ -790,6 +891,27 @@ export function CinematicEnglishPlayer() {
     }
   }, [currentStep, feedback, prefersReducedMotion]);
 
+  /**
+   * Emits the completion event once the study state has settled, so the
+   * projection sees the day 7 observation that `completeLesson` cannot.
+   * Keyed by study so a reload of an already-completed study stays silent, and
+   * so StrictMode's double effect invocation reports once.
+   */
+  useEffect(() => {
+    if (!lesson || !study || study.phase !== 'completed') return;
+    const reportKey = `${study.studyId}:${study.contentVersion}`;
+    if (completionReportedRef.current === reportKey) return;
+    completionReportedRef.current = reportKey;
+    void trackCrearComplete({
+      tallerId: lesson.id_taller,
+      pasoId: getStepId(lesson.pasos[study.stepIndex] ?? lesson.pasos[lesson.pasos.length - 1]!),
+      checksum: lesson.checksum,
+      studyId: study.studyId,
+      retestDueAt: study.retestDueAt,
+      constructStates: aggregateCrearConstructStates(study.evidenceLedger),
+    });
+  }, [lesson, study]);
+
   function getStepLatencyMs(): number | undefined {
     if (stepInteractiveAtRef.current === null) return undefined;
     return Math.max(0, Date.now() - stepInteractiveAtRef.current);
@@ -827,6 +949,14 @@ export function CinematicEnglishPlayer() {
       targetCategory?: CrearResponseCategory;
       statementId?: string;
       stateKey?: string;
+      cueFrame?: CrearCueFrame;
+      /**
+       * What the ledger records, when it is not what the learner was told.
+       * The branch decides the feedback; the construct decides the evidence.
+       * On a production step they diverge exactly when the form is sound and
+       * the certainty is not.
+       */
+      evidenceCorrect?: boolean;
     }
   ): void {
     const stepId = getStepId(step);
@@ -850,10 +980,11 @@ export function CinematicEnglishPlayer() {
         stepId,
         opportunity: step.crear?.learningOpportunity,
         branch,
-        correct,
+        correct: details?.evidenceCorrect ?? correct,
         assisted: details?.assisted ?? Boolean(current.assistance[stepId]),
         attempt: attemptNumber,
         statementId: details?.statementId,
+        cueFrame: details?.cueFrame,
       });
       return saveCrearStudyState({
         ...current,
@@ -877,7 +1008,8 @@ export function CinematicEnglishPlayer() {
     correct: boolean,
     assisted: boolean,
     attemptNumber: number,
-    statementId?: string
+    statementId?: string,
+    cueFrame?: CrearCueFrame
   ): void {
     const stepId = getStepId(step);
     setStudy((current) => {
@@ -890,6 +1022,7 @@ export function CinematicEnglishPlayer() {
         assisted,
         attempt: attemptNumber,
         statementId,
+        cueFrame,
       });
       if (observations.length === 0) return current;
       return saveCrearStudyState({
@@ -899,18 +1032,19 @@ export function CinematicEnglishPlayer() {
     });
   }
 
-  function completeLesson(step: CrearPaso) {
+  /**
+   * The completion event is emitted by an effect, not from here. The final
+   * measured step has `revealFeedback: false`, so `advance` runs in the same
+   * tick as `persistAttempt` and `study` still holds the ledger from before the
+   * last observation. Reporting from here would drop the day 7 row from the
+   * projection every single time.
+   */
+  function completeLesson() {
     if (!lesson || !sessionId || !study) return;
     persistProgress(currentIndex, true);
     markWorkshopCompleted(sessionId, lesson.id_taller);
     persistStudy({ phase: 'completed', stepIndex: currentIndex });
     setCompleted(true);
-    void trackCrearComplete({
-      tallerId: lesson.id_taller,
-      pasoId: getStepId(step),
-      checksum: lesson.checksum,
-      studyId: study.studyId,
-    });
   }
 
   function advance(step: CrearPaso, nextRefId: string | null) {
@@ -929,7 +1063,7 @@ export function CinematicEnglishPlayer() {
         : currentIndex + 1;
 
     if (nextIndex < 0 || nextIndex >= lesson.pasos.length) {
-      completeLesson(step);
+      completeLesson();
       return;
     }
 
@@ -986,7 +1120,13 @@ export function CinematicEnglishPlayer() {
     if (!classifier) return { rama: 'no_claro', confianza: 0 };
 
     const controller = new AbortController();
-    const timeout = window.setTimeout(() => controller.abort(), 6500);
+    /**
+     * School wifi is slow, and the visible cost of waiting is a spinner the
+     * learner already sees. The invisible cost of aborting early is silently
+     * downgrading every answer to keyword matching, which is exactly the data
+     * this lesson cannot afford to lose.
+     */
+    const timeout = window.setTimeout(() => controller.abort(), 12000);
     try {
       const response = await fetch('/api/classify', {
         method: 'POST',
@@ -1002,7 +1142,7 @@ export function CinematicEnglishPlayer() {
       if (!response.ok) throw new Error(`classifier_${response.status}`);
       return (await response.json()) as ClassifyResponse;
     } catch {
-      return classifyCrearLocally(text, classifier, parts);
+      return { ...classifyCrearLocally(text, classifier, parts), source: 'local_offline' };
     } finally {
       window.clearTimeout(timeout);
     }
@@ -1022,9 +1162,17 @@ export function CinematicEnglishPlayer() {
       targetCategory?: CrearResponseCategory;
       statementId?: string;
       latencyMs?: number;
+      classifierSource?: CrearClassifierSource;
+      classifierAgreed?: boolean;
+      baselineGate?: CrearBaselineGate;
+      cueFrame?: CrearCueFrame;
+      shownOrder?: string[];
+      form?: CrearModalFormReading;
+      certaintyConsistent?: boolean;
     }
   ) {
     if (!lesson || !study) return;
+    const opportunity = step.crear?.learningOpportunity;
     void trackCrearAnswer({
       tallerId: lesson.id_taller,
       pasoId: getStepId(step),
@@ -1038,12 +1186,68 @@ export function CinematicEnglishPlayer() {
       targetCategory: details?.targetCategory,
       statementId: details?.statementId,
       latencyMs: details?.latencyMs,
+      classifierSource: details?.classifierSource,
+      classifierAgreed: details?.classifierAgreed,
+      baselineGate: details?.baselineGate,
+      shownOrder: details?.shownOrder,
+      expressedCategory: details?.form?.expressedCategory,
+      formWellFormed: details?.form?.wellFormed,
+      subjectPresent: details?.form?.subjectPresent,
+      certaintyConsistent: details?.certaintyConsistent,
       score,
       attempt: attemptNumber,
       studyId: study.studyId,
       checksum: lesson.checksum,
-      learningOpportunity: step.crear?.learningOpportunity,
+      // The per-item frame wins over the step-level one on multi-clue steps.
+      learningOpportunity: opportunity && details?.cueFrame
+        ? { ...opportunity, cueFrame: details.cueFrame }
+        : opportunity,
     });
+  }
+
+  /**
+   * Reads a production attempt as the two constructs it actually contains.
+   *
+   * `formCorrect` is the `modal + have + participle` structure plus the right
+   * person — nothing about whether the certainty was the one the evidence
+   * supported. `certaintyConsistent` compares the written modal against the
+   * decision the learner made one screen earlier, which is a different
+   * question from whether that decision was right: a learner can be perfectly
+   * consistent with a mis-calibrated judgement, and those two findings must
+   * stay apart.
+   */
+  function readProductionEvidence(
+    step: CrearPaso,
+    text: string
+  ): { form: CrearModalFormReading; formCorrect: boolean; certaintyConsistent?: boolean } | null {
+    const target = step.crear?.productionTarget;
+    if (!target) return null;
+    const form = readModalForm(text, target);
+    const chosen = certaintyChoiceBefore(step);
+    return {
+      form,
+      formCorrect: form.wellFormed && form.subjectPresent,
+      ...(chosen && form.expressedCategory
+        ? { certaintyConsistent: form.expressedCategory === chosen }
+        : {}),
+    };
+  }
+
+  /**
+   * The certainty the learner selected on the step that leads into this one.
+   * Read from the stored mapping rather than the answer label, so a copy edit
+   * cannot silently turn consistency into `undefined`.
+   */
+  function certaintyChoiceBefore(step: CrearPaso): CrearResponseCategory | null {
+    if (!lesson || !study) return null;
+    const refId = getStepId(step);
+    const previous = lesson.pasos.find((candidate) => candidate.crear?.nextRefId === refId);
+    if (!previous) return null;
+    const previousId = getStepId(previous);
+    const chosen = study.latestOutcomes[previousId]?.mapping?.[previousId];
+    return chosen === 'casi_seguro' || chosen === 'posible' || chosen === 'imposible'
+      ? chosen
+      : null;
   }
 
   function showFeedbackForBranch(
@@ -1073,6 +1277,14 @@ export function CinematicEnglishPlayer() {
       const correct = branch?.correcto ?? false;
       const score = branch?.score ?? 0;
       const assisted = Boolean(study.assistance[getStepId(currentStep)]);
+      /**
+       * Two readings of one sentence. The branch is what the learner is told;
+       * the structural reading is what the ledger records. They part ways on
+       * `misconcepcion_certeza`: a flawless `modal + have + participle` that
+       * carries the wrong certainty is a calibration error, not a form error,
+       * and scoring `modal_form` from the branch marked the form wrong.
+       */
+      const evidence = readProductionEvidence(currentStep, text);
       persistAttempt(
         currentStep,
         classification.rama,
@@ -1082,7 +1294,10 @@ export function CinematicEnglishPlayer() {
         attemptNumber,
         classification.confianza,
         parts,
-        { assisted }
+        {
+          assisted,
+          ...(evidence ? { evidenceCorrect: evidence.formCorrect } : {}),
+        }
       );
       queueAnswerTelemetry(
         currentStep,
@@ -1092,7 +1307,15 @@ export function CinematicEnglishPlayer() {
         text,
         attemptNumber,
         parts,
-        { assisted, latencyMs }
+        {
+          assisted,
+          latencyMs,
+          classifierSource: classification.source,
+          classifierAgreed: classification.agreed,
+          ...(evidence
+            ? { form: evidence.form, certaintyConsistent: evidence.certaintyConsistent }
+            : {}),
+        }
       );
 
       if (branch?.pista) {
@@ -1128,6 +1351,14 @@ export function CinematicEnglishPlayer() {
     const score = correct ? 1 : 0;
     const answerText = choice?.texto ?? choiceId;
     const assisted = Boolean(study.assistance[getStepId(currentStep)]);
+    /**
+     * The chosen category is stored by id, not by label. The production step
+     * that follows compares its written modal against this decision, and a
+     * copy edit must not be able to break that link.
+     */
+    const mapping = isCertaintyScaleStep(currentStep)
+      ? { [getStepId(currentStep)]: choiceId as CrearResponseCategory }
+      : undefined;
     persistAttempt(
       currentStep,
       branchId,
@@ -1137,7 +1368,7 @@ export function CinematicEnglishPlayer() {
       attemptNumber,
       1,
       undefined,
-      { assisted }
+      { assisted, ...(mapping ? { mapping } : {}) }
     );
     queueAnswerTelemetry(
       currentStep,
@@ -1147,7 +1378,15 @@ export function CinematicEnglishPlayer() {
       answerText,
       attemptNumber,
       undefined,
-      { assisted, latencyMs }
+      {
+        assisted,
+        latencyMs,
+        ...(mapping ? { mapping } : {}),
+        shownOrder: shownChoices.map((item) => item.id),
+        ...(currentStep.crear?.learningOpportunity?.cueFrame
+          ? { cueFrame: currentStep.crear.learningOpportunity.cueFrame }
+          : {}),
+      }
     );
 
     const retry = Boolean(
@@ -1181,7 +1420,8 @@ export function CinematicEnglishPlayer() {
       mapAttempt.correct,
       mapAttempt.assisted,
       mapAttempt.attempt,
-      mapAttempt.statementId
+      mapAttempt.statementId,
+      mapAttempt.cueFrame
     );
     queueAnswerTelemetry(
       currentStep,
@@ -1196,6 +1436,8 @@ export function CinematicEnglishPlayer() {
         assisted: mapAttempt.assisted,
         statementId: mapAttempt.statementId,
         latencyMs: mapAttempt.latencyMs,
+        cueFrame: mapAttempt.cueFrame,
+        shownOrder: mapAttempt.shownOrder,
       }
     );
   }
@@ -1226,6 +1468,7 @@ export function CinematicEnglishPlayer() {
         assisted: false,
         statementId: precheckAttempt.itemId,
         stateKey,
+        cueFrame: precheckAttempt.cueFrame,
       }
     );
     queueAnswerTelemetry(
@@ -1241,12 +1484,97 @@ export function CinematicEnglishPlayer() {
         assisted: false,
         statementId: precheckAttempt.itemId,
         latencyMs: precheckAttempt.latencyMs,
+        cueFrame: precheckAttempt.cueFrame,
+        shownOrder: precheckAttempt.shownOrder,
       }
     );
   }
 
   function handlePrecheckComplete(): void {
     if (!currentStep) return;
+    advance(currentStep, currentStep.crear?.nextRefId ?? null);
+  }
+
+  /**
+   * The self-efficacy gate has no right answer, so both branches report
+   * `correcto: false` and the signal lives in `rama`. It stays out of the
+   * evidence ledger: believing you can write a sentence is not evidence that
+   * you can.
+   */
+  function handleBaselineGate(answer: CrearBaselineGate): void {
+    if (!currentStep) return;
+    queueAnswerTelemetry(
+      currentStep,
+      answer === 'yes' ? 'baseline_gate_yes' : 'baseline_gate_no',
+      false,
+      0,
+      answer === 'yes'
+        ? currentStep.crear?.baselineProduction?.gateYesLabel ?? 'Sí'
+        : currentStep.crear?.baselineProduction?.gateNoLabel ?? 'Todavía no',
+      1,
+      undefined,
+      { assisted: false, latencyMs: getStepLatencyMs() }
+    );
+    /**
+     * The attempt clock starts when the field first appears and never restarts.
+     * Changing the gate answer is encouraged — it is a second recorded event —
+     * and restarting the clock there meant a learner who typed for forty
+     * seconds and then moved to "todavía no" was logged as having spent two.
+     */
+    if (baselineAttemptStartedAtRef.current === null) {
+      baselineAttemptStartedAtRef.current = Date.now();
+    }
+  }
+
+  function handleBaselineSubmit(
+    text: string,
+    gate: CrearBaselineGate,
+    skipped: boolean
+  ): void {
+    if (!currentStep) return;
+    const attemptNumber = 1;
+    const branch = skipped ? 'baseline_produccion_omitida' : 'baseline_produccion';
+    const latencyMs = baselineAttemptStartedAtRef.current === null
+      ? getStepLatencyMs()
+      : Math.max(0, Date.now() - baselineAttemptStartedAtRef.current);
+    /**
+     * The baseline runs no classifier — it must not teach — but it still gets
+     * the structural reading, because otherwise the pre-measure for `modal_form`
+     * is a string nobody has scored and the whole before/after comparison waits
+     * on hand labelling.
+     */
+    const evidence = skipped ? null : readProductionEvidence(currentStep, text);
+
+    persistAttempt(
+      currentStep,
+      branch,
+      false,
+      0,
+      text,
+      attemptNumber,
+      0,
+      undefined,
+      {
+        assisted: false,
+        evidenceCorrect: evidence ? evidence.formCorrect : false,
+      }
+    );
+    queueAnswerTelemetry(
+      currentStep,
+      branch,
+      false,
+      0,
+      text,
+      attemptNumber,
+      undefined,
+      {
+        assisted: false,
+        latencyMs,
+        baselineGate: gate,
+        ...(evidence ? { form: evidence.form } : {}),
+      }
+    );
+    setLastOutcome({ branch, correct: false, score: 0 });
     advance(currentStep, currentStep.crear?.nextRefId ?? null);
   }
 
@@ -1260,7 +1588,7 @@ export function CinematicEnglishPlayer() {
       || JSON.stringify(submission.assignments);
 
     try {
-      const classification = submission.productionText
+      const classification: ClassifyResponse = submission.productionText
         ? await classifyText(currentStep, submission.productionText)
         : { rama: submission.assisted ? 'mapa_asistido' : 'mapa_independiente', confianza: 1 };
       const branch = submission.productionText
@@ -1276,6 +1604,10 @@ export function CinematicEnglishPlayer() {
         ...(targetCategory ? { targetCategory } : {}),
         ...(typeof submission.latencyMs === 'number'
           ? { latencyMs: submission.latencyMs }
+          : {}),
+        ...(classification.source ? { classifierSource: classification.source } : {}),
+        ...(typeof classification.agreed === 'boolean'
+          ? { classifierAgreed: classification.agreed }
           : {}),
       };
 
@@ -1357,6 +1689,12 @@ export function CinematicEnglishPlayer() {
   }
 
   function openGuide(): void {
+    if (currentStep) {
+      const stepId = getStepId(currentStep);
+      setGuideUsedSteps((current) =>
+        current.has(stepId) ? current : new Set(current).add(stepId)
+      );
+    }
     markAssistance('guide_opened');
     setGuideOpen(true);
   }
@@ -1500,6 +1838,16 @@ export function CinematicEnglishPlayer() {
   const mode = getInputMode(currentStep);
   const prompt = getPrompt(currentStep);
   const display = currentStep.crear?.display;
+  /**
+   * No case breadcrumb in the chrome. It answered "which case am I in?", but
+   * `transfer-bridge` already answers it in the learner's own language and
+   * with narration ("Cambia el caso, no la idea"), and each screen's own copy
+   * names the person and the object. A persistent chrome line was a second,
+   * weaker answer to a question already answered, and it spent the width that
+   * the sentence carrying the meaning needed. Narrative orientation beats
+   * chrome orientation; the artifact label survives on `arrival`, where the
+   * case is introduced for the first time.
+   */
   const compactVoice = true;
   const hideMapSceneCopy = Boolean(
     mode === 'match'
@@ -1509,11 +1857,22 @@ export function CinematicEnglishPlayer() {
   const sceneTransition = prefersReducedMotion
     ? { duration: 0.12 }
     : { duration: 0.52, ease: [0.22, 1, 0.36, 1] as const };
-  const answerElement = currentStep.crear?.precheck ? (
+  const answerElement = currentStep.crear?.baselineProduction ? (
+    <CinematicBaselineProduction
+      key={getStepId(currentStep)}
+      config={currentStep.crear.baselineProduction}
+      pending={pending}
+      placeholder={getPlaceholder(currentStep, 'Escribe una oración breve en inglés…')}
+      onGate={handleBaselineGate}
+      onSubmit={handleBaselineSubmit}
+      onFocusChange={setInputFocused}
+    />
+  ) : currentStep.crear?.precheck ? (
     <CinematicPrecheck
       key={getStepId(currentStep)}
       config={currentStep.crear.precheck}
       pending={pending}
+      orderSeed={orderSeed}
       initialAnswers={precheckAnswers}
       onAttempt={handlePrecheckAttempt}
       onComplete={handlePrecheckComplete}
@@ -1524,6 +1883,8 @@ export function CinematicEnglishPlayer() {
       config={currentStep.crear.certaintyMap}
       pending={pending}
       assisted={Boolean(study.assistance[getStepId(currentStep)])}
+      guideAssisted={guideUsedSteps.has(getStepId(currentStep))}
+      orderSeed={`${orderSeed}:${getStepId(currentStep)}`}
       onAssistance={markAssistance}
       onAttempt={handleMapItemAttempt}
       onSubmit={handleSubmitMap}
@@ -1536,7 +1897,7 @@ export function CinematicEnglishPlayer() {
       mode={mode}
       prompt={prompt}
       placeholder={getPlaceholder(currentStep, 'Escribe una oración breve en inglés…')}
-      choices={getChoices(currentStep)}
+      choices={shownChoices}
       pending={pending}
       minChars={currentStep.crear?.minChars}
       responseParts={currentStep.crear?.responseParts}
@@ -1563,6 +1924,93 @@ export function CinematicEnglishPlayer() {
       onFocusChange={setInputFocused}
     />
   );
+
+  /**
+   * The two dimensions were always measured separately; only the report was
+   * missing. Certainty comes from the independent decision, form from the
+   * classifier branch — except when the sentence itself contradicts the
+   * decision, which is what `misconcepcion_certeza` means.
+   *
+   * It is shaped as a receipt because it is the only thing the learner
+   * *receives* for having written a baseline that served the study, not them.
+   * Read as loose lines it was a footnote, and the baseline went back to being
+   * a research tax on the last screen of day 1 — the screen that decides
+   * whether they come back on day 7. No score, no percentage, no traffic
+   * light: two named dimensions, and the two sentences side by side.
+   */
+  const closingDiagnostic = (() => {
+    if (currentScene !== 'closure') return null;
+    const certainty = study.latestOutcomes['transfer-check-certainty'];
+    const production = study.latestOutcomes['transfer-production'];
+    if (!certainty && !production) return null;
+
+    /**
+     * Each row reads its own construct and nothing else. The form row used to
+     * be `branch === 'correcto'`, which told a learner whose `must have` was
+     * spelled perfectly that their English form needed review — the mistake
+     * was the certainty, and it already has its own row above.
+     */
+    const productionStep = lesson?.pasos.find(
+      (step) => getStepId(step) === 'transfer-production'
+    );
+    const target = productionStep?.crear?.productionTarget;
+    const written = production?.text.trim();
+    const reading = target && written ? readModalForm(written, target) : null;
+    const formCorrect = reading ? reading.wellFormed && reading.subjectPresent : false;
+    const interpretationCorrect = certainty?.correct ?? false;
+    const baselineText = study.latestOutcomes['precheck-production']?.text.trim();
+    const transferText = written;
+    const dimensions = [
+      { id: 'interpretation', label: 'Interpretación de las pistas', correct: interpretationCorrect },
+      { id: 'form', label: 'Forma en inglés', correct: formCorrect },
+    ];
+
+    return (
+      <section className={styles.closingReceipt} aria-labelledby="closing-receipt-label">
+        <p className={styles.receiptLabel} id="closing-receipt-label">
+          Lo que guardamos de hoy
+        </p>
+        <ul className={styles.receiptRows}>
+          {dimensions.map((dimension) => (
+            <li
+              className={styles.receiptRow}
+              data-correct={dimension.correct ? 'true' : 'false'}
+              key={dimension.id}
+            >
+              <span className={styles.receiptMark} aria-hidden="true">
+                {dimension.correct ? <Check size={17} /> : <RotateCcw size={17} />}
+              </span>
+              <span className={styles.receiptDimension}>
+                <small>{dimension.label}</small>
+                <strong>{dimension.correct ? 'correcta' : 'por revisar'}</strong>
+              </span>
+            </li>
+          ))}
+        </ul>
+        {/* Degrades to nothing when the learner submitted the baseline empty:
+            the two dimensions above still read as a finished block.
+
+            The typographic weight is what claims progress, so it is only
+            applied when today's sentence actually earned it. A learner who
+            already knew the structure — possible at B2 — or who wrote a worse
+            sentence than they started with was being shown their own regression
+            typeset as an arc upward. Both lines then read level, and the two
+            rows above still say what needs review. */}
+        {baselineText && transferText ? (
+          <div className={styles.receiptArc} aria-label="Tu primera frase y la de hoy">
+            <p className={styles.receiptArcEntry} data-weight={formCorrect ? 'before' : 'level'}>
+              <small>Al empezar escribiste</small>
+              <span lang="en-US">{baselineText}</span>
+            </p>
+            <p className={styles.receiptArcEntry} data-weight={formCorrect ? 'now' : 'level'}>
+              <small>Ahora escribiste</small>
+              <span lang="en-US">{transferText}</span>
+            </p>
+          </div>
+        ) : null}
+      </section>
+    );
+  })();
 
   return (
     <MotionConfig reducedMotion="user">
@@ -1730,6 +2178,8 @@ export function CinematicEnglishPlayer() {
                 />
               ) : null}
 
+              {closingDiagnostic}
+
               {hasStructuredEvidenceFlow ? (
                 <div
                   className={styles.structuredAnswerStage}
@@ -1837,7 +2287,10 @@ function renderGuideSheet(
           <span><BookOpenText size={18} /></span>
           <div>
             <small>Consúltala cuando la necesites</small>
-            <h2 id="guide-title">Tres formas de decir qué tan seguro estás</h2>
+            {/* Certainty is the strength of the evidence, not personal
+                confidence. The guide is the last surface that still framed it
+                as how sure the learner feels. */}
+            <h2 id="guide-title">Tres formas según la fuerza de la evidencia</h2>
           </div>
         </div>
         <ConceptPrism step={guideStep} />

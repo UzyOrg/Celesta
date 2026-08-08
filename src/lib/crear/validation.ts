@@ -1,15 +1,17 @@
 import { validateWorkshopJson } from '@/lib/workshops/schema';
 import type {
+  CrearBaselineProduction,
   CrearCaseArtifact,
   CrearClassifierBranch,
   CrearLearningOpportunity,
+  CrearProductionTarget,
   CrearResponseCategory,
   CrearStepMeta,
   CrearVisualCue,
   CrearWorkshop,
 } from './types';
 
-const INPUT_MODES = new Set(['none', 'text', 'choice', 'verdict', 'match']);
+const INPUT_MODES = new Set(['none', 'text', 'choice', 'match']);
 const FASES = new Set(['pre_check', 'practica', 'post', 'transfer', 'teach_back']);
 const STAGES = new Set(['descubre', 'practica', 'aplica', 'recuerda']);
 const SCENES = new Set([
@@ -30,13 +32,26 @@ const RESPONSE_CATEGORIES: readonly CrearResponseCategory[] = [
   'imposible',
 ];
 const RESPONSE_CATEGORY_SET = new Set<CrearResponseCategory>(RESPONSE_CATEGORIES);
-const CASE_ARTIFACT_KINDS = new Set(['poster', 'model', 'trip']);
+const CASE_ARTIFACT_KINDS = new Set(['poster', 'model', 'trip', 'mural']);
 const VISUAL_CUE_KINDS = new Set(['paint', 'glue', 'presence', 'location', 'trip']);
 const LEARNING_CONSTRUCTS = new Set([
   'evidence_comprehension',
   'certainty_calibration',
   'modal_form',
 ]);
+const CUE_FRAMES = new Set([
+  'physical_trace',
+  'presence_unobserved',
+  'absence_elsewhere',
+]);
+const BASELINE_PRODUCTION_FIELDS: readonly (keyof CrearBaselineProduction)[] = [
+  'gatePrompt',
+  'gateYesLabel',
+  'gateNoLabel',
+  'attemptPrompt',
+  'emptySubmitLabel',
+  'submitLabel',
+];
 const LEARNING_CONDITIONS = new Set(['supported', 'independent']);
 const LEARNING_NOVELTIES = new Set(['same_case', 'new_case']);
 const LEARNING_TIMINGS = new Set(['immediate', 'delayed']);
@@ -85,7 +100,25 @@ function validateLearningOpportunity(
     new Set(opportunity.constructs).size !== opportunity.constructs.length ||
     !LEARNING_CONDITIONS.has(opportunity.condition) ||
     !LEARNING_NOVELTIES.has(opportunity.novelty) ||
-    !LEARNING_TIMINGS.has(opportunity.timing)
+    !LEARNING_TIMINGS.has(opportunity.timing) ||
+    (opportunity.cueFrame !== undefined && !CUE_FRAMES.has(opportunity.cueFrame)) ||
+    (opportunity.evidentiary !== undefined && typeof opportunity.evidentiary !== 'boolean')
+  ) {
+    throw new Error(`CREAR JSON: ${label} is invalid`);
+  }
+}
+
+function validateProductionTarget(target: CrearProductionTarget, label: string): void {
+  if (
+    !target ||
+    typeof target !== 'object' ||
+    !RESPONSE_CATEGORY_SET.has(target.category) ||
+    !Array.isArray(target.subject) ||
+    target.subject.length === 0 ||
+    target.subject.some((entry) => typeof entry !== 'string' || !entry.trim()) ||
+    !Array.isArray(target.participles) ||
+    target.participles.length === 0 ||
+    target.participles.some((entry) => typeof entry !== 'string' || !entry.trim())
   ) {
     throw new Error(`CREAR JSON: ${label} is invalid`);
   }
@@ -201,6 +234,24 @@ function validateMeta(meta: CrearStepMeta, refId: string): void {
       `${refId}.crear.learningOpportunity`
     );
   }
+  if (meta.productionTarget !== undefined) {
+    validateProductionTarget(meta.productionTarget, `${refId}.crear.productionTarget`);
+  }
+  /**
+   * `productionTarget` is the contract behind the `modal_form` construct, the
+   * same way `guideAvailable` is the contract behind `independent`. Without it
+   * the only available reading of "did they get the form right" is the
+   * classifier branch — and that branch also carries calibration, so the two
+   * constructs collapse into one score. Fail closed.
+   */
+  if (
+    meta.learningOpportunity?.constructs.includes('modal_form') &&
+    meta.productionTarget === undefined
+  ) {
+    throw new Error(
+      `CREAR JSON: ${refId}.crear.learningOpportunity measures modal_form, so crear.productionTarget is required`
+    );
+  }
   if (
     meta.retestDelayHours !== undefined &&
     (!Number.isFinite(meta.retestDelayHours) || meta.retestDelayHours < 0)
@@ -309,7 +360,8 @@ function validateMeta(meta: CrearStepMeta, refId: string): void {
         !item.clue.trim() ||
         typeof item.prompt !== 'string' ||
         !item.prompt.trim() ||
-        !RESPONSE_CATEGORY_SET.has(item.correctCategory)
+        !RESPONSE_CATEGORY_SET.has(item.correctCategory) ||
+        (item.cueFrame !== undefined && !CUE_FRAMES.has(item.cueFrame))
       ) {
         throw new Error(`CREAR JSON: ${refId}.crear.precheck.items[${index}] is invalid`);
       }
@@ -322,8 +374,87 @@ function validateMeta(meta: CrearStepMeta, refId: string): void {
       throw new Error(`CREAR JSON: ${refId}.crear.precheck.completeLabel must be non-empty`);
     }
   }
-  if (meta.scene === 'precheck' && meta.precheck === undefined) {
-    throw new Error(`CREAR JSON: ${refId}.crear.scene precheck requires a precheck config`);
+  if (meta.baselineProduction !== undefined) {
+    if (meta.input !== 'text') {
+      throw new Error(`CREAR JSON: ${refId}.crear.baselineProduction requires text input`);
+    }
+    for (const field of BASELINE_PRODUCTION_FIELDS) {
+      if (
+        typeof meta.baselineProduction[field] !== 'string' ||
+        !meta.baselineProduction[field].trim()
+      ) {
+        throw new Error(
+          `CREAR JSON: ${refId}.crear.baselineProduction.${field} must be a non-empty string`
+        );
+      }
+    }
+    /**
+     * The blocked state after "sí" is the one disabled control in the flow.
+     * Shipping it without copy that names the exit is the exact failure the
+     * gate's own "todavía no" is there to absorb, so the hint is optional in
+     * the type but must be usable when present.
+     */
+    if (
+      meta.baselineProduction.blockedHint !== undefined &&
+      (typeof meta.baselineProduction.blockedHint !== 'string' ||
+        !meta.baselineProduction.blockedHint.trim())
+    ) {
+      throw new Error(
+        `CREAR JSON: ${refId}.crear.baselineProduction.blockedHint must be a non-empty string`
+      );
+    }
+    if (
+      meta.baselineProduction.attemptPromptNo !== undefined &&
+      (typeof meta.baselineProduction.attemptPromptNo !== 'string' ||
+        !meta.baselineProduction.attemptPromptNo.trim())
+    ) {
+      throw new Error(
+        `CREAR JSON: ${refId}.crear.baselineProduction.attemptPromptNo must be a non-empty string`
+      );
+    }
+    /**
+     * A pre-instruction baseline measures; it must not teach. Guidance or
+     * corrective feedback here would contaminate the very comparison the
+     * baseline exists to make.
+     */
+    if (meta.guideAvailable === true) {
+      throw new Error(
+        `CREAR JSON: ${refId}.crear.baselineProduction cannot offer the guide`
+      );
+    }
+    if (meta.revealFeedback !== false) {
+      throw new Error(
+        `CREAR JSON: ${refId}.crear.baselineProduction requires revealFeedback false`
+      );
+    }
+    if (meta.classifier !== undefined) {
+      throw new Error(
+        `CREAR JSON: ${refId}.crear.baselineProduction must not run a classifier`
+      );
+    }
+  }
+  if (meta.scene === 'precheck' && meta.precheck === undefined && meta.baselineProduction === undefined) {
+    throw new Error(
+      `CREAR JSON: ${refId}.crear.scene precheck requires a precheck or baselineProduction config`
+    );
+  }
+  /**
+   * `guideAvailable` is the contract behind `condition: "independent"`, so an
+   * absent field is never read as a default. The author writes `false`, and a
+   * step that claims independence can never expose guidance.
+   */
+  if (meta.learningOpportunity !== undefined && typeof meta.guideAvailable !== 'boolean') {
+    throw new Error(
+      `CREAR JSON: ${refId}.crear.guideAvailable must be declared on any step with a learningOpportunity`
+    );
+  }
+  if (
+    meta.learningOpportunity?.condition === 'independent' &&
+    meta.guideAvailable !== false
+  ) {
+    throw new Error(
+      `CREAR JSON: ${refId}.crear.learningOpportunity is independent, so guideAvailable must be false`
+    );
   }
   if (meta.formula !== undefined) {
     if (
@@ -405,7 +536,8 @@ function validateMeta(meta: CrearStepMeta, refId: string): void {
         !statement.sentenceStart.trim() ||
         typeof statement.sentenceEnd !== 'string' ||
         !statement.sentenceEnd.trim() ||
-        !RESPONSE_CATEGORY_SET.has(statement.correctCategory)
+        !RESPONSE_CATEGORY_SET.has(statement.correctCategory) ||
+        (statement.cueFrame !== undefined && !CUE_FRAMES.has(statement.cueFrame))
       ) {
         throw new Error(
           `CREAR JSON: ${refId}.crear.certaintyMap.statements[${index}] is invalid`
@@ -477,6 +609,86 @@ function validateMeta(meta: CrearStepMeta, refId: string): void {
   }
 }
 
+/**
+ * Two invariants that keep the evidence ledger honest, both enforced at the
+ * lesson level because neither is visible from a single step.
+ *
+ * **A construct that is never observed independently cannot be evidence.** One
+ * assisted observation on the same case has no delta, no independence and no
+ * durability. Left undeclared it still produces ledger rows that read like
+ * evidence, inflate coverage and contaminate any later aggregation. The author
+ * must say so out loud with `evidentiary: false`; the schema will not accept
+ * the ambiguous state.
+ *
+ * **An evidentiary construct must have a baseline, and it must come first.**
+ * A learning claim is a delta, not a level: without a pre-instruction measure,
+ * "wrote it correctly at the end" cannot distinguish a lesson that taught it
+ * from a learner who already knew. Requiring the baseline to precede every
+ * other observation of its construct is also what lets
+ * `aggregateCrearConstructStates` identify it structurally
+ * (independent + same_case + immediate) instead of guessing from step names.
+ */
+function validateConstructEvidenceContract(workshop: CrearWorkshop): void {
+  interface AuthoredOpportunity {
+    refId: string;
+    order: number;
+    opportunity: CrearLearningOpportunity;
+  }
+
+  const byConstruct = new Map<string, AuthoredOpportunity[]>();
+  workshop.pasos.forEach((step, order) => {
+    const opportunity = step.crear?.learningOpportunity;
+    if (!opportunity) return;
+    for (const construct of opportunity.constructs) {
+      const entries = byConstruct.get(construct) ?? [];
+      entries.push({ refId: step.ref_id as string, order, opportunity });
+      byConstruct.set(construct, entries);
+    }
+  });
+
+  for (const [construct, entries] of Array.from(byConstruct.entries())) {
+    const hasIndependent = entries.some(
+      (entry) => entry.opportunity.condition === 'independent'
+    );
+
+    if (!hasIndependent) {
+      const undeclared = entries.filter((entry) => entry.opportunity.evidentiary !== false);
+      if (undeclared.length > 0) {
+        throw new Error(
+          `CREAR JSON: ${construct} is never observed independently, so every step measuring it must declare learningOpportunity.evidentiary = false (missing on ${undeclared
+            .map((entry) => entry.refId)
+            .join(', ')})`
+        );
+      }
+      continue;
+    }
+
+    const evidentiary = entries.filter((entry) => entry.opportunity.evidentiary !== false);
+    if (evidentiary.length === 0) continue;
+
+    const baselines = evidentiary.filter(
+      (entry) =>
+        entry.opportunity.condition === 'independent' &&
+        entry.opportunity.novelty === 'same_case' &&
+        entry.opportunity.timing === 'immediate'
+    );
+    if (baselines.length !== 1) {
+      throw new Error(
+        `CREAR JSON: ${construct} needs exactly one pre-instruction baseline (independent, same_case, immediate); found ${baselines.length}`
+      );
+    }
+    const baseline = baselines[0]!;
+    const earlier = evidentiary.filter((entry) => entry.order < baseline.order);
+    if (earlier.length > 0) {
+      throw new Error(
+        `CREAR JSON: the ${construct} baseline in ${baseline.refId} must precede every other observation of it (${earlier
+          .map((entry) => entry.refId)
+          .join(', ')} come first)`
+      );
+    }
+  }
+}
+
 export function validateCrearWorkshopJson(input: unknown): CrearWorkshop {
   const workshop = validateWorkshopJson(input) as CrearWorkshop;
   if (
@@ -507,6 +719,67 @@ export function validateCrearWorkshopJson(input: unknown): CrearWorkshop {
       }
     }
   });
+
+  /**
+   * A production step asks for the sentence that carries the certainty the
+   * previous screen just asked the learner to judge. If the two disagree, a
+   * learner who is internally consistent is scored wrong on both, and no
+   * analysis can tell which one the lesson broke.
+   */
+  workshop.pasos.forEach((step) => {
+    const target = step.crear?.productionTarget;
+    if (!target) return;
+    const refId = step.ref_id as string;
+    const previous = workshop.pasos.find(
+      (candidate) => candidate.crear?.nextRefId === refId
+    );
+    if (previous?.tipo_paso !== 'opcion_multiple') return;
+    const optionIds = previous.opcion_multiple.opciones.map((option) => option.id);
+    const isCertaintyScale = RESPONSE_CATEGORIES.every((category) =>
+      optionIds.includes(category)
+    );
+    if (!isCertaintyScale) return;
+    if (previous.opcion_multiple.respuesta_correcta !== target.category) {
+      throw new Error(
+        `CREAR JSON: ${refId}.crear.productionTarget.category must match the certainty answer authored in ${previous.ref_id}`
+      );
+    }
+  });
+
+  /**
+   * The delayed retest exists to isolate time. Day 1 asked for `might have` and
+   * day 7 asked for `can't have`, so a drop between them was equally explained
+   * by forgetting and by the target modal changing — with n≈5 that difference
+   * is not recoverable afterwards. The delayed item must be a parallel form of
+   * the immediate one: new case, same construct, same target certainty.
+   */
+  const independentForm = workshop.pasos.filter(
+    (step) =>
+      step.crear?.productionTarget &&
+      step.crear.learningOpportunity?.condition === 'independent' &&
+      step.crear.learningOpportunity.novelty === 'new_case' &&
+      step.crear.learningOpportunity.constructs.includes('modal_form')
+  );
+  const immediateForm = independentForm.filter(
+    (step) => step.crear?.learningOpportunity?.timing === 'immediate'
+  );
+  const delayedForm = independentForm.filter(
+    (step) => step.crear?.learningOpportunity?.timing === 'delayed'
+  );
+  for (const delayed of delayedForm) {
+    for (const immediate of immediateForm) {
+      if (
+        delayed.crear?.productionTarget?.category !==
+        immediate.crear?.productionTarget?.category
+      ) {
+        throw new Error(
+          `CREAR JSON: ${delayed.ref_id} is the delayed parallel form of ${immediate.ref_id}, so both must target the same certainty`
+        );
+      }
+    }
+  }
+
+  validateConstructEvidenceContract(workshop);
 
   if (workshop.pasos.length > 0) {
     const reachable = new Set<number>();

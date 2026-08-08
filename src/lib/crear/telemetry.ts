@@ -1,13 +1,23 @@
 "use client";
 
 import { trackEvent } from '@/lib/track';
+import type { CrearConstructState } from './constructState';
 import type {
+  CrearBaselineGate,
+  CrearClassifierSource,
   CrearFase,
   CrearLearningOpportunity,
   CrearResponseCategory,
   CrearResponsePartAnswer,
   CrearTelemetryResult,
 } from './types';
+
+interface TrackCrearProductionReading {
+  expressedCategory?: CrearResponseCategory | null;
+  formWellFormed?: boolean;
+  subjectPresent?: boolean;
+  certaintyConsistent?: boolean;
+}
 
 interface TrackCrearAnswerInput {
   tallerId: string;
@@ -27,8 +37,14 @@ interface TrackCrearAnswerInput {
   intento?: number;
   attempt?: number;
   studyId?: string;
+  classifierSource?: CrearClassifierSource;
+  classifierAgreed?: boolean;
+  baselineGate?: CrearBaselineGate;
+  shownOrder?: string[];
   learningOpportunity?: CrearLearningOpportunity;
 }
+
+type TrackCrearAnswerPayload = TrackCrearAnswerInput & TrackCrearProductionReading;
 
 interface TrackCrearStepInput {
   tallerId: string;
@@ -37,7 +53,7 @@ interface TrackCrearStepInput {
   studyId?: string;
 }
 
-export async function trackCrearAnswer(input: TrackCrearAnswerInput): Promise<void> {
+export async function trackCrearAnswer(input: TrackCrearAnswerPayload): Promise<void> {
   const result: CrearTelemetryResult = {
     fase: input.fase,
     correcto: input.correcto,
@@ -94,6 +110,44 @@ export async function trackCrearAnswer(input: TrackCrearAnswerInput): Promise<vo
     result.studyId = input.studyId;
   }
 
+  if (input.classifierSource) {
+    result.classifierSource = input.classifierSource;
+  }
+
+  if (typeof input.classifierAgreed === 'boolean') {
+    result.classifierAgreed = input.classifierAgreed;
+  }
+
+  if (input.baselineGate) {
+    result.baselineGate = input.baselineGate;
+  }
+
+  if (input.shownOrder && input.shownOrder.length > 0) {
+    result.shownOrder = input.shownOrder;
+  }
+
+  /**
+   * The structural reading of a production attempt. `expressedCategory` is
+   * explicitly allowed to be `null` — "no past modal appeared at all" is a
+   * finding, and dropping it would make it indistinguishable from a step that
+   * never ran the reading.
+   */
+  if (input.expressedCategory !== undefined) {
+    result.expressedCategory = input.expressedCategory;
+  }
+
+  if (typeof input.formWellFormed === 'boolean') {
+    result.formWellFormed = input.formWellFormed;
+  }
+
+  if (typeof input.subjectPresent === 'boolean') {
+    result.subjectPresent = input.subjectPresent;
+  }
+
+  if (typeof input.certaintyConsistent === 'boolean') {
+    result.certaintyConsistent = input.certaintyConsistent;
+  }
+
   if (input.learningOpportunity) {
     result.learningOpportunity = input.learningOpportunity;
   }
@@ -146,11 +200,32 @@ export async function trackCrearHint(
   });
 }
 
-export async function trackCrearComplete(input: TrackCrearStepInput): Promise<void> {
+/**
+ * `retestDueAt` rides the completion event on purpose. The gate itself lives in
+ * localStorage, which a shared classroom device can lose between day 1 and day
+ * 7; the server copy is what lets the cohort be rebuilt from the database.
+ */
+export async function trackCrearComplete(
+  input: TrackCrearStepInput & {
+    retestDueAt?: number;
+    /**
+     * Per-construct projection of the whole ledger, for the same reason as
+     * `retestDueAt`: the ledger lives in `localStorage` and a shared classroom
+     * device can lose it. Derived, never authored, so it can always be
+     * recomputed from the observation rows and can never disagree with them.
+     */
+    constructStates?: CrearConstructState[];
+  }
+): Promise<void> {
+  const result = {
+    ...(input.studyId ? { studyId: input.studyId } : {}),
+    ...(typeof input.retestDueAt === 'number' ? { retestDueAt: input.retestDueAt } : {}),
+    ...(input.constructStates?.length ? { constructStates: input.constructStates } : {}),
+  };
   await trackEvent('taller_completado', {
     tallerId: input.tallerId,
     pasoId: input.pasoId,
-    result: input.studyId ? { studyId: input.studyId } : undefined,
+    result: Object.keys(result).length > 0 ? result : undefined,
     checksum: input.checksum,
   });
 }

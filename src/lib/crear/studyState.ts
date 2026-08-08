@@ -103,6 +103,11 @@ function isLearningObservation(value: unknown): value is CrearLearningObservatio
     (value.condition === 'supported' || value.condition === 'independent') &&
     (value.novelty === 'same_case' || value.novelty === 'new_case') &&
     (value.timing === 'immediate' || value.timing === 'delayed') &&
+    (value.cueFrame === undefined ||
+      value.cueFrame === 'physical_trace' ||
+      value.cueFrame === 'presence_unobserved' ||
+      value.cueFrame === 'absence_elsewhere') &&
+    (value.evidentiary === undefined || typeof value.evidentiary === 'boolean') &&
     typeof value.stepId === 'string' &&
     typeof value.branch === 'string' &&
     typeof value.correct === 'boolean' &&

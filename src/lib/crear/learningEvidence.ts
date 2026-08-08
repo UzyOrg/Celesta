@@ -1,4 +1,5 @@
 import type {
+  CrearCueFrame,
   CrearLearningObservation,
   CrearLearningOpportunity,
 } from './types';
@@ -11,6 +12,12 @@ interface BuildCrearLearningObservationsInput {
   assisted: boolean;
   attempt: number;
   statementId?: string;
+  /**
+   * Per-item frame, for steps that probe several. It overrides the step-level
+   * frame so a three-clue map records what each clue actually was instead of
+   * one label smeared across all three.
+   */
+  cueFrame?: CrearCueFrame;
   recordedAt?: number;
 }
 
@@ -26,6 +33,7 @@ export function buildCrearLearningObservations(
 
   const recordedAt = input.recordedAt ?? Date.now();
   const opportunity = input.opportunity;
+  const cueFrame = input.cueFrame ?? opportunity.cueFrame;
   return opportunity.constructs.map((construct) => ({
     ...opportunity,
     constructs: [construct],
@@ -35,6 +43,7 @@ export function buildCrearLearningObservations(
     assisted: input.assisted,
     attempt: input.attempt,
     recordedAt,
+    ...(cueFrame ? { cueFrame } : {}),
     ...(input.statementId ? { statementId: input.statementId } : {}),
   }));
 }

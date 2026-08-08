@@ -7,8 +7,9 @@ import {
   type PanInfo,
 } from 'framer-motion';
 import { ArrowRight, Languages, Loader2 } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { seededShuffle } from '@/lib/crear/shuffle';
 import {
   CREAR_MAX_ANSWER_LENGTH,
   type CrearCertaintyMap,
@@ -23,6 +24,15 @@ interface CinematicCertaintyMapProps {
   config: CrearCertaintyMap;
   pending: boolean;
   assisted: boolean;
+  /**
+   * True only once the consultable guide has been opened on this step. Unlike
+   * `assisted`, it does not turn on because a *different* clue was retried, so
+   * it can be attributed to every clue answered after it without lying about
+   * the ones before.
+   */
+  guideAssisted?: boolean;
+  /** Seeds the per-learner statement order; stable for the life of a study. */
+  orderSeed?: string;
   onAssistance: (
     reason: 'map_retry' | 'translation_opened',
     statementId?: string
@@ -78,6 +88,8 @@ export function CinematicCertaintyMap({
   config,
   pending,
   assisted,
+  guideAssisted = false,
+  orderSeed = '',
   onAssistance,
   onAttempt,
   onSubmit,
@@ -105,12 +117,39 @@ export function CinematicCertaintyMap({
   const assistedStatementIdsRef = useRef<Set<string>>(new Set());
   const translatedStatementIdsRef = useRef<Set<string>>(new Set());
 
-  const activeStatement = config.statements[activeIndex] ?? config.statements[0];
+  /**
+   * Clues rotate per learner; the three terms in the bank never do. The bank
+   * reads as a strength scale — MUST HAVE, MIGHT HAVE, CAN'T HAVE — and that
+   * ordering is part of the teaching. The authored clue order was what made
+   * the correct answers run diagonally down the bank, so that is what moves.
+   */
+  const statements = useMemo(
+    () => seededShuffle(config.statements, `${orderSeed}:${config.statements.map((item) => item.id).join('-')}`),
+    [config.statements, orderSeed]
+  );
+  const shownOrder = useMemo(() => statements.map((statement) => statement.id), [statements]);
+  const activeStatement = statements[activeIndex] ?? statements[0];
   const selectedCategory = activeStatement ? assignments[activeStatement.id] : undefined;
   const selectedTerm = config.categories.find(
     (category) => category.id === selectedCategory
   )?.term;
+  /**
+   * Step-level assistance, reported once with the finished map. It is a fair
+   * summary of the step and a bad summary of any single clue, which is why the
+   * per-clue flag below exists separately.
+   */
   const effectiveAssistance = assisted || hadIncorrectMap;
+  /**
+   * Assistance attributable to *this* clue. A retry or a translation on clue 1
+   * says nothing about clue 3; the guide does, because it stays read.
+   */
+  function statementAssistance(statementId: string): boolean {
+    return (
+      guideAssisted ||
+      assistedStatementIdsRef.current.has(statementId) ||
+      translatedStatementIdsRef.current.has(statementId)
+    );
+  }
   const currentNeedsCorrection = activeStatement
     ? wrongStatementIds.includes(activeStatement.id)
     : false;
@@ -255,7 +294,9 @@ export function CinematicCertaintyMap({
       correct,
       attempt: nextAttempt,
       assignments,
-      assisted: effectiveAssistance,
+      assisted: statementAssistance(activeStatement.id),
+      ...(activeStatement.cueFrame ? { cueFrame: activeStatement.cueFrame } : {}),
+      shownOrder,
       latencyMs: activeStatementStartedAtRef.current === null
         ? undefined
         : Math.max(0, Date.now() - activeStatementStartedAtRef.current),
@@ -271,7 +312,7 @@ export function CinematicCertaintyMap({
       return;
     }
 
-    if (activeIndex < config.statements.length - 1) {
+    if (activeIndex < statements.length - 1) {
       setWrongStatementIds([]);
       setTranslationOpenId(null);
       setActiveIndex((current) => current + 1);
@@ -353,14 +394,14 @@ export function CinematicCertaintyMap({
     <section className={styles.certaintyMap} data-phase="match" aria-busy={pending}>
       {/* A single-item map needs no position: "Pista 1 de 1" and a lone dot
         * are extraneous load, not orientation. */}
-      {config.statements.length > 1 ? (
+      {statements.length > 1 ? (
         <>
           <div className={styles.mapInstruction}>
-            <p>Pista {activeIndex + 1} de {config.statements.length}</p>
+            <p>Pista {activeIndex + 1} de {statements.length}</p>
           </div>
 
           <div className={styles.mapProgress} aria-hidden="true">
-            {config.statements.map((statement, index) => (
+            {statements.map((statement, index) => (
               <span
                 data-state={
                   assignments[statement.id]
@@ -381,6 +422,8 @@ export function CinematicCertaintyMap({
             <motion.article
               className={styles.mapQuestion}
               data-error={currentNeedsCorrection ? 'true' : 'false'}
+              data-testid="certainty-map-question"
+              data-statement-id={activeStatement.id}
               key={activeStatement.id}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -572,7 +615,7 @@ export function CinematicCertaintyMap({
             onClick={continueMap}
           >
             <span>
-              {activeIndex < config.statements.length - 1 ? 'Siguiente' : 'Comprobar'}
+              {activeIndex < statements.length - 1 ? 'Siguiente' : 'Comprobar'}
             </span>
             <ArrowRight size={18} />
           </button>

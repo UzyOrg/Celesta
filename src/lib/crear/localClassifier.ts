@@ -12,7 +12,7 @@ const CATEGORY_SIGNALS: Record<CrearResponseCategory, string[]> = {
   imposible: ["can't have", 'cannot have', "couldn't have", 'could not have'],
 };
 
-function normalizeText(text: string): string {
+export function normalizeText(text: string): string {
   return text
     .toLowerCase()
     .normalize('NFD')
@@ -22,9 +22,25 @@ function normalizeText(text: string): string {
     .trim();
 }
 
+/**
+ * Signals match whole tokens, never raw substrings.
+ *
+ * With plain `includes`, the subject group `["nora","she","he","they"]` was
+ * satisfied by any sentence containing *the* \u2014 "he" sits inside it \u2014 so a
+ * deduction about the wrong person scored `correcto`, and the subject was
+ * never actually verified. Padding both sides with a space makes every signal
+ * a token-boundary phrase match. Contractions survive it: `normalizeText`
+ * turns `can't have` into `can t have` on both sides of the comparison.
+ */
+export function containsSignal(normalized: string, signal: string): boolean {
+  const phrase = normalizeText(signal);
+  if (!phrase) return false;
+  return ` ${normalized} `.includes(` ${phrase} `);
+}
+
 function scoreBranch(text: string, branch: CrearClassifierBranch): number {
   const normalized = normalizeText(text);
-  const includesSignal = (signal: string) => normalized.includes(normalizeText(signal));
+  const includesSignal = (signal: string) => containsSignal(normalized, signal);
   const match = branch.match;
 
   if (match?.none?.some(includesSignal)) return 0;
@@ -47,13 +63,13 @@ function scoreBranch(text: string, branch: CrearClassifierBranch): number {
   if (signals.length === 0) return score;
   for (const signal of signals) {
     if (!signal) continue;
-    if (normalized.includes(signal)) {
+    if (containsSignal(normalized, signal)) {
       score += signal.split(' ').length > 1 ? 2 : 1;
       continue;
     }
 
     const tokens = signal.split(' ').filter((token) => token.length >= 4);
-    const hits = tokens.filter((token) => normalized.includes(token)).length;
+    const hits = tokens.filter((token) => containsSignal(normalized, token)).length;
     if (tokens.length > 0) score += hits / tokens.length;
   }
 
@@ -80,7 +96,7 @@ export function classifyCrearResponseStructure(
       CrearResponseCategory,
       string[],
     ]>).filter(([, signals]) =>
-      signals.some((signal) => normalized.includes(normalizeText(signal)))
+      signals.some((signal) => containsSignal(normalized, signal))
     );
 
     return detected.length > 0 && (
