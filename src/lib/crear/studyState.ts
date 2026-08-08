@@ -27,6 +27,15 @@ export interface CrearStudyState {
   studyId: string;
   lessonId: CrearLessonId;
   contentVersion: string;
+  /**
+   * The token the study was born under. It is remembered rather than re-read
+   * from the URL on every load, because a learner who returns to a bare
+   * `/crear` would otherwise keep the same progress under a brand new session
+   * id — the same study, reported as two different people. Sticky here, and a
+   * link that carries a genuinely different token starts a new study instead of
+   * splitting one across two identities.
+   */
+  classToken?: string;
   startedAt: number;
   updatedAt: number;
   phase: CrearStudyPhase;
@@ -152,6 +161,8 @@ export function loadCrearStudyState(lessonId: CrearLessonId): CrearStudyState | 
       parsed.studyId.length === 0 ||
       typeof parsed.contentVersion !== 'string' ||
       parsed.contentVersion.length === 0 ||
+      (parsed.classToken !== undefined &&
+        (typeof parsed.classToken !== 'string' || parsed.classToken.length === 0)) ||
       !isFiniteTimestamp(parsed.startedAt) ||
       !isFiniteTimestamp(parsed.updatedAt) ||
       !isStudyPhase(parsed.phase) ||
@@ -173,6 +184,7 @@ export function loadCrearStudyState(lessonId: CrearLessonId): CrearStudyState | 
       studyId: parsed.studyId,
       lessonId,
       contentVersion: parsed.contentVersion,
+      ...(parsed.classToken === undefined ? {} : { classToken: parsed.classToken }),
       startedAt: parsed.startedAt,
       updatedAt: parsed.updatedAt,
       phase: parsed.phase,
@@ -193,18 +205,29 @@ export function loadCrearStudyState(lessonId: CrearLessonId): CrearStudyState | 
   }
 }
 
+/**
+ * `classToken` participates in the identity of a study, not just its metadata.
+ * Evidence collected under one token and continued under another describes one
+ * learner but ships as two, so a token change starts a clean study rather than
+ * splitting the ledger. Nothing is lost server-side: the earlier rows were
+ * already delivered under the earlier token.
+ */
 export function getOrCreateCrearStudyState(
   lessonId: CrearLessonId,
-  contentVersion: string
+  contentVersion: string,
+  classToken?: string
 ): CrearStudyState {
   const existing = loadCrearStudyState(lessonId);
-  if (existing?.contentVersion === contentVersion) return existing;
+  if (existing?.contentVersion === contentVersion && existing.classToken === classToken) {
+    return existing;
+  }
 
   const now = Date.now();
   const state: CrearStudyState = {
     studyId: makeStudyId(),
     lessonId,
     contentVersion,
+    ...(classToken === undefined ? {} : { classToken }),
     startedAt: now,
     updatedAt: now,
     phase: 'initial',
