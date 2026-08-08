@@ -589,6 +589,13 @@ export function CinematicEnglishPlayer() {
   const [lesson, setLesson] = useState<CrearWorkshop | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [sessionId, setSessionId] = useState<string | null>(null);
+  /**
+   * Read once from the entry link. Every teacher-facing read of the event table
+   * filters on `class_token`, so without it the rows are written and nothing in
+   * the product can retrieve them. Optional on purpose: an open `/crear` still
+   * runs and still records, it just records anonymously. See `docs/adr/0008`.
+   */
+  const [classToken, setClassToken] = useState<string | undefined>(undefined);
   const [study, setStudy] = useState<CrearStudyState | null>(null);
   const [loading, setLoading] = useState(true);
   const [pending, setPending] = useState(false);
@@ -684,7 +691,18 @@ export function CinematicEnglishPlayer() {
       setError(null);
       try {
         const loaded = await loadCrearLesson(DEFAULT_CREAR_LESSON_ID);
-        const sid = getOrCreateSessionId();
+        /**
+         * `?t=` matches the join link the rest of the product already uses;
+         * `?token=` is accepted because that is what the teacher export calls
+         * the same value. Both are trimmed to a sane length so a junk query
+         * string cannot become a class token.
+         */
+        const params = new URLSearchParams(window.location.search);
+        const rawToken = (params.get('t') ?? params.get('token') ?? '').trim();
+        const token = rawToken.length > 0 && rawToken.length <= 64 ? rawToken : undefined;
+        setClassToken(token);
+        // Keyed by token, so two classes on one device do not share a session.
+        const sid = getOrCreateSessionId(token);
         let nextStudy = getOrCreateCrearStudyState(
           DEFAULT_CREAR_LESSON_ID,
           loaded.content_version ?? 'dev'
@@ -786,6 +804,7 @@ export function CinematicEnglishPlayer() {
 
         if (firstStep && nextStudy.phase !== 'completed') {
           void trackCrearStart({
+            classToken: token,
             tallerId: loaded.id_taller,
             pasoId: getStepId(firstStep),
             checksum: loaded.checksum,
@@ -910,6 +929,7 @@ export function CinematicEnglishPlayer() {
     completionReportedRef.current = reportKey;
     persistStudy({ completionReported: true });
     void trackCrearComplete({
+      classToken,
       tallerId: lesson.id_taller,
       pasoId: getStepId(lesson.pasos[study.stepIndex] ?? lesson.pasos[lesson.pasos.length - 1]!),
       checksum: lesson.checksum,
@@ -1040,11 +1060,15 @@ export function CinematicEnglishPlayer() {
   }
 
   /**
-   * The completion event is emitted by an effect, not from here. The final
-   * measured step has `revealFeedback: false`, so `advance` runs in the same
-   * tick as `persistAttempt` and `study` still holds the ledger from before the
-   * last observation. Reporting from here would drop the day 7 row from the
-   * projection every single time.
+   * The completion event is emitted by the effect above, not from here, so the
+   * projection is always computed from a settled ledger.
+   *
+   * In lesson 1.17.0 reporting from here would also work: the last measured
+   * step reveals feedback, so `advance` runs a tick after `persistAttempt`.
+   * That is a property of the authored JSON, not of this code — the day it is
+   * authored with `revealFeedback: false`, `advance` would run in the same tick
+   * and the final observation would be missing from every projection, silently.
+   * The effect makes that unauthorable rather than merely unlikely.
    */
   function completeLesson() {
     if (!lesson || !sessionId || !study) return;
@@ -1058,6 +1082,7 @@ export function CinematicEnglishPlayer() {
     if (!lesson || !study) return;
 
     void trackCrearStepComplete({
+      classToken,
       tallerId: lesson.id_taller,
       pasoId: getStepId(step),
       checksum: lesson.checksum,
@@ -1181,6 +1206,7 @@ export function CinematicEnglishPlayer() {
     if (!lesson || !study) return;
     const opportunity = step.crear?.learningOpportunity;
     void trackCrearAnswer({
+      classToken,
       tallerId: lesson.id_taller,
       pasoId: getStepId(step),
       fase: step.crear?.fase ?? 'practica',
@@ -1327,6 +1353,7 @@ export function CinematicEnglishPlayer() {
 
       if (branch?.pista) {
         void trackCrearHint({
+          classToken,
           tallerId: lesson.id_taller,
           pasoId: getStepId(currentStep),
           rama: classification.rama,
@@ -1404,6 +1431,7 @@ export function CinematicEnglishPlayer() {
 
     if (retry) {
       void trackCrearHint({
+        classToken,
         tallerId: lesson.id_taller,
         pasoId: getStepId(currentStep),
         rama: branchId,
@@ -1685,6 +1713,7 @@ export function CinematicEnglishPlayer() {
       });
     }
     void trackCrearHint({
+      classToken,
       tallerId: lesson.id_taller,
       pasoId: stepId,
       rama: reason,
@@ -1729,6 +1758,7 @@ export function CinematicEnglishPlayer() {
   async function confirmExit() {
     if (lesson && currentStep && study) {
       await trackCrearAbandon({
+        classToken,
         tallerId: lesson.id_taller,
         pasoId: getStepId(currentStep),
         checksum: lesson.checksum,

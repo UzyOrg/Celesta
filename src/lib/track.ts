@@ -222,10 +222,74 @@ export async function trackEvent(
   }
 }
 
+/**
+ * Last-chance delivery when the page goes away.
+ *
+ * Events are written to IndexedDB first and flushed 350ms later, so closing the
+ * tab right after the final answer leaves them queued. They would ship on the
+ * learner's next visit — except the last event of the study is `taller_completado`,
+ * and after that there is no next visit. `sendBeacon` is the only transport the
+ * browser guarantees during unload; a `fetch` here is cancelled with the page.
+ *
+ * The queue is not cleared on success: `sendBeacon` reports that the payload was
+ * handed to the browser, never that the server accepted it. `client_event_id`
+ * makes the duplicate harmless, and a dropped final event would not be.
+ */
+const beaconed = new Set<string>();
+
+async function beaconFlush(): Promise<void> {
+  if (typeof navigator === 'undefined' || typeof navigator.sendBeacon !== 'function') return;
+  const entries = await idbGetAllEntries<LearningEvent>('events');
+  /**
+   * Only what this page has not already beaconed. `visibilitychange` fires
+   * every time the learner switches apps, and re-sending the whole queue on
+   * each one turns a phone that gets backgrounded ten times into ten full
+   * resends. The set is per page load, so a genuine unload after a reload
+   * still re-sends — which is the safe direction.
+   */
+  const pending = entries
+    .map((entry) => entry.value)
+    .filter((event) => !beaconed.has(event.client_event_id));
+  if (pending.length === 0) return;
+
+  // Same 60KB ceiling the normal path uses; sendBeacon also caps the payload.
+  const MAX_BYTES = 60 * 1024;
+  const send = (batch: LearningEvent[]) => {
+    if (batch.length === 0) return;
+    if (navigator.sendBeacon('/api/events/ingest', JSON.stringify({ events: batch }))) {
+      batch.forEach((event) => beaconed.add(event.client_event_id));
+    }
+  };
+
+  let batch: LearningEvent[] = [];
+  for (const event of pending) {
+    const tentative = [...batch, event];
+    if (new Blob([JSON.stringify({ events: tentative })]).size > MAX_BYTES) {
+      send(batch);
+      batch = [event];
+    } else {
+      batch = tentative;
+    }
+  }
+  send(batch);
+}
+
 export function initTracking() {
   if (typeof window === 'undefined') return;
   window.addEventListener('online', () => {
     scheduleQueueFlush();
+  });
+  /**
+   * `pagehide` fires on tab close, navigation and backgrounding on iOS, where
+   * `beforeunload` is unreliable. `visibilitychange` covers the phone being
+   * locked or the app switched away — the ordinary way a classroom session
+   * ends.
+   */
+  window.addEventListener('pagehide', () => {
+    void beaconFlush();
+  });
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') void beaconFlush();
   });
   // Attempt flush on init
   scheduleQueueFlush();

@@ -77,9 +77,25 @@ razón que `retestDueAt` (ADR 0003 §telemetría): el ledger vive en
 que siempre puede recomputarse desde las filas y nunca puede contradecirlas.
 
 La emisión se movió de `completeLesson` a un efecto sobre `phase === 'completed'`.
-El último paso medido lleva `revealFeedback: false`, así que `advance` corre en
-el mismo tick que `persistAttempt` y el `study` del closure todavía no contenía
-la última observación: reportar desde ahí **perdía la fila del día 7 siempre**.
+
+> **Corrección (2026-08-07).** La primera versión de este ADR afirmaba que
+> reportar desde `completeLesson` *"perdía la fila del día 7 siempre"*. Es
+> falso, y se comprobó ejecutando la lección completa con la emisión anterior:
+> la proyección salía íntegra. `retest-production` **sí** revela feedback, así
+> que `advance` corre al descartar el diálogo, un tick después de
+> `persistAttempt`, con `study` ya asentado.
+>
+> La razón real para conservar el efecto es distinta y más débil, pero válida:
+> el acoplamiento existiría en cuanto un paso final se autorara con
+> `revealFeedback: false`, y el efecto lo vuelve imposible por construcción en
+> vez de depender de una propiedad del JSON que nadie está obligado a mantener.
+> Mismo criterio fail-closed que el resto del esquema.
+>
+> El bug que sí era real apareció después, en la revisión del PR: el guard vivía
+> en un `useRef`, que se reinicia en cada montaje. Un alumno que reabría
+> `/crear` tras terminar emitía un `taller_completado` nuevo **en cada carga**,
+> porque `phase` ya venía `completed` desde `localStorage`. Se corrigió
+> persistiendo `completionReported` en el estudio (commit `2bf0022`).
 
 ## Sobre `errorShape`
 
