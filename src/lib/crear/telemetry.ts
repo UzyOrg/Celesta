@@ -42,6 +42,7 @@ interface TrackCrearAnswerInput {
   baselineGate?: CrearBaselineGate;
   shownOrder?: string[];
   learningOpportunity?: CrearLearningOpportunity;
+  classToken?: string;
 }
 
 type TrackCrearAnswerPayload = TrackCrearAnswerInput & TrackCrearProductionReading;
@@ -51,6 +52,12 @@ interface TrackCrearStepInput {
   pasoId: string;
   checksum?: string;
   studyId?: string;
+  /**
+   * Without it `class_token` lands null, and every teacher-facing read filters
+   * on that column — the rows exist and nothing can retrieve them. See
+   * `docs/adr/0008`.
+   */
+  classToken?: string;
 }
 
 export async function trackCrearAnswer(input: TrackCrearAnswerPayload): Promise<void> {
@@ -157,6 +164,7 @@ export async function trackCrearAnswer(input: TrackCrearAnswerPayload): Promise<
     pasoId: input.pasoId,
     result,
     checksum: input.checksum,
+    classToken: input.classToken,
   });
 }
 
@@ -166,6 +174,7 @@ export async function trackCrearStart(input: TrackCrearStepInput): Promise<void>
     pasoId: input.pasoId,
     result: input.studyId ? { studyId: input.studyId } : undefined,
     checksum: input.checksum,
+    classToken: input.classToken,
   });
 }
 
@@ -175,6 +184,7 @@ export async function trackCrearStepComplete(input: TrackCrearStepInput): Promis
     pasoId: input.pasoId,
     result: input.studyId ? { studyId: input.studyId } : undefined,
     checksum: input.checksum,
+    classToken: input.classToken,
   });
 }
 
@@ -197,6 +207,7 @@ export async function trackCrearHint(
       ...(input.studyId ? { studyId: input.studyId } : {}),
     },
     checksum: input.checksum,
+    classToken: input.classToken,
   });
 }
 
@@ -227,6 +238,7 @@ export async function trackCrearComplete(
     pasoId: input.pasoId,
     result: Object.keys(result).length > 0 ? result : undefined,
     checksum: input.checksum,
+    classToken: input.classToken,
   });
 }
 
@@ -236,5 +248,6 @@ export async function trackCrearAbandon(input: TrackCrearStepInput): Promise<voi
     pasoId: input.pasoId,
     result: input.studyId ? { studyId: input.studyId } : undefined,
     checksum: input.checksum,
+    classToken: input.classToken,
   });
 }
