@@ -70,8 +70,8 @@
 .clue,
 .completeNote {
   color: var(--color-ink-soft);
-  font-size: clamp(var(--text-base), 4.2vw, var(--text-md));
-  line-height: 1.55;
+  font-size: var(--text-sm);
+  line-height: 1.5;
   margin: 0;
   max-width: 45ch;
 }

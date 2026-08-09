@@ -158,7 +158,7 @@ export function CinematicBaselineProduction({
             <div className={styles.actions}>
               {blocked && !pending ? (
                 <p className={styles.actionHint} id="celestea-baseline-hint">
-                  {config.blockedHint ?? `Si no te sale, elige “${config.gateNoLabel}”.`}
+                  {config.blockedHint ?? `${config.gateNoLabel}, también es una respuesta.`}
                 </p>
               ) : null}
               <button

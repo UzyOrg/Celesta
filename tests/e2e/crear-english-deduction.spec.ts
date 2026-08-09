@@ -34,7 +34,7 @@ const PRECHECK_WRONG_ANSWERS: Record<string, string> = {
 
 const PRECHECK_CLUES: Record<string, string> = {
   sofia: 'Sofía tenía pintura azul fresca en las manos. El cartel tenía la misma pintura.',
-  tadeo: 'Tadeo se quedó en la biblioteca a la hora de la salida. Nadie vio qué estaba haciendo.',
+  tadeo: 'Tadeo se quedó en la biblioteca, donde estaba el cartel, a la hora de la salida. Nadie vio qué estaba haciendo.',
   renata: 'Renata estaba en otro plantel cuando cambiaron el cartel.',
 };
 
@@ -110,7 +110,7 @@ async function activeId(
 const GATE_PROMPT = '¿Podrías escribir en inglés qué tan seguro es que Camila haya sido quien lo borró?';
 const ATTEMPT_PROMPT = 'Inténtalo como puedas.';
 const ATTEMPT_PROMPT_NO = 'Inténtalo como puedas. Esto no se califica.';
-const BLOCKED_HINT = 'Si no te sale, elige “Todavía no”. También es una respuesta.';
+const BLOCKED_HINT = 'Todavía no, también es una respuesta.';
 const NORA_FRAME = 'Es … que Nora haya trabajado en la maqueta.';
 /**
  * Day 7 is a parallel form of day 1, not a different question. It changes the
@@ -368,6 +368,7 @@ test('Hallmark arrival reads as one quiet cinematic task across mobile widths', 
     name: 'El cartel cambió antes de la feria.',
     exact: true,
   });
+  expect(await title.evaluate((element) => getComputedStyle(element).textWrap)).toBe('wrap');
   const titleBox = await title.boundingBox();
   expect(titleBox?.height).toBeLessThanOrEqual(70);
 
@@ -429,17 +430,23 @@ test('precheck captures three neutral certainty decisions before the explanation
   await page.setViewportSize({ width: 375, height: 812 });
   await page.goto('/crear');
 
-  await expect(page.getByRole('heading', {
-    name: 'Son tres decisiones rápidas antes de ver cómo expresarlo en inglés.',
+  const precheckTitle = page.getByRole('heading', {
+    name: '¿Quién modificó el cartel?',
     exact: true,
-  })).toBeVisible();
-  expect(await page.getByRole('heading', {
-    name: 'Son tres decisiones rápidas antes de ver cómo expresarlo en inglés.',
-    exact: true,
-  }).evaluate((element) => getComputedStyle(element).fontSize)).toBe('22px');
+  });
+  await expect(precheckTitle).toBeVisible();
+  expect(await precheckTitle.evaluate((element) => getComputedStyle(element).fontSize)).toBe('28px');
+  const precheckSubtitle = page.getByText(
+    'Son tres decisiones rápidas antes de ver cómo expresarlo en inglés.',
+    { exact: true }
+  );
+  await expect(precheckSubtitle).toBeVisible();
+  expect(await precheckSubtitle.evaluate((element) => getComputedStyle(element).fontSize)).toBe('14px');
   await expect(page.getByText('Decide solo con la pista', { exact: true })).toHaveCount(0);
   const firstItemId = await activeId(page, 'precheck-item', 'data-item-id');
-  await expect(page.getByText(PRECHECK_CLUES[firstItemId]!, { exact: true })).toBeVisible();
+  const precheckClue = page.getByText(PRECHECK_CLUES[firstItemId]!, { exact: true });
+  await expect(precheckClue).toBeVisible();
+  expect(await precheckClue.evaluate((element) => getComputedStyle(element).fontSize)).toBe('14px');
   await expect(page.getByText('MUST HAVE', { exact: true })).toHaveCount(0);
   await expect(page.getByText('MIGHT HAVE', { exact: true })).toHaveCount(0);
   await expect(page.getByText("CAN'T HAVE", { exact: true })).toHaveCount(0);
@@ -1228,7 +1235,7 @@ test('a day 7 link cannot skip a learner into a retest they have not earned', as
   await expect(page.getByRole('heading', { name: 'Una semana después.', exact: true }))
     .toHaveCount(0);
   await expect(page.getByRole('heading', {
-    name: 'Son tres decisiones rápidas antes de ver cómo expresarlo en inglés.',
+    name: '¿Quién modificó el cartel?',
     exact: true,
   })).toBeVisible();
   const state = await page.evaluate((lessonId) =>
@@ -1809,7 +1816,7 @@ test('a day 7 link opens the retest even after local state is lost', async ({ pa
   expect(state.retestDueAt).toBeUndefined();
 });
 
-test('lesson 1.17.0 measures production before instruction and declares every guide contract', async () => {
+test('lesson 1.17.1 measures production before instruction and declares every guide contract', async () => {
   const lessonPath = path.join(process.cwd(), 'public/workshops', `${LESSON_ID}.json`);
   const lesson = JSON.parse(fs.readFileSync(lessonPath, 'utf8')) as {
     version: string;
@@ -1845,7 +1852,7 @@ test('lesson 1.17.0 measures production before instruction and declares every gu
   };
   const stepBy = (refId: string) => lesson.pasos.find((step) => step.ref_id === refId);
 
-  expect(lesson.version).toBe('1.17.0');
+  expect(lesson.version).toBe('1.17.1');
   expect(lesson.content_version).toBe(CONTENT_VERSION);
   // Nothing was re-rendered in the voice layer, so both versions stay pinned
   // together. If they ever diverge, `audioAssetsReady` mutes every scene.

@@ -28,6 +28,7 @@ Celestea is a **voice-first, AI-native learning companion** for Mexican high-sch
 4. **Mobile-first, local-first, offline-tolerant.** Assume low-end Android over flaky networks.
 5. Motion must clarify state, progression, or feedback. Use smooth `framer-motion` transitions, respect reduced motion, and avoid animation that delays comprehension.
 6. Icons from `lucide-react`; accessibility always. Primary actions belong in the mobile thumb zone. Narration must remain available to assistive technology and have a visible fallback when audio fails.
+7. **Typography:** [`docs/design-system/typography.md`](docs/design-system/typography.md) is the canonical type contract for active product surfaces. Use the existing Celestea type tokens by semantic role; do not add raw, one-off font sizes or fluid typography for readable lesson copy without updating that contract.
 
 ## 2. THE LEARNING EXPERIENCE (voice-first)
 - The companion **speaks** (TTS); the student responds. **v1 = TTS output is core; student input is TEXT.** Voice input (STT / Whisper) is a **flagged fast-follow**, NOT required for v1 — keep the voice layer thin to validate the pedagogy fast and cheap.
