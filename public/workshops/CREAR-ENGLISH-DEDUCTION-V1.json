@@ -71,8 +71,8 @@
         "scene": "precheck",
         "display": {
           "eyebrow": "",
-          "headline": "Son tres decisiones rápidas antes de ver cómo expresarlo en inglés.",
-          "body": "Aquí no se califica nada: es tu lectura antes de ver la explicación."
+          "headline": "¿Quién modificó el cartel?",
+          "body": "Son tres decisiones rápidas antes de ver cómo expresarlo en inglés."
         },
         "input": "choice",
         "guideAvailable": false,
@@ -99,7 +99,7 @@
             },
             {
               "id": "tadeo",
-              "clue": "Tadeo se quedó en la biblioteca a la hora de la salida. Nadie vio qué estaba haciendo.",
+              "clue": "Tadeo se quedó en la biblioteca, donde estaba el cartel, a la hora de la salida. Nadie vio qué estaba haciendo.",
               "prompt": "Sobre Tadeo, dirías que…",
               "correctCategory": "posible",
               "cueFrame": "presence_unobserved"
