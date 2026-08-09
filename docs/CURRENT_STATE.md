@@ -1,6 +1,6 @@
 # Celestea · Current State
 
-Last updated: 2026-08-07
+Last updated: 2026-08-09
 
 This is a compact handoff for a fresh Codex task. It records the current
 checkpoint, not permanent repository policy. Read `AGENTS.md` first; it wins
@@ -28,7 +28,7 @@ completion, surveillance, streaks, or decorative gamification.
 Route: `/crear`
 
 Lesson: `CREAR-ENGLISH-DEDUCTION-V1`, content/audio version
-`2026-08-07-medicion-separada`, lesson version `1.17.0`.
+`2026-08-07-medicion-separada`, lesson version `1.17.1`.
 
 Content and audio versions must stay identical. `audioAssetsReady` in
 `CinematicEnglishPlayer.tsx` compares them and disables the entire voice layer
@@ -47,12 +47,20 @@ partition. See `docs/adr/0003-sincronizacion-audio-copy-y-documentos.md`,
 `docs/adr/0005-el-gate-compromete-la-certeza-la-pone-el-alumno.md` and
 `docs/adr/0006-medir-forma-y-certeza-por-separado.md`.
 
+Lesson 1.17.1 makes a presentation-only polish: the baseline helper now reads
+*“Todavía no, también es una respuesta.”*, title wrapping is natural rather
+than balanced, and active `/crear` type roles use the documented token scale.
+No narration script or measurement construct changed, so `content_version` and
+`audio_asset_version` remain pinned together at `2026-08-07-medicion-separada`
+under ADR 0003; the pilot cohort stays in one local-state partition.
+
 The current session contains:
 
 - a direct Spanish orientation that frames one concrete challenge: discover
   who may have worked on the poster and explain it in English;
-- a one-line precheck promise in a 22 px heading; the secondary instruction
-  was removed so the learner sees the three decisions without duplicate copy;
+- a precheck with a 28 px screen title, 14 px supporting copy and short clues,
+  an 18 px question, and 16 px controls before instruction; the hierarchy is
+  lighter without making the decision controls harder to read;
 - a neutral, Spanish three-touch pre-check before instruction: one visible
   school clue at a time, three certainty choices, no English modal labels and
   no learner-facing correctness feedback; each touch records its answer and
@@ -294,6 +302,8 @@ large-text cases retain ordinary page scrolling as an accessibility fallback.
 - `src/lib/crear/learningEvidence.ts` — descriptive construct-level evidence
   observations.
 - `tokens.css` — active Celestea design tokens.
+- `docs/design-system/typography.md` — canonical type-scale roles and usage
+  rules for active product surfaces.
 - `tests/e2e/crear-english-deduction.spec.ts` — behavioral and responsive
   regression suite.
 - `.hallmark/audit-chalk-over-film-2026-08-01.md` — current design audit.
@@ -395,7 +405,8 @@ the production screens reuse the practice gap instead of ordering a translation,
 and the case breadcrumb is gone) and lesson 1.17.0 (the pre-pilot measurement
 audit: token-boundary matching and a verified subject, form scored apart from
 certainty, per-learner item order, a day 7 parallel form, and five smaller
-attribution fixes) are all applied on top of commit `c8046df` and are
+attribution fixes), plus lesson 1.17.1 (typography and helper-copy polish
+without a `content_version` bump) are all applied on top of commit `c8046df` and are
 uncommitted at this handoff. Their decisions are recorded as ADRs 0001–0006 in
 `docs/adr/`. ADR 0005 reverts ADR 0004 §1's *"the gate never blocks"* and
 §6.2's persistent rótulo, and corrects the copy ADR 0004 §4 considered settled.
@@ -410,14 +421,12 @@ the button that blocks, the bridge screen that already narrated the case change.
 Copy that explains the design is a signal the design is not yet communicating on
 its own.
 
-**Verified for 1.17.0 on the founder's machine:** `npm run typecheck`,
+**Verified for 1.17.1 in this checkout (2026-08-09):** `npm run typecheck`,
 `npm run lint:workshops` (the same six unrelated legacy warnings), and
 `npx playwright test tests/e2e/crear-english-deduction.spec.ts --project=mobile-chrome`
-at 32/32, plus `api-hardening.spec.ts` at 3/3. This covers what the 1.16.0
-handoff could not run. **Still owed before committing:** the manual 320×812 /
-375×812 walkthrough and the rendered Hallmark review — the retest screen carries
-a new `mural` artifact and new copy, and no automated check is a design
-sign-off.
+at 34/34. The rendered mobile review covers the arrival and pre-check at
+320×812 and 375×812, including the natural title wrap and the 28 / 14 / 16 px
+hierarchy; no horizontal overflow or hidden primary action appeared.
 
 The lesson 1.7 baseline is integrated into `main`. Commit `6c99754` preserves
 the founder-owned dirty state that already existed in the primary checkout;

@@ -1,6 +1,6 @@
 {
   "id_taller": "CREAR-ENGLISH-DEDUCTION-V1",
-  "version": "1.17.0",
+  "version": "1.17.1",
   "schema_version": "0.1",
   "content_version": "2026-08-07-medicion-separada",
   "audio_asset_version": "2026-08-07-medicion-separada",
@@ -157,7 +157,7 @@
           "attemptPromptNo": "Inténtalo como puedas. Esto no se califica.",
           "emptySubmitLabel": "Continuar sin escribir",
           "submitLabel": "Guardar y continuar",
-          "blockedHint": "Si no te sale, elige “Todavía no”. También es una respuesta."
+          "blockedHint": "Todavía no, también es una respuesta."
         },
         "productionTarget": {
           "category": "casi_seguro",
