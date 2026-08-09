@@ -7,6 +7,14 @@ export default defineConfig({
     timeout: 10_000,
   },
   reporter: [['list']],
+  /**
+   * Every worker shares one `next dev` server, and dev compiles per request. At
+   * three workers they queue behind each other: the suite takes 7.0m instead of
+   * 3.2m, and workers sit idle long enough that Playwright force-kills them at
+   * teardown — five-minute stalls and three spurious errors on a fully passing
+   * run. Serial is both faster and quiet here. Measured, not assumed.
+   */
+  workers: 1,
   use: {
     baseURL: 'http://127.0.0.1:3001',
     channel: process.env.PLAYWRIGHT_CHANNEL || 'chrome',

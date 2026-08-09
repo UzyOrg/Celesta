@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from 'react';
 import { getOrCreateSessionId } from '@/lib/session';
+import { setAliasInLocalStorage } from '@/lib/alias';
 import {
   loadWorkshopProgress,
   markWorkshopCompleted,
@@ -40,6 +41,7 @@ import {
 } from '@/lib/crear/stepHelpers';
 import {
   getOrCreateCrearStudyState,
+  loadCrearStudyState,
   saveCrearStudyState,
   type CrearStudyState,
 } from '@/lib/crear/studyState';
@@ -590,10 +592,11 @@ export function CinematicEnglishPlayer() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [sessionId, setSessionId] = useState<string | null>(null);
   /**
-   * Read once from the entry link. Every teacher-facing read of the event table
-   * filters on `class_token`, so without it the rows are written and nothing in
-   * the product can retrieve them. Optional on purpose: an open `/crear` still
-   * runs and still records, it just records anonymously. See `docs/adr/0008`.
+   * Resolved once at boot, from the entry link or from the study that already
+   * remembers it. Every teacher-facing read of the event table filters on
+   * `class_token`, so without it the rows are written and nothing in the
+   * product can retrieve them. Optional on purpose: an open `/crear` still runs
+   * and still records, it just records anonymously. See `docs/adr/0008`.
    */
   const [classToken, setClassToken] = useState<string | undefined>(undefined);
   const [study, setStudy] = useState<CrearStudyState | null>(null);
@@ -699,13 +702,39 @@ export function CinematicEnglishPlayer() {
          */
         const params = new URLSearchParams(window.location.search);
         const rawToken = (params.get('t') ?? params.get('token') ?? '').trim();
-        const token = rawToken.length > 0 && rawToken.length <= 64 ? rawToken : undefined;
+        const linkToken = rawToken.length > 0 && rawToken.length <= 64 ? rawToken : undefined;
+        /**
+         * A link without a token does not make the learner anonymous again. The
+         * study remembers the token it started under, so returning to a bare
+         * `/crear` keeps reporting under the same identity instead of opening a
+         * second one halfway through the evidence.
+         */
+        const priorStudy = loadCrearStudyState(DEFAULT_CREAR_LESSON_ID);
+        const token = linkToken ?? priorStudy?.classToken;
         setClassToken(token);
         // Keyed by token, so two classes on one device do not share a session.
         const sid = getOrCreateSessionId(token);
+
+        /**
+         * `?a=` names the learner. `class_token` says which cohort a row belongs
+         * to; without an alias the rows are attributable to a group and to
+         * nobody in particular, and `/crear` has no alias screen because the
+         * day 1 action budget (ADR 0001) will not pay for one. Written before
+         * the first event so `inicio_taller` is already attributed.
+         *
+         * localStorage is the whole integration: `trackEvent` reads it into
+         * `student_alias`, and `/api/events/ingest` upserts the roster row the
+         * teacher export joins on. Posting to `/api/roster/set-alias` from here
+         * would only duplicate that, at the cost of a network call on boot.
+         */
+        const rawAlias = (params.get('a') ?? params.get('alias') ?? '').trim();
+        const alias = rawAlias.length > 0 && rawAlias.length <= 64 ? rawAlias : undefined;
+        if (alias) setAliasInLocalStorage(token, alias);
+
         let nextStudy = getOrCreateCrearStudyState(
           DEFAULT_CREAR_LESSON_ID,
-          loaded.content_version ?? 'dev'
+          loaded.content_version ?? 'dev',
+          token
         );
 
         /**

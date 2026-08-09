@@ -81,20 +81,54 @@ aceptó encolar el payload, nunca que el servidor lo recibió. Con
 decisión que el alumno vea. La cohorte no se particiona y la congelación del ADR
 0006 sigue en pie.
 
-El piloto se convoca con enlaces con token:
+El piloto se convoca con un enlace por persona:
 
 ```
-https://<host>/crear?t=PILOTO-01
+https://<host>/crear?t=PILOTO-01&a=Uziel
 ```
 
-y el día 7 conserva su bypass, ahora acumulable: `/crear?t=PILOTO-01&retest=1`.
+y el día 7 conserva su bypass, acumulable: `/crear?t=PILOTO-01&retest=1`.
 
-Queda abierto, y es una decisión del fundador, no un olvido: **sin alias, las
-filas son atribuibles a una cohorte pero no a una persona.** `student_alias`
-sigue nulo en `/crear` porque el flujo de alias vive en `/join` y meterlo aquí
-costaría una pantalla antes del baseline —justo el presupuesto de acciones que
-el ADR 0001 protege. Con n≈5 y sesiones supervisadas, `actor_sid` más la hora
-bastan para reconstruir quién es quién. A la primera cohorte que no sea
-supervisada, esto deja de bastar.
+## Addendum (2026-08-08) · quién, no solo de qué grupo
+
+La primera versión dejaba abierto que **sin alias las filas son atribuibles a
+una cohorte pero no a una persona**, apostando a que con n≈5 supervisado
+`actor_sid` más la hora bastarían para reconstruir quién es quién. Al probarlo
+de verdad eso se cae: el evento llega con `student_alias` nulo y lo único
+identificable en la tabla es un UUID. Reconstruir a mano cinco identidades
+contra relojes no es un método, es una anécdota.
+
+**`?a=` nombra al alumno.** Se escribe en `localStorage` antes del primer
+evento, así que hasta `inicio_taller` sale atribuido. Ahí termina la
+integración: `trackEvent` ya lo lee a la columna `student_alias`, y
+`/api/events/ingest` ya hace upsert de la fila de roster contra la que el export
+del profesor hace join. Se descartó llamar a `/api/roster/set-alias` desde
+`/crear`: duplicaría exactamente ese upsert a cambio de una llamada de red en el
+arranque.
+
+No se añade pantalla de alias. El presupuesto de acciones del día 1 (ADR 0001)
+no la paga, y el nombre ya lo conoce quien reparte los enlaces.
+
+Contrapartida que el fundador debe conocer: **el nombre viaja en la URL**, así
+que queda en el historial del navegador y en los access logs del hosting. Para
+un piloto supervisado de cinco personas es un intercambio razonable; para una
+cohorte abierta, no.
+
+## El tercer hueco: una identidad por estudio
+
+`class_token` keyea la sesión (`celesta:sid:<token>`), pero el estudio se
+guardaba bajo `celesta:crear:study:<lessonId>`, sin token. Las dos claves se
+movían por separado, y eso rompía por los dos lados:
+
+- Volver a un `/crear` pelado —marcador viejo, URL escrita a mano— **conservaba
+  el progreso pero estrenaba `actor_sid`**: una sola persona reportada como dos,
+  partida a la mitad de su propia evidencia.
+- Entrar con un token distinto **continuaba el mismo estudio bajo otra
+  identidad**: media evidencia bajo un token y media bajo otro.
+
+Ahora el estudio recuerda el token con el que nació. Un enlace sin token no
+vuelve anónimo a nadie: se reusa el guardado. Un enlace con un token realmente
+distinto **abre un estudio nuevo** en vez de partir uno. No se pierde nada en el
+servidor: las filas anteriores ya se entregaron bajo el token anterior.
 
 `CREAR_CLASSIFIER_MODEL` sigue en `gpt-4o-mini`, igual que en el 0007.

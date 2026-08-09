@@ -269,6 +269,46 @@ test('an entry link with a class token attributes every event it produces', asyn
   expect(captured.events.map((event) => event.verbo)).toContain('inicio_taller');
 });
 
+/**
+ * `class_token` says which cohort a row belongs to. Without an alias the pilot
+ * can tell that somebody in the group produced the sentence and not who — which
+ * is the whole point of a five-person study. `?a=` names them from the link.
+ */
+test('an entry link with a name attributes every event to that learner', async ({ page }) => {
+  const captured = await captureIngest(page);
+  await page.goto('/crear?t=PILOTO-01&a=Uziel');
+  await page.getByRole('button', { name: 'Ver la primera pista', exact: true }).click();
+
+  await expect.poll(() => captured.events.length, { timeout: 15_000 }).toBeGreaterThan(0);
+  expect(captured.events.every((event) => event.student_alias === 'Uziel')).toBe(true);
+  expect(captured.events.every((event) => event.class_token === 'PILOTO-01')).toBe(true);
+});
+
+/**
+ * The learner types the bare URL, or follows a stale bookmark. The study has to
+ * keep reporting under the identity it started with; re-reading the link on
+ * every load would turn one person's evidence into two anonymous halves.
+ */
+test('a study keeps its token when the learner returns without one', async ({ page }) => {
+  const captured = await captureIngest(page);
+  await page.goto('/crear?t=PILOTO-01&a=Uziel');
+  await page.getByRole('button', { name: 'Ver la primera pista', exact: true }).click();
+  await expect.poll(() => captured.events.length, { timeout: 15_000 }).toBeGreaterThan(0);
+
+  const before = captured.events.length;
+  await page.goto('/crear');
+  // Every precheck item offers the same three certainty options, so this picks
+  // a valid one whichever item the shuffle put first. Being right is irrelevant
+  // here; what matters is who the resulting row is attributed to.
+  await page.getByRole('radio', { name: 'Casi seguro', exact: true }).click();
+  await page.getByRole('button', { name: 'Siguiente', exact: true }).click();
+
+  await expect.poll(() => captured.events.length, { timeout: 15_000 }).toBeGreaterThan(before);
+  const after = captured.events.slice(before);
+  expect(after.every((event) => event.class_token === 'PILOTO-01')).toBe(true);
+  expect(after.every((event) => event.student_alias === 'Uziel')).toBe(true);
+});
+
 test('an open link still records, anonymously, instead of failing closed', async ({ page }) => {
   const captured = await captureIngest(page);
   await page.goto('/crear');
