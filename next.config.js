@@ -26,7 +26,7 @@ const productionContentSecurityPolicy = [
   "font-src 'self' data: https://fonts.gstatic.com",
   "img-src 'self' data: blob:",
   "media-src 'self' data: blob:",
-  "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
+  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://storage.googleapis.com",
   "worker-src 'self' blob:",
   "manifest-src 'self'",
 ].join('; ');

@@ -91,7 +91,7 @@ import {
 } from './CinematicCertaintyMap';
 import { CinematicPrecheck } from './CinematicPrecheck';
 import { CinematicVoice } from './CinematicVoice';
-import { getLearningVisualMode, getScaffoldWithdrawMotion } from './sceneMotion';
+import { getLearningVisualMode } from './sceneMotion';
 import { useCinematicNarration } from './useCinematicNarration';
 import styles from './CinematicEnglishPlayer.hallmark.module.css';
 
@@ -2683,7 +2683,6 @@ export function CinematicEnglishPlayer() {
   const learningVisualMode = feedback
     ? 'reflect'
     : getLearningVisualMode(getStepId(currentStep));
-  const scaffoldWithdrawMotion = getScaffoldWithdrawMotion(Boolean(prefersReducedMotion));
   const hideMapSceneCopy = Boolean(
     mode === 'match'
       && currentStep.crear?.certaintyMap
@@ -2930,20 +2929,6 @@ export function CinematicEnglishPlayer() {
           </header>
 
           <article className={styles.scene}>
-              <AnimatePresence initial={false}>
-                {learningVisualMode === 'supported' ? (
-                  <motion.span
-                    animate={{ opacity: 1, scaleY: 1 }}
-                    aria-hidden="true"
-                    className={styles.supportRail}
-                    data-support-rail="true"
-                    exit={scaffoldWithdrawMotion.exit}
-                    initial={false}
-                    key="support-rail"
-                    transition={scaffoldWithdrawMotion.transition}
-                  />
-                ) : null}
-              </AnimatePresence>
               {currentStep.crear?.guideAvailable
                 && guideUnlocked
                 && guideStep

@@ -460,18 +460,6 @@
   width: min(100%, 44rem);
 }
 
-.supportRail {
-  background-color: var(--celestea-support-rail);
-  border-radius: 999px;
-  bottom: var(--space-xl);
-  left: calc(var(--space-sm) * -1);
-  pointer-events: none;
-  position: absolute;
-  top: calc(var(--space-xl) + var(--space-sm));
-  transform-origin: bottom center;
-  width: 0.125rem;
-}
-
 .sceneCopy {
   display: flex;
   flex-direction: column;
@@ -3075,10 +3063,6 @@
 
   .waveVideoLayer {
     display: none;
-  }
-
-  .supportRail {
-    transition-duration: 120ms !important;
   }
 
   .voiceBars span {
