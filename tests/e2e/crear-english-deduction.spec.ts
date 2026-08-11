@@ -4,10 +4,11 @@ import { expect, test, type Page } from '@playwright/test';
 import type {
   CrearLearningObservation,
   CrearProductionTarget,
+  CrearWorkshop,
 } from '../../src/lib/crear/types';
 
 const LESSON_ID = 'CREAR-ENGLISH-DEDUCTION-V1';
-const CONTENT_VERSION = '2026-08-07-medicion-separada';
+const CONTENT_VERSION = '2026-08-11-forma-guiada';
 const ARTIFACT_DIR = path.join(process.cwd(), 'test-artifacts');
 const RETEST_TOTAL_ATTEMPTS = 4;
 
@@ -204,7 +205,7 @@ async function seedStep(page: Page, stepIndex: number) {
   await page.addInitScript(({ lessonId, contentVersion, index }) => {
     const now = Date.now();
     const storageKey = `celesta:crear:study:${lessonId}`;
-    const isRetest = index >= 11;
+    const isRetest = index >= 12;
     if (isRetest) localStorage.setItem('celesta:alias:TEST-PILOT', 'P01');
     // The init script runs again on reload. Preserve the learner's decision so
     // this helper can exercise the real resume path instead of reseeding it.
@@ -268,7 +269,7 @@ async function seedLockedRetest(page: Page, mockAuthorization = true) {
         startedAt: now - 60_000,
         updatedAt: now,
         phase: 'waiting_retest',
-        stepIndex: 11,
+        stepIndex: 12,
         retestDueAt: now + 7 * 24 * 60 * 60 * 1000,
         attempts: {},
         firstOutcomes: {},
@@ -291,7 +292,7 @@ async function seedOpenModeRetest(page: Page) {
       startedAt: now - 60_000,
       updatedAt: now,
       phase: 'waiting_retest',
-      stepIndex: 11,
+      stepIndex: 12,
       attempts: {},
       firstOutcomes: {},
       latestOutcomes: {},
@@ -379,6 +380,25 @@ async function assignCorrectMap(page: Page, count = 3): Promise<string[]> {
     }
   }
   return shown;
+}
+
+async function completeGuidedForm(page: Page): Promise<void> {
+  await expect(page.getByRole('heading', {
+    name: 'Ahora arma la forma.',
+    exact: true,
+  })).toBeVisible();
+  for (const token of ['MIGHT', 'HAVE', 'WORKED']) {
+    await page.getByRole('button', {
+      name: `Colocar ${token} en el siguiente hueco`,
+      exact: true,
+    }).click();
+  }
+  await page.getByRole('button', { name: 'Comprobar', exact: true }).click();
+  await expect(page.getByText('La forma quedó completa.', { exact: true })).toBeVisible();
+  await page.getByRole('button', {
+    name: 'Continuar al caso nuevo',
+    exact: true,
+  }).click();
 }
 
 test('a second participant on a shared phone starts a separate study', async ({ page }) => {
@@ -717,7 +737,7 @@ test('the pre-check answer key does not run down the option column', async ({ pa
       localStorage.setItem(key, JSON.stringify({
         studyId: id,
         lessonId: 'CREAR-ENGLISH-DEDUCTION-V1',
-        contentVersion: '2026-08-07-medicion-separada',
+        contentVersion: '2026-08-11-forma-guiada',
         startedAt: now,
         updatedAt: now,
         phase: 'initial',
@@ -1135,6 +1155,7 @@ test('completes a low-friction session and preserves transfer plus D7 evidence',
   await reachGuidedMap(page);
   await assignCorrectMap(page);
   await page.getByRole('button', { name: 'Comprobar', exact: true }).click();
+  await completeGuidedForm(page);
   // The bridge names both objects, so the third change of case stops arriving
   // unannounced. The heading is the recording's own sentence, said out loud.
   await expect(page.getByRole('heading', {
@@ -1179,6 +1200,7 @@ test('completes a low-friction session and preserves transfer plus D7 evidence',
   // The clue was read on the certainty screen; here the frame with the missing
   // certainty takes its place.
   await expect(page.getByText(NORA_FRAME, { exact: true })).toBeVisible();
+  await expect(page.getByText('Verbo que puedes usar: work', { exact: true })).toBeVisible();
   await expect(page.getByText(
     'Nora stayed in the classroom during recess. Nobody saw what she was doing.',
     { exact: true }
@@ -1212,6 +1234,13 @@ test('completes a low-friction session and preserves transfer plus D7 evidence',
       elena: 'casi_seguro',
     },
   });
+  expect(transferState.firstOutcomes['guided-form']).toMatchObject({
+    branch: 'forma_guiada_correcta',
+    correct: true,
+    assisted: true,
+    text: 'Mateo MIGHT HAVE WORKED on the poster.',
+    attempt: 1,
+  });
   expect(transferState.firstOutcomes['transfer-check-certainty']).toMatchObject({
     correct: true,
     assisted: false,
@@ -1223,6 +1252,13 @@ test('completes a low-friction session and preserves transfer plus D7 evidence',
     text: 'Nora might have worked on the model.',
   });
   expect(transferState.evidenceLedger).toEqual(expect.arrayContaining([
+    expect.objectContaining({
+      id: 'supported-modal-form-poster',
+      constructs: ['modal_form'],
+      condition: 'supported',
+      correct: true,
+      assisted: true,
+    }),
     expect.objectContaining({
       id: 'independent-transfer-certainty',
       constructs: ['certainty_calibration'],
@@ -1236,6 +1272,25 @@ test('completes a low-friction session and preserves transfer plus D7 evidence',
       correct: true,
     }),
   ]));
+  await expect.poll(() => telemetry.find((event) =>
+    event.verbo === 'envio_respuesta' && event.paso_id === 'guided-form'
+  )?.result).toMatchObject({
+    fase: 'practica',
+    correcto: true,
+    rama: 'forma_guiada_correcta',
+    texto: 'Mateo MIGHT HAVE WORKED on the poster.',
+    assisted: true,
+    attempt: 1,
+    shownOrder: expect.arrayContaining(['might', 'have', 'has', 'work', 'worked']),
+    learningOpportunity: {
+      id: 'supported-modal-form-poster',
+      constructs: ['modal_form'],
+      condition: 'supported',
+      novelty: 'same_case',
+      timing: 'immediate',
+      cueFrame: 'presence_unobserved',
+    },
+  });
 
   await page.getByRole('button', { name: 'Continuar', exact: true }).click();
   await expect(page.getByRole('heading', {
@@ -1291,6 +1346,7 @@ test('completes a low-friction session and preserves transfer plus D7 evidence',
   await page.getByRole('button', { name: 'Guardar decisión', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Ahora dilo en inglés.', exact: true })).toBeVisible();
   await expect(page.getByText(EMI_FRAME, { exact: true })).toBeVisible();
+  await expect(page.getByText('Verbo que puedes usar: paint', { exact: true })).toBeVisible();
   await page.getByRole('textbox', {
     name: PRODUCTION_PROMPT,
     exact: true,
@@ -1371,7 +1427,7 @@ test('completes a low-friction session and preserves transfer plus D7 evidence',
 
 test('keeps the independent production cue and primary action inside common mobile viewports', async ({ page }) => {
   await mockTelemetry(page);
-  await seedStep(page, 9);
+  await seedStep(page, 10);
 
   for (const viewport of [
     { width: 320, height: 812 },
@@ -1584,9 +1640,193 @@ test('turns a corrected map into assisted evidence instead of a false independen
   }
 });
 
+test('guided form distinguishes have/has and work/worked with durable supported telemetry', async ({ page }) => {
+  const telemetry = await mockTelemetry(page);
+  let classifierCalls = 0;
+  await page.route('**/api/classify', async (route) => {
+    classifierCalls += 1;
+    await route.fulfill({
+      contentType: 'application/json',
+      status: 500,
+      body: JSON.stringify({ error: 'classifier_must_not_run' }),
+    });
+  });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await seedStep(page, 6);
+  await page.setViewportSize({ width: 320, height: 812 });
+  await page.goto('/crear');
+
+  await expect(page.getByRole('heading', {
+    name: 'Ahora arma la forma.',
+    exact: true,
+  })).toBeVisible();
+  await expect(page.getByText(
+    'Elige tres piezas para completar la deducción.',
+    { exact: true }
+  )).toBeVisible();
+  expect(await page.getByRole('heading', {
+    name: 'Ahora arma la forma.',
+    exact: true,
+  }).evaluate((element) => getComputedStyle(element).fontSize)).toBe('22px');
+  expect(await page.getByText(
+    'Elige tres piezas para completar la deducción.',
+    { exact: true }
+  ).evaluate((element) => getComputedStyle(element).fontSize)).toBe('18px');
+  for (const token of ['MIGHT', 'HAVE', 'HAS', 'WORK', 'WORKED']) {
+    await expect(page.getByRole('button', {
+      name: `Colocar ${token} en el siguiente hueco`,
+      exact: true,
+    })).toBeVisible();
+  }
+  await expect(page.getByText('MUST', { exact: true })).toHaveCount(0);
+
+  const might = page.getByRole('button', {
+    name: 'Colocar MIGHT en el siguiente hueco',
+    exact: true,
+  });
+  await might.focus();
+  await page.keyboard.press('Enter');
+  await page.getByRole('button', {
+    name: 'Colocar HAS en el siguiente hueco',
+    exact: true,
+  }).click();
+  await page.getByRole('button', {
+    name: 'Colocar WORKED en el siguiente hueco',
+    exact: true,
+  }).click();
+  await page.getByRole('button', { name: 'Comprobar', exact: true }).click();
+  await expect(page.getByText('Después de might usamos have, no has.', { exact: true }))
+    .toBeVisible();
+
+  await page.getByRole('button', {
+    name: 'Hueco 2 completado con HAS. Toca para devolver la pieza',
+    exact: true,
+  }).click();
+  await page.getByRole('button', {
+    name: 'Colocar HAVE en el siguiente hueco',
+    exact: true,
+  }).click();
+  await page.getByRole('button', {
+    name: 'Hueco 3 completado con WORKED. Toca para devolver la pieza',
+    exact: true,
+  }).click();
+  await page.getByRole('button', {
+    name: 'Colocar WORK en el siguiente hueco',
+    exact: true,
+  }).click();
+  await page.getByRole('button', { name: 'Comprobar', exact: true }).click();
+  await expect(page.getByText('Después de have va la forma pasada: worked.', { exact: true }))
+    .toBeVisible();
+
+  await page.getByRole('button', {
+    name: 'Hueco 3 completado con WORK. Toca para devolver la pieza',
+    exact: true,
+  }).click();
+  await page.getByRole('button', {
+    name: 'Colocar WORKED en el siguiente hueco',
+    exact: true,
+  }).click();
+  await page.getByRole('button', { name: 'Comprobar', exact: true }).click();
+  await expect(page.getByText('La forma quedó completa.', { exact: true })).toBeVisible();
+
+  const guidedForm = page.getByRole('region', {
+    name: 'Construcción guiada de la frase',
+    exact: true,
+  });
+  for (const button of await guidedForm.getByRole('button').all()) {
+    if (!(await button.isVisible())) continue;
+    const box = await button.boundingBox();
+    if (!box) continue;
+    expect(box.height).toBeGreaterThanOrEqual(44);
+  }
+  expect(await page.evaluate(() =>
+    document.documentElement.scrollWidth - document.documentElement.clientWidth
+  )).toBeLessThanOrEqual(1);
+  const actionBox = await page.getByRole('button', {
+    name: 'Continuar al caso nuevo',
+    exact: true,
+  }).boundingBox();
+  expect((actionBox?.y ?? 0) + (actionBox?.height ?? 0)).toBeLessThanOrEqual(812);
+  await capture(page, 'celestea-v18-guided-form-320.png');
+
+  await expect.poll(() => telemetry.filter((event) =>
+    event.verbo === 'envio_respuesta' && event.paso_id === 'guided-form'
+  )).toHaveLength(3);
+  const attempts = telemetry.filter((event) =>
+    event.verbo === 'envio_respuesta' && event.paso_id === 'guided-form'
+  );
+  expect(attempts.map((event) => event.result)).toEqual([
+    expect.objectContaining({
+      correcto: false,
+      rama: 'misconcepcion_have_has',
+      texto: 'Mateo MIGHT HAS WORKED on the poster.',
+      assisted: true,
+      attempt: 1,
+    }),
+    expect.objectContaining({
+      correcto: false,
+      rama: 'misconcepcion_participio_base',
+      texto: 'Mateo MIGHT HAVE WORK on the poster.',
+      assisted: true,
+      attempt: 2,
+    }),
+    expect.objectContaining({
+      correcto: true,
+      rama: 'forma_guiada_correcta',
+      texto: 'Mateo MIGHT HAVE WORKED on the poster.',
+      assisted: true,
+      attempt: 3,
+    }),
+  ]);
+  const state = await page.evaluate((lessonId) =>
+    JSON.parse(localStorage.getItem(`celesta:crear:study:${lessonId}`) ?? '{}'),
+  LESSON_ID);
+  expect(state.firstOutcomes['guided-form']).toMatchObject({
+    branch: 'misconcepcion_have_has',
+    correct: false,
+    attempt: 1,
+  });
+  expect(state.latestOutcomes['guided-form']).toMatchObject({
+    branch: 'forma_guiada_correcta',
+    correct: true,
+    attempt: 3,
+  });
+  expect(state.evidenceLedger.filter(
+    (observation: { stepId?: string }) => observation.stepId === 'guided-form'
+  )).toHaveLength(3);
+  expect(classifierCalls).toBe(0);
+
+  await page.reload();
+  await expect(page.getByText('La forma quedó completa.', { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', {
+    name: 'Continuar al caso nuevo',
+    exact: true,
+  })).toBeEnabled();
+  for (const viewport of [
+    { width: 375, height: 812 },
+    { width: 812, height: 375 },
+  ]) {
+    await page.setViewportSize(viewport);
+    expect(await page.evaluate(() =>
+      document.documentElement.scrollWidth - document.documentElement.clientWidth
+    )).toBeLessThanOrEqual(1);
+    await page.getByRole('button', {
+      name: 'Continuar al caso nuevo',
+      exact: true,
+    }).scrollIntoViewIfNeeded();
+  }
+  await page.setViewportSize({ width: 320, height: 812 });
+  await page.evaluate(() => {
+    document.documentElement.style.fontSize = '200%';
+  });
+  expect(await page.evaluate(() =>
+    document.documentElement.scrollWidth - document.documentElement.clientWidth
+  )).toBeLessThanOrEqual(1);
+});
+
 test('does not convert a miscalibrated transfer sentence into success', async ({ page }) => {
   await mockTelemetry(page);
-  await seedStep(page, 7);
+  await seedStep(page, 8);
   await page.goto('/crear');
   await assignCorrectMap(page, 1);
   await page.getByRole('button', {
@@ -1629,7 +1869,7 @@ test('does not convert a miscalibrated transfer sentence into success', async ({
 
 test('records the two constructs of a production attempt separately', async ({ page }) => {
   const telemetry = await mockTelemetry(page);
-  await seedStep(page, 7);
+  await seedStep(page, 8);
   await page.goto('/crear');
   await assignCorrectMap(page, 1);
   await page.getByRole('button', { name: 'Comprobar', exact: true }).click();
@@ -1855,6 +2095,9 @@ test('the pre-instruction baseline separates self-efficacy from production', asy
   // No teaching surface on a measurement screen.
   await expect(page.getByRole('button', { name: 'Ayuda', exact: true })).toHaveCount(0);
   await expect(page.getByText('MUST HAVE', { exact: true })).toHaveCount(0);
+  // Lexical support belongs to the attempt, not the self-efficacy gate.
+  await expect(page.getByText('Verbo que puedes usar: erase', { exact: true }))
+    .toHaveCount(0);
 
   const attemptField = page.locator('#celestea-baseline-attempt');
   const baseline = page.getByRole('region', {
@@ -1893,6 +2136,10 @@ test('the pre-instruction baseline separates self-efficacy from production', asy
   await expect(gateYes).toHaveAttribute('aria-pressed', 'false');
   await expect(attemptField).toBeVisible();
   await expect(page.getByPlaceholder('Camila … the board.', { exact: true })).toBeVisible();
+  const verbSuggestion = page.getByText('Verbo que puedes usar: erase', { exact: true });
+  await expect(verbSuggestion).toBeVisible();
+  expect(await verbSuggestion.evaluate((element) => getComputedStyle(element).fontSize))
+    .toBe('14px');
   // "Todavía no" keeps the reassurance that the attempt isn't graded.
   await expect(page.getByText(ATTEMPT_PROMPT_NO, { exact: true })).toBeVisible();
 
@@ -2062,7 +2309,7 @@ test('the closing receipt degrades to a complete block when the baseline was ski
       startedAt: now,
       updatedAt: now,
       phase: 'initial',
-      stepIndex: 10,
+      stepIndex: 11,
       attempts: {},
       firstOutcomes: outcomes,
       latestOutcomes: outcomes,
@@ -2133,7 +2380,7 @@ test('the closing receipt draws ascent only from an observed unsuccessful baseli
       startedAt: now,
       updatedAt: now,
       phase: 'initial',
-      stepIndex: 10,
+      stepIndex: 11,
       attempts: {},
       firstOutcomes: outcomes,
       latestOutcomes: outcomes,
@@ -2207,7 +2454,7 @@ test('the day 7 receipt keeps unavailable day 1 evidence explicit on a recovered
       startedAt: now,
       updatedAt: now,
       phase: 'completed',
-      stepIndex: 12,
+      stepIndex: 13,
       completionReported: true,
       attempts: {},
       firstOutcomes: outcomes,
@@ -2302,7 +2549,7 @@ test('a completed study is marked reported only after its deterministic event is
       startedAt: now - 60_000,
       updatedAt: now,
       phase: 'completed',
-      stepIndex: 12,
+      stepIndex: 13,
       attempts: {},
       firstOutcomes: {},
       latestOutcomes: {},
@@ -2433,14 +2680,14 @@ test('prism states the structure once, above the forces, and fits 320×812', asy
  */
 for (const screen of [
   {
-    index: 8,
+    index: 9,
     refId: 'transfer-check-certainty',
     question: '¿Qué tan seguro es que Nora haya sido quien trabajó en la maqueta?',
     caseLabel: 'Maqueta de la feria',
     caseStatus: 'Segundo caso: quién trabajó en la maqueta.',
   },
   {
-    index: 9,
+    index: 10,
     refId: 'transfer-production',
     question: PRODUCTION_PROMPT,
     frame: NORA_FRAME,
@@ -2448,14 +2695,14 @@ for (const screen of [
     caseStatus: 'Segundo caso: quién trabajó en la maqueta.',
   },
   {
-    index: 11,
+    index: 12,
     refId: 'retest-certainty',
     question: '¿Qué tan seguro es que Emi haya sido quien pintó el mural?',
     caseLabel: 'Mural de la entrada',
     caseStatus: 'Tercer caso: quién pintó el mural.',
   },
   {
-    index: 12,
+    index: 13,
     refId: 'retest-production',
     question: PRODUCTION_PROMPT,
     frame: EMI_FRAME,
@@ -2467,7 +2714,7 @@ for (const screen of [
     await mockTelemetry(page);
     await seedStep(page, screen.index);
     await page.setViewportSize({ width: 320, height: 812 });
-    await page.goto(screen.index >= 11 ? '/crear?t=TEST-PILOT&a=P01' : '/crear');
+    await page.goto(screen.index >= 12 ? '/crear?t=TEST-PILOT&a=P01' : '/crear');
 
     const question = page.getByText(screen.question, { exact: true });
     await expect(question).toBeVisible();
@@ -2514,8 +2761,8 @@ for (const screen of [
  * the rendered page, on a step reached after the guide has been unlocked.
  */
 for (const independentStep of [
-  { index: 8, refId: 'transfer-check-certainty', heading: '¿Qué tan seguro es?' },
-  { index: 9, refId: 'transfer-production', heading: 'Ahora dilo en inglés.' },
+  { index: 9, refId: 'transfer-check-certainty', heading: '¿Qué tan seguro es?' },
+  { index: 10, refId: 'transfer-production', heading: 'Ahora dilo en inglés.' },
 ]) {
   test(`${independentStep.refId} exposes no guide affordance in the DOM`, async ({ page }) => {
     await mockTelemetry(page);
@@ -2534,7 +2781,7 @@ for (const independentStep of [
 
 test('propagates classifier provenance and disagreement into telemetry', async ({ page }) => {
   const telemetry = await mockTelemetry(page);
-  await seedStep(page, 9);
+  await seedStep(page, 10);
   // The pilot server runs the model; the test server cannot. Standing in for
   // the model lets the arbitration fields be verified end to end.
   await page.route('**/api/classify', async (route) => {
@@ -2584,7 +2831,7 @@ test('a signed day 7 link opens the same study after local state is lost', async
       startedAt: now - 60_000,
       updatedAt: now,
       phase: 'waiting_retest',
-      stepIndex: 11,
+      stepIndex: 12,
       retestDueAt: now,
       attempts: {},
       firstOutcomes: {},
@@ -2613,7 +2860,7 @@ test('a signed day 7 link opens the same study after local state is lost', async
   expect(state.retestTicket).toBe(ticket);
 });
 
-test('lesson 1.17.1 measures production before instruction and declares every guide contract', async () => {
+test('lesson 1.18.0 adds supported form construction without weakening independent production', async () => {
   const lessonPath = path.join(process.cwd(), 'public/workshops', `${LESSON_ID}.json`);
   const lesson = JSON.parse(fs.readFileSync(lessonPath, 'utf8')) as {
     version: string;
@@ -2629,6 +2876,17 @@ test('lesson 1.17.1 measures production before instruction and declares every gu
         baselineProduction?: Record<string, string>;
         caseArtifact?: { label: string; status: string };
         certaintyMap?: { artifact?: { kind: string }; statements: unknown[] };
+        formAssembly?: {
+          tokens: Array<{ id: string; label: string }>;
+          correctSequence: string[];
+          errorRules: Array<{
+            slotIndex: number;
+            tokenId: string;
+            feedback: { rama: string };
+          }>;
+          success: { rama: string };
+          fallback: { rama: string };
+        };
         classifier?: {
           ramas: Array<{
             rama: string;
@@ -2638,7 +2896,20 @@ test('lesson 1.17.1 measures production before instruction and declares every gu
         };
         display?: { headline?: string; body?: string };
         formula?: Array<{ label: string }>;
-        learningOpportunity?: { condition: string };
+        learningOpportunity?: {
+          id: string;
+          constructs: string[];
+          condition: string;
+          novelty: string;
+          timing: string;
+          cueFrame?: string;
+        };
+        productionTarget?: {
+          category: string;
+          subject: string[];
+          participles: string[];
+        };
+        verbSuggestion?: { label: string; base: string; participle: string };
         precheck?: { items: unknown[]; options: unknown[] };
         evidencePresentation?: unknown;
         guideAvailable?: boolean;
@@ -2649,12 +2920,12 @@ test('lesson 1.17.1 measures production before instruction and declares every gu
   };
   const stepBy = (refId: string) => lesson.pasos.find((step) => step.ref_id === refId);
 
-  expect(lesson.version).toBe('1.17.1');
+  expect(lesson.version).toBe('1.18.0');
   expect(lesson.content_version).toBe(CONTENT_VERSION);
   // Nothing was re-rendered in the voice layer, so both versions stay pinned
   // together. If they ever diverge, `audioAssetsReady` mutes every scene.
   expect(lesson.audio_asset_version).toBe(lesson.content_version);
-  expect(lesson.metadata.duracion_estimada_min).toBe(5);
+  expect(lesson.metadata.duracion_estimada_min).toBe(6);
   expect(lesson.pasos.map((step) => step.ref_id)).toEqual([
     'arrival',
     'precheck',
@@ -2662,6 +2933,7 @@ test('lesson 1.17.1 measures production before instruction and declares every gu
     'contrast',
     'prism',
     'guided-map',
+    'guided-form',
     'transfer-bridge',
     'transfer',
     'transfer-check-certainty',
@@ -2686,6 +2958,11 @@ test('lesson 1.17.1 measures production before instruction and declares every gu
     attemptPrompt: ATTEMPT_PROMPT,
     emptySubmitLabel: 'Continuar sin escribir',
     submitLabel: 'Guardar y continuar',
+  });
+  expect(baseline?.verbSuggestion).toEqual({
+    label: 'Verbo que puedes usar',
+    base: 'erase',
+    participle: 'erased',
   });
   // The empty submission is the same button, not a second control: the gate
   // measures belief and the empty submission measures behaviour, and two
@@ -2750,6 +3027,65 @@ test('lesson 1.17.1 measures production before instruction and declares every gu
     .toBeUndefined();
   expect(lesson.pasos.find((step) => step.ref_id === 'guided-map')?.crear?.guideAvailable)
     .toBe(true);
+  const guidedForm = stepBy('guided-form')?.crear;
+  expect(guidedForm).toMatchObject({
+    input: 'assembly',
+    guideAvailable: false,
+    learningOpportunity: {
+      id: 'supported-modal-form-poster',
+      constructs: ['modal_form'],
+      condition: 'supported',
+      novelty: 'same_case',
+      timing: 'immediate',
+      cueFrame: 'presence_unobserved',
+    },
+    productionTarget: {
+      category: 'posible',
+      subject: expect.arrayContaining(['mateo']),
+      participles: expect.arrayContaining(['worked']),
+    },
+    formAssembly: {
+      correctSequence: ['might', 'have', 'worked'],
+      success: { rama: 'forma_guiada_correcta' },
+      fallback: { rama: 'misconcepcion_orden_forma' },
+    },
+  });
+  expect(guidedForm?.audio).toBeUndefined();
+  expect(guidedForm?.classifier).toBeUndefined();
+  expect(guidedForm?.formAssembly?.tokens).toEqual(expect.arrayContaining([
+    { id: 'might', label: 'MIGHT' },
+    { id: 'have', label: 'HAVE' },
+    { id: 'has', label: 'HAS' },
+    { id: 'work', label: 'WORK' },
+    { id: 'worked', label: 'WORKED' },
+  ]));
+  expect(guidedForm?.formAssembly?.tokens.map((token) => token.id)).not.toContain('must');
+  expect(guidedForm?.formAssembly?.errorRules).toEqual(expect.arrayContaining([
+    expect.objectContaining({
+      slotIndex: 1,
+      tokenId: 'has',
+      feedback: expect.objectContaining({ rama: 'misconcepcion_have_has' }),
+    }),
+    expect.objectContaining({
+      slotIndex: 2,
+      tokenId: 'work',
+      feedback: expect.objectContaining({ rama: 'misconcepcion_participio_base' }),
+    }),
+  ]));
+  expect(guidedForm?.formAssembly?.errorRules).toHaveLength(2);
+
+  const productionSuggestions = [
+    ['precheck-production', 'erase', 'erased'],
+    ['transfer-production', 'work', 'worked'],
+    ['retest-production', 'paint', 'painted'],
+  ] as const;
+  for (const [refId, base, participle] of productionSuggestions) {
+    expect(stepBy(refId)?.crear?.verbSuggestion).toEqual({
+      label: 'Verbo que puedes usar',
+      base,
+      participle,
+    });
+  }
   // The bridge audio was deliberately not re-rendered: the heading now *is* the
   // recording's own sentence, so screen and voice say the same thing for the
   // first time. Assert both together so the test cannot stay green while the
@@ -2861,6 +3197,41 @@ test('lesson 1.17.1 measures production before instruction and declares every gu
   }
   expect(stepBy('transfer-bridge')?.crear?.display?.headline)
     .toBe('Cambia el caso, no la idea.');
+});
+
+test('lesson validation fails closed on malformed guided form and verb support', async () => {
+  const { validateCrearWorkshopJson } = await import('../../src/lib/crear/validation');
+  const lessonPath = path.join(process.cwd(), 'public/workshops', `${LESSON_ID}.json`);
+  const authored = JSON.parse(fs.readFileSync(lessonPath, 'utf8')) as CrearWorkshop;
+
+  expect(() => validateCrearWorkshopJson(structuredClone(authored))).not.toThrow();
+
+  const malformedSequence = structuredClone(authored);
+  const assembly = malformedSequence.pasos.find(
+    (step) => step.ref_id === 'guided-form'
+  )?.crear?.formAssembly;
+  if (!assembly) throw new Error('guided-form assembly missing from test fixture');
+  assembly.correctSequence = ['might', 'has', 'worked'];
+  expect(() => validateCrearWorkshopJson(malformedSequence))
+    .toThrow('correctSequence must satisfy productionTarget');
+
+  const missingAssembly = structuredClone(authored);
+  const guidedMeta = missingAssembly.pasos.find(
+    (step) => step.ref_id === 'guided-form'
+  )?.crear;
+  if (!guidedMeta) throw new Error('guided-form metadata missing from test fixture');
+  delete guidedMeta.formAssembly;
+  expect(() => validateCrearWorkshopJson(missingAssembly))
+    .toThrow('input assembly requires formAssembly');
+
+  const unsupportedParticiple = structuredClone(authored);
+  const suggestion = unsupportedParticiple.pasos.find(
+    (step) => step.ref_id === 'transfer-production'
+  )?.crear?.verbSuggestion;
+  if (!suggestion) throw new Error('transfer verb suggestion missing from test fixture');
+  suggestion.participle = 'workedt';
+  expect(() => validateCrearWorkshopJson(unsupportedParticiple))
+    .toThrow('verbSuggestion.participle must be accepted by productionTarget');
 });
 
 test('mobile map stays readable, tappable and motion-safe at 375px', async ({ page }) => {
@@ -3331,6 +3702,11 @@ test('construct aggregation refuses claims the observations do not support', asy
 
   expect(claimOf([supported(), independent(), delayed()])).toBe('unproven');
   expect(claimOf([baseline({ correct: false }), supported()])).toBe('supported_only');
+  expect(claimOf([
+    baseline({ constructs: ['modal_form'], correct: false }),
+    supported({ constructs: ['modal_form'] }),
+    independent({ constructs: ['modal_form'], correct: false }),
+  ])).toBe('supported_only');
   expect(claimOf([baseline({ correct: false }), independent()])).toBe('independent_only');
   expect(claimOf([baseline({ correct: false }), independent(), delayed()])).toBe('durable');
 

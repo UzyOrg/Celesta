@@ -7,13 +7,16 @@ import {
   CREAR_MAX_ANSWER_LENGTH,
   type CrearBaselineGate,
   type CrearBaselineProduction,
+  type CrearVerbSuggestion,
 } from '@/lib/crear/types';
+import { CinematicVerbSuggestion } from './CinematicVerbSuggestion';
 import styles from './CinematicBaselineProduction.module.css';
 
 interface CinematicBaselineProductionProps {
   config: CrearBaselineProduction;
   pending: boolean;
   placeholder?: string;
+  verbSuggestion?: CrearVerbSuggestion;
   onGate: (answer: CrearBaselineGate) => void;
   onSubmit: (text: string, gate: CrearBaselineGate, skipped: boolean) => void;
   onFocusChange?: (focused: boolean) => void;
@@ -51,6 +54,7 @@ export function CinematicBaselineProduction({
   config,
   pending,
   placeholder,
+  verbSuggestion,
   onGate,
   onSubmit,
   onFocusChange,
@@ -138,6 +142,9 @@ export function CinematicBaselineProduction({
               <label className={styles.attemptPrompt} htmlFor="celestea-baseline-attempt">
                 {gate === 'no' ? config.attemptPromptNo ?? config.attemptPrompt : config.attemptPrompt}
               </label>
+              {verbSuggestion ? (
+                <CinematicVerbSuggestion suggestion={verbSuggestion} />
+              ) : null}
               <textarea
                 className={styles.attemptField}
                 disabled={pending}

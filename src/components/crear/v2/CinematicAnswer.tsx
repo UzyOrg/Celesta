@@ -8,8 +8,10 @@ import {
   type CrearInputMode,
   type CrearResponsePart,
   type CrearResponsePartAnswer,
+  type CrearVerbSuggestion,
 } from '@/lib/crear/types';
 import type { CrearChoiceOption } from '@/lib/crear/stepHelpers';
+import { CinematicVerbSuggestion } from './CinematicVerbSuggestion';
 import styles from './CinematicEnglishPlayer.hallmark.module.css';
 
 interface CinematicAnswerProps {
@@ -20,6 +22,7 @@ interface CinematicAnswerProps {
   pending: boolean;
   minChars?: number;
   responseParts?: CrearResponsePart[];
+  verbSuggestion?: CrearVerbSuggestion;
   choiceLanguage?: 'es-MX' | 'en-US';
   continueLabel?: string;
   choiceSubmitLabel?: string;
@@ -54,6 +57,7 @@ export function CinematicAnswer({
   pending,
   minChars = 2,
   responseParts = [],
+  verbSuggestion,
   choiceLanguage = 'es-MX',
   continueLabel = 'Continuar',
   choiceSubmitLabel = 'Comprobar',
@@ -282,9 +286,14 @@ export function CinematicAnswer({
 
   return (
     <div className={styles.responseDock} aria-busy={pending}>
-      <label className={styles.responsePrompt} htmlFor="celestea-cinematic-answer" lang="es-MX">
-        {prompt}
-      </label>
+      <div className={styles.responsePromptBlock}>
+        <label className={styles.responsePrompt} htmlFor="celestea-cinematic-answer" lang="es-MX">
+          {prompt}
+        </label>
+        {verbSuggestion ? (
+          <CinematicVerbSuggestion suggestion={verbSuggestion} />
+        ) : null}
+      </div>
       <div className={styles.textareaFrame}>
         <textarea
           ref={textareaRef}

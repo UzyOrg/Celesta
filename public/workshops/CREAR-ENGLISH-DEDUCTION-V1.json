@@ -1,9 +1,9 @@
 {
   "id_taller": "CREAR-ENGLISH-DEDUCTION-V1",
-  "version": "1.17.1",
+  "version": "1.18.0",
   "schema_version": "0.1",
-  "content_version": "2026-08-07-medicion-separada",
-  "audio_asset_version": "2026-08-07-medicion-separada",
+  "content_version": "2026-08-11-forma-guiada",
+  "audio_asset_version": "2026-08-11-forma-guiada",
   "titulo": "La maqueta de la feria",
   "metadata": {
     "grado": "Prepa",
@@ -14,7 +14,7 @@
       "transfer",
       "durable retest"
     ],
-    "duracion_estimada_min": 5
+    "duracion_estimada_min": 6
   },
   "pasos": [
     {
@@ -158,6 +158,11 @@
           "emptySubmitLabel": "Continuar sin escribir",
           "submitLabel": "Guardar y continuar",
           "blockedHint": "Todavía no, también es una respuesta."
+        },
+        "verbSuggestion": {
+          "label": "Verbo que puedes usar",
+          "base": "erase",
+          "participle": "erased"
         },
         "productionTarget": {
           "category": "casi_seguro",
@@ -402,11 +407,95 @@
           "successBody": "Falta lo que importa: usarlas en un caso que no practicaste."
         },
         "revealFeedback": false,
-        "nextRefId": "transfer-bridge"
+        "nextRefId": "guided-form"
       }
     },
     {
       "paso_numero": 7,
+      "ref_id": "guided-form",
+      "tipo_paso": "instruccion",
+      "titulo_paso": "Construcción guiada de la forma",
+      "instruccion": {
+        "texto": "Construye la forma antes de usarla por tu cuenta."
+      },
+      "bloquea_avance_si_falla": false,
+      "puntaje": 1,
+      "crear": {
+        "fase": "practica",
+        "stage": "practica",
+        "scene": "practice",
+        "display": {
+          "eyebrow": "",
+          "headline": "Ahora arma la forma.",
+          "body": "La certeza ya está decidida: es posible que Mateo haya trabajado en el cartel."
+        },
+        "input": "assembly",
+        "guideAvailable": false,
+        "revealFeedback": false,
+        "learningOpportunity": {
+          "id": "supported-modal-form-poster",
+          "constructs": ["modal_form"],
+          "condition": "supported",
+          "novelty": "same_case",
+          "timing": "immediate",
+          "cueFrame": "presence_unobserved"
+        },
+        "productionTarget": {
+          "category": "posible",
+          "subject": ["mateo", "he", "she", "they"],
+          "participles": ["worked"]
+        },
+        "formAssembly": {
+          "instruction": "Elige tres piezas para completar la deducción.",
+          "sentenceStart": "Mateo",
+          "sentenceEnd": "on the poster.",
+          "slotCount": 3,
+          "tokens": [
+            { "id": "might", "label": "MIGHT" },
+            { "id": "have", "label": "HAVE" },
+            { "id": "has", "label": "HAS" },
+            { "id": "work", "label": "WORK" },
+            { "id": "worked", "label": "WORKED" }
+          ],
+          "correctSequence": ["might", "have", "worked"],
+          "success": {
+            "rama": "forma_guiada_correcta",
+            "title": "La forma quedó completa.",
+            "body": "Después del modal van have y la acción en participio."
+          },
+          "errorRules": [
+            {
+              "slotIndex": 1,
+              "tokenId": "has",
+              "feedback": {
+                "rama": "misconcepcion_have_has",
+                "title": "Revisa la segunda pieza.",
+                "body": "Después de might usamos have, no has."
+              }
+            },
+            {
+              "slotIndex": 2,
+              "tokenId": "work",
+              "feedback": {
+                "rama": "misconcepcion_participio_base",
+                "title": "Revisa la acción.",
+                "body": "Después de have va la forma pasada: worked."
+              }
+            }
+          ],
+          "fallback": {
+            "rama": "misconcepcion_orden_forma",
+            "title": "Revisa el orden.",
+            "body": "La secuencia es modal, have y después la acción en participio."
+          },
+          "actionLabel": "Comprobar",
+          "continueLabel": "Continuar al caso nuevo"
+        },
+        "nextRefId": "transfer-bridge"
+      }
+    },
+    {
+      "paso_numero": 8,
       "ref_id": "transfer-bridge",
       "tipo_paso": "instruccion",
       "titulo_paso": "Puente hacia la transferencia",
@@ -436,7 +525,7 @@
       }
     },
     {
-      "paso_numero": 8,
+      "paso_numero": 9,
       "ref_id": "transfer",
       "tipo_paso": "transferencia",
       "titulo_paso": "La maqueta de la feria",
@@ -517,7 +606,7 @@
       }
     },
     {
-      "paso_numero": 9,
+      "paso_numero": 10,
       "ref_id": "transfer-check-certainty",
       "tipo_paso": "opcion_multiple",
       "titulo_paso": "Decide la certeza",
@@ -569,7 +658,7 @@
       }
     },
     {
-      "paso_numero": 10,
+      "paso_numero": 11,
       "ref_id": "transfer-production",
       "tipo_paso": "pregunta_abierta_validada",
       "titulo_paso": "Expresa la deducción",
@@ -609,6 +698,11 @@
         "minChars": 14,
         "allowRetry": false,
         "guideAvailable": false,
+        "verbSuggestion": {
+          "label": "Verbo que puedes usar",
+          "base": "work",
+          "participle": "worked"
+        },
         "learningOpportunity": {
           "id": "independent-transfer-form",
           "constructs": ["modal_form"],
@@ -768,7 +862,7 @@
       }
     },
     {
-      "paso_numero": 11,
+      "paso_numero": 12,
       "ref_id": "close",
       "tipo_paso": "instruccion",
       "titulo_paso": "Cierre",
@@ -797,7 +891,7 @@
       }
     },
     {
-      "paso_numero": 12,
+      "paso_numero": 13,
       "ref_id": "retest-certainty",
       "tipo_paso": "opcion_multiple",
       "titulo_paso": "Revisión de certeza",
@@ -850,7 +944,7 @@
       }
     },
     {
-      "paso_numero": 13,
+      "paso_numero": 14,
       "ref_id": "retest-production",
       "tipo_paso": "pregunta_abierta_validada",
       "titulo_paso": "Revisión de forma",
@@ -890,6 +984,11 @@
         "minChars": 14,
         "allowRetry": false,
         "guideAvailable": false,
+        "verbSuggestion": {
+          "label": "Verbo que puedes usar",
+          "base": "paint",
+          "participle": "painted"
+        },
         "learningOpportunity": {
           "id": "delayed-independent-form",
           "constructs": ["modal_form"],

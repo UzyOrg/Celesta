@@ -1769,6 +1769,15 @@
   margin-block-start: auto;
 }
 
+.responsePromptBlock {
+  display: grid;
+  gap: var(--space-xs);
+}
+
+.responsePromptBlock .responsePrompt {
+  margin: 0;
+}
+
 .choiceStack {
   border-top: 1px solid var(--color-rule);
   display: grid;

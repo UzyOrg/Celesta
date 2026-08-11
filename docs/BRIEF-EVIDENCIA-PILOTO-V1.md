@@ -379,6 +379,12 @@ mostrar el origen del presupuesto.
   obligara a tocar el JSON, `content_version` y `audio_asset_version` se mueven **juntos** y
   se avisa antes, porque particiona el `localStorage` de la cohorte.
 
+**Excepción cerrada antes del primer participante (2026-08-11):** el fundador aprobó
+`guided-form` y las tres ayudas léxicas descritas en
+`architecture/guided-modal-form-2026-08-11.md`. La congelación se reanuda en 1.18.0 con
+`content_version === audio_asset_version === 2026-08-11-forma-guiada`; no autoriza ningún
+otro cambio de contenido durante la cohorte.
+
 ---
 
 ## Cómo se verifica que terminaste
