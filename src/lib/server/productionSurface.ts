@@ -34,9 +34,14 @@ function matchesRoutePrefix(pathname: string, prefix: string): boolean {
   return pathname === prefix || pathname.startsWith(`${prefix}/`);
 }
 
+function runtimeEnvironmentFromNodeEnv(value: string | undefined): RuntimeEnvironment {
+  if (value === 'production' || value === 'test') return value;
+  return 'development';
+}
+
 export function isRetiredProductionPath(
   pathname: string,
-  environment: RuntimeEnvironment = process.env.NODE_ENV
+  environment: RuntimeEnvironment = runtimeEnvironmentFromNodeEnv(process.env.NODE_ENV)
 ): boolean {
   if (environment !== 'production') return false;
   return RETIRED_PRODUCTION_ROUTE_PREFIXES.some((prefix) =>

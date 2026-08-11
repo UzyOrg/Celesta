@@ -1,4 +1,5 @@
 interface ReadinessEnvironment {
+  readonly [key: string]: string | undefined;
   NODE_ENV?: string;
   NEXT_PUBLIC_SUPABASE_URL?: string;
   NEXT_PUBLIC_SUPABASE_ANON_KEY?: string;
