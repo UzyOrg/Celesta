@@ -93,7 +93,7 @@ const MAP_TERMS: Record<string, string> = {
 
 /** Plays every step to the end, including the day 7 retest. */
 async function playWholeLesson(page: Page): Promise<void> {
-  await page.goto('/crear');
+  await page.goto('/crear?t=TEST-PILOT&a=P01');
   await page.getByRole('button', { name: 'Ver la primera pista', exact: true }).click();
 
   // 1 · precheck — baseline certainty, before any instruction.

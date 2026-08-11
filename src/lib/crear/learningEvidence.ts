@@ -9,6 +9,7 @@ interface BuildCrearLearningObservationsInput {
   opportunity?: CrearLearningOpportunity;
   branch: string;
   correct: boolean;
+  observed?: boolean;
   assisted: boolean;
   attempt: number;
   statementId?: string;
@@ -40,6 +41,7 @@ export function buildCrearLearningObservations(
     stepId: input.stepId,
     branch: input.branch,
     correct: input.correct,
+    ...(typeof input.observed === 'boolean' ? { observed: input.observed } : {}),
     assisted: input.assisted,
     attempt: input.attempt,
     recordedAt,

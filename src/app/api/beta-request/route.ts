@@ -1,34 +1,75 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 
 export const runtime = 'nodejs';
 
-interface BetaRequestBody {
-  fullName: string;
-  email: string;
-  schoolName: string;
+const MAX_BODY_BYTES = 8_192;
+const BetaRequestSchema = z.object({
+  fullName: z.string().trim().min(2).max(100),
+  email: z.string().trim().email().max(254),
+  schoolName: z.string().trim().min(2).max(160),
+}).strict();
+
+function escapeHtml(value: string): string {
+  return value.replace(/[&<>'"]/g, (character) => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    "'": '&#39;',
+    '"': '&quot;',
+  })[character] ?? character);
+}
+
+function jsonResponse(body: object, status: number): NextResponse {
+  return NextResponse.json(body, {
+    status,
+    headers: { 'Cache-Control': 'private, no-store' },
+  });
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const body: BetaRequestBody = await request.json();
-    const { fullName, email, schoolName } = body;
-
-    // Validación básica
-    if (!fullName || !email || !schoolName) {
-      return NextResponse.json(
-        { error: 'Todos los campos son requeridos' },
-        { status: 400 }
-      );
+    const ip = getClientIp(request);
+    const rateLimit = checkRateLimit(`beta-request:${ip}`, 5, 60 * 60 * 1_000);
+    if (!rateLimit.allowed) {
+      return new NextResponse(JSON.stringify({ error: 'Demasiados intentos. Intenta más tarde.' }), {
+        status: 429,
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'private, no-store',
+          'Retry-After': String(Math.max(1, Math.ceil((rateLimit.resetAt - Date.now()) / 1_000))),
+        },
+      });
     }
 
-    // Validar formato de email
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return NextResponse.json(
-        { error: 'Formato de email inválido' },
-        { status: 400 }
-      );
+    const contentLength = Number(request.headers.get('content-length') ?? '0');
+    if (Number.isFinite(contentLength) && contentLength > MAX_BODY_BYTES) {
+      return jsonResponse({ error: 'Solicitud demasiado grande' }, 413);
     }
+
+    const rawBody = await request.text();
+    if (new TextEncoder().encode(rawBody).byteLength > MAX_BODY_BYTES) {
+      return jsonResponse({ error: 'Solicitud demasiado grande' }, 413);
+    }
+
+    let parsedJson: unknown;
+    try {
+      parsedJson = JSON.parse(rawBody);
+    } catch {
+      return jsonResponse({ error: 'Solicitud inválida' }, 400);
+    }
+
+    const parsed = BetaRequestSchema.safeParse(parsedJson);
+    if (!parsed.success) {
+      return jsonResponse({ error: 'Revisa los datos enviados' }, 400);
+    }
+
+    const { fullName, email, schoolName } = parsed.data;
+    const safeFullName = escapeHtml(fullName);
+    const safeEmail = escapeHtml(email);
+    const safeSchoolName = escapeHtml(schoolName);
+    const encodedEmail = encodeURIComponent(email);
 
     // Preparar el email de notificación
     const emailContent = {
@@ -106,18 +147,18 @@ export async function POST(request: NextRequest) {
             <div class="content">
               <div class="info-row">
                 <div class="label">👤 Nombre Completo</div>
-                <div class="value">${fullName}</div>
+                <div class="value">${safeFullName}</div>
               </div>
               <div class="info-row">
                 <div class="label">📧 Correo Electrónico</div>
-                <div class="value"><a href="mailto:${email}" style="color: #667eea;">${email}</a></div>
+                <div class="value"><a href="mailto:${encodedEmail}" style="color: #667eea;">${safeEmail}</a></div>
               </div>
               <div class="info-row">
                 <div class="label">🏫 Institución Educativa</div>
-                <div class="value">${schoolName}</div>
+                <div class="value">${safeSchoolName}</div>
               </div>
               <div style="text-align: center;">
-                <a href="mailto:${email}?subject=Bienvenido%20a%20Celestea%20Beta" class="cta-button">
+                <a href="mailto:${encodedEmail}?subject=Bienvenido%20a%20Celestea%20Beta" class="cta-button">
                   Responder al Solicitante
                 </a>
               </div>
@@ -159,10 +200,7 @@ Responde a ${email} para dar acceso al piloto.
         });
       }
       
-      return NextResponse.json(
-        { error: 'Servicio de email no configurado' },
-        { status: 500 }
-      );
+      return jsonResponse({ error: 'Servicio temporalmente no disponible' }, 503);
     }
 
     // Enviar el email
@@ -179,6 +217,7 @@ Responde a ${email} para dar acceso al piloto.
         html: emailContent.html,
         text: emailContent.text,
       }),
+      signal: AbortSignal.timeout(8_000),
     });
 
     if (!emailResponse.ok) {
@@ -188,11 +227,8 @@ Responde a ${email} para dar acceso al piloto.
     return NextResponse.json({
       success: true,
       message: 'Solicitud enviada exitosamente',
-    });
-  } catch (error) {
-    return NextResponse.json(
-      { error: 'Error al procesar la solicitud' },
-      { status: 500 }
-    );
+    }, { headers: { 'Cache-Control': 'private, no-store' } });
+  } catch {
+    return jsonResponse({ error: 'Error al procesar la solicitud' }, 500);
   }
 }

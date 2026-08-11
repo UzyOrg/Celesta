@@ -221,6 +221,11 @@ Un bloque con forma de entrega:
   renderiza y el bloque de dos dimensiones sigue leyéndose completo y
   deliberado, no truncado. Verificado en navegador y con test propio.
 
+> **Corrección 2026-08-10.** ADR 0012 reemplaza dos detalles de esta decisión:
+> el rótulo activo es *“Lo que hiciste hoy”* y la frase final solo recibe peso
+> ascendente cuando el ledger muestra progreso observado. Un baseline
+> `preexisting` se compone a nivel aunque la transferencia sea correcta.
+
 Mapeo de estado sin cambios: solo `correcto` cuenta como forma correcta;
 `misconcepcion_certeza` fuerza *interpretación por revisar* y deja la forma como
 correcta; `misconcepcion_forma`, `misconcepcion_forma_general` y

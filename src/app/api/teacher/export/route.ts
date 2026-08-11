@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import { authorizeClassRead } from '@/lib/server/classReadAuthorization';
 
 export const runtime = 'nodejs';
 export const revalidate = 0;
@@ -48,11 +48,15 @@ export async function GET(req: Request) {
     const fromISO = `${fromParam}T00:00:00.000Z`;
     const toISO = `${toParam}T23:59:59.999Z`;
 
-    const supabase = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } });
+    const authorization = await authorizeClassRead(classToken);
+    if (!authorization.ok) {
+      return new Response(authorization.error, { status: authorization.status });
+    }
+    const supabase = authorization.admin;
 
     let query = supabase
       .from('eventos_de_aprendizaje')
-      .select('student_session_id, actor_sid, class_token, taller_id, paso_id, verbo, result, ts, client_ts')
+      .select('student_session_id, student_alias, actor_sid, class_token, taller_id, paso_id, verbo, result, ts, client_ts')
       .eq('class_token', classToken)
       .gte('ts', fromISO)
       .lte('ts', toISO)
@@ -107,7 +111,7 @@ export async function GET(req: Request) {
         controller.enqueue(encoder.encode(header));
         for (let i = 0; i < rows.length; i++) {
           const e = rows[i] as any;
-          const canonicalAlias = aliasMap.get(e.student_session_id) ?? '';
+          const canonicalAlias = e.student_alias ?? aliasMap.get(e.student_session_id) ?? '';
           const score = e?.result?.score ?? '';
           const success = e?.result?.success ?? '';
           const hintCost = e?.verbo === 'solicito_pista' ? (e?.result?.costo ?? '') : '';

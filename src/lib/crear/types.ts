@@ -155,6 +155,11 @@ export interface CrearLearningObservation extends CrearLearningOpportunity {
   stepId: string;
   branch: string;
   correct: boolean;
+  /**
+   * `false` means the opportunity was presented but no scorable response was
+   * observed. Historical rows omit it and therefore default to `true`.
+   */
+  observed?: boolean;
   assisted: boolean;
   attempt: number;
   recordedAt: number;
@@ -461,6 +466,8 @@ export interface CrearTelemetryResult extends Record<string, unknown> {
   classifierAgreed?: boolean;
   /** Self-efficacy answer that preceded a pre-instruction production attempt. */
   baselineGate?: CrearBaselineGate;
+  /** Whether a scorable answer was actually observed. Defaults to true. */
+  observed?: boolean;
   /**
    * Structural reading of an independent production attempt, kept beside the
    * classifier branch so form and calibration stay separable in analysis. The

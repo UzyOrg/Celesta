@@ -72,6 +72,7 @@ export function CinematicPrecheck({
   const advanceLockRef = useRef(false);
 
   const activeItem = items[activeIndex];
+  const activeItemId = activeItem?.id;
   const selectedCategory = activeItem ? answers[activeItem.id] : undefined;
   const completedCount = Math.min(activeIndex, items.length);
   const isComplete = !activeItem;
@@ -91,8 +92,8 @@ export function CinematicPrecheck({
   );
 
   useEffect(() => {
-    if (activeItem) activeStartedAtRef.current = Date.now();
-  }, [activeItem?.id]);
+    if (activeItemId) activeStartedAtRef.current = Date.now();
+  }, [activeItemId]);
 
   useEffect(() => {
     if (!shouldFocusQuestionRef.current) return;

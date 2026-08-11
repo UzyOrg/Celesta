@@ -1,5 +1,13 @@
 import { NextResponse } from 'next/server';
 
+interface HealthResponse {
+  status: 'ok';
+}
+
 export async function GET() {
-  return NextResponse.json({ ok: true });
+  const body: HealthResponse = { status: 'ok' };
+  return NextResponse.json(
+    body,
+    { headers: { 'Cache-Control': 'private, no-store' } }
+  );
 }

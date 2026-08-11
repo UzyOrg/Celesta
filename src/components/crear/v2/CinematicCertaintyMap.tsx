@@ -129,6 +129,7 @@ export function CinematicCertaintyMap({
   );
   const shownOrder = useMemo(() => statements.map((statement) => statement.id), [statements]);
   const activeStatement = statements[activeIndex] ?? statements[0];
+  const activeStatementId = activeStatement?.id;
   const selectedCategory = activeStatement ? assignments[activeStatement.id] : undefined;
   const selectedTerm = config.categories.find(
     (category) => category.id === selectedCategory
@@ -160,10 +161,10 @@ export function CinematicCertaintyMap({
   }, [onPhaseChange, phase]);
 
   useEffect(() => {
-    if (activeStatement) {
+    if (activeStatementId) {
       activeStatementStartedAtRef.current = Date.now();
     }
-  }, [activeStatement?.id]);
+  }, [activeStatementId]);
 
   useEffect(() => {
     productionStartedAtRef.current = phase === 'produce' ? Date.now() : null;

@@ -14,9 +14,18 @@ import {
   RotateCcw,
   X,
 } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+  type RefObject,
+} from 'react';
 import { getOrCreateSessionId } from '@/lib/session';
-import { setAliasInLocalStorage } from '@/lib/alias';
+import { getAliasFromLocalStorage, setAliasInLocalStorage } from '@/lib/alias';
+import { flushEventQueue, type TrackEventResult } from '@/lib/track';
 import {
   loadWorkshopProgress,
   markWorkshopCompleted,
@@ -50,8 +59,11 @@ import {
   trackCrearAnswer,
   trackCrearComplete,
   trackCrearHint,
+  trackCrearMarketSignal,
+  trackCrearRetestScheduled,
   trackCrearStart,
   trackCrearStepComplete,
+  type CrearMarketProbeMoment,
 } from '@/lib/crear/telemetry';
 import type {
   ClassifyResponse,
@@ -62,6 +74,7 @@ import type {
   CrearCertaintyMapSubmission,
   CrearCueFrame,
   CrearExperienceStage,
+  CrearLearningObservation,
   CrearPaso,
   CrearPrecheckAttempt,
   CrearResponseCategory,
@@ -78,6 +91,7 @@ import {
 } from './CinematicCertaintyMap';
 import { CinematicPrecheck } from './CinematicPrecheck';
 import { CinematicVoice } from './CinematicVoice';
+import { getLearningVisualMode, getScaffoldWithdrawMotion } from './sceneMotion';
 import { useCinematicNarration } from './useCinematicNarration';
 import styles from './CinematicEnglishPlayer.hallmark.module.css';
 
@@ -90,11 +104,180 @@ interface FeedbackState {
   correct: boolean;
 }
 
-interface OutcomeState {
-  branch: string;
-  correct: boolean;
-  score: number;
+interface RetestAccessResponse {
+  eligible: boolean;
+  classToken: string;
+  participantCode: string;
+  studyId: string;
+  lessonId: string;
+  notBefore: number;
+  expiresAt: number;
+  serverNow?: number;
 }
+
+type RetestAuthorization =
+  | { status: 'idle' | 'checking' }
+  | { status: 'locked' | 'ready'; dueAt: number }
+  | { status: 'retryable_error'; message: string }
+  | { status: 'permanent_error'; reason: 'open_mode' | 'request'; message: string };
+
+interface RetestErrorPayload {
+  error?: unknown;
+}
+
+const RETEST_RETRY_DELAYS_MS = [250, 700, 1_600] as const;
+const COMPLETION_RETRY_DELAYS_MS = [1_000, 3_000, 10_000, 30_000] as const;
+
+class RetestRequestFailure extends Error {
+  constructor(
+    message: string,
+    readonly retryable: boolean,
+    readonly code?: string
+  ) {
+    super(message);
+    this.name = 'RetestRequestFailure';
+  }
+}
+
+function makeAbortError(): Error {
+  const error = new Error('Retest request aborted');
+  error.name = 'AbortError';
+  return error;
+}
+
+function waitForRetestRetry(delayMs: number, signal: AbortSignal): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (signal.aborted) {
+      reject(makeAbortError());
+      return;
+    }
+    const timer = window.setTimeout(() => {
+      signal.removeEventListener('abort', handleAbort);
+      resolve();
+    }, delayMs);
+    function handleAbort() {
+      window.clearTimeout(timer);
+      reject(makeAbortError());
+    }
+    signal.addEventListener('abort', handleAbort, { once: true });
+  });
+}
+
+function retestFailureMessage(code: string | undefined, issuing: boolean): string {
+  if (code === 'day1_not_completed') {
+    return 'Tu avance del día 1 todavía se está sincronizando.';
+  }
+  if (code === 'milestone_not_persisted') {
+    return 'No pudimos guardar todavía el cierre del día 1.';
+  }
+  if (code === 'rate_limited') {
+    return 'Hicimos varios intentos seguidos. Espera un momento y vuelve a intentarlo.';
+  }
+  if (code === 'expired') return 'Este enlace de revisión ya venció.';
+  if (code === 'retest_window_expired') {
+    return 'La ventana para hacer esta revisión ya terminó.';
+  }
+  if (
+    code === 'invalid_signature' ||
+    code === 'invalid_format' ||
+    code === 'malformed' ||
+    code === 'invalid_claims'
+  ) {
+    return 'Este enlace de revisión no es válido.';
+  }
+  if (code === 'invalid_request') {
+    return 'No pudimos identificar este recorrido para programar la revisión.';
+  }
+  if (code === 'server_misconfigured') {
+    return 'La revisión del día 7 no está disponible en este momento.';
+  }
+  return issuing
+    ? 'No hubo conexión suficiente para programar la revisión.'
+    : 'No hubo conexión suficiente para validar la revisión.';
+}
+
+async function failureFromRetestResponse(
+  response: Response,
+  issuing: boolean
+): Promise<RetestRequestFailure> {
+  let code: string | undefined;
+  try {
+    const payload = (await response.json()) as RetestErrorPayload;
+    if (typeof payload.error === 'string') code = payload.error;
+  } catch {
+    // An empty or non-JSON error remains classifiable by HTTP status.
+  }
+  const retryable =
+    code === 'day1_not_completed' ||
+    code === 'milestone_lookup_failed' ||
+    code === 'rate_limited' ||
+    response.status === 408 ||
+    response.status === 425 ||
+    response.status === 429 ||
+    (response.status >= 500 && code !== 'server_misconfigured');
+  return new RetestRequestFailure(retestFailureMessage(code, issuing), retryable, code);
+}
+
+async function fetchRetestWithBackoff(
+  request: () => Promise<Response>,
+  signal: AbortSignal,
+  issuing: boolean
+): Promise<Response> {
+  for (let attemptIndex = 0; ; attemptIndex += 1) {
+    try {
+      if (signal.aborted) throw makeAbortError();
+      const response = await request();
+      if (response.ok) return response;
+      throw await failureFromRetestResponse(response, issuing);
+    } catch (requestError) {
+      if (signal.aborted || (requestError as Error).name === 'AbortError') {
+        throw makeAbortError();
+      }
+      const failure = requestError instanceof RetestRequestFailure
+        ? requestError
+        : new RetestRequestFailure(retestFailureMessage(undefined, issuing), true);
+      const delayMs = RETEST_RETRY_DELAYS_MS[attemptIndex];
+      if (!failure.retryable || delayMs === undefined) throw failure;
+      await waitForRetestRetry(delayMs, signal);
+    }
+  }
+}
+
+type MarketObjective = 'hablar' | 'entender' | 'escuela';
+
+interface MarketProbeState {
+  moment: CrearMarketProbeMoment;
+  objective?: MarketObjective;
+  reminderAccepted: boolean;
+  pending: boolean;
+  confirmed: boolean;
+}
+
+type ReceiptEvidenceStatus = 'independent' | 'supported' | 'review' | 'unknown';
+
+function receiptEvidenceStatus(
+  observation: CrearLearningObservation | undefined
+): ReceiptEvidenceStatus {
+  if (!observation || observation.observed === false) return 'unknown';
+  if (!observation.correct) return 'review';
+  return observation.assisted ? 'supported' : 'independent';
+}
+
+function receiptEvidenceLabel(
+  status: ReceiptEvidenceStatus,
+  missingLabel = 'no observada'
+): string {
+  if (status === 'independent') return 'registrada, sin ayuda';
+  if (status === 'supported') return 'registrada, con apoyo';
+  if (status === 'review') return 'por revisar';
+  return missingLabel;
+}
+
+const MARKET_OBJECTIVES: ReadonlyArray<{ id: MarketObjective; label: string }> = [
+  { id: 'hablar', label: 'Hablar con más seguridad' },
+  { id: 'entender', label: 'Entender videos y conversaciones' },
+  { id: 'escuela', label: 'Mejorar para tareas o exámenes' },
+];
 
 interface NavigatorWithConnection extends Navigator {
   connection?: { saveData?: boolean };
@@ -584,10 +767,15 @@ export function CinematicEnglishPlayer() {
   const guideCloseRef = useRef<HTMLButtonElement>(null);
   const exitContinueRef = useRef<HTMLButtonElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
-  const bootedRef = useRef(false);
   const completionReportedRef = useRef<string | null>(null);
+  const completionNeedsRetryRef = useRef(false);
+  const completionRetryAttemptRef = useRef(0);
+  const completionRetryTimerRef = useRef<number | null>(null);
   const stepInteractiveAtRef = useRef<number | null>(null);
   const baselineAttemptStartedAtRef = useRef<number | null>(null);
+  const retestRequestKeyRef = useRef<string | null>(null);
+  const retestMilestoneQueuedRef = useRef<Promise<TrackEventResult> | null>(null);
+  const retestAuthorizationRef = useRef<RetestAuthorization>({ status: 'idle' });
   const [lesson, setLesson] = useState<CrearWorkshop | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -606,10 +794,27 @@ export function CinematicEnglishPlayer() {
   const [feedback, setFeedback] = useState<FeedbackState | null>(null);
   const [attempt, setAttempt] = useState(0);
   const [completed, setCompleted] = useState(false);
-  const [lastOutcome, setLastOutcome] = useState<OutcomeState | null>(null);
+  const [completionRetryCycle, setCompletionRetryCycle] = useState(0);
+  const [clientPreferencesReady, setClientPreferencesReady] = useState(false);
   const [inputFocused, setInputFocused] = useState(false);
   const [exitConfirm, setExitConfirm] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
+  const scheduleCompletionReportRetry = useCallback((): void => {
+    if (completionRetryTimerRef.current !== null) return;
+    const retryIndex = Math.min(
+      completionRetryAttemptRef.current,
+      COMPLETION_RETRY_DELAYS_MS.length - 1
+    );
+    const delay = COMPLETION_RETRY_DELAYS_MS[retryIndex]!;
+    completionRetryAttemptRef.current = Math.min(
+      completionRetryAttemptRef.current + 1,
+      COMPLETION_RETRY_DELAYS_MS.length - 1
+    );
+    completionRetryTimerRef.current = window.setTimeout(() => {
+      completionRetryTimerRef.current = null;
+      setCompletionRetryCycle((cycle) => cycle + 1);
+    }, delay);
+  }, []);
   /**
    * Steps whose guide the learner actually opened. `study.assistance` cannot
    * answer this: it also turns on for a retry or a translation, so using it
@@ -619,8 +824,24 @@ export function CinematicEnglishPlayer() {
   const [pageHidden, setPageHidden] = useState(false);
   const [liteMode, setLiteMode] = useState(false);
   const [clockNow, setClockNow] = useState(() => Date.now());
+  const [retestAuthorization, setRetestAuthorization] = useState<RetestAuthorization>({
+    status: 'idle',
+  });
+  const [retestRetryCycle, setRetestRetryCycle] = useState(0);
+  const [marketProbe, setMarketProbe] = useState<MarketProbeState | null>(null);
   const [structuredView, setStructuredView] = useState<'explore' | 'answer'>('explore');
   const [certaintyPhase, setCertaintyPhase] = useState<CrearCertaintyMapPhase>('map');
+
+  const commitRetestAuthorization = useCallback((next: RetestAuthorization): void => {
+    retestAuthorizationRef.current = next;
+    setRetestAuthorization(next);
+  }, []);
+
+  const retryRetestAuthorization = useCallback((): void => {
+    retestRequestKeyRef.current = null;
+    commitRetestAuthorization({ status: 'idle' });
+    setRetestRetryCycle((current) => current + 1);
+  }, [commitRetestAuthorization]);
 
   const currentStep = lesson?.pasos[currentIndex] ?? null;
   const currentStage = currentStep?.crear?.stage ?? 'descubre';
@@ -658,7 +879,6 @@ export function CinematicEnglishPlayer() {
     lesson && lesson.audio_asset_version === lesson.content_version
   );
   const audio = audioAssetsReady ? currentStep?.crear?.audio : undefined;
-  const sceneTransitionMs = prefersReducedMotion ? 120 : 520;
   const narration = useCinematicNarration({
     audio,
     sceneKey: currentStep ? getStepId(currentStep) : 'loading',
@@ -684,16 +904,23 @@ export function CinematicEnglishPlayer() {
       return answers;
     }, {});
   }, [currentStep, study]);
+  const constructStates = useMemo(
+    () => aggregateCrearConstructStates(study?.evidenceLedger ?? []),
+    [study?.evidenceLedger]
+  );
 
   useEffect(() => {
-    if (bootedRef.current) return;
-    bootedRef.current = true;
+    const bootController = new AbortController();
 
     async function boot() {
       setLoading(true);
       setError(null);
       try {
         const loaded = await loadCrearLesson(DEFAULT_CREAR_LESSON_ID);
+        // React may intentionally start and discard an effect while verifying
+        // hydration in development. Never let that abandoned boot commit state
+        // or telemetry after its cleanup has fired.
+        if (bootController.signal.aborted) return;
         /**
          * `?t=` matches the join link the rest of the product already uses;
          * `?token=` is accepted because that is what the teacher export calls
@@ -701,16 +928,62 @@ export function CinematicEnglishPlayer() {
          * string cannot become a class token.
          */
         const params = new URLSearchParams(window.location.search);
-        const rawToken = (params.get('t') ?? params.get('token') ?? '').trim();
-        const linkToken = rawToken.length > 0 && rawToken.length <= 64 ? rawToken : undefined;
+        const hasExplicitToken = params.has('t') || params.has('token');
+        const tokenParam = params.has('t') ? params.get('t') : params.get('token');
+        const explicitToken = tokenParam?.trim();
+        if (
+          hasExplicitToken &&
+          (!explicitToken || explicitToken.length > 64)
+        ) {
+          throw new Error('El enlace de acceso tiene un grupo inválido. Pide un enlace nuevo.');
+        }
+        const hasExplicitAlias = params.has('a') || params.has('alias');
+        const aliasParam = params.has('a') ? params.get('a') : params.get('alias');
+        const explicitAlias = aliasParam?.trim();
+        if (
+          hasExplicitAlias &&
+          (!explicitAlias || explicitAlias.length > 64)
+        ) {
+          throw new Error('El enlace de acceso tiene un participante inválido. Pide un enlace nuevo.');
+        }
+        const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+        // New links keep the signed bearer ticket in the fragment so it is not
+        // sent in the initial HTTP request or ordinary referrer logs. Query
+        // support remains for links already distributed before this change.
+        const rawRetestTicket = (params.get('rt') ?? hashParams.get('rt') ?? '').trim();
+        let ticketAccess: RetestAccessResponse | null = null;
+        if (rawRetestTicket) {
+          const response = await fetchRetestWithBackoff(
+            () => fetch('/api/crear/retest', {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ ticket: rawRetestTicket }),
+              cache: 'no-store',
+              signal: bootController.signal,
+            }),
+            bootController.signal,
+            false
+          );
+          ticketAccess = (await response.json()) as RetestAccessResponse;
+          if (ticketAccess.lessonId !== loaded.id_taller) {
+            throw new Error('Este enlace corresponde a otra experiencia.');
+          }
+        }
+
         /**
-         * A link without a token does not make the learner anonymous again. The
-         * study remembers the token it started under, so returning to a bare
-         * `/crear` keeps reporting under the same identity instead of opening a
-         * second one halfway through the evidence.
+         * Only a truly bare `/crear` resumes the stored identity. An explicit
+         * cohort link is a new identity decision: without `a` it opens an
+         * anonymous cohort study instead of exposing the previous learner on a
+         * shared phone. A signed retest remains authoritative over both.
          */
         const priorStudy = loadCrearStudyState(DEFAULT_CREAR_LESSON_ID);
-        const token = linkToken ?? priorStudy?.classToken;
+        const resumeStoredIdentity = !ticketAccess && !hasExplicitToken && !hasExplicitAlias;
+        const token = ticketAccess?.classToken
+          ?? (hasExplicitToken
+            ? explicitToken
+            : resumeStoredIdentity
+              ? priorStudy?.classToken
+              : undefined);
         setClassToken(token);
         // Keyed by token, so two classes on one device do not share a session.
         const sid = getOrCreateSessionId(token);
@@ -727,54 +1000,81 @@ export function CinematicEnglishPlayer() {
          * teacher export joins on. Posting to `/api/roster/set-alias` from here
          * would only duplicate that, at the cost of a network call on boot.
          */
-        const rawAlias = (params.get('a') ?? params.get('alias') ?? '').trim();
-        const alias = rawAlias.length > 0 && rawAlias.length <= 64 ? rawAlias : undefined;
-        if (alias) setAliasInLocalStorage(token, alias);
+        if (ticketAccess) {
+          setAliasInLocalStorage(token, ticketAccess.participantCode);
+        } else if (hasExplicitAlias) {
+          setAliasInLocalStorage(token, explicitAlias!);
+        } else if (hasExplicitToken) {
+          // `trackEvent` reads this cache directly. Clearing it is what keeps
+          // an anonymous cohort link from reporting as the previous student.
+          setAliasInLocalStorage(token, null);
+        }
+        const storedAlias = resumeStoredIdentity
+          ? getAliasFromLocalStorage(token)?.trim()
+          : undefined;
+        const participantCode = ticketAccess?.participantCode
+          ?? (hasExplicitAlias ? explicitAlias : undefined)
+          ?? (storedAlias && storedAlias.length <= 64 ? storedAlias : undefined)
+          ?? (resumeStoredIdentity ? priorStudy?.participantCode : undefined);
+        if (resumeStoredIdentity && participantCode && !storedAlias) {
+          // A bare return resumes the study identity, including the cache read
+          // directly by telemetry and D7 authorization.
+          setAliasInLocalStorage(token, participantCode);
+        }
 
         let nextStudy = getOrCreateCrearStudyState(
           DEFAULT_CREAR_LESSON_ID,
           loaded.content_version ?? 'dev',
-          token
+          token,
+          participantCode
         );
 
-        /**
-         * The day 7 retest is the most valuable measurement in the design and
-         * the most fragile: its due date lives in localStorage, which a shared
-         * or reset device loses. `?retest=1` opens the gate from a link so a
-         * lost browser state cannot cost the cohort a whole learner.
-         */
-        const retestBypass =
-          new URLSearchParams(window.location.search).get('retest') === '1';
         const retestStepIndex = loaded.pasos.findIndex(
           (step) => typeof step.crear?.retestDelayHours === 'number'
         );
-        /**
-         * The bypass only reopens a retest that was actually earned. It writes
-         * `stepIndex` to storage, so firing it on a learner who has not
-         * finished day 1 — a link forwarded in a group chat, a curious tap —
-         * threw away their position and dropped them into a measurement of
-         * something they had never been taught.
-         */
-        const earnedRetest =
-          nextStudy.phase === 'waiting_retest' ||
-          nextStudy.phase === 'completed' ||
-          typeof nextStudy.retestDueAt === 'number';
-        const openRetestGate = retestBypass && retestStepIndex >= 0 && earnedRetest;
-        if (openRetestGate) {
-          const reopened: CrearStudyState = {
-            ...nextStudy,
-            phase: 'initial',
-            stepIndex: retestStepIndex,
-          };
-          delete reopened.retestDueAt;
-          nextStudy = saveCrearStudyState(reopened);
+        if (ticketAccess && retestStepIndex >= 0) {
+          const sameStudy = nextStudy.studyId === ticketAccess.studyId;
+          const recovered: CrearStudyState = sameStudy
+            ? {
+                ...nextStudy,
+                classToken: ticketAccess.classToken,
+                participantCode: ticketAccess.participantCode,
+                retestTicket: rawRetestTicket,
+                retestDueAt: ticketAccess.notBefore,
+                phase: ticketAccess.eligible ? 'initial' : 'waiting_retest',
+                stepIndex: retestStepIndex,
+              }
+            : {
+                studyId: ticketAccess.studyId,
+                lessonId: DEFAULT_CREAR_LESSON_ID,
+                contentVersion: loaded.content_version ?? 'dev',
+                classToken: ticketAccess.classToken,
+                participantCode: ticketAccess.participantCode,
+                startedAt: Date.now(),
+                updatedAt: Date.now(),
+                phase: ticketAccess.eligible ? 'initial' : 'waiting_retest',
+                stepIndex: retestStepIndex,
+                retestDueAt: ticketAccess.notBefore,
+                retestTicket: rawRetestTicket,
+                attempts: {},
+                firstOutcomes: {},
+                latestOutcomes: {},
+                awaitingFeedback: {},
+                assistance: {},
+                evidenceLedger: [],
+              };
+          nextStudy = saveCrearStudyState(recovered);
+          commitRetestAuthorization({
+            status: ticketAccess.eligible ? 'ready' : 'locked',
+            dueAt: ticketAccess.notBefore,
+          });
         }
 
         const saved = loadWorkshopProgress(sid, loaded.id_taller);
         const savedMatchesStudy = Boolean(
           saved && saved.ultima_actualizacion >= nextStudy.startedAt
         );
-        const candidateIndex = openRetestGate
+        const candidateIndex = ticketAccess
           ? retestStepIndex
           : savedMatchesStudy
             ? Math.max(nextStudy.stepIndex, saved?.paso_actual ?? 0)
@@ -787,31 +1087,12 @@ export function CinematicEnglishPlayer() {
         setStudy(nextStudy);
         setCurrentIndex(safeIndex);
         setCompleted(
-          !openRetestGate &&
+          !ticketAccess &&
           (nextStudy.phase === 'completed' || (savedMatchesStudy && saved?.completado === true))
         );
         setAttempt(nextStudy.attempts[getStepId(firstStep)] ?? 0);
 
         const firstStepId = getStepId(firstStep);
-        const transferStep = loaded.pasos.find((step) => step.crear?.fase === 'transfer');
-        const retestStep = loaded.pasos.find(
-          (step) => typeof step.crear?.retestDelayHours === 'number'
-        );
-        const outcomeStepId = nextStudy.phase === 'completed' && retestStep
-          ? getStepId(retestStep)
-          : firstStep.crear?.scene === 'closure' && transferStep
-            ? getStepId(transferStep)
-            : firstStepId;
-        const storedOutcome =
-          nextStudy.latestOutcomes[firstStepId] ?? nextStudy.firstOutcomes[outcomeStepId];
-        if (storedOutcome) {
-          setLastOutcome({
-            branch: storedOutcome.branch,
-            correct: storedOutcome.correct,
-            score: storedOutcome.score,
-          });
-        }
-
         const pendingReceipt = nextStudy.latestOutcomes[firstStepId];
         if (
           nextStudy.phase !== 'completed' &&
@@ -831,7 +1112,7 @@ export function CinematicEnglishPlayer() {
           setFeedback(restoredFeedback);
         }
 
-        if (firstStep && nextStudy.phase !== 'completed') {
+        if (firstStep && nextStudy.phase === 'initial') {
           void trackCrearStart({
             classToken: token,
             tallerId: loaded.id_taller,
@@ -841,15 +1122,24 @@ export function CinematicEnglishPlayer() {
           });
         }
       } catch (bootError) {
+        if ((bootError as Error).name === 'AbortError') return;
         setError((bootError as Error).message || 'No pudimos abrir la experiencia.');
       } finally {
-        setLoading(false);
+        if (!bootController.signal.aborted) setLoading(false);
       }
     }
 
     const nav = navigator as NavigatorWithConnection;
     setLiteMode(Boolean(nav.connection?.saveData));
     void boot();
+    return () => bootController.abort();
+  }, [commitRetestAuthorization]);
+
+  useEffect(() => {
+    // `useReducedMotion` is browser-owned. Gating it until after hydration keeps
+    // the server and first client tree identical, then swaps to the still frame
+    // before the background video has time to become instructional motion.
+    setClientPreferencesReady(true);
   }, []);
 
   useEffect(() => {
@@ -874,6 +1164,187 @@ export function CinematicEnglishPlayer() {
     const timer = window.setTimeout(() => setClockNow(Date.now()), remaining + 50);
     return () => window.clearTimeout(timer);
   }, [study?.retestDueAt]);
+
+  useEffect(() => {
+    if (!lesson || !study) return;
+    const retestStep = lesson.pasos[study.stepIndex];
+    // Authorize the whole delayed sitting, not only its first screen. A local
+    // state edited to point at the production screen must not bypass D7.
+    if (!isRetestStage(retestStep?.crear?.stage)) return;
+    if (retestAuthorizationRef.current.status !== 'idle') return;
+    const currentStudy = study;
+    const currentLesson = lesson;
+
+    const participantCode = currentStudy.participantCode
+      ?? getAliasFromLocalStorage(classToken)
+      ?? undefined;
+    if (!classToken || !participantCode) {
+      commitRetestAuthorization({
+        status: 'permanent_error',
+        reason: 'open_mode',
+        message: 'Completaste el reto de hoy. Como entraste sin un enlace individual, este modo no guardó una fecha para volver.',
+      });
+      return;
+    }
+
+    const requestKey = `${currentStudy.studyId}:${currentStudy.retestTicket ?? 'issue'}:${retestRetryCycle}`;
+    retestRequestKeyRef.current = requestKey;
+    const controller = new AbortController();
+    commitRetestAuthorization({ status: 'checking' });
+
+    const retestBoundaryIndex = currentLesson.pasos.findIndex(
+      (step) => effectiveRetestDelayHours(step) != null
+    );
+    const scheduledRetestStep = currentLesson.pasos[retestBoundaryIndex];
+    const milestoneStep = currentLesson.pasos[Math.max(0, retestBoundaryIndex - 1)]
+      ?? retestStep;
+    const retestDelayHours = scheduledRetestStep
+      ? effectiveRetestDelayHours(scheduledRetestStep) ?? 168
+      : 168;
+
+    async function ensureRetestMilestonePersisted(): Promise<void> {
+      let result: TrackEventResult | null = null;
+      try {
+        result = await retestMilestoneQueuedRef.current;
+      } catch {
+        // Re-create the same deterministic event below.
+      }
+
+      if (!result || result.status === 'not_persisted') {
+        const retry = trackCrearRetestScheduled({
+          classToken,
+          tallerId: currentLesson.id_taller,
+          pasoId: getStepId(milestoneStep),
+          checksum: currentLesson.checksum,
+          studyId: currentStudy.studyId,
+          retestDelayHours,
+        });
+        retestMilestoneQueuedRef.current = retry;
+        try {
+          result = await retry;
+        } catch {
+          result = null;
+        }
+      }
+
+      if (!result || result.status === 'not_persisted') {
+        throw new RetestRequestFailure(
+          retestFailureMessage('milestone_not_persisted', true),
+          true,
+          'milestone_not_persisted'
+        );
+      }
+    }
+
+    async function authorizeRetest() {
+      try {
+        const issuing = !currentStudy.retestTicket;
+        const response = await fetchRetestWithBackoff(async () => {
+          if (currentStudy.retestTicket) {
+            return fetch('/api/crear/retest', {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ ticket: currentStudy.retestTicket }),
+              cache: 'no-store',
+              signal: controller.signal,
+            });
+          }
+
+          // Never ask the server to issue a ticket until the day-1 milestone is
+          // durable somewhere. On reload the in-memory promise is gone, so the
+          // deterministic client id lets us safely reconstruct the same event.
+          await ensureRetestMilestonePersisted();
+          await flushEventQueue();
+          return fetch('/api/crear/retest', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              classToken,
+              participantCode,
+              studyId: currentStudy.studyId,
+              lessonId: currentLesson.id_taller,
+            }),
+            signal: controller.signal,
+          });
+        }, controller.signal, issuing);
+        const payload = (await response.json()) as RetestAccessResponse & { ticket?: string };
+        if (
+          typeof payload.eligible !== 'boolean' ||
+          !Number.isFinite(payload.notBefore) ||
+          (payload.lessonId !== undefined && payload.lessonId !== currentLesson.id_taller)
+        ) {
+          throw new RetestRequestFailure('La respuesta de revisión no es válida.', false);
+        }
+        if (controller.signal.aborted || retestRequestKeyRef.current !== requestKey) return;
+        if (payload.ticket) {
+          persistStudy({ retestTicket: payload.ticket, retestDueAt: payload.notBefore });
+        } else if (currentStudy.retestDueAt !== payload.notBefore) {
+          persistStudy({ retestDueAt: payload.notBefore });
+        }
+        setClockNow(payload.serverNow ?? Date.now());
+        commitRetestAuthorization({
+          status: payload.eligible ? 'ready' : 'locked',
+          dueAt: payload.notBefore,
+        });
+      } catch (authorizationError) {
+        if (
+          controller.signal.aborted ||
+          (authorizationError as Error).name === 'AbortError' ||
+          retestRequestKeyRef.current !== requestKey
+        ) return;
+        const failure = authorizationError instanceof RetestRequestFailure
+          ? authorizationError
+          : new RetestRequestFailure(retestFailureMessage(undefined, true), true);
+        commitRetestAuthorization(failure.retryable
+          ? { status: 'retryable_error', message: failure.message }
+          : { status: 'permanent_error', reason: 'request', message: failure.message });
+      }
+    }
+
+    void authorizeRetest();
+    return () => {
+      controller.abort();
+      if (retestRequestKeyRef.current === requestKey) retestRequestKeyRef.current = null;
+    };
+  }, [
+    classToken,
+    commitRetestAuthorization,
+    lesson,
+    retestRetryCycle,
+    study,
+  ]);
+
+  useEffect(() => {
+    if (retestAuthorization.status !== 'locked') return;
+    const remaining = retestAuthorization.dueAt - Date.now();
+    const timer = window.setTimeout(() => {
+      retryRetestAuthorization();
+    }, Math.max(100, remaining + 50));
+    return () => window.clearTimeout(timer);
+  }, [retestAuthorization, retryRetestAuthorization]);
+
+  useEffect(() => {
+    function handleOnline(): void {
+      if (retestAuthorizationRef.current.status === 'retryable_error') {
+        retryRetestAuthorization();
+      }
+      if (completionNeedsRetryRef.current) {
+        if (completionRetryTimerRef.current !== null) {
+          window.clearTimeout(completionRetryTimerRef.current);
+          completionRetryTimerRef.current = null;
+        }
+        setCompletionRetryCycle((cycle) => cycle + 1);
+      }
+    }
+    window.addEventListener('online', handleOnline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      if (completionRetryTimerRef.current !== null) {
+        window.clearTimeout(completionRetryTimerRef.current);
+        completionRetryTimerRef.current = null;
+      }
+    };
+  }, [retryRetestAuthorization]);
 
   useEffect(() => {
     if (!feedback && !exitConfirm && !guideOpen) return;
@@ -943,7 +1414,8 @@ export function CinematicEnglishPlayer() {
    * Emits the completion event once the study state has settled, so the
    * projection sees the day 7 observation that `completeLesson` cannot.
    *
-   * Guarded two ways: `study.completionReported` is persisted to localStorage,
+   * Guarded two ways: `study.completionReported` is persisted to localStorage
+   * only after the event is durably queued or accepted by the server,
    * so a returning learner reopening an already-finished study — which boots
    * straight into `phase: 'completed'` — does not re-emit the event on every
    * page load. `completionReportedRef` is the synchronous companion for the
@@ -956,7 +1428,7 @@ export function CinematicEnglishPlayer() {
     const reportKey = `${study.studyId}:${study.contentVersion}`;
     if (completionReportedRef.current === reportKey) return;
     completionReportedRef.current = reportKey;
-    persistStudy({ completionReported: true });
+    completionNeedsRetryRef.current = false;
     void trackCrearComplete({
       classToken,
       tallerId: lesson.id_taller,
@@ -965,18 +1437,39 @@ export function CinematicEnglishPlayer() {
       studyId: study.studyId,
       retestDueAt: study.retestDueAt,
       constructStates: aggregateCrearConstructStates(study.evidenceLedger),
+    }).then((result) => {
+      if (result.status === 'queued' || result.status === 'sent') {
+        completionNeedsRetryRef.current = false;
+        completionRetryAttemptRef.current = 0;
+        if (completionRetryTimerRef.current !== null) {
+          window.clearTimeout(completionRetryTimerRef.current);
+          completionRetryTimerRef.current = null;
+        }
+        persistStudy({ completionReported: true });
+        return;
+      }
+      completionReportedRef.current = null;
+      completionNeedsRetryRef.current = true;
+      scheduleCompletionReportRetry();
+    }).catch(() => {
+      completionReportedRef.current = null;
+      completionNeedsRetryRef.current = true;
+      scheduleCompletionReportRetry();
     });
-  }, [lesson, study]);
+  }, [classToken, completionRetryCycle, lesson, scheduleCompletionReportRetry, study]);
 
   function getStepLatencyMs(): number | undefined {
     if (stepInteractiveAtRef.current === null) return undefined;
     return Math.max(0, Date.now() - stepInteractiveAtRef.current);
   }
 
-  const retestLocked = useMemo(() => {
-    if (!currentStep || !study || typeof currentStep.crear?.retestDelayHours !== 'number') return false;
-    return typeof study.retestDueAt === 'number' && clockNow < study.retestDueAt;
-  }, [clockNow, currentStep, study]);
+  const retestGateActive = useMemo(() => {
+    if (!currentStep || !study || !isRetestStage(currentStage)) return false;
+    return retestAuthorization.status !== 'ready';
+  }, [currentStep, currentStage, retestAuthorization.status, study]);
+
+  const ambientPaused = clientPreferencesReady
+    && (Boolean(prefersReducedMotion) || liteMode || pageHidden);
 
   function persistProgress(nextIndex: number, isComplete: boolean) {
     if (!lesson || !sessionId) return;
@@ -1013,6 +1506,8 @@ export function CinematicEnglishPlayer() {
        * the certainty is not.
        */
       evidenceCorrect?: boolean;
+      /** A presented-but-omitted baseline is unknown, not an error. */
+      evidenceObserved?: boolean;
     }
   ): void {
     const stepId = getStepId(step);
@@ -1037,6 +1532,7 @@ export function CinematicEnglishPlayer() {
         opportunity: step.crear?.learningOpportunity,
         branch,
         correct: details?.evidenceCorrect ?? correct,
+        observed: details?.evidenceObserved,
         assisted: details?.assisted ?? Boolean(current.assistance[stepId]),
         attempt: attemptNumber,
         statementId: details?.statementId,
@@ -1110,20 +1606,19 @@ export function CinematicEnglishPlayer() {
   function advance(step: CrearPaso, nextRefId: string | null) {
     if (!lesson || !study) return;
 
-    void trackCrearStepComplete({
-      classToken,
-      tallerId: lesson.id_taller,
-      pasoId: getStepId(step),
-      checksum: lesson.checksum,
-      studyId: study.studyId,
-    });
-
     const nextIndex =
       nextRefId != null
         ? lesson.pasos.findIndex((candidate) => candidate.ref_id === nextRefId)
         : currentIndex + 1;
 
     if (nextIndex < 0 || nextIndex >= lesson.pasos.length) {
+      void trackCrearStepComplete({
+        classToken,
+        tallerId: lesson.id_taller,
+        pasoId: getStepId(step),
+        checksum: lesson.checksum,
+        studyId: study.studyId,
+      });
       completeLesson();
       return;
     }
@@ -1132,9 +1627,32 @@ export function CinematicEnglishPlayer() {
     narration.prepareTransition({
       audio: audioAssetsReady ? nextStep.crear?.audio : undefined,
       sceneKey: getStepId(nextStep),
-      transitionMs: sceneTransitionMs,
+      transitionMs: 0,
     });
     const delayHours = effectiveRetestDelayHours(nextStep);
+    if (delayHours != null && study.phase === 'initial') {
+      const milestoneQueued = trackCrearRetestScheduled({
+        classToken,
+        tallerId: lesson.id_taller,
+        pasoId: getStepId(step),
+        checksum: lesson.checksum,
+        studyId: study.studyId,
+        retestDelayHours: delayHours,
+      });
+      retestMilestoneQueuedRef.current = milestoneQueued;
+      // The authorization effect awaits this exact write before flushing. The
+      // catch prevents a rejected background promise from becoming unhandled;
+      // the awaiting effect still receives the rejection and fails closed.
+      void milestoneQueued.catch(() => undefined);
+    } else {
+      void trackCrearStepComplete({
+        classToken,
+        tallerId: lesson.id_taller,
+        pasoId: getStepId(step),
+        checksum: lesson.checksum,
+        studyId: study.studyId,
+      });
+    }
     const nextStudy: Partial<CrearStudyState> = {
       stepIndex: nextIndex,
       awaitingFeedback: {
@@ -1144,7 +1662,6 @@ export function CinematicEnglishPlayer() {
     };
     if (delayHours != null && study.phase === 'initial') {
       nextStudy.phase = 'waiting_retest';
-      nextStudy.retestDueAt = Date.now() + delayHours * 60 * 60 * 1000;
     }
 
     persistProgress(nextIndex, false);
@@ -1226,6 +1743,7 @@ export function CinematicEnglishPlayer() {
       classifierSource?: CrearClassifierSource;
       classifierAgreed?: boolean;
       baselineGate?: CrearBaselineGate;
+      observed?: boolean;
       cueFrame?: CrearCueFrame;
       shownOrder?: string[];
       form?: CrearModalFormReading;
@@ -1251,6 +1769,7 @@ export function CinematicEnglishPlayer() {
       classifierSource: details?.classifierSource,
       classifierAgreed: details?.classifierAgreed,
       baselineGate: details?.baselineGate,
+      observed: details?.observed,
       shownOrder: details?.shownOrder,
       expressedCategory: details?.form?.expressedCategory,
       formWellFormed: details?.form?.wellFormed,
@@ -1322,7 +1841,6 @@ export function CinematicEnglishPlayer() {
     const correct = branch?.correcto ?? false;
     const score = branch?.score ?? 0;
 
-    setLastOutcome({ branch: branchId, correct, score });
     setFeedback(buildBranchFeedback(step, branch, branchId, confidence, attemptNumber));
   }
 
@@ -1392,7 +1910,6 @@ export function CinematicEnglishPlayer() {
       }
 
       if (currentStep.crear?.revealFeedback === false) {
-        setLastOutcome({ branch: classification.rama, correct, score });
         advance(currentStep, resolveNextRef(currentStep, classification));
         return;
       }
@@ -1468,7 +1985,6 @@ export function CinematicEnglishPlayer() {
         studyId: study.studyId,
       });
     }
-    setLastOutcome({ branch: branchId, correct, score });
     if (currentStep.crear?.revealFeedback === false) {
       advance(currentStep, resolveNextRef(currentStep, { rama: branchId, confianza: 1 }));
       return;
@@ -1621,6 +2137,7 @@ export function CinematicEnglishPlayer() {
       {
         assisted: false,
         evidenceCorrect: evidence ? evidence.formCorrect : false,
+        evidenceObserved: !skipped,
       }
     );
     queueAnswerTelemetry(
@@ -1635,10 +2152,10 @@ export function CinematicEnglishPlayer() {
         assisted: false,
         latencyMs,
         baselineGate: gate,
+        observed: !skipped,
         ...(evidence ? { form: evidence.form } : {}),
       }
     );
-    setLastOutcome({ branch, correct: false, score: 0 });
     advance(currentStep, currentStep.crear?.nextRefId ?? null);
   }
 
@@ -1696,7 +2213,6 @@ export function CinematicEnglishPlayer() {
         undefined,
         details
       );
-      setLastOutcome({ branch: classification.rama, correct, score });
 
       if (submission.productionText) {
         if (!correct) {
@@ -1797,10 +2313,53 @@ export function CinematicEnglishPlayer() {
     window.location.assign('/');
   }
 
+  function trackMarketProbe(
+    moment: CrearMarketProbeMoment,
+    stage: 'opened' | 'objective_selected' | 'registered',
+    objective?: MarketObjective,
+    reminderAccepted?: boolean
+  ): Promise<void> {
+    if (!lesson || !study) return Promise.resolve();
+    return trackCrearMarketSignal({
+      classToken,
+      tallerId: lesson.id_taller,
+      pasoId: `market-probe-${moment}`,
+      checksum: lesson.checksum,
+      studyId: study.studyId,
+      moment,
+      stage,
+      objective,
+      reminderAccepted,
+    });
+  }
+
+  function openMarketProbe(moment: CrearMarketProbeMoment): void {
+    setMarketProbe({ moment, reminderAccepted: false, pending: false, confirmed: false });
+    void trackMarketProbe(moment, 'opened');
+  }
+
+  function chooseMarketObjective(objective: MarketObjective): void {
+    setMarketProbe((current) => current ? { ...current, objective } : current);
+    if (marketProbe) void trackMarketProbe(marketProbe.moment, 'objective_selected', objective);
+  }
+
+  async function registerMarketInterest(): Promise<void> {
+    if (!marketProbe?.objective || marketProbe.pending) return;
+    const snapshot = marketProbe;
+    setMarketProbe({ ...snapshot, pending: true });
+    await trackMarketProbe(
+      snapshot.moment,
+      'registered',
+      snapshot.objective,
+      snapshot.reminderAccepted
+    );
+    setMarketProbe({ ...snapshot, pending: false, confirmed: true });
+  }
+
   if (loading) {
     return (
-      <main className={styles.pageShell} data-scene="arrival" data-celestea-create="true" lang="es-MX">
-        <AmbientField paused={Boolean(prefersReducedMotion) || liteMode || pageHidden} />
+      <main className={styles.pageShell} data-scene="arrival" data-learning-mode="reflect" data-celestea-create="true" lang="es-MX">
+        <AmbientField paused={ambientPaused} />
         <div className={styles.loadingScene} role="status">
           <span className={styles.loadingOrb}><Loader2 size={24} /></span>
           <p>Preparando el caso…</p>
@@ -1811,8 +2370,8 @@ export function CinematicEnglishPlayer() {
 
   if (error || !lesson || !currentStep || !study) {
     return (
-      <main className={styles.pageShell} data-scene="arrival" data-celestea-create="true" lang="es-MX">
-        <AmbientField paused={Boolean(prefersReducedMotion) || liteMode || pageHidden} />
+      <main className={styles.pageShell} data-scene="arrival" data-learning-mode="reflect" data-celestea-create="true" lang="es-MX">
+        <AmbientField paused={ambientPaused} />
         <section className={styles.errorScene}>
           <span><RotateCcw size={22} /></span>
           <h1>No pudimos abrir la experiencia</h1>
@@ -1825,50 +2384,245 @@ export function CinematicEnglishPlayer() {
     );
   }
 
-  if (completed) {
+  if (marketProbe) {
     return (
-      <main className={styles.pageShell} data-scene="closure" data-celestea-create="true" lang="es-MX">
-        <AmbientField paused={Boolean(prefersReducedMotion) || liteMode || pageHidden} />
-        <section className={styles.completionScene}>
+      <main className={styles.pageShell} data-scene="closure" data-learning-mode="reflect" data-celestea-create="true" lang="es-MX">
+        <AmbientField paused={ambientPaused} />
+        <section className={styles.marketProbeScene}>
+          {marketProbe.confirmed ? (
+            <>
+              <span className={styles.completionMark}><Check size={28} /></span>
+              <p className={styles.marketProbeLabel}>Siguiente reto</p>
+              <h1>Tu lugar quedó apartado.</h1>
+              <p>Te avisaremos por el mismo medio cuando podamos probarlo.</p>
+              <button className={styles.primaryAction} type="button" onClick={() => window.location.assign('/')}>
+                Listo, cerrar
+              </button>
+            </>
+          ) : (
+            <>
+              <p className={styles.marketProbeLabel}>Siguiente reto</p>
+              <h1>¿Qué te gustaría lograr con tu inglés?</h1>
+              <p>Elige uno. Esto nos ayuda a preparar algo que sí te sirva.</p>
+              <fieldset className={styles.marketProbeOptions}>
+                <legend className={styles.visuallyHidden}>Elige un objetivo</legend>
+                {MARKET_OBJECTIVES.map((option) => (
+                  <label className={styles.marketProbeOption} key={option.id}>
+                    <input
+                      checked={marketProbe.objective === option.id}
+                      name="market-objective"
+                      onChange={() => chooseMarketObjective(option.id)}
+                      type="radio"
+                      value={option.id}
+                    />
+                    <span>{option.label}</span>
+                  </label>
+                ))}
+              </fieldset>
+              <label className={styles.marketReminder}>
+                <input
+                  checked={marketProbe.reminderAccepted}
+                  onChange={(event) => setMarketProbe((current) => current
+                    ? { ...current, reminderAccepted: event.target.checked }
+                    : current)}
+                  type="checkbox"
+                />
+                <span>Sí, avísame por el mismo medio cuando esté listo.</span>
+              </label>
+              <div className={styles.marketProbeActions}>
+                <button
+                  className={styles.primaryAction}
+                  disabled={!marketProbe.objective || marketProbe.pending}
+                  onClick={() => void registerMarketInterest()}
+                  type="button"
+                >
+                  {marketProbe.pending ? 'Guardando…' : 'Apartar mi lugar'}
+                </button>
+                <button className={styles.secondaryAction} type="button" onClick={() => window.location.assign('/')}>
+                  Ahora no
+                </button>
+              </div>
+            </>
+          )}
+        </section>
+      </main>
+    );
+  }
+
+  if (completed) {
+    const certaintyState = constructStates.find(
+      (state) => state.construct === 'certainty_calibration'
+    );
+    const formState = constructStates.find((state) => state.construct === 'modal_form');
+    const day7Dimensions = [
+      {
+        id: 'interpretation',
+        label: 'Interpretación de las pistas',
+        dayOne: receiptEvidenceStatus(certaintyState?.independent),
+        daySeven: receiptEvidenceStatus(certaintyState?.delayed),
+      },
+      {
+        id: 'form',
+        label: 'Forma en inglés',
+        dayOne: receiptEvidenceStatus(formState?.independent),
+        daySeven: receiptEvidenceStatus(formState?.delayed),
+      },
+    ];
+    const daySevenPhrase = study.latestOutcomes['retest-production']?.text.trim();
+
+    return (
+      <main className={styles.pageShell} data-scene="closure" data-learning-mode="reflect" data-celestea-create="true" lang="es-MX">
+        <AmbientField paused={ambientPaused} />
+        <section className={`${styles.completionScene} ${styles.day7CompletionScene}`}>
           <span className={styles.completionMark}><Check size={28} /></span>
-          <h1>Terminaste la revisión.</h1>
-          <p>Guardamos tus respuestas para mejorar la siguiente experiencia.</p>
-          <div
-            className={styles.outcomeCard}
-            data-correct={lastOutcome ? (lastOutcome.correct ? 'true' : 'false') : 'unknown'}
+          <h1>Volviste y cerraste el caso.</h1>
+          <p>Ahora sí puedes comparar el caso nuevo con lo que hiciste una semana después.</p>
+          <section
+            aria-labelledby="day7-receipt-label"
+            className={styles.day7Receipt}
           >
-            <small>Resultado de esta revisión</small>
-            <strong>
-              {lastOutcome
-                ? lastOutcome.correct
-                  ? 'Pudiste escribir una deducción en un caso nuevo.'
-                  : 'Ya sabemos qué conviene practicar de nuevo.'
-                : 'La revisión quedó guardada.'}
-            </strong>
+            <p className={styles.receiptLabel} id="day7-receipt-label">
+              Tu evidencia de una semana después
+            </p>
+            <div className={styles.day7EvidenceRows}>
+              {day7Dimensions.map((dimension) => (
+                <article className={styles.day7EvidenceRow} key={dimension.id}>
+                  <h2>{dimension.label}</h2>
+                  <dl className={styles.day7Moments}>
+                    <div>
+                      <dt>Día 1 · caso nuevo</dt>
+                      <dd data-status={dimension.dayOne}>
+                        {receiptEvidenceLabel(dimension.dayOne, 'no disponible aquí')}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>Día 7 · hoy</dt>
+                      <dd data-status={dimension.daySeven}>
+                        {receiptEvidenceLabel(dimension.daySeven)}
+                      </dd>
+                    </div>
+                  </dl>
+                </article>
+              ))}
+            </div>
+            {daySevenPhrase ? (
+              <figure className={styles.day7Phrase}>
+                <figcaption>Una semana después escribiste</figcaption>
+                <blockquote lang="en-US">{daySevenPhrase}</blockquote>
+              </figure>
+            ) : null}
+            <div className={styles.day7EvidenceLimit}>
+              <p className={styles.receiptLabel}>Lo que todavía no sabemos</p>
+              <p>
+                Esto describe estos dos casos. Todavía no muestra cómo te irá con otros
+                temas o situaciones.
+              </p>
+              <strong>Este registro es tuyo.</strong>
+            </div>
+          </section>
+          <div className={styles.completionActions}>
+            <button className={styles.primaryAction} type="button" onClick={() => openMarketProbe('day7')}>
+              Quiero otro reto
+            </button>
+            <button className={styles.secondaryAction} type="button" onClick={() => window.location.assign('/')}>
+              Volver al inicio
+              <ArrowLeft size={17} />
+            </button>
           </div>
-          <button className={styles.secondaryAction} type="button" onClick={() => window.location.assign('/')}>
-            Volver al inicio
-            <ArrowLeft size={17} />
+        </section>
+      </main>
+    );
+  }
+
+  if (
+    retestGateActive &&
+    (retestAuthorization.status === 'idle' || retestAuthorization.status === 'checking')
+  ) {
+    return (
+      <main
+        className={styles.pageShell}
+        data-scene="closure"
+        data-learning-mode="reflect"
+        data-gate="retest-checking"
+        data-celestea-create="true"
+        lang="es-MX"
+      >
+        <AmbientField paused={ambientPaused} />
+        <section className={styles.errorScene} role="status" aria-live="polite">
+          <span><Loader2 size={22} /></span>
+          <h1>Confirmando tu revisión…</h1>
+          <p>Estamos sincronizando tu avance del día 1.</p>
+        </section>
+      </main>
+    );
+  }
+
+  if (
+    retestGateActive &&
+    (retestAuthorization.status === 'retryable_error' ||
+      retestAuthorization.status === 'permanent_error')
+  ) {
+    const retryable = retestAuthorization.status === 'retryable_error';
+    const openMode =
+      retestAuthorization.status === 'permanent_error' &&
+      retestAuthorization.reason === 'open_mode';
+    return (
+      <main
+        className={styles.pageShell}
+        data-scene="closure"
+        data-learning-mode="reflect"
+        data-gate={openMode ? 'retest-open-mode' : 'retest-error'}
+        data-celestea-create="true"
+        lang="es-MX"
+      >
+        <AmbientField paused={ambientPaused} />
+        <section className={styles.errorScene} role={retryable ? 'alert' : undefined}>
+          <span>{openMode ? <CalendarClock size={22} /> : <RotateCcw size={22} />}</span>
+          <h1>
+            {openMode
+              ? 'Este modo abierto no programa una revisión.'
+              : retryable
+                ? 'Aún no pudimos confirmar la revisión.'
+                : 'No pudimos abrir esta revisión.'}
+          </h1>
+          <p>{retestAuthorization.message}</p>
+          {retryable ? (
+            <button
+              type="button"
+              className={styles.primaryAction}
+              onClick={retryRetestAuthorization}
+            >
+              Reintentar
+            </button>
+          ) : null}
+          <button
+            type="button"
+            className={styles.secondaryAction}
+            onClick={() => window.location.assign('/')}
+          >
+            Listo, cerrar
           </button>
         </section>
       </main>
     );
   }
 
-  if (retestLocked) {
+  if (retestGateActive && retestAuthorization.status === 'locked') {
     const dueDate = new Intl.DateTimeFormat('es-MX', {
       dateStyle: 'long',
       timeStyle: 'short',
-    }).format(study.retestDueAt);
+    }).format(retestAuthorization.dueAt);
+    const dayOnePhrase = study.latestOutcomes['transfer-production']?.text.trim();
     return (
       <main
         className={styles.pageShell}
         data-scene="closure"
+        data-learning-mode="reflect"
         data-gate="retest"
         data-celestea-create="true"
         lang="es-MX"
       >
-        <AmbientField paused={Boolean(prefersReducedMotion) || liteMode || pageHidden} />
+        <AmbientField paused={ambientPaused} />
         <header className={styles.topBar} aria-hidden={exitConfirm ? true : undefined}>
           <button className={styles.iconButton} type="button" onClick={() => setExitConfirm(true)} aria-label="Salir">
             <X size={20} />
@@ -1880,6 +2634,12 @@ export function CinematicEnglishPlayer() {
             <span className={styles.gateLabel}><CalendarClock size={16} /> Próxima revisión</span>
             <h1>Volvemos en una semana.</h1>
             <p>Hoy resolviste un caso nuevo. Regresa sin repasar para descubrir qué recuerdas.</p>
+            {dayOnePhrase ? (
+              <figure className={styles.dayOnePhrase}>
+                <figcaption>Tu frase del día 1</figcaption>
+                <blockquote lang="en-US">{dayOnePhrase}</blockquote>
+              </figure>
+            ) : null}
             <div className={styles.retestDate}>
               <Clock3 size={18} />
               <span>
@@ -1888,9 +2648,14 @@ export function CinematicEnglishPlayer() {
               </span>
             </div>
           </div>
-          <button className={styles.gatePrimaryAction} type="button" onClick={() => window.location.assign('/')}>
-            Listo, cerrar
-          </button>
+          <div className={styles.gateActions}>
+            <button className={styles.secondaryAction} type="button" onClick={() => openMarketProbe('day1')}>
+              Quiero otro reto
+            </button>
+            <button className={styles.gatePrimaryAction} type="button" onClick={() => window.location.assign('/')}>
+              Listo, cerrar
+            </button>
+          </div>
         </section>
         <AnimatePresence>
           {exitConfirm
@@ -1915,14 +2680,15 @@ export function CinematicEnglishPlayer() {
    * case is introduced for the first time.
    */
   const compactVoice = true;
+  const learningVisualMode = feedback
+    ? 'reflect'
+    : getLearningVisualMode(getStepId(currentStep));
+  const scaffoldWithdrawMotion = getScaffoldWithdrawMotion(Boolean(prefersReducedMotion));
   const hideMapSceneCopy = Boolean(
     mode === 'match'
       && currentStep.crear?.certaintyMap
       && certaintyPhase === 'produce'
   );
-  const sceneTransition = prefersReducedMotion
-    ? { duration: 0.12 }
-    : { duration: 0.52, ease: [0.22, 1, 0.36, 1] as const };
   const answerElement = currentStep.crear?.baselineProduction ? (
     <CinematicBaselineProduction
       key={getStepId(currentStep)}
@@ -2026,6 +2792,14 @@ export function CinematicEnglishPlayer() {
     const interpretationCorrect = certainty?.correct ?? false;
     const baselineText = study.latestOutcomes['precheck-production']?.text.trim();
     const transferText = written;
+    const modalFormState = constructStates.find((state) => state.construct === 'modal_form');
+    const earnedFormProgress = Boolean(
+      modalFormState?.baseline?.status === 'not_demonstrated'
+      && modalFormState.independent
+      && modalFormState.independent.observed !== false
+      && modalFormState.independent.correct
+      && !modalFormState.independent.assisted
+    );
     const dimensions = [
       { id: 'interpretation', label: 'Interpretación de las pistas', correct: interpretationCorrect },
       { id: 'form', label: 'Forma en inglés', correct: formCorrect },
@@ -2034,7 +2808,7 @@ export function CinematicEnglishPlayer() {
     return (
       <section className={styles.closingReceipt} aria-labelledby="closing-receipt-label">
         <p className={styles.receiptLabel} id="closing-receipt-label">
-          Lo que guardamos de hoy
+          Lo que hiciste hoy
         </p>
         <ul className={styles.receiptRows}>
           {dimensions.map((dimension) => (
@@ -2048,7 +2822,7 @@ export function CinematicEnglishPlayer() {
               </span>
               <span className={styles.receiptDimension}>
                 <small>{dimension.label}</small>
-                <strong>{dimension.correct ? 'correcta' : 'por revisar'}</strong>
+                <strong>{dimension.correct ? 'registrada, sin ayuda' : 'por revisar'}</strong>
               </span>
             </li>
           ))}
@@ -2056,19 +2830,22 @@ export function CinematicEnglishPlayer() {
         {/* Degrades to nothing when the learner submitted the baseline empty:
             the two dimensions above still read as a finished block.
 
-            The typographic weight is what claims progress, so it is only
-            applied when today's sentence actually earned it. A learner who
-            already knew the structure — possible at B2 — or who wrote a worse
-            sentence than they started with was being shown their own regression
-            typeset as an arc upward. Both lines then read level, and the two
-            rows above still say what needs review. */}
+            The typographic weight is what claims progress. It therefore reads
+            the modal-form trajectory from the evidence ledger: an observed,
+            unsuccessful baseline followed by an independent correct transfer.
+            A correct final sentence alone is not enough. `preexisting`, mixed,
+            unknown and unsuccessful trajectories all stay level. */}
         {baselineText && transferText ? (
-          <div className={styles.receiptArc} aria-label="Tu primera frase y la de hoy">
-            <p className={styles.receiptArcEntry} data-weight={formCorrect ? 'before' : 'level'}>
+          <div
+            aria-label="Tu primera frase y la de hoy"
+            className={styles.receiptArc}
+            data-trajectory={earnedFormProgress ? 'progress' : 'level'}
+          >
+            <p className={styles.receiptArcEntry} data-weight={earnedFormProgress ? 'before' : 'level'}>
               <small>Al empezar escribiste</small>
               <span lang="en-US">{baselineText}</span>
             </p>
-            <p className={styles.receiptArcEntry} data-weight={formCorrect ? 'now' : 'level'}>
+            <p className={styles.receiptArcEntry} data-weight={earnedFormProgress ? 'now' : 'level'}>
               <small>Ahora escribiste</small>
               <span lang="en-US">{transferText}</span>
             </p>
@@ -2084,6 +2861,7 @@ export function CinematicEnglishPlayer() {
         className={styles.pageShell}
         data-scene={currentScene}
         data-stage={currentStage}
+        data-learning-mode={learningVisualMode}
         data-audio-ready={audioAssetsReady ? 'true' : 'false'}
         data-structured={currentStep.crear?.responseParts || currentStep.crear?.certaintyMap ? 'true' : 'false'}
         data-certainty-phase={mode === 'match' ? certaintyPhase : undefined}
@@ -2095,7 +2873,7 @@ export function CinematicEnglishPlayer() {
         data-celestea-create="true"
         lang="es-MX"
       >
-        <AmbientField paused={Boolean(prefersReducedMotion) || liteMode || pageHidden} />
+        <AmbientField paused={ambientPaused} />
         <audio
           ref={narration.audioRef}
           preload="metadata"
@@ -2151,13 +2929,21 @@ export function CinematicEnglishPlayer() {
             )}
           </header>
 
-          <motion.article
-            className={styles.scene}
-            key={getStepId(currentStep)}
-            initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: 16, scale: 0.985 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={sceneTransition}
-          >
+          <article className={styles.scene}>
+              <AnimatePresence initial={false}>
+                {learningVisualMode === 'supported' ? (
+                  <motion.span
+                    animate={{ opacity: 1, scaleY: 1 }}
+                    aria-hidden="true"
+                    className={styles.supportRail}
+                    data-support-rail="true"
+                    exit={scaffoldWithdrawMotion.exit}
+                    initial={false}
+                    key="support-rail"
+                    transition={scaffoldWithdrawMotion.transition}
+                  />
+                ) : null}
+              </AnimatePresence>
               {currentStep.crear?.guideAvailable
                 && guideUnlocked
                 && guideStep
@@ -2273,7 +3059,7 @@ export function CinematicEnglishPlayer() {
                   {answerElement}
                 </div>
               ) : answerElement}
-          </motion.article>
+          </article>
         </section>
 
         {feedback ? (

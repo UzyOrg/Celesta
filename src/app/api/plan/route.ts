@@ -1,6 +1,15 @@
 import { NextResponse } from 'next/server';
 import fs from 'fs/promises';
 import path from 'path';
+import { isRetiredProductionPath } from '@/lib/server/productionSurface';
+
+export const runtime = 'nodejs';
+
+function normalizeTemplateName(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim().toLowerCase().replace(/\s+/g, '_');
+  return /^[a-z0-9_-]+$/.test(normalized) ? normalized : null;
+}
 
 // Helper function to replace placeholders in a string
 function replacePlaceholders(text: string, tema?: string, grado?: string): string {
@@ -35,10 +44,16 @@ function processObject(obj: any, tema?: string, grado?: string): any {
 }
 
 export async function POST(request: Request) {
+  // Defense in depth if middleware is ever bypassed or its matcher changes.
+  if (isRetiredProductionPath('/api/plan')) {
+    return NextResponse.json({ error: 'not_found' }, { status: 404 });
+  }
+
   try {
-    const body = await request.json();
-    const { materia, grado } = body;
-    let tema = body.tema; // 'tema' is now optional
+    const body = (await request.json()) as Record<string, unknown>;
+    const materia = typeof body.materia === 'string' ? body.materia.trim() : '';
+    const grado = typeof body.grado === 'string' ? body.grado.trim() : '';
+    let tema = typeof body.tema === 'string' ? body.tema.trim() : '';
 
     if (!materia || !grado) {
       return NextResponse.json({ error: 'Faltan parámetros: materia y grado son requeridos.' }, { status: 400 });
@@ -50,13 +65,16 @@ export async function POST(request: Request) {
     }
 
     // Normalize materia to match file names (e.g., 'Algebra' -> 'algebra')
-    const normalizedMateria = materia.toLowerCase().replace(/\s+/g, '_');
+    const normalizedMateria = normalizeTemplateName(materia);
+    if (!normalizedMateria) {
+      return NextResponse.json({ error: 'Materia inválida.' }, { status: 400 });
+    }
     
     // Construct path to templates directory (assuming it's at the project root, outside 'src')
     // The project root is c:\Users\PC\Desktop\project-edTech\Celesta
     const templatesDir = path.join(process.cwd(), 'templates');
     
-    let templatePath = path.join(templatesDir, `${normalizedMateria}.json`);
+    const templatePath = path.join(templatesDir, `${normalizedMateria}.json`);
     const fallbackTemplatePath = path.join(templatesDir, 'generico.json');
 
     let planContent;

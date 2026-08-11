@@ -1,6 +1,5 @@
 'use client';
 
-import type { Metadata } from 'next'; // Keep for now, might need adjustment with 'use client'
 import { ThemeProvider } from '@/context/ThemeContext';
 import './globals.css';
 import { ModalProvider } from '@/context/ModalContext';
@@ -34,7 +33,7 @@ export default function RootLayout({
     }
   }, []);
   return (
-    <html lang="en">
+    <html lang="es-MX">
       <head>
         {/* Font imports are now handled in globals.css */}
         <link rel="icon" href="/Logo_Celestea.png" />

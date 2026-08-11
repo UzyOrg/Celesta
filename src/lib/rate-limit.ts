@@ -9,7 +9,10 @@
  * 
  * Funcionamiento:
  * - Usa un Map en memoria (se resetea al reiniciar el servidor)
- * - Para producción escalable, considerar Redis
+ * - La limpieza es oportunista y el número de buckets está acotado. Un
+ *   `setInterval` a nivel de módulo se duplicaba con hot reload y podía mantener
+ *   vivo un proceso de pruebas.
+ * - Para producción multi-instancia, considerar un almacén compartido.
  */
 
 interface RateLimitBucket {
@@ -19,25 +22,26 @@ interface RateLimitBucket {
 
 // Almacenamiento en memoria de los contadores
 const rateLimitMap = new Map<string, RateLimitBucket>();
+const MAX_RATE_LIMIT_BUCKETS = 10_000;
+const CLEANUP_INTERVAL_MS = 60_000;
+let nextCleanupAt = 0;
 
-// Limpieza periódica de buckets expirados (prevenir memory leak)
-if (typeof setInterval !== 'undefined') {
-  setInterval(() => {
-    const now = Date.now();
-    let cleaned = 0;
-    
-    const entries = Array.from(rateLimitMap.entries());
-    for (const [key, bucket] of entries) {
-      if (now > bucket.reset) {
-        rateLimitMap.delete(key);
-        cleaned++;
-      }
-    }
-    
-    if (cleaned > 0) {
-      console.log(`[rate-limit] Cleaned ${cleaned} expired buckets`);
-    }
-  }, 2 * 60 * 1000); // Cada 2 minutos
+function cleanupRateLimits(now: number, force = false): void {
+  if (!force && now < nextCleanupAt && rateLimitMap.size < MAX_RATE_LIMIT_BUCKETS) return;
+
+  for (const [key, bucket] of Array.from(rateLimitMap.entries())) {
+    if (now > bucket.reset) rateLimitMap.delete(key);
+  }
+  nextCleanupAt = now + CLEANUP_INTERVAL_MS;
+
+  // A hostile stream of never-before-seen keys must not grow the process
+  // forever during the cleanup window. Map preserves insertion order, so the
+  // first key is the oldest bucket.
+  while (rateLimitMap.size >= MAX_RATE_LIMIT_BUCKETS) {
+    const oldestKey = rateLimitMap.keys().next().value as string | undefined;
+    if (!oldestKey) break;
+    rateLimitMap.delete(oldestKey);
+  }
 }
 
 export interface RateLimitResult {
@@ -64,25 +68,30 @@ export function checkRateLimit(
   windowMs: number = 60_000
 ): RateLimitResult {
   const now = Date.now();
+  cleanupRateLimits(now);
+  const safeLimit = Number.isFinite(limit) && limit > 0 ? Math.floor(limit) : 1;
+  const safeWindowMs = Number.isFinite(windowMs) && windowMs > 0
+    ? Math.floor(windowMs)
+    : 60_000;
   const bucket = rateLimitMap.get(key);
   
   // Si no existe bucket o ya expiró, crear uno nuevo
   if (!bucket || now > bucket.reset) {
     const newBucket: RateLimitBucket = {
       count: 1,
-      reset: now + windowMs
+      reset: now + safeWindowMs
     };
     rateLimitMap.set(key, newBucket);
     
     return {
       allowed: true,
-      remaining: limit - 1,
+      remaining: safeLimit - 1,
       resetAt: newBucket.reset
     };
   }
   
   // Si ya alcanzó el límite
-  if (bucket.count >= limit) {
+  if (bucket.count >= safeLimit) {
     return {
       allowed: false,
       remaining: 0,
@@ -96,7 +105,7 @@ export function checkRateLimit(
   
   return {
     allowed: true,
-    remaining: limit - bucket.count,
+    remaining: safeLimit - bucket.count,
     resetAt: bucket.reset
   };
 }
@@ -136,6 +145,7 @@ export function getRateLimitStats(): {
   activeBuckets: number;
 } {
   const now = Date.now();
+  cleanupRateLimits(now, true);
   let active = 0;
   
   const buckets = Array.from(rateLimitMap.values());

@@ -28,7 +28,7 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'NEXT_DIST_DIR=.next-playwright CREAR_CLASSIFIER_FORCE_LOCAL=1 NEXT_PUBLIC_CREAR_RETEST_DELAY_HOURS=0 pnpm exec next dev --hostname 127.0.0.1 --port 3001',
+    command: 'NEXT_DIST_DIR=.next-playwright CREAR_CLASSIFIER_FORCE_LOCAL=1 NEXT_PUBLIC_CREAR_RETEST_DELAY_HOURS=0 CREAR_RETEST_TEST_MODE=1 CREAR_RETEST_DELAY_HOURS=0 CREAR_RETEST_SIGNING_SECRET=playwright-only-retest-secret-000000000 pnpm exec next dev --hostname 127.0.0.1 --port 3001',
     url: 'http://127.0.0.1:3001/crear',
     reuseExistingServer: false,
     timeout: 120_000,
