@@ -1,6 +1,6 @@
 # Celestea · Current State
 
-Last updated: 2026-08-09
+Last updated: 2026-08-11
 
 This is a compact handoff for a fresh Codex task. It records the current
 checkpoint, not permanent repository policy. Read `AGENTS.md` first; it wins
@@ -11,6 +11,12 @@ over deprecated documents in this repository.
 Celestea is a B2C, voice-first learning companion for Mexican prepa students.
 The current MVP uses English deduction at B1+/B2 as the test domain, not as the
 entire long-term company.
+
+The 2026-08-10 pilot-evidence pass is implemented locally. It hardens the
+meaning of the data, continuity into D7, raw-evidence readers, and the first
+behavioral commitment probe. It does not add a teacher dashboard or claim that
+one lesson validates learning efficacy. See `docs/BRIEF-EVIDENCIA-PILOTO-V1.md`,
+`docs/PILOT-METRICS-V1.md`, and ADRs 0009–0011.
 
 The learning loop is:
 
@@ -186,14 +192,23 @@ The current session contains:
   object in its own body. The breadcrumb was a second, weaker answer charged
   against every screen's width and height. Narrative orientation over chrome
   orientation; the tests now assert its absence so it does not creep back;
-- a closing screen shaped as a **receipt**, not a paragraph: a deliverable
-  label (*“Lo que guardamos de hoy”*), the two measured dimensions as two
+- a closing screen shaped as a **receipt**, not a paragraph: a learner-owned
+  label (*“Lo que hiciste hoy”*), the two measured dimensions as two
   parallel labelled rows separated by hairlines, and below them the day 1
-  baseline sentence next to today's, as one unit where today's carries the
-  weight. State is carried by a `lucide-react` icon and typographic hierarchy —
+  baseline sentence next to today's. The pair only receives ascending
+  typographic weight when the ledger shows an observed unsuccessful baseline
+  followed by correct independent transfer; `preexisting`, `mixed`, `unknown`
+  and unsuccessful trajectories remain level. State is carried by a
+  `lucide-react` icon and typographic hierarchy —
   never a red/green verdict. No score, no percentage, no “1 de 2”. When the
   baseline was skipped the comparison is not rendered and the two-dimension
   block still reads as a finished block;
+- a dedicated D7 learner receipt in the runtime completion state — not a new
+  authored step — that compares interpretation and English form between the
+  D1 transfer case and D7, preserves locally unavailable D1 evidence as such,
+  returns the learner's D7 sentence, and names the limit of what two cases can
+  establish. It is not a score, an automated parent report or a share surface;
+  the record belongs to the learner first;
 - production screens that keep the source clue visible and put the primary
   action in the mobile thumb zone;
 - a seven-day retest that again separates certainty from English production on
@@ -217,9 +232,21 @@ The current session contains:
   both recorded, a high-confidence structural local match wins over a
   disagreeing model, and the answer event carries `classifierSource` and
   `classifierAgreed` so human labels can later be compared against the machine;
-- a `?retest=1` bypass that reopens the day 7 retest from a link, and the
-  `retestDueAt` mirrored into the `taller_completado` event, so a lost
-  `localStorage` cannot cost the cohort a learner.
+- a server-authorized D7 gate. Closing D1 emits a deterministic, durable
+  `day1_complete`; the server uses its timestamp to set 168 hours and issues a
+  signed `#rt=` link. The browser validates that bearer ticket in a bounded PUT
+  body rather than placing it in request URLs. It reconstructs the same
+  `studyId` on a clean device, and neither `?retest=1` nor edited local state can
+  open either D7 screen;
+- a composite baseline whose status and claim are invariant to item order.
+  Omitted responses remain `unknown`, never fabricated failures;
+- “Quiero otro reto” after D1 and D7. It records opened → objective selected →
+  place reserved → reminder accepted as declared behavioral interest, never as
+  payment, retention, or product pull;
+- an internal `pilot:export` reader that paginates every row, emits a flat CSV
+  plus a six-section human projection per participant, keeps unjoinable rows
+  explicit, neutralizes spreadsheet formulas in learner text, and writes the
+  raw export with owner-only filesystem permissions.
 
 Do not reintroduce the old three-long-free-text-answer flow. It caused stress,
 repetition, fatigue, and poor recall of the explanation in the first observed
@@ -301,13 +328,20 @@ large-text cases retain ordinary page scrolling as an accessibility fallback.
 - `src/lib/crear/` — study state, telemetry, contracts, and validation.
 - `src/lib/crear/learningEvidence.ts` — descriptive construct-level evidence
   observations.
+- `src/lib/crear/constructState.ts` — composite baseline and conservative claims.
+- `src/lib/crear/retestTicket.ts` and `src/app/api/crear/retest/route.ts` — signed,
+  server-timed D7 authorization.
+- `scripts/export-crear-pilot.ts` — internal CSV and human-readable pilot reader.
+- `docs/PILOT-METRICS-V1.md` — frozen denominators and claim vocabulary.
+- `docs/EXECUTION-HANDOFF-PILOT-P0.md` — bounded production checklist for a
+  code executor; strategy and interpretation stay with the orchestrator.
 - `tokens.css` — active Celestea design tokens.
 - `docs/design-system/typography.md` — canonical type-scale roles and usage
   rules for active product surfaces.
 - `tests/e2e/crear-english-deduction.spec.ts` — behavioral and responsive
   regression suite.
 - `.hallmark/audit-chalk-over-film-2026-08-01.md` — current design audit.
-- `docs/adr/` — append-only decision records, 0001–0006.
+- `docs/adr/` — append-only decision records, 0001–0012.
 - `src/lib/crear/modalForm.ts` — structural reading of a production attempt.
 - `src/lib/crear/shuffle.ts` — per-study item order.
 - `.claude/launch.json` — `dev` (port 3000) and `dev-retest` (port 3005, sets
@@ -331,12 +365,29 @@ prompt aborts, and with `CI=true` it purges silently — so the same command
 behaves differently for the founder and for an agent. Playwright browsers are a
 one-time install: `npx playwright install chromium`.
 
-Most recent checks (2026-08-06, lesson 1.13.0):
+Most recent checks (2026-08-11, lesson 1.17.1 plus production hardening):
 
-- `npm run typecheck` — passed.
-- `npm run lint:workshops` — passed with six unrelated legacy warnings.
-- `npx playwright test tests/e2e/crear-english-deduction.spec.ts --project=mobile-chrome`
-  — 28/28 passed.
+- `pnpm run typecheck` — passed.
+- `pnpm run build` — passed; only the documented dependency and legacy hook
+  warnings remain.
+- `pnpm run lint` — zero errors and no warnings in the active `/crear` surface;
+  seven warnings remain inside gated legacy components.
+- `pnpm run lint:workshops` — passed with six unrelated legacy warnings.
+- `pnpm audit --prod` — no known vulnerabilities.
+- full Playwright suite — **78/78 passed** in 3.1 minutes, including API
+  hardening, signed D7,
+  clean-profile recovery, composite-baseline properties, telemetry contract,
+  the next-challenge probe, the D7 learner receipt and the rule that
+  `preexisting` never receives an ascending visual hierarchy. The D7 receipt
+  also passes at 320×812, 812×375 and 200% root text scaling without horizontal
+  overflow; its primary action remains at least 44 px high.
+- reduced-motion hydration now has a regression gate: server and client start
+  from the same background tree, then switch to the still frame. The former
+  mismatch could leave `/crear` frozen at “Preparando el caso…”;
+- internal reader run against the audit data — 925 rows reconstructed into 62
+  explicit traces, 925/925 retained. All 62 predate participant codes and the
+  new D1 milestone, and 57 lack D7; the reader surfaces those gaps instead of
+  deleting the rows.
 - full manual walkthrough of all thirteen screens at **320×812 and 375×812**
   with `NEXT_PUBLIC_CREAR_RETEST_DELAY_HOURS=0`: no horizontal overflow, no
   console errors, no 404s, and the primary action fully inside the viewport on
@@ -453,6 +504,16 @@ new founder-owned changes.
 
 ## Open debt before the pilot runs
 
+- **Apply `supabase/migrations/20260810_secure_learning_event_readers.sql` in
+  production.** Rechecked without reading rows on 2026-08-11: the anon role
+  still receives HTTP 200 from `eventos_de_aprendizaje`, `alias_sessions`,
+  `learning_events`, and `learning_events_with_alias`. The application routes
+  are closed locally, but the database grants remain the P0 blocker until the
+  migration runs and the same four probes return 401/403.
+- **Configure `CREAR_RETEST_SIGNING_SECRET` (at least 32 random characters) and
+  `NEXT_PUBLIC_SITE_URL` in the deployed environment.** The signed D7 route
+  fails closed without the secret; links cannot be generated without the base
+  URL. Neither is present in `.env.local` at this checkpoint.
 - **Set `CREAR_CLASSIFIER_MODEL` to a current model.** The code default is
   still `gpt-4o-mini`, and the distinction that matters most — correct
   reasoning with incorrect form versus incorrect reasoning — is exactly where a

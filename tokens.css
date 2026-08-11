@@ -28,6 +28,13 @@
   --celestea-error-soft: oklch(72% 0.16 28 / 0.11);
   --celestea-wave: oklch(74% 0.13 238 / 0.24);
   --celestea-wave-clear: oklch(74% 0.13 238 / 0);
+  --celestea-support-rail: oklch(92% 0.018 84 / 0.52);
+  --celestea-wave-presence-reflect: 0.82;
+  --celestea-wave-presence-supported: 0.62;
+  --celestea-wave-presence-solo: 0.38;
+  --celestea-wave-fallback-reflect: 0.62;
+  --celestea-wave-fallback-supported: 0.46;
+  --celestea-wave-fallback-solo: 0.28;
   --celestea-overlay-top: oklch(8.5% 0.018 266 / 0.76);
   --celestea-overlay-bottom: oklch(8.5% 0.018 266 / 0.05);
   --celestea-wave-fallback-cyan: rgb(86 206 255 / 0.42);

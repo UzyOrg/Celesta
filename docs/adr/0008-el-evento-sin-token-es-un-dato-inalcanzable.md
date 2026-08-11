@@ -132,3 +132,9 @@ distinto **abre un estudio nuevo** en vez de partir uno. No se pierde nada en el
 servidor: las filas anteriores ya se entregaron bajo el token anterior.
 
 `CREAR_CLASSIFIER_MODEL` sigue en `gpt-4o-mini`, igual que en el 0007.
+
+## Addendum (2026-08-10) · el query param deja de ser autorización D7
+
+La auditoría posterior demostró que `?retest=1` seguía dependiendo de `localStorage` y podía
+ignorar el reloj. El ADR 0010 lo sustituye por un ticket firmado desde un milestone fechado
+por el servidor. `studyId` es la llave D1→D7; la sesión puede rotar.

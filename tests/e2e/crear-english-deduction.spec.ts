@@ -1,10 +1,15 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
+import type {
+  CrearLearningObservation,
+  CrearProductionTarget,
+} from '../../src/lib/crear/types';
 
 const LESSON_ID = 'CREAR-ENGLISH-DEDUCTION-V1';
 const CONTENT_VERSION = '2026-08-07-medicion-separada';
 const ARTIFACT_DIR = path.join(process.cwd(), 'test-artifacts');
+const RETEST_TOTAL_ATTEMPTS = 4;
 
 /**
  * The pre-check and the guided map now rotate their items per learner, because
@@ -124,6 +129,7 @@ const PRODUCTION_PROMPT = 'Escríbelo como hemos practicado';
 
 interface CapturedLearningEvent {
   client_event_id: string;
+  student_alias?: string;
   paso_id: string;
   verbo: string;
   result?: {
@@ -136,6 +142,13 @@ interface CapturedLearningEvent {
     fase?: string;
     intento?: number;
     latencyMs?: number;
+    milestone?: string;
+    marketSignal?: string;
+    moment?: string;
+    stage?: string;
+    objective?: string;
+    reminderAccepted?: boolean;
+    retestDelayHours?: number;
     retestDueAt?: number;
     mapping?: Record<string, string>;
     rama?: string;
@@ -147,6 +160,7 @@ interface CapturedLearningEvent {
     expressedCategory?: string | null;
     formWellFormed?: boolean;
     subjectPresent?: boolean;
+    studyId?: string;
     certaintyConsistent?: boolean;
     learningOpportunity?: {
       id: string;
@@ -190,6 +204,8 @@ async function seedStep(page: Page, stepIndex: number) {
   await page.addInitScript(({ lessonId, contentVersion, index }) => {
     const now = Date.now();
     const storageKey = `celesta:crear:study:${lessonId}`;
+    const isRetest = index >= 11;
+    if (isRetest) localStorage.setItem('celesta:alias:TEST-PILOT', 'P01');
     // The init script runs again on reload. Preserve the learner's decision so
     // this helper can exercise the real resume path instead of reseeding it.
     if (localStorage.getItem(storageKey)) return;
@@ -199,6 +215,8 @@ async function seedStep(page: Page, stepIndex: number) {
         studyId: `study-step-${index}`,
         lessonId,
         contentVersion,
+        ...(isRetest ? { classToken: 'TEST-PILOT' } : {}),
+        ...(isRetest ? { participantCode: 'P01' } : {}),
         startedAt: now,
         updatedAt: now,
         phase: 'initial',
@@ -214,17 +232,39 @@ async function seedStep(page: Page, stepIndex: number) {
   }, { lessonId: LESSON_ID, contentVersion: CONTENT_VERSION, index: stepIndex });
 }
 
-async function seedLockedRetest(page: Page) {
+async function seedLockedRetest(page: Page, mockAuthorization = true) {
+  if (mockAuthorization) {
+    const dueAt = Date.now() + 7 * 24 * 60 * 60 * 1000;
+    await page.route('**/api/crear/retest', async (route) => {
+      await route.fulfill({
+        contentType: 'application/json',
+        status: 200,
+        body: JSON.stringify({
+          eligible: false,
+          classToken: 'TEST-PILOT',
+          participantCode: 'P01',
+          studyId: 'study-locked-retest',
+          lessonId: LESSON_ID,
+          notBefore: dueAt,
+          expiresAt: dueAt + 14 * 24 * 60 * 60 * 1000,
+          serverNow: Date.now(),
+        }),
+      });
+    });
+  }
   await page.addInitScript(({ lessonId, contentVersion }) => {
     const now = Date.now();
     const storageKey = `celesta:crear:study:${lessonId}`;
     if (localStorage.getItem(storageKey)) return;
+    localStorage.setItem('celesta:alias:TEST-PILOT', 'P01');
     localStorage.setItem(
       storageKey,
       JSON.stringify({
         studyId: 'study-locked-retest',
         lessonId,
         contentVersion,
+        classToken: 'TEST-PILOT',
+        participantCode: 'P01',
         startedAt: now - 60_000,
         updatedAt: now,
         phase: 'waiting_retest',
@@ -238,6 +278,27 @@ async function seedLockedRetest(page: Page) {
         evidenceLedger: [],
       })
     );
+  }, { lessonId: LESSON_ID, contentVersion: CONTENT_VERSION });
+}
+
+async function seedOpenModeRetest(page: Page) {
+  await page.addInitScript(({ lessonId, contentVersion }) => {
+    const now = Date.now();
+    localStorage.setItem(`celesta:crear:study:${lessonId}`, JSON.stringify({
+      studyId: 'study-open-mode-retest',
+      lessonId,
+      contentVersion,
+      startedAt: now - 60_000,
+      updatedAt: now,
+      phase: 'waiting_retest',
+      stepIndex: 11,
+      attempts: {},
+      firstOutcomes: {},
+      latestOutcomes: {},
+      awaitingFeedback: {},
+      assistance: {},
+      evidenceLedger: [],
+    }));
   }, { lessonId: LESSON_ID, contentVersion: CONTENT_VERSION });
 }
 
@@ -278,7 +339,7 @@ async function completePrecheck(
 }
 
 async function reachGuidedMap(page: Page) {
-  await page.goto('/crear');
+  await page.goto('/crear?t=TEST-PILOT&a=P01');
   await page.getByRole('button', { name: 'Ver la primera pista', exact: true }).click();
   await completePrecheck(page);
   await completeBaselineProduction(page);
@@ -320,6 +381,94 @@ async function assignCorrectMap(page: Page, count = 3): Promise<string[]> {
   return shown;
 }
 
+test('a second participant on a shared phone starts a separate study', async ({ page }) => {
+  await mockTelemetry(page);
+  const readStudy = () => page.evaluate((lessonId) => {
+    const raw = localStorage.getItem(`celesta:crear:study:${lessonId}`);
+    return raw ? JSON.parse(raw) as {
+      studyId: string;
+      participantCode?: string;
+      stepIndex: number;
+    } : null;
+  }, LESSON_ID);
+
+  await page.goto('/crear?t=SHARED-PILOT&a=P01');
+  await expect(page.getByRole('heading', {
+    name: 'El cartel cambió antes de la feria.',
+    exact: true,
+  })).toBeVisible();
+  const first = await readStudy();
+
+  await page.goto('/crear?t=SHARED-PILOT&a=P02');
+  await expect(page.getByRole('heading', {
+    name: 'El cartel cambió antes de la feria.',
+    exact: true,
+  })).toBeVisible();
+  const second = await readStudy();
+
+  expect(first?.participantCode).toBe('P01');
+  expect(second?.participantCode).toBe('P02');
+  expect(second?.studyId).not.toBe(first?.studyId);
+  expect(second?.stepIndex).toBe(0);
+});
+
+test('explicit invalid cohort identity fails visibly instead of resuming a stored learner', async ({ page }) => {
+  await mockTelemetry(page);
+  await page.goto('/crear?t=SHARED-PILOT&a=P01');
+  await expect(page.getByRole('heading', {
+    name: 'El cartel cambió antes de la feria.',
+    exact: true,
+  })).toBeVisible();
+
+  for (const invalidQuery of [
+    't=',
+    `t=${'X'.repeat(65)}`,
+    'a=',
+    `a=${'P'.repeat(65)}`,
+  ]) {
+    await page.goto(`/crear?${invalidQuery}`);
+    await expect(page.getByRole('heading', {
+      name: 'No pudimos abrir la experiencia',
+      exact: true,
+    })).toBeVisible();
+    await expect(page.getByText('Pide un enlace nuevo.', { exact: false })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Intentar de nuevo', exact: true }))
+      .toBeVisible();
+  }
+});
+
+test('an explicit cohort without participant starts anonymously on a shared phone', async ({ page }) => {
+  const telemetry = await mockTelemetry(page);
+  await page.goto('/crear?t=SHARED-PILOT&a=P01');
+  const firstStudyId = await page.evaluate((lessonId) =>
+    JSON.parse(localStorage.getItem(`celesta:crear:study:${lessonId}`) ?? '{}').studyId,
+  LESSON_ID);
+
+  await page.goto('/crear?t=SHARED-PILOT');
+  await expect(page.getByRole('heading', {
+    name: 'El cartel cambió antes de la feria.',
+    exact: true,
+  })).toBeVisible();
+  const anonymous = await page.evaluate(({ lessonId, aliasKey }) => ({
+    study: JSON.parse(localStorage.getItem(`celesta:crear:study:${lessonId}`) ?? '{}'),
+    alias: localStorage.getItem(aliasKey),
+  }), {
+    lessonId: LESSON_ID,
+    aliasKey: 'celesta:alias:SHARED-PILOT',
+  });
+
+  expect(anonymous.study.studyId).not.toBe(firstStudyId);
+  expect(anonymous.study.participantCode).toBeUndefined();
+  expect(anonymous.study.stepIndex).toBe(0);
+  expect(anonymous.alias).toBeNull();
+  await expect.poll(() => telemetry.filter(
+    (event) => event.verbo === 'inicio_taller'
+  ).length).toBeGreaterThanOrEqual(2);
+  expect(telemetry.filter(
+    (event) => event.verbo === 'inicio_taller'
+  ).at(-1)?.student_alias).toBeUndefined();
+});
+
 test('Hallmark arrival reads as one quiet cinematic task across mobile widths', async ({ page }) => {
   await mockTelemetry(page);
   await seedStep(page, 0);
@@ -339,7 +488,7 @@ test('Hallmark arrival reads as one quiet cinematic task across mobile widths', 
 
   const video = page.locator('video');
   await expect(video).toBeVisible();
-  expect(await video.evaluate((element) => getComputedStyle(element).opacity)).toBe('0.88');
+  expect(await video.evaluate((element) => getComputedStyle(element).opacity)).toBe('0.82');
 
   await video.evaluate((element) => {
     const media = element as HTMLVideoElement;
@@ -701,6 +850,276 @@ test('locked D7 gate keeps safe gutters at mobile widths', async ({ page }) => {
   await capture(page, 'celestea-hallmark-d7-gate-375.png');
 });
 
+test('D7 authorization retries eventual day 1 ingestion before showing a date', async ({ page }) => {
+  await mockTelemetry(page);
+  await seedLockedRetest(page, false);
+  let attempts = 0;
+  const dueAt = Date.now() + 7 * 24 * 60 * 60 * 1000;
+  await page.route('**/api/crear/retest', async (route) => {
+    attempts += 1;
+    if (attempts < 3) {
+      await route.fulfill({
+        contentType: 'application/json',
+        status: 403,
+        body: JSON.stringify({ error: 'day1_not_completed' }),
+      });
+      return;
+    }
+    await route.fulfill({
+      contentType: 'application/json',
+      status: 200,
+      body: JSON.stringify({
+        ticket: 'issued-after-ingest',
+        eligible: false,
+        notBefore: dueAt,
+        expiresAt: dueAt + 14 * 24 * 60 * 60 * 1000,
+        serverNow: Date.now(),
+      }),
+    });
+  });
+
+  await page.goto('/crear');
+  await expect(page.getByRole('heading', {
+    name: 'Volvemos en una semana.',
+    exact: true,
+  })).toBeVisible();
+  expect(attempts).toBe(3);
+  await expect(page.getByRole('button', { name: 'Reintentar', exact: true }))
+    .toHaveCount(0);
+});
+
+test('D7 keeps a retryable failure visible and retries again when connectivity returns', async ({ page }) => {
+  await mockTelemetry(page);
+  await seedLockedRetest(page, false);
+  let serverReady = false;
+  let attempts = 0;
+  const dueAt = Date.now() + 7 * 24 * 60 * 60 * 1000;
+  await page.route('**/api/crear/retest', async (route) => {
+    attempts += 1;
+    if (!serverReady) {
+      await route.fulfill({
+        contentType: 'application/json',
+        status: 503,
+        body: JSON.stringify({ error: 'milestone_lookup_failed' }),
+      });
+      return;
+    }
+    await route.fulfill({
+      contentType: 'application/json',
+      status: 200,
+      body: JSON.stringify({
+        ticket: 'issued-after-network-return',
+        eligible: false,
+        notBefore: dueAt,
+        expiresAt: dueAt + 14 * 24 * 60 * 60 * 1000,
+        serverNow: Date.now(),
+      }),
+    });
+  });
+
+  await page.goto('/crear');
+  await expect(page.getByRole('heading', {
+    name: 'Aún no pudimos confirmar la revisión.',
+    exact: true,
+  })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Reintentar', exact: true }))
+    .toBeVisible();
+  await expect(page.getByText('Disponible', { exact: true })).toHaveCount(0);
+  expect(attempts).toBe(RETEST_TOTAL_ATTEMPTS);
+
+  serverReady = true;
+  await page.evaluate(() => window.dispatchEvent(new Event('online')));
+  await expect(page.getByRole('heading', {
+    name: 'Volvemos en una semana.',
+    exact: true,
+  })).toBeVisible();
+  expect(attempts).toBe(RETEST_TOTAL_ATTEMPTS + 1);
+});
+
+test('D7 never asks the server for a ticket before the day 1 milestone is durable', async ({ page }) => {
+  await seedLockedRetest(page, false);
+  await page.addInitScript((fallbackKey) => {
+    Object.defineProperty(window, 'indexedDB', {
+      configurable: true,
+      value: {
+        open() {
+          throw new DOMException('IndexedDB blocked for test', 'SecurityError');
+        },
+      },
+    });
+    const nativeSetItem = Storage.prototype.setItem;
+    Object.defineProperty(Storage.prototype, 'setItem', {
+      configurable: true,
+      value(this: Storage, key: string, value: string) {
+        if (key === fallbackKey) {
+          throw new DOMException('Telemetry storage blocked', 'QuotaExceededError');
+        }
+        return nativeSetItem.call(this, key, value);
+      },
+    });
+  }, 'celesta:telemetry:fallback:v1');
+
+  await page.route('**/api/events/ingest', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      status: 503,
+      body: JSON.stringify({ error: 'temporarily_unavailable' }),
+    });
+  });
+  let retestRequests = 0;
+  await page.route('**/api/crear/retest', async (route) => {
+    retestRequests += 1;
+    await route.fulfill({
+      contentType: 'application/json',
+      status: 200,
+      body: JSON.stringify({ eligible: false }),
+    });
+  });
+
+  await page.goto('/crear');
+  await expect(page.getByRole('heading', {
+    name: 'Aún no pudimos confirmar la revisión.',
+    exact: true,
+  })).toBeVisible();
+  await expect(page.getByText(
+    'No pudimos guardar todavía el cierre del día 1.',
+    { exact: true }
+  )).toBeVisible();
+  expect(retestRequests).toBe(0);
+});
+
+test('open mode completes day 1 without inventing or promising a D7 date', async ({ page }) => {
+  await mockTelemetry(page);
+  await seedOpenModeRetest(page);
+  let retestRequests = 0;
+  await page.route('**/api/crear/retest', async (route) => {
+    retestRequests += 1;
+    await route.abort();
+  });
+
+  await page.goto('/crear');
+  await expect(page.getByRole('heading', {
+    name: 'Este modo abierto no programa una revisión.',
+    exact: true,
+  })).toBeVisible();
+  await expect(page.getByText('Disponible', { exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Reintentar', exact: true }))
+    .toHaveCount(0);
+  const state = await page.evaluate((lessonId) =>
+    JSON.parse(localStorage.getItem(`celesta:crear:study:${lessonId}`) ?? '{}'),
+  LESSON_ID);
+  expect(state.retestDueAt).toBeUndefined();
+  expect(retestRequests).toBe(0);
+});
+
+test('D7 distinguishes a permanent request error from a retryable outage', async ({ page }) => {
+  await mockTelemetry(page);
+  await seedLockedRetest(page, false);
+  let attempts = 0;
+  await page.route('**/api/crear/retest', async (route) => {
+    attempts += 1;
+    await route.fulfill({
+      contentType: 'application/json',
+      status: 400,
+      body: JSON.stringify({ error: 'invalid_request' }),
+    });
+  });
+
+  await page.goto('/crear');
+  await expect(page.getByRole('heading', {
+    name: 'No pudimos abrir esta revisión.',
+    exact: true,
+  })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Reintentar', exact: true }))
+    .toHaveCount(0);
+  expect(attempts).toBe(1);
+});
+
+test('D7 reports a closed retest window as a permanent state', async ({ page }) => {
+  await mockTelemetry(page);
+  await seedLockedRetest(page, false);
+  let attempts = 0;
+  await page.route('**/api/crear/retest', async (route) => {
+    attempts += 1;
+    await route.fulfill({
+      contentType: 'application/json',
+      status: 410,
+      body: JSON.stringify({ error: 'retest_window_expired' }),
+    });
+  });
+
+  await page.goto('/crear');
+  await expect(page.getByRole('heading', {
+    name: 'No pudimos abrir esta revisión.',
+    exact: true,
+  })).toBeVisible();
+  await expect(page.getByText('La ventana para hacer esta revisión ya terminó.', { exact: true }))
+    .toBeVisible();
+  await expect(page.getByRole('button', { name: 'Reintentar', exact: true }))
+    .toHaveCount(0);
+  expect(attempts).toBe(1);
+});
+
+test('an invalid signed D7 link is not reported as a connectivity problem', async ({ page }) => {
+  let attempts = 0;
+  await page.route('**/api/crear/retest', async (route) => {
+    attempts += 1;
+    expect(route.request().method()).toBe('PUT');
+    expect(route.request().postDataJSON()).toEqual({ ticket: 'not-a-ticket' });
+    await route.fulfill({
+      contentType: 'application/json',
+      status: 401,
+      body: JSON.stringify({ error: 'malformed' }),
+    });
+  });
+
+  await page.goto('/crear?rt=not-a-ticket');
+  await expect(page.getByRole('heading', {
+    name: 'No pudimos abrir la experiencia',
+    exact: true,
+  })).toBeVisible();
+  await expect(page.getByText('Este enlace de revisión no es válido.', { exact: true }))
+    .toBeVisible();
+  await expect(page.getByText('No hubo conexión suficiente', { exact: false }))
+    .toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Intentar de nuevo', exact: true }))
+    .toBeVisible();
+  expect(attempts).toBe(1);
+});
+
+test('day 1 next-challenge probe records intent without pretending it is payment', async ({ page }) => {
+  const telemetry = await mockTelemetry(page);
+  await seedLockedRetest(page);
+  await page.goto('/crear');
+
+  await page.getByRole('button', { name: 'Quiero otro reto', exact: true }).click();
+  await expect(page.getByRole('heading', {
+    name: '¿Qué te gustaría lograr con tu inglés?',
+    exact: true,
+  })).toBeVisible();
+  await page.getByRole('radio', {
+    name: 'Entender videos y conversaciones',
+    exact: true,
+  }).click();
+  await page.getByRole('checkbox', {
+    name: 'Sí, avísame por el mismo medio cuando esté listo.',
+    exact: true,
+  }).check();
+  await page.getByRole('button', { name: 'Apartar mi lugar', exact: true }).click();
+
+  await expect(page.getByRole('heading', {
+    name: 'Tu lugar quedó apartado.',
+    exact: true,
+  })).toBeVisible();
+  await expect.poll(() => telemetry.some((event) =>
+    event.result?.marketSignal === 'next_challenge'
+    && event.result?.moment === 'day1'
+    && event.result?.stage === 'registered'
+    && event.result?.objective === 'entender'
+    && event.result?.reminderAccepted === true
+  )).toBe(true);
+});
+
 test('completes a low-friction session and preserves transfer plus D7 evidence', async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 812 });
   const consoleErrors: string[] = [];
@@ -825,18 +1244,26 @@ test('completes a low-friction session and preserves transfer plus D7 evidence',
   })).toBeVisible();
   // A receipt, not a paragraph: a deliverable label and two named dimensions,
   // each with its own state. No score, no percentage, no "1 de 2".
-  const receipt = page.getByRole('region', { name: 'Lo que guardamos de hoy', exact: true });
+  const receipt = page.getByRole('region', { name: 'Lo que hiciste hoy', exact: true });
   await expect(receipt).toBeVisible();
   const receiptRows = receipt.getByRole('listitem');
   await expect(receiptRows).toHaveCount(2);
   await expect(receiptRows.nth(0)).toContainText('Interpretación de las pistas');
-  await expect(receiptRows.nth(0)).toContainText('correcta');
+  await expect(receiptRows.nth(0)).toContainText('registrada, sin ayuda');
   await expect(receiptRows.nth(1)).toContainText('Forma en inglés');
-  await expect(receiptRows.nth(1)).toContainText('correcta');
+  await expect(receiptRows.nth(1)).toContainText('registrada, sin ayuda');
   await expect(page.getByText('Camila must have cleaned the board.', { exact: true }))
     .toBeVisible();
   await expect(page.getByText('Nora might have worked on the model.', { exact: true }))
     .toBeVisible();
+  // The baseline sentence was already structurally correct. Both attempts
+  // therefore stay typographically level: this is preexisting evidence, not
+  // progress attributable to the lesson.
+  const receiptArc = receipt.locator('[data-trajectory]');
+  await expect(receiptArc).toHaveAttribute('data-trajectory', 'level');
+  await expect(receiptArc.locator('[data-weight="level"]')).toHaveCount(2);
+  await expect(receiptArc.locator('[data-weight="before"], [data-weight="now"]'))
+    .toHaveCount(0);
   await expect(page.getByText('%', { exact: false })).toHaveCount(0);
   await expect(page.getByText('1 de 2', { exact: false })).toHaveCount(0);
   await capture(page, 'celestea-v18-closing-diagnostic-375.png');
@@ -872,11 +1299,24 @@ test('completes a low-friction session and preserves transfer plus D7 evidence',
   await expect(page.getByRole('heading', { name: 'La idea sigue contigo', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Terminar', exact: true }).click();
 
-  await expect(page.getByRole('heading', { name: 'Terminaste la revisión.', exact: true })).toBeVisible();
-  await expect(page.getByText(
-    'Pudiste escribir una deducción en un caso nuevo.',
-    { exact: true }
-  )).toBeVisible();
+  await expect(page.getByRole('heading', {
+    name: 'Volviste y cerraste el caso.',
+    exact: true,
+  })).toBeVisible();
+  const day7Receipt = page.getByRole('region', {
+    name: 'Tu evidencia de una semana después',
+    exact: true,
+  });
+  await expect(day7Receipt).toBeVisible();
+  await expect(day7Receipt.getByRole('heading', { level: 2 })).toHaveCount(2);
+  await expect(day7Receipt).toContainText('Interpretación de las pistas');
+  await expect(day7Receipt).toContainText('Forma en inglés');
+  await expect(day7Receipt.locator('dd[data-status="independent"]')).toHaveCount(4);
+  await expect(day7Receipt.getByText('Emi might have painted the mural.', { exact: true }))
+    .toBeVisible();
+  await expect(day7Receipt).toContainText('Lo que todavía no sabemos');
+  await expect(day7Receipt).toContainText('Este registro es tuyo.');
+  await capture(page, 'celestea-v20-day7-evidence-receipt-375.png');
   // One statement-level observation plus one aggregate event for the single
   // supported transfer item.
   await expect.poll(() => telemetry.filter(
@@ -909,6 +1349,23 @@ test('completes a low-friction session and preserves transfer plus D7 evidence',
   await expect.poll(() => typeof telemetry.find(
     (event) => event.verbo === 'taller_completado'
   )?.result?.retestDueAt).toBe('number');
+  const day1Milestone = telemetry.find(
+    (event) => event.verbo === 'completo_paso'
+      && event.result?.milestone === 'day1_complete'
+  );
+  expect(day1Milestone).toMatchObject({
+    client_event_id: `crear:${transferState.studyId}:day1_complete`,
+    result: {
+      studyId: transferState.studyId,
+      milestone: 'day1_complete',
+      retestDelayHours: expect.any(Number),
+    },
+  });
+  const completionEvent = telemetry.find((event) => event.verbo === 'taller_completado');
+  expect(completionEvent).toMatchObject({
+    client_event_id: `crear:${transferState.studyId}:day7_complete`,
+    result: { studyId: transferState.studyId },
+  });
   expect(consoleErrors, `Missing resources: ${missingResources.join(', ')}`).toEqual([]);
 });
 
@@ -1296,6 +1753,54 @@ test('local classifier distinguishes the authored transfer and D7 targets', asyn
   expect(await retestPronoun.json()).toMatchObject({ rama: 'correcto' });
 });
 
+test('modal-form reader requires the target subject to govern the modal', async () => {
+  const { readModalForm } = await import('../../src/lib/crear/modalForm');
+  const target: CrearProductionTarget = {
+    category: 'posible',
+    subject: ['emi', 'she', 'they'],
+    participles: ['painted'],
+  };
+  const rejected = [
+    'The mural might have painted Emi.',
+    'Might have painted the mural... Emi.',
+    'Emi said they might have painted the mural.',
+  ];
+
+  for (const text of rejected) {
+    const reading = readModalForm(text, target);
+    expect(
+      reading.wellFormed && reading.subjectPresent,
+      `should reject: ${text}`
+    ).toBe(false);
+  }
+});
+
+test('modal-form reader accepts common have contractions and keeps negation', async () => {
+  const { readModalForm } = await import('../../src/lib/crear/modalForm');
+  const target: CrearProductionTarget = {
+    category: 'posible',
+    subject: ['emi', 'she', 'they'],
+    participles: ['painted'],
+  };
+  const accepted: Array<[string, string]> = [
+    ["Emi might've painted the mural.", 'posible'],
+    ["She could've painted the mural.", 'posible'],
+    ["They may've painted the mural.", 'posible'],
+    ["Emi must've painted the mural.", 'casi_seguro'],
+    ["Emi couldn't have painted the mural.", 'imposible'],
+    ['Emi could not have painted the mural.', 'imposible'],
+    ["Emi can't have painted the mural.", 'imposible'],
+  ];
+
+  for (const [text, category] of accepted) {
+    expect(readModalForm(text, target), text).toMatchObject({
+      expressedCategory: category,
+      wellFormed: true,
+      subjectPresent: true,
+    });
+  }
+});
+
 test('near misses reach an authored branch instead of falling into no_claro', async ({ request }) => {
   const cases: Array<[string, string, string]> = [
     ['transfer-production', 'Nora might have worked on the model.', 'correcto'],
@@ -1570,7 +2075,7 @@ test('the closing receipt degrades to a complete block when the baseline was ski
   await page.setViewportSize({ width: 320, height: 812 });
   await page.goto('/crear');
 
-  const receipt = page.getByRole('region', { name: 'Lo que guardamos de hoy', exact: true });
+  const receipt = page.getByRole('region', { name: 'Lo que hiciste hoy', exact: true });
   await expect(receipt).toBeVisible();
   await expect(receipt.getByRole('listitem')).toHaveCount(2);
   await expect(receipt).toContainText('Interpretación de las pistas');
@@ -1597,6 +2102,274 @@ test('the closing receipt degrades to a complete block when the baseline was ski
       document.documentElement.scrollWidth - document.documentElement.clientWidth
     )).toBeLessThanOrEqual(1);
   }
+});
+
+test('the closing receipt draws ascent only from an observed unsuccessful baseline', async ({ page }) => {
+  await mockTelemetry(page);
+  await page.addInitScript(({ lessonId, contentVersion }) => {
+    const now = Date.now();
+    const outcome = (branch: string, correct: boolean, score: number, text: string) => ({
+      branch, correct, score, text, attempt: 1, confidence: 1, submittedAt: now,
+    });
+    const outcomes = {
+      'precheck-production': outcome(
+        'baseline_produccion_incorrecta',
+        false,
+        0,
+        'Camila might of cleaned the board.'
+      ),
+      'transfer-check-certainty': outcome('correcto', true, 1, 'Es posible'),
+      'transfer-production': outcome(
+        'correcto',
+        true,
+        2,
+        'Nora might have worked on the model.'
+      ),
+    };
+    localStorage.setItem(`celesta:crear:study:${lessonId}`, JSON.stringify({
+      studyId: 'study-closure-observed-progress',
+      lessonId,
+      contentVersion,
+      startedAt: now,
+      updatedAt: now,
+      phase: 'initial',
+      stepIndex: 10,
+      attempts: {},
+      firstOutcomes: outcomes,
+      latestOutcomes: outcomes,
+      awaitingFeedback: {},
+      assistance: {},
+      evidenceLedger: [
+        {
+          id: 'baseline-modal-form',
+          constructs: ['modal_form'],
+          condition: 'independent',
+          novelty: 'same_case',
+          timing: 'immediate',
+          cueFrame: 'physical_trace',
+          stepId: 'precheck-production',
+          branch: 'baseline_produccion_incorrecta',
+          correct: false,
+          observed: true,
+          assisted: false,
+          attempt: 1,
+          recordedAt: now,
+        },
+        {
+          id: 'independent-transfer-form',
+          constructs: ['modal_form'],
+          condition: 'independent',
+          novelty: 'new_case',
+          timing: 'immediate',
+          cueFrame: 'presence_unobserved',
+          stepId: 'transfer-production',
+          branch: 'correcto',
+          correct: true,
+          observed: true,
+          assisted: false,
+          attempt: 1,
+          recordedAt: now + 1,
+        },
+      ],
+    }));
+  }, { lessonId: LESSON_ID, contentVersion: CONTENT_VERSION });
+
+  await page.goto('/crear');
+
+  const receipt = page.getByRole('region', { name: 'Lo que hiciste hoy', exact: true });
+  const arc = receipt.locator('[data-trajectory]');
+  await expect(arc).toHaveAttribute('data-trajectory', 'progress');
+  await expect(arc.locator('[data-weight="before"]')).toHaveCount(1);
+  await expect(arc.locator('[data-weight="now"]')).toHaveCount(1);
+  await expect(arc.locator('[data-weight="level"]')).toHaveCount(0);
+});
+
+test('the day 7 receipt keeps unavailable day 1 evidence explicit on a recovered device', async ({ page }) => {
+  await mockTelemetry(page);
+  await page.addInitScript(({ lessonId, contentVersion }) => {
+    const now = Date.now();
+    const outcome = (branch: string, correct: boolean, score: number, text: string) => ({
+      branch, correct, score, text, attempt: 1, confidence: 1, submittedAt: now,
+    });
+    const outcomes = {
+      'retest-certainty': outcome('correcto', true, 1, 'Es posible'),
+      'retest-production': outcome(
+        'correcto',
+        true,
+        2,
+        'Emi might have painted the mural.'
+      ),
+    };
+    localStorage.setItem(`celesta:crear:study:${lessonId}`, JSON.stringify({
+      studyId: 'study-completed-recovered-device',
+      lessonId,
+      contentVersion,
+      startedAt: now,
+      updatedAt: now,
+      phase: 'completed',
+      stepIndex: 12,
+      completionReported: true,
+      attempts: {},
+      firstOutcomes: outcomes,
+      latestOutcomes: outcomes,
+      awaitingFeedback: {},
+      assistance: {},
+      evidenceLedger: [
+        {
+          id: 'delayed-independent-certainty',
+          constructs: ['certainty_calibration'],
+          condition: 'independent',
+          novelty: 'new_case',
+          timing: 'delayed',
+          cueFrame: 'presence_unobserved',
+          stepId: 'retest-certainty',
+          branch: 'correcto',
+          correct: true,
+          observed: true,
+          assisted: false,
+          attempt: 1,
+          recordedAt: now,
+        },
+        {
+          id: 'delayed-independent-form',
+          constructs: ['modal_form'],
+          condition: 'independent',
+          novelty: 'new_case',
+          timing: 'delayed',
+          cueFrame: 'presence_unobserved',
+          stepId: 'retest-production',
+          branch: 'correcto',
+          correct: true,
+          observed: true,
+          assisted: false,
+          attempt: 1,
+          recordedAt: now + 1,
+        },
+      ],
+    }));
+  }, { lessonId: LESSON_ID, contentVersion: CONTENT_VERSION });
+
+  await page.setViewportSize({ width: 320, height: 812 });
+  await page.goto('/crear');
+
+  const receipt = page.getByRole('region', {
+    name: 'Tu evidencia de una semana después',
+    exact: true,
+  });
+  await expect(receipt).toBeVisible();
+  await expect(receipt.getByText('no disponible aquí', { exact: true })).toHaveCount(2);
+  await expect(receipt.locator('dd[data-status="unknown"]')).toHaveCount(2);
+  await expect(receipt.locator('dd[data-status="independent"]')).toHaveCount(2);
+  await expect(receipt.getByText('registrada, sin ayuda', { exact: true })).toHaveCount(2);
+  await expect(receipt.getByText('Emi might have painted the mural.', { exact: true }))
+    .toBeVisible();
+  const nextChallengeBox = await page.getByRole('button', {
+    name: 'Quiero otro reto',
+    exact: true,
+  }).boundingBox();
+  expect(nextChallengeBox?.height).toBeGreaterThanOrEqual(44);
+
+  for (const viewport of [
+    { width: 320, height: 812 },
+    { width: 812, height: 375 },
+  ]) {
+    await page.setViewportSize(viewport);
+    expect(await page.evaluate(() =>
+      document.documentElement.scrollWidth - document.documentElement.clientWidth
+    )).toBeLessThanOrEqual(1);
+  }
+
+  // The receipt is all wrapping text and definitions, so browser/system text
+  // scaling must make it taller rather than wider or truncate its meaning.
+  await page.setViewportSize({ width: 320, height: 812 });
+  await page.evaluate(() => {
+    document.documentElement.style.fontSize = '200%';
+  });
+  expect(await page.evaluate(() =>
+    document.documentElement.scrollWidth - document.documentElement.clientWidth
+  )).toBeLessThanOrEqual(1);
+  await expect(receipt).toContainText('Lo que todavía no sabemos');
+});
+
+test('a completed study is marked reported only after its deterministic event is durable', async ({ page }) => {
+  const fallbackQueueKey = 'celesta:telemetry:fallback:v1';
+  await page.addInitScript(({ lessonId, contentVersion, fallbackKey }) => {
+    const now = Date.now();
+    localStorage.setItem(`celesta:crear:study:${lessonId}`, JSON.stringify({
+      studyId: 'study-completion-durability',
+      lessonId,
+      contentVersion,
+      startedAt: now - 60_000,
+      updatedAt: now,
+      phase: 'completed',
+      stepIndex: 12,
+      attempts: {},
+      firstOutcomes: {},
+      latestOutcomes: {},
+      awaitingFeedback: {},
+      assistance: {},
+      evidenceLedger: [],
+    }));
+    Object.defineProperty(window, 'indexedDB', {
+      configurable: true,
+      value: {
+        open() {
+          throw new DOMException('IndexedDB blocked for test', 'SecurityError');
+        },
+      },
+    });
+    const nativeSetItem = Storage.prototype.setItem;
+    Object.defineProperty(Storage.prototype, 'setItem', {
+      configurable: true,
+      value(this: Storage, key: string, value: string) {
+        if (key === fallbackKey) {
+          throw new DOMException('Telemetry storage blocked', 'QuotaExceededError');
+        }
+        return nativeSetItem.call(this, key, value);
+      },
+    });
+  }, {
+    lessonId: LESSON_ID,
+    contentVersion: CONTENT_VERSION,
+    fallbackKey: fallbackQueueKey,
+  });
+
+  let acceptCompletion = false;
+  let attempts = 0;
+  const deliveredIds: string[] = [];
+  await page.route('**/api/events/ingest', async (route) => {
+    attempts += 1;
+    const payload = route.request().postDataJSON() as {
+      events?: Array<{ client_event_id?: string }>;
+    };
+    for (const event of payload.events ?? []) {
+      if (event.client_event_id) deliveredIds.push(event.client_event_id);
+    }
+    await route.fulfill({
+      contentType: 'application/json',
+      status: acceptCompletion ? 200 : 503,
+      body: JSON.stringify(acceptCompletion ? { ok: true } : { error: 'temporarily_unavailable' }),
+    });
+  });
+
+  await page.goto('/crear');
+  await expect(page.getByRole('heading', {
+    name: 'Volviste y cerraste el caso.',
+    exact: true,
+  })).toBeVisible();
+  await expect.poll(() => attempts).toBeGreaterThan(0);
+  expect(await page.evaluate((lessonId) =>
+    JSON.parse(localStorage.getItem(`celesta:crear:study:${lessonId}`) ?? '{}')
+      .completionReported,
+  LESSON_ID)).not.toBe(true);
+
+  acceptCompletion = true;
+  await page.evaluate(() => window.dispatchEvent(new Event('online')));
+  await expect.poll(() => page.evaluate((lessonId) =>
+    JSON.parse(localStorage.getItem(`celesta:crear:study:${lessonId}`) ?? '{}')
+      .completionReported,
+  LESSON_ID)).toBe(true);
+  expect(deliveredIds).toContain('crear:study-completion-durability:day7_complete');
 });
 
 /**
@@ -1694,7 +2467,7 @@ for (const screen of [
     await mockTelemetry(page);
     await seedStep(page, screen.index);
     await page.setViewportSize({ width: 320, height: 812 });
-    await page.goto('/crear');
+    await page.goto(screen.index >= 11 ? '/crear?t=TEST-PILOT&a=P01' : '/crear');
 
     const question = page.getByText(screen.question, { exact: true });
     await expect(question).toBeVisible();
@@ -1797,23 +2570,47 @@ test('propagates classifier provenance and disagreement into telemetry', async (
   )).toBe(true);
 });
 
-test('a day 7 link opens the retest even after local state is lost', async ({ page }) => {
+test('a signed day 7 link opens the same study after local state is lost', async ({ page }) => {
   await mockTelemetry(page);
-  await seedLockedRetest(page);
-  await page.goto('/crear');
-  await expect(page.getByRole('heading', {
-    name: 'Volvemos en una semana.',
-    exact: true,
-  })).toBeVisible();
-
-  await page.goto('/crear?retest=1');
+  await page.addInitScript(({ lessonId, contentVersion }) => {
+    const now = Date.now();
+    localStorage.setItem('celesta:alias:TEST-PILOT', 'P01');
+    localStorage.setItem(`celesta:crear:study:${lessonId}`, JSON.stringify({
+      studyId: 'study-signed-retest',
+      lessonId,
+      contentVersion,
+      classToken: 'TEST-PILOT',
+      participantCode: 'P01',
+      startedAt: now - 60_000,
+      updatedAt: now,
+      phase: 'waiting_retest',
+      stepIndex: 11,
+      retestDueAt: now,
+      attempts: {},
+      firstOutcomes: {},
+      latestOutcomes: {},
+      awaitingFeedback: {},
+      assistance: {},
+      evidenceLedger: [],
+    }));
+  }, { lessonId: LESSON_ID, contentVersion: CONTENT_VERSION });
+  await page.goto('/crear?t=TEST-PILOT&a=P01');
+  await expect.poll(() => page.evaluate((lessonId) =>
+    JSON.parse(localStorage.getItem(`celesta:crear:study:${lessonId}`) ?? '{}').retestTicket,
+  LESSON_ID)).toEqual(expect.any(String));
+  const ticket = await page.evaluate((lessonId) =>
+    JSON.parse(localStorage.getItem(`celesta:crear:study:${lessonId}`) ?? '{}').retestTicket as string,
+  LESSON_ID);
+  await page.evaluate(() => localStorage.clear());
+  await page.goto(`/crear#rt=${encodeURIComponent(ticket)}`);
   await expect(page.getByRole('heading', { name: 'Una semana después.', exact: true }))
     .toBeVisible();
   const state = await page.evaluate((lessonId) =>
     JSON.parse(localStorage.getItem(`celesta:crear:study:${lessonId}`) ?? '{}'),
   LESSON_ID);
+  expect(state.studyId).toBe('study-signed-retest');
   expect(state.phase).toBe('initial');
-  expect(state.retestDueAt).toBeUndefined();
+  expect(state.retestTicket).toBe(ticket);
 });
 
 test('lesson 1.17.1 measures production before instruction and declares every guide contract', async () => {
@@ -2067,6 +2864,8 @@ test('lesson 1.17.1 measures production before instruction and declares every gu
 });
 
 test('mobile map stays readable, tappable and motion-safe at 375px', async ({ page }) => {
+  const pageErrors: string[] = [];
+  page.on('pageerror', (error) => pageErrors.push(error.message));
   await mockTelemetry(page);
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await seedStep(page, 5);
@@ -2158,6 +2957,7 @@ test('mobile map stays readable, tappable and motion-safe at 375px', async ({ pa
 
   await page.setViewportSize({ width: 375, height: 812 });
   await capture(page, 'celestea-v16-guided-map-mobile.png');
+  expect(pageErrors).toEqual([]);
 });
 
 test('mobile map accepts a real pointer drag without making drag mandatory', async ({ page }) => {
@@ -2525,13 +3325,43 @@ test('construct aggregation refuses claims the observations do not support', asy
   const supported = (o = {}) => observation({ condition: 'supported', ...o });
   const independent = (o = {}) => observation({ novelty: 'new_case', ...o });
   const delayed = (o = {}) => observation({ novelty: 'new_case', timing: 'delayed', ...o });
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const claimOf = (ledger: unknown[]) => aggregateCrearConstructStates(ledger as any)[0]?.claim;
+  const claimOf = (ledger: unknown[]) => aggregateCrearConstructStates(
+    ledger as CrearLearningObservation[]
+  )[0]?.claim;
 
   expect(claimOf([supported(), independent(), delayed()])).toBe('unproven');
   expect(claimOf([baseline({ correct: false }), supported()])).toBe('supported_only');
   expect(claimOf([baseline({ correct: false }), independent()])).toBe('independent_only');
   expect(claimOf([baseline({ correct: false }), independent(), delayed()])).toBe('durable');
+
+  // A presented-but-omitted baseline is unknown, never evidence of failure.
+  const omitted = aggregateCrearConstructStates([
+    baseline({ correct: false, observed: false, branch: 'baseline_produccion_omitida' }),
+    delayed(),
+  ] as CrearLearningObservation[])[0]!;
+  expect(omitted.baseline?.status).toBe('unknown');
+  expect(omitted.claim).toBe('unproven');
+
+  // A partially answered multi-item baseline cannot establish either prior
+  // mastery or prior absence. Both readings would overclaim from missing data.
+  for (const correct of [true, false]) {
+    const incomplete = aggregateCrearConstructStates([
+      baseline({ statementId: 'observed', correct }),
+      baseline({
+        statementId: 'omitted',
+        correct: false,
+        observed: false,
+        branch: 'baseline_produccion_omitida',
+      }),
+      delayed(),
+    ] as CrearLearningObservation[])[0]!;
+    expect(incomplete.baseline).toMatchObject({
+      status: 'mixed',
+      observedCount: 1,
+      totalPresented: 2,
+    });
+    expect(incomplete.claim).toBe('unproven');
+  }
 
   // Already correct before instruction: nothing after it is attributable.
   expect(claimOf([baseline(), independent(), delayed()])).toBe('preexisting');
@@ -2545,12 +3375,108 @@ test('construct aggregation refuses claims the observations do not support', asy
   ).toBe('unproven');
 
   // Process rows stay in the ledger and out of every claim.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const mixed = aggregateCrearConstructStates([
     observation({ constructs: ['evidence_comprehension'], condition: 'supported', evidentiary: false }),
     baseline({ correct: false, branch: 'confunde_certeza' }),
     independent(),
-  ] as any);
+  ] as CrearLearningObservation[]);
   expect(mixed.map((state) => state.construct)).toEqual(['certainty_calibration']);
   expect(mixed[0]!.errorShapes).toEqual(['confunde_certeza']);
+});
+
+test('multi-item baseline claim is invariant under every shown order', async () => {
+  const { aggregateCrearConstructStates } =
+    await import('../../src/lib/crear/constructState');
+  const base = [
+    { statementId: 'sofia', correct: true },
+    { statementId: 'tadeo', correct: false },
+    { statementId: 'renata', correct: false },
+  ];
+  const permutations = <T,>(items: T[]): T[][] => items.length <= 1
+    ? [items]
+    : items.flatMap((item, index) =>
+        permutations(items.filter((_, candidate) => candidate !== index))
+          .map((rest) => [item, ...rest]));
+  const claims = permutations(base).map((order) => aggregateCrearConstructStates([
+    ...order.map((item, index) => ({
+      id: 'baseline-certainty',
+      constructs: ['certainty_calibration'],
+      condition: 'independent',
+      novelty: 'same_case',
+      timing: 'immediate',
+      stepId: 'precheck',
+      branch: item.correct ? 'correcto' : 'incorrecto',
+      correct: item.correct,
+      assisted: false,
+      attempt: 1,
+      recordedAt: 1_000 + index,
+      statementId: item.statementId,
+    })),
+    {
+      id: 'd7-certainty',
+      constructs: ['certainty_calibration'],
+      condition: 'independent',
+      novelty: 'new_case',
+      timing: 'delayed',
+      stepId: 'retest-certainty',
+      branch: 'correcto',
+      correct: true,
+      assisted: false,
+      attempt: 1,
+      recordedAt: 2_000,
+    },
+  ] as CrearLearningObservation[])[0]);
+
+  expect(new Set(claims.map((state) => state?.claim))).toEqual(new Set(['unproven']));
+  expect(new Set(claims.map((state) => [
+    state?.baseline?.status,
+    state?.baseline?.observedCount,
+    state?.baseline?.correctCount,
+  ].join(':')))).toEqual(new Set(['mixed:3:1']));
+});
+
+test('retest ticket enforces signature, server time and expiry', async () => {
+  const { createCrearRetestTicket, verifyCrearRetestTicket } =
+    await import('../../src/lib/crear/retestTicket');
+  const secret = 'property-test-secret-with-at-least-32-characters';
+  const ticket = createCrearRetestTicket(secret, {
+    version: 1,
+    classToken: 'PILOT-01',
+    participantCode: 'P01',
+    studyId: 'study-01',
+    lessonId: LESSON_ID,
+    issuedAt: 1_000,
+    notBefore: 2_000,
+    expiresAt: 5_000,
+  });
+
+  expect(verifyCrearRetestTicket(secret, ticket, 1_999)).toMatchObject({ ok: true, eligible: false });
+  expect(verifyCrearRetestTicket(secret, ticket, 2_000)).toMatchObject({ ok: true, eligible: true });
+  expect(verifyCrearRetestTicket(secret, ticket, 5_000)).toEqual({ ok: false, reason: 'expired' });
+  expect(verifyCrearRetestTicket(secret, ticket, 5_001)).toEqual({ ok: false, reason: 'expired' });
+  expect(verifyCrearRetestTicket(secret, `${ticket.slice(0, -1)}x`, 2_000))
+    .toEqual({ ok: false, reason: 'invalid_signature' });
+
+  const issuedAfterDue = createCrearRetestTicket(secret, {
+    version: 1,
+    classToken: 'PILOT-01',
+    participantCode: 'P01',
+    studyId: 'study-late-return',
+    lessonId: LESSON_ID,
+    issuedAt: 3_000,
+    notBefore: 2_000,
+    expiresAt: 5_000,
+  });
+  expect(verifyCrearRetestTicket(secret, issuedAfterDue, 3_000))
+    .toMatchObject({ ok: true, eligible: true });
+  expect(() => createCrearRetestTicket(secret, {
+    version: 1,
+    classToken: 'PILOT-01',
+    participantCode: 'P01',
+    studyId: 'study-too-late',
+    lessonId: LESSON_ID,
+    issuedAt: 5_000,
+    notBefore: 2_000,
+    expiresAt: 5_000,
+  })).toThrow('invalid_retest_ticket_claims');
 });

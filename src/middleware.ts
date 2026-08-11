@@ -1,8 +1,28 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { generateCsrfToken } from '@/lib/csrf'
+import { isRetiredProductionPath } from '@/lib/server/productionSurface'
 
 export async function middleware(request: NextRequest) {
+  if (isRetiredProductionPath(request.nextUrl.pathname)) {
+    return NextResponse.json(
+      { error: 'not_found' },
+      {
+        status: 404,
+        headers: {
+          'Cache-Control': 'private, no-store',
+          'X-Robots-Tag': 'noindex, nofollow',
+        },
+      }
+    )
+  }
+
+  // Active APIs perform their own authorization. Session refresh and the
+  // browser CSRF cookie only belong to rendered pages.
+  if (request.nextUrl.pathname.startsWith('/api/')) {
+    return NextResponse.next()
+  }
+
   let response = NextResponse.next({
     request: {
       headers: request.headers,
@@ -84,6 +104,6 @@ export const config = {
      * - favicon.ico (favicon file)
      * Feel free to modify this pattern to include more paths.
      */
-    '/((?!_next/static|_next/image|favicon.ico|api/).*)', // Excluímos /api/ para evitar conflictos con tus rutas de API si no requieren autenticación de sesión de esta manera. Puedes ajustarlo.
+    '/((?!_next/static|_next/image|favicon.ico|.*\\..*).*)',
   ],
 }

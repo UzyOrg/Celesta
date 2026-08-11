@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createClient } from '@supabase/supabase-js';
+import { isRetiredProductionPath } from '@/lib/server/productionSurface';
 
 export const runtime = 'nodejs';
 export const revalidate = 0;
@@ -15,6 +16,12 @@ const RequestSchema = z.object({
 });
 
 export async function POST(req: Request) {
+  // `/crear` binds its pilot alias locally from the signed invitation link;
+  // this unauthenticated legacy mutator is not part of the deployed MVP.
+  if (isRetiredProductionPath('/api/roster/set-alias')) {
+    return NextResponse.json({ error: 'not_found' }, { status: 404 });
+  }
+
   if (!supabaseUrl || !serviceRoleKey) {
     return NextResponse.json({ error: 'Server misconfigured' }, { status: 500 });
   }

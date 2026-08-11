@@ -1,4 +1,5 @@
-const CACHE_NAME = 'celesta-sw-v3';
+const CACHE_NAME = 'celesta-sw-v4';
+const CREAR_SHELL_PATH = '/crear';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
@@ -16,10 +17,23 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
+function isSuccessfulSameOriginResponse(request, response) {
+  return (
+    response &&
+    response.ok &&
+    new URL(request.url).origin === self.location.origin &&
+    response.type !== 'opaque'
+  );
+}
+
 function shouldCache(request) {
   const url = new URL(request.url);
   if (request.method !== 'GET') return false;
-  if (request.mode === 'navigate' && url.pathname.startsWith('/crear')) return true;
+  if (url.origin !== self.location.origin) return false;
+  if (
+    request.mode === 'navigate' &&
+    (url.pathname === CREAR_SHELL_PATH || url.pathname.startsWith(`${CREAR_SHELL_PATH}/`))
+  ) return true;
   if (url.pathname.startsWith('/workshops/')) return true;
   if (url.pathname.startsWith('/audio/')) return true;
   if (url.pathname.startsWith('/_next/static/')) return true;
@@ -32,37 +46,57 @@ self.addEventListener('fetch', (event) => {
   if (!shouldCache(request)) return;
 
   const url = new URL(request.url);
-  if (request.mode === 'navigate' && url.pathname.startsWith('/crear')) {
+  if (
+    request.mode === 'navigate' &&
+    (url.pathname === CREAR_SHELL_PATH || url.pathname.startsWith(`${CREAR_SHELL_PATH}/`))
+  ) {
+    // Cache one query-free application shell. Pilot aliases and signed retest
+    // tickets are bearer/identity data and must never become CacheStorage keys.
+    const shellRequest = new Request(new URL(CREAR_SHELL_PATH, self.location.origin), {
+      method: 'GET',
+      credentials: 'same-origin',
+    });
+
     event.respondWith(
       fetch(request)
         .then((networkResponse) => {
-          if (networkResponse && networkResponse.status === 200) {
+          if (isSuccessfulSameOriginResponse(request, networkResponse)) {
             const copy = networkResponse.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(request, copy)).catch(() => {});
+            caches.open(CACHE_NAME).then((cache) => cache.put(shellRequest, copy)).catch(() => {});
           }
           return networkResponse;
         })
         .catch(async () => {
-          const cached = await caches.match(request);
+          const cached = await caches.match(shellRequest);
           return cached ?? Response.error();
         })
     );
     return;
   }
 
-  event.respondWith(
-    caches.match(request).then((cached) => {
-      const fetchPromise = fetch(request)
-        .then((networkResponse) => {
-          if (networkResponse && networkResponse.status === 200) {
-            const copy = networkResponse.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(request, copy)).catch(() => {});
-          }
-          return networkResponse;
-        })
-        .catch(() => cached); // offline fallback
+  const networkFirst = url.pathname.startsWith('/workshops/');
 
-      return cached || fetchPromise;
-    })
+  const fetchAndCache = async () => {
+    const networkResponse = await fetch(request);
+    if (isSuccessfulSameOriginResponse(request, networkResponse)) {
+      const copy = networkResponse.clone();
+      caches.open(CACHE_NAME).then((cache) => cache.put(request, copy)).catch(() => {});
+    }
+    return networkResponse;
+  };
+
+  if (networkFirst) {
+    event.respondWith(
+      fetchAndCache().catch(async () => (await caches.match(request)) ?? Response.error())
+    );
+    return;
+  }
+
+  // Static assets stay instant on weak networks and refresh in the background.
+  // Bumping CACHE_NAME invalidates the lesson's currently unversioned audio.
+  const refresh = fetchAndCache();
+  event.waitUntil(refresh.then(() => undefined).catch(() => undefined));
+  event.respondWith(
+    caches.match(request).then((cached) => cached ?? refresh).catch(() => refresh)
   );
 });

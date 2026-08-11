@@ -1,6 +1,6 @@
 "use client";
 
-import { trackEvent } from '@/lib/track';
+import { trackEvent, type TrackEventResult } from '@/lib/track';
 import type { CrearConstructState } from './constructState';
 import type {
   CrearBaselineGate,
@@ -40,6 +40,7 @@ interface TrackCrearAnswerInput {
   classifierSource?: CrearClassifierSource;
   classifierAgreed?: boolean;
   baselineGate?: CrearBaselineGate;
+  observed?: boolean;
   shownOrder?: string[];
   learningOpportunity?: CrearLearningOpportunity;
   classToken?: string;
@@ -129,6 +130,10 @@ export async function trackCrearAnswer(input: TrackCrearAnswerPayload): Promise<
     result.baselineGate = input.baselineGate;
   }
 
+  if (typeof input.observed === 'boolean') {
+    result.observed = input.observed;
+  }
+
   if (input.shownOrder && input.shownOrder.length > 0) {
     result.shownOrder = input.shownOrder;
   }
@@ -188,6 +193,54 @@ export async function trackCrearStepComplete(input: TrackCrearStepInput): Promis
   });
 }
 
+export async function trackCrearRetestScheduled(
+  input: TrackCrearStepInput & { retestDelayHours: number }
+): Promise<TrackEventResult> {
+  return trackEvent('completo_paso', {
+    tallerId: input.tallerId,
+    pasoId: input.pasoId,
+    result: {
+      ...(input.studyId ? { studyId: input.studyId } : {}),
+      milestone: 'day1_complete',
+      retestDelayHours: input.retestDelayHours,
+    },
+    checksum: input.checksum,
+    classToken: input.classToken,
+    clientEventId: input.studyId
+      ? `crear:${input.studyId}:day1_complete`
+      : undefined,
+  });
+}
+
+export type CrearMarketProbeMoment = 'day1' | 'day7';
+export type CrearMarketProbeStage = 'opened' | 'objective_selected' | 'registered';
+
+export async function trackCrearMarketSignal(
+  input: TrackCrearStepInput & {
+    moment: CrearMarketProbeMoment;
+    stage: CrearMarketProbeStage;
+    objective?: string;
+    reminderAccepted?: boolean;
+  }
+): Promise<void> {
+  await trackEvent('completo_paso', {
+    tallerId: input.tallerId,
+    pasoId: `market-probe-${input.moment}`,
+    result: {
+      ...(input.studyId ? { studyId: input.studyId } : {}),
+      marketSignal: 'next_challenge',
+      moment: input.moment,
+      stage: input.stage,
+      ...(input.objective ? { objective: input.objective } : {}),
+      ...(typeof input.reminderAccepted === 'boolean'
+        ? { reminderAccepted: input.reminderAccepted }
+        : {}),
+    },
+    checksum: input.checksum,
+    classToken: input.classToken,
+  });
+}
+
 export async function trackCrearHint(
   input: TrackCrearStepInput & {
     rama: string;
@@ -211,11 +264,7 @@ export async function trackCrearHint(
   });
 }
 
-/**
- * `retestDueAt` rides the completion event on purpose. The gate itself lives in
- * localStorage, which a shared classroom device can lose between day 1 and day
- * 7; the server copy is what lets the cohort be rebuilt from the database.
- */
+/** Final D7 receipt. Eligibility is already server-owned via day1_complete. */
 export async function trackCrearComplete(
   input: TrackCrearStepInput & {
     retestDueAt?: number;
@@ -227,18 +276,21 @@ export async function trackCrearComplete(
      */
     constructStates?: CrearConstructState[];
   }
-): Promise<void> {
+): Promise<TrackEventResult> {
   const result = {
     ...(input.studyId ? { studyId: input.studyId } : {}),
     ...(typeof input.retestDueAt === 'number' ? { retestDueAt: input.retestDueAt } : {}),
     ...(input.constructStates?.length ? { constructStates: input.constructStates } : {}),
   };
-  await trackEvent('taller_completado', {
+  return trackEvent('taller_completado', {
     tallerId: input.tallerId,
     pasoId: input.pasoId,
     result: Object.keys(result).length > 0 ? result : undefined,
     checksum: input.checksum,
     classToken: input.classToken,
+    clientEventId: input.studyId
+      ? `crear:${input.studyId}:day7_complete`
+      : undefined,
   });
 }
 

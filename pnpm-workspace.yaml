@@ -3,3 +3,13 @@ allowBuilds:
   esbuild: true
   sharp: true
   unrs-resolver: true
+
+# Security convergence for transitive packages whose parents have not yet
+# widened their ranges. Keep these on patch-compatible APIs and remove each
+# override once its direct parent ships the patched floor.
+overrides:
+  lodash: 4.18.1
+  nanoid@3: 3.3.17
+  postcss: 8.5.23
+  sharp: 0.35.0
+  ws: 8.21.0

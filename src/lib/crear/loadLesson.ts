@@ -20,7 +20,13 @@ async function sha256Hex(text: string): Promise<string | null> {
 
 export async function loadCrearLesson(id: CrearLessonId): Promise<CrearWorkshop> {
   const cacheKey = `${CACHE_PREFIX}:${id}`;
-  const cached = await idbGet<CrearWorkshop>('workshops', cacheKey);
+  let cached: CrearWorkshop | undefined;
+  try {
+    cached = await idbGet<CrearWorkshop>('workshops', cacheKey);
+  } catch {
+    // IndexedDB can be unavailable in private/restricted contexts. Cache access
+    // must never prevent a valid network lesson from opening.
+  }
 
   try {
     const res = await fetch(`/workshops/${id}.json`, { cache: 'no-store' });
@@ -39,7 +45,12 @@ export async function loadCrearLesson(id: CrearLessonId): Promise<CrearWorkshop>
       validated.checksum = checksum;
     }
 
-    await idbPut('workshops', cacheKey, validated);
+    try {
+      await idbPut('workshops', cacheKey, validated);
+    } catch {
+      // A quota/permission failure is a cache miss for the next visit, not a
+      // failure of the network response we just validated.
+    }
     return validated;
   } catch (error) {
     if (cached) return validateCrearWorkshopJson(cached);

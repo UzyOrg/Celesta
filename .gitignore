@@ -1,4 +1,5 @@
 node_modules
+.pnpm-store/
 .next
 # Alternate build dirs (NEXT_DIST_DIR): playwright, retest walkthrough, verify runs
 .next-*

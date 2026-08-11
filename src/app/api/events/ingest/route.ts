@@ -1,163 +1,153 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createClient } from '@supabase/supabase-js';
+import { checkRateLimit, getClientIp, type RateLimitResult } from '@/lib/rate-limit';
+import {
+  PayloadTooLargeError,
+  FIRST_WRITE_WINS_UPSERT_OPTIONS,
+  firstEventsByClientId,
+  parseIngestPayload,
+  prepareEventRowsForInsert,
+  type IngestEvent,
+  type JsonValue,
+} from '@/lib/events/ingestPolicy';
 
 export const runtime = 'nodejs';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-const EventSchema = z.object({
-  actor_sid: z.string().min(1),
-  student_session_id: z.string().min(1).optional(),
-  student_alias: z.string().optional(), // ✅ Alias del estudiante
-  class_token: z.string().min(1).optional(),
-  taller_id: z.string().min(1),
-  paso_id: z.string().min(1),
-  verbo: z.enum(['inicio_taller', 'envio_respuesta', 'solicito_pista', 'completo_paso', 'taller_completado', 'abandono_taller']),
-  result: z.any().optional(),
-  ts: z.string().datetime(),
-  client_event_id: z.string().min(8),
-  client_ts: z.string().datetime(),
-});
+const MAX_DISTINCT_CLASS_TOKENS = 16;
+const WINDOW_MS = 60_000;
+const LIMIT_IP = 240;
+const LIMIT_IP_CLASS = 120;
 
-const PayloadSchema = z.object({
-  events: z.array(EventSchema).min(1).max(200),
-});
+function rateLimitResponse(result: RateLimitResult): NextResponse {
+  return NextResponse.json(
+    { error: 'rate_limited' },
+    {
+      status: 429,
+      headers: {
+        'Retry-After': String(Math.max(1, Math.ceil((result.resetAt - Date.now()) / 1000))),
+      },
+    }
+  );
+}
 
-// In-memory rate limits
-const rlIp = new Map<string, { count: number; reset: number }>();
-const rlIpClass = new Map<string, { count: number; reset: number }>();
-const WINDOW_MS = 60_000; // 60s
-const LIMIT_IP = 240; // per 60s per ip
-const LIMIT_IP_CLASS = 120; // per 60s per (ip,class_token)
+function resultAlias(event: IngestEvent): string | null {
+  if (event.student_alias) return event.student_alias;
+  if (!event.result || typeof event.result !== 'object' || Array.isArray(event.result)) return null;
+  const alias = (event.result as Record<string, JsonValue>).alias;
+  return typeof alias === 'string' && alias.trim().length > 0 && alias.length <= 128
+    ? alias.trim()
+    : null;
+}
 
 export async function POST(req: Request) {
+  const ip = getClientIp(req);
+  const ipRateLimit = checkRateLimit(`events:ingest:ip:${ip}`, LIMIT_IP, WINDOW_MS);
+  if (!ipRateLimit.allowed) return rateLimitResponse(ipRateLimit);
+
   try {
+    const { events } = parseIngestPayload(await req.text());
+    const uniqueEvents = firstEventsByClientId(events);
+    const tokens = Array.from(new Set(
+      uniqueEvents.flatMap((event) => event.class_token ? [event.class_token] : [])
+    ));
+    if (tokens.length > MAX_DISTINCT_CLASS_TOKENS) {
+      return NextResponse.json({ error: 'too_many_class_tokens' }, { status: 400 });
+    }
+
+    for (const token of tokens) {
+      const tokenRateLimit = checkRateLimit(
+        `events:ingest:ip-class:${ip}:${token}`,
+        LIMIT_IP_CLASS,
+        WINDOW_MS
+      );
+      if (!tokenRateLimit.allowed) return rateLimitResponse(tokenRateLimit);
+    }
+
     if (!supabaseUrl || !serviceKey) {
-      return NextResponse.json({ error: 'Server misconfigured' }, { status: 500 });
+      return NextResponse.json({ error: 'server_misconfigured' }, { status: 500 });
     }
-
-    // rate limit per IP
-    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'local';
-    const now = Date.now();
-    const bucket = rlIp.get(ip);
-    if (!bucket || now > bucket.reset) {
-      rlIp.set(ip, { count: 1, reset: now + WINDOW_MS });
-    } else {
-      if (bucket.count >= LIMIT_IP) {
-        return NextResponse.json({ error: 'rate_limited' }, { status: 429 });
-      }
-      bucket.count += 1;
-      rlIp.set(ip, bucket);
-    }
-
-    // Enforce payload size limit (~64KB) to accommodate modest batches
-    const text = await req.text();
-    if (text.length > 64 * 1024) {
-      return NextResponse.json({ error: 'payload_too_large' }, { status: 413 });
-    }
-    const json = JSON.parse(text);
-    const { events } = PayloadSchema.parse(json);
-
-    // Additional rate limit per (ip, class_token)
-    const tokens = new Set<string>();
-    for (let i = 0; i < events.length; i++) {
-      const t = (events[i] as any)?.class_token;
-      if (typeof t === 'string' && t.trim().length > 0) tokens.add(t);
-    }
-    const now2 = Date.now();
-    // First pass: check
-    let limited = false;
-    tokens.forEach((t) => {
-      const key = `${ip}|${t}`;
-      const bucket2 = rlIpClass.get(key);
-      if (bucket2 && now2 <= bucket2.reset && bucket2.count >= LIMIT_IP_CLASS) {
-        limited = true;
-      }
-    });
-    if (limited) {
-      return NextResponse.json({ error: 'rate_limited' }, { status: 429 });
-    }
-    // Second pass: update
-    tokens.forEach((t) => {
-      const key = `${ip}|${t}`;
-      const bucket2 = rlIpClass.get(key);
-      if (!bucket2 || now2 > bucket2.reset) {
-        rlIpClass.set(key, { count: 1, reset: now2 + WINDOW_MS });
-      } else {
-        bucket2.count += 1;
-        rlIpClass.set(key, bucket2);
-      }
-    });
 
     const supabase = createClient(supabaseUrl, serviceKey, {
       auth: { persistSession: false },
     });
+    const rows = prepareEventRowsForInsert(uniqueEvents, new Date().toISOString());
 
-    // Prefer canonical table with idempotency
-    const { error } = await supabase
+    /**
+     * `ignoreDuplicates` maps to `ON CONFLICT DO NOTHING`: a retry is a true
+     * no-op. A normal upsert updated `ts` and could rewrite the first event with
+     * a later client payload, destroying the chronology idempotency is meant to
+     * protect.
+     */
+    const { data: insertedRows, error } = await supabase
       .from('eventos_de_aprendizaje')
-      .upsert(
-        events.map((e) => ({
-          client_event_id: e.client_event_id,
-          actor_sid: e.actor_sid,
-          student_session_id: e.student_session_id ?? e.actor_sid,
-          student_alias: (e as any).student_alias ?? null, // ✅ Guardar alias
-          class_token: e.class_token ?? null,
-          taller_id: e.taller_id,
-          paso_id: e.paso_id,
-          verbo: e.verbo,
-          result: e.result ?? null,
-          ts: e.ts,
-          client_ts: e.client_ts,
-        })),
-        { onConflict: 'client_event_id' }
-      );
+      .upsert(rows, FIRST_WRITE_WINS_UPSERT_OPTIONS)
+      .select('client_event_id');
 
     if (error) {
-      console.error('ingest_upsert_error', error.message);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      console.error('ingest_insert_failed', { code: error.code });
+      return NextResponse.json({ error: 'ingest_unavailable' }, { status: 503 });
     }
 
-    // PR-1.5: Upsert alias to alias_sessions if present in any event.result
+    // A duplicate event must have no secondary side effects either. PostgREST
+    // returns only rows inserted by DO NOTHING, so alias last_seen advances only
+    // for a genuinely new learning event.
+    const insertedIds = new Set(
+      (insertedRows ?? []).flatMap((row) =>
+        typeof row?.client_event_id === 'string' ? [row.client_event_id] : []
+      )
+    );
+
     try {
-      const aliasMap = new Map<string, { class_token: string; student_session_id: string; alias: string; last_seen: string }>();
-      for (let i = 0; i < events.length; i++) {
-        const e = events[i]!;
-        const alias = (e as any)?.result?.alias;
-        const class_token = e.class_token ?? null;
-        const sid = e.student_session_id ?? e.actor_sid;
-        if (alias && typeof alias === 'string' && class_token) {
-          const key = `${class_token}|${sid}`;
-          aliasMap.set(key, {
-            class_token,
-            student_session_id: sid,
-            alias,
-            last_seen: new Date().toISOString(),
-          });
-        }
+      const aliasMap = new Map<
+        string,
+        { class_token: string; student_session_id: string; alias: string; last_seen: string }
+      >();
+      const lastSeen = new Date().toISOString();
+      for (const event of uniqueEvents) {
+        if (!insertedIds.has(event.client_event_id) || !event.class_token) continue;
+        const alias = resultAlias(event);
+        if (!alias) continue;
+        const studentSessionId = event.student_session_id ?? event.actor_sid;
+        aliasMap.set(`${event.class_token}|${studentSessionId}`, {
+          class_token: event.class_token,
+          student_session_id: studentSessionId,
+          alias,
+          last_seen: lastSeen,
+        });
       }
+
       if (aliasMap.size > 0) {
-        const aliasRows = Array.from(aliasMap.values());
-        const { error: aliasErr } = await supabase
+        const { error: aliasError } = await supabase
           .from('alias_sessions')
-          .upsert(aliasRows, { onConflict: 'class_token,student_session_id' });
-        if (aliasErr) {
-          // Do not fail ingestion if alias upsert fails; just log server-side
-          console.error('alias_upsert_failed', aliasErr.message);
-        }
+          .upsert(Array.from(aliasMap.values()), {
+            onConflict: 'class_token,student_session_id',
+          });
+        if (aliasError) console.error('alias_upsert_failed', { code: aliasError.code });
       }
-    } catch (e) {
-      console.error('alias_upsert_unexpected', (e as any)?.message);
+    } catch (aliasError) {
+      console.error('alias_upsert_unexpected', {
+        name: aliasError instanceof Error ? aliasError.name : 'unknown',
+      });
     }
 
     return NextResponse.json({ ok: true });
-  } catch (e: any) {
-    if (e instanceof z.ZodError) {
-      return NextResponse.json({ error: 'invalid_payload', details: e.flatten() }, { status: 400 });
+  } catch (error) {
+    if (error instanceof PayloadTooLargeError) {
+      return NextResponse.json({ error: 'payload_too_large' }, { status: 413 });
     }
-    return NextResponse.json({ error: 'unexpected', message: e?.message }, { status: 500 });
+    if (error instanceof z.ZodError) {
+      return NextResponse.json({ error: 'invalid_payload' }, { status: 400 });
+    }
+    if (error instanceof SyntaxError) {
+      return NextResponse.json({ error: 'invalid_json' }, { status: 400 });
+    }
+    console.error('ingest_unexpected', {
+      name: error instanceof Error ? error.name : 'unknown',
+    });
+    return NextResponse.json({ error: 'unexpected' }, { status: 500 });
   }
 }
-

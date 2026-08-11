@@ -1,4 +1,5 @@
 "use client";
+
 import { idbAdd, idbDelete, idbGetAllEntries } from '@/lib/idb';
 import { getOrCreateSessionId } from '@/lib/session';
 import { getAliasFromLocalStorage } from '@/lib/alias';
@@ -8,18 +9,139 @@ type Json = Record<string, unknown> | Array<unknown> | string | number | boolean
 export type LearningEvent = {
   actor_sid: string;
   student_session_id: string;
-  student_alias?: string; // ✅ NUEVO: Alias del estudiante (único por class_token)
+  student_alias?: string;
   class_token?: string;
   taller_id: string;
-  paso_id: string; // e.g., `${paso_numero}` or a semantic id
-  verbo: 'inicio_taller' | 'envio_respuesta' | 'solicito_pista' | 'completo_paso' | 'taller_completado' | 'abandono_taller';
+  paso_id: string;
+  verbo:
+    | 'inicio_taller'
+    | 'envio_respuesta'
+    | 'solicito_pista'
+    | 'completo_paso'
+    | 'taller_completado'
+    | 'abandono_taller';
   result?: Json;
-  ts: string; // ISO
-  client_event_id: string; // idempotencia
-  client_ts: string; // ISO desde cliente
+  /** Kept for wire compatibility; the ingest route owns the canonical DB `ts`. */
+  ts: string;
+  client_event_id: string;
+  client_ts: string;
 };
 
+export type TrackEventResult =
+  | { status: 'queued'; storage: 'indexeddb' | 'localstorage'; clientEventId: string }
+  | { status: 'sent'; storage: 'network'; clientEventId: string }
+  | {
+      status: 'not_persisted';
+      reason:
+        | 'invalid_event'
+        | 'storage_unavailable'
+        | 'server_rejected'
+        | 'network_unavailable';
+      clientEventId: string;
+    };
+
 type BatchPostResult = 'ok' | 'drop' | 'retry';
+
+export const TELEMETRY_FALLBACK_STORAGE_KEY = 'celesta:telemetry:fallback:v1';
+const MAX_FALLBACK_EVENTS = 200;
+const MAX_FALLBACK_BYTES = 512 * 1024;
+const MAX_BATCH_BYTES = 60 * 1024;
+const MAX_BATCH_ITEMS = 100;
+const VALID_VERBS = new Set<LearningEvent['verbo']>([
+  'inicio_taller',
+  'envio_respuesta',
+  'solicito_pista',
+  'completo_paso',
+  'taller_completado',
+  'abandono_taller',
+]);
+
+function utf8Bytes(value: string): number {
+  return new TextEncoder().encode(value).byteLength;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function isJsonValue(value: unknown): boolean {
+  const pending: Array<{ value: unknown; depth: number }> = [{ value, depth: 0 }];
+  let nodes = 0;
+  while (pending.length > 0) {
+    const current = pending.pop()!;
+    nodes += 1;
+    if (nodes > 4_000 || current.depth > 12) return false;
+    if (current.value === null || typeof current.value === 'boolean') continue;
+    if (typeof current.value === 'string') {
+      if (current.value.length > 8_192) return false;
+      continue;
+    }
+    if (typeof current.value === 'number') {
+      if (!Number.isFinite(current.value)) return false;
+      continue;
+    }
+    if (Array.isArray(current.value)) {
+      if (current.value.length > 240) return false;
+      for (const entry of current.value) {
+        pending.push({ value: entry, depth: current.depth + 1 });
+      }
+      continue;
+    }
+    if (!isRecord(current.value)) return false;
+    const entries = Object.entries(current.value);
+    if (entries.length > 160) return false;
+    for (const [key, entry] of entries) {
+      if (key.length > 160) return false;
+      pending.push({ value: entry, depth: current.depth + 1 });
+    }
+  }
+  return true;
+}
+
+function isIsoTimestamp(value: unknown): value is string {
+  return typeof value === 'string' && value.length <= 64 && Number.isFinite(Date.parse(value));
+}
+
+function boundedString(value: unknown, max: number): value is string {
+  return typeof value === 'string' && value.length > 0 && value.length <= max;
+}
+
+function isLearningEvent(value: unknown): value is LearningEvent {
+  if (!isRecord(value)) return false;
+  return (
+    boundedString(value.actor_sid, 256) &&
+    boundedString(value.student_session_id, 256) &&
+    (value.student_alias === undefined || boundedString(value.student_alias, 128)) &&
+    (value.class_token === undefined || boundedString(value.class_token, 128)) &&
+    boundedString(value.taller_id, 160) &&
+    boundedString(value.paso_id, 160) &&
+    typeof value.verbo === 'string' &&
+    VALID_VERBS.has(value.verbo as LearningEvent['verbo']) &&
+    (value.result === undefined || isJsonValue(value.result)) &&
+    isIsoTimestamp(value.ts) &&
+    boundedString(value.client_event_id, 160) &&
+    value.client_event_id.length >= 8 &&
+    isIsoTimestamp(value.client_ts)
+  );
+}
+
+function normalizeLearningEvent(event: LearningEvent): LearningEvent | null {
+  try {
+    // Normalize to the exact JSON representation used on the wire. This strips
+    // `undefined` object properties and rejects cycles/BigInt before a caller is
+    // told the event is durable.
+    const normalized: unknown = JSON.parse(JSON.stringify(event));
+    if (!isLearningEvent(normalized)) return null;
+    if (utf8Bytes(JSON.stringify({ events: [normalized] })) > MAX_BATCH_BYTES) return null;
+    return normalized;
+  } catch {
+    return null;
+  }
+}
+
+function browserIsOnline(): boolean {
+  return typeof navigator !== 'undefined' && navigator.onLine !== false;
+}
 
 async function postEventsBatch(events: LearningEvent[]): Promise<BatchPostResult> {
   try {
@@ -38,15 +160,77 @@ async function postEventsBatch(events: LearningEvent[]): Promise<BatchPostResult
   }
 }
 
+function readFallbackQueue(): LearningEvent[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = localStorage.getItem(TELEMETRY_FALLBACK_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed: unknown = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    const unique = new Map<string, LearningEvent>();
+    for (const entry of parsed) {
+      if (isLearningEvent(entry) && !unique.has(entry.client_event_id)) {
+        unique.set(entry.client_event_id, entry);
+      }
+    }
+    return Array.from(unique.values());
+  } catch {
+    return [];
+  }
+}
+
+function writeFallbackQueue(events: readonly LearningEvent[]): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    if (events.length === 0) {
+      localStorage.removeItem(TELEMETRY_FALLBACK_STORAGE_KEY);
+      return true;
+    }
+    if (events.length > MAX_FALLBACK_EVENTS || events.some((event) => !isLearningEvent(event))) {
+      return false;
+    }
+    const serialized = JSON.stringify(events);
+    if (utf8Bytes(serialized) > MAX_FALLBACK_BYTES) return false;
+    localStorage.setItem(TELEMETRY_FALLBACK_STORAGE_KEY, serialized);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function persistFallbackEvent(event: LearningEvent): boolean {
+  const normalized = normalizeLearningEvent(event);
+  if (!normalized) return false;
+  const queued = readFallbackQueue();
+  if (queued.some((candidate) => candidate.client_event_id === normalized.client_event_id)) {
+    return true;
+  }
+  return writeFallbackQueue([...queued, normalized]);
+}
+
 let backoffMs = 1000;
 const MAX_BACKOFF_MS = 60_000;
 let flushScheduled = false;
 let flushInFlight: Promise<void> | null = null;
 let flushRequested = false;
 let retryTimer: number | null = null;
+let trackingInitialized = false;
+
+function safelyStartFlush(): void {
+  void flushEventQueue().catch(() => {
+    // `flushEventQueue` is defensive itself. This final guard prevents a future
+    // storage implementation from turning an event listener into an unhandled
+    // rejection.
+  });
+}
 
 function scheduleQueueFlush(): void {
-  if (typeof window === 'undefined' || flushScheduled || retryTimer !== null || !navigator.onLine) return;
+  if (
+    typeof window === 'undefined' ||
+    flushScheduled ||
+    retryTimer !== null ||
+    !browserIsOnline()
+  ) return;
   if (flushInFlight) {
     flushRequested = true;
     return;
@@ -54,81 +238,157 @@ function scheduleQueueFlush(): void {
   flushScheduled = true;
   window.setTimeout(() => {
     flushScheduled = false;
-    void flushEventQueue();
+    safelyStartFlush();
   }, 350);
 }
 
-async function flushEventQueueOnce(): Promise<void> {
-  if (typeof window === 'undefined') return;
-  const entries = await idbGetAllEntries<LearningEvent>('events');
-  const queued = entries.map((entry) => entry.value);
-  if (queued.length === 0) return;
-  if (!navigator.onLine) return;
-  // Chunk by payload size (target < 64KB) and a sane max items per batch
-  const MAX_BYTES = 60 * 1024; // 60KB margin under server 64KB limit
-  const MAX_ITEMS = 100; // server allows up to 200, stay conservative
+function scheduleRetry(): void {
+  if (typeof window === 'undefined' || retryTimer !== null || !browserIsOnline()) return;
+  const delay = backoffMs;
+  retryTimer = window.setTimeout(() => {
+    retryTimer = null;
+    safelyStartFlush();
+  }, delay);
+  backoffMs = Math.min(backoffMs * 2, MAX_BACKOFF_MS);
+}
 
-  const chunks: LearningEvent[][] = [];
-  let curr: LearningEvent[] = [];
-  let currSize = 0;
-  for (let i = 0; i < queued.length; i++) {
-    const e = queued[i]!;
-    const tentative = [...curr, e];
-    const tentativeSize = new Blob([JSON.stringify({ events: tentative })]).size;
-    if (tentativeSize <= MAX_BYTES && tentative.length <= MAX_ITEMS) {
-      curr = tentative;
-      currSize = tentativeSize;
+interface CollectedEvent {
+  event: LearningEvent;
+  idbKeys: IDBValidKey[];
+}
+
+async function collectQueuedEvents(): Promise<CollectedEvent[]> {
+  let idbEntries: Array<{ key: IDBValidKey; value: LearningEvent }> = [];
+  try {
+    idbEntries = await idbGetAllEntries<LearningEvent>('events');
+  } catch {
+    // The localStorage fallback remains readable when IndexedDB is blocked.
+  }
+
+  const collected = new Map<string, CollectedEvent>();
+  for (const entry of idbEntries) {
+    if (!isLearningEvent(entry.value)) continue;
+    const existing = collected.get(entry.value.client_event_id);
+    if (existing) {
+      existing.idbKeys.push(entry.key);
     } else {
-      if (curr.length > 0) chunks.push(curr);
-      curr = [e];
-      currSize = new Blob([JSON.stringify({ events: curr })]).size;
+      collected.set(entry.value.client_event_id, {
+        event: entry.value,
+        idbKeys: [entry.key],
+      });
     }
   }
-  if (curr.length > 0) chunks.push(curr);
 
-  async function deliverBatch(batch: LearningEvent[]): Promise<'ok' | 'retry'> {
-    const result = await postEventsBatch(batch);
-    if (result === 'ok') return 'ok';
-    if (result === 'retry') return 'retry';
-
-    // A permanent 4xx can be caused by one malformed event. Bisect the batch
-    // so valid telemetry still ships and only the poison entry is discarded.
-    if (batch.length > 1) {
-      const midpoint = Math.ceil(batch.length / 2);
-      const left = await deliverBatch(batch.slice(0, midpoint));
-      if (left === 'retry') return 'retry';
-      return deliverBatch(batch.slice(midpoint));
+  for (const event of readFallbackQueue()) {
+    const existing = collected.get(event.client_event_id);
+    if (!existing) {
+      collected.set(event.client_event_id, {
+        event,
+        idbKeys: [],
+      });
     }
-
-    const rejectedEvent = batch[0];
-    if (rejectedEvent) {
-      await Promise.all(
-        entries
-          .filter((entry) => entry.value.client_event_id === rejectedEvent.client_event_id)
-          .map((entry) => idbDelete('events', entry.key))
-      );
-    }
-    return 'ok';
   }
+  return Array.from(collected.values());
+}
+
+function chunkEvents(events: readonly LearningEvent[]): LearningEvent[][] {
+  const chunks: LearningEvent[][] = [];
+  let current: LearningEvent[] = [];
+
+  for (const event of events) {
+    const tentative = [...current, event];
+    const bytes = utf8Bytes(JSON.stringify({ events: tentative }));
+    if (bytes <= MAX_BATCH_BYTES && tentative.length <= MAX_BATCH_ITEMS) {
+      current = tentative;
+      continue;
+    }
+    if (current.length > 0) chunks.push(current);
+    current = [event];
+  }
+  if (current.length > 0) chunks.push(current);
+  return chunks;
+}
+
+interface DeliveryResult {
+  settledIds: Set<string>;
+  retry: boolean;
+}
+
+async function deliverBatch(batch: LearningEvent[]): Promise<DeliveryResult> {
+  const result = await postEventsBatch(batch);
+  if (result === 'ok') {
+    return {
+      settledIds: new Set(batch.map((event) => event.client_event_id)),
+      retry: false,
+    };
+  }
+  if (result === 'retry') return { settledIds: new Set(), retry: true };
+
+  // A permanent 4xx can be caused by one malformed legacy entry. Bisect so the
+  // valid telemetry ships and only the poison event leaves the durable queue.
+  if (batch.length > 1) {
+    const midpoint = Math.ceil(batch.length / 2);
+    const left = await deliverBatch(batch.slice(0, midpoint));
+    if (left.retry) return left;
+    const right = await deliverBatch(batch.slice(midpoint));
+    return {
+      settledIds: new Set([
+        ...Array.from(left.settledIds),
+        ...Array.from(right.settledIds),
+      ]),
+      retry: right.retry,
+    };
+  }
+
+  const rejected = batch[0];
+  if (rejected) {
+    console.warn('telemetry_event_rejected', { clientEventId: rejected.client_event_id });
+    return { settledIds: new Set([rejected.client_event_id]), retry: false };
+  }
+  return { settledIds: new Set(), retry: false };
+}
+
+async function removeSettledEvents(
+  collected: readonly CollectedEvent[],
+  settledIds: ReadonlySet<string>
+): Promise<void> {
+  const idbDeletes = collected
+    .filter((entry) => settledIds.has(entry.event.client_event_id))
+    .flatMap((entry) => entry.idbKeys)
+    .map((key) => idbDelete('events', key));
+  await Promise.allSettled(idbDeletes);
+
+  const fallback = readFallbackQueue();
+  if (fallback.some((event) => settledIds.has(event.client_event_id))) {
+    // If this write fails the event remains and is safely re-sent: server-side
+    // first-write-wins makes duplicates harmless.
+    writeFallbackQueue(
+      fallback.filter((event) => !settledIds.has(event.client_event_id))
+    );
+  }
+}
+
+async function flushEventQueueOnce(): Promise<void> {
+  if (typeof window === 'undefined' || !browserIsOnline()) return;
+  const collected = await collectQueuedEvents();
+  if (collected.length === 0) return;
 
   let shouldRetry = false;
-  for (const batch of chunks) {
-    if (await deliverBatch(batch) === 'retry') {
+  const settledIds = new Set<string>();
+  for (const batch of chunkEvents(collected.map((entry) => entry.event))) {
+    const result = await deliverBatch(batch);
+    result.settledIds.forEach((id) => settledIds.add(id));
+    if (result.retry) {
       shouldRetry = true;
       break;
     }
   }
-  if (!shouldRetry) {
-    await Promise.all(entries.map((entry) => idbDelete('events', entry.key)));
-    backoffMs = 1000;
+
+  if (settledIds.size > 0) await removeSettledEvents(collected, settledIds);
+  if (shouldRetry) {
+    scheduleRetry();
   } else {
-    if (retryTimer !== null) return;
-    const delay = backoffMs;
-    retryTimer = window.setTimeout(() => {
-      retryTimer = null;
-      void flushEventQueue();
-    }, delay);
-    backoffMs = Math.min(backoffMs * 2, MAX_BACKOFF_MS);
+    backoffMs = 1000;
   }
 }
 
@@ -138,14 +398,36 @@ export function flushEventQueue(): Promise<void> {
     return flushInFlight;
   }
 
-  flushInFlight = flushEventQueueOnce().finally(() => {
-    flushInFlight = null;
-    if (flushRequested) {
-      flushRequested = false;
-      scheduleQueueFlush();
-    }
-  });
+  flushInFlight = flushEventQueueOnce()
+    .catch(() => {
+      scheduleRetry();
+    })
+    .finally(() => {
+      flushInFlight = null;
+      if (flushRequested) {
+        flushRequested = false;
+        scheduleQueueFlush();
+      }
+    });
   return flushInFlight;
+}
+
+function makeClientEventId(sessionId: string, clientTimestamp: string): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
+    const bytes = new Uint8Array(16);
+    crypto.getRandomValues(bytes);
+    bytes[6] = (bytes[6]! & 0x0f) | 0x40;
+    bytes[8] = (bytes[8]! & 0x3f) | 0x80;
+    const hex = Array.from(bytes, (value) => value.toString(16).padStart(2, '0')).join('');
+    return [
+      hex.substring(0, 8),
+      hex.substring(8, 12),
+      hex.substring(12, 16),
+      hex.substring(16, 20),
+      hex.substring(20),
+    ].join('-');
+  }
+  return `${sessionId}-${clientTimestamp}-${Math.random().toString(36).slice(2)}`;
 }
 
 export async function trackEvent(
@@ -156,141 +438,112 @@ export async function trackEvent(
     result?: Json;
     classToken?: string;
     sid?: string;
-    checksum?: string; // SHA-256 del JSON del taller
+    checksum?: string;
+    /** Stable id for milestones whose delivery may be retried across reloads. */
+    clientEventId?: string;
   }
-): Promise<void> {
+): Promise<TrackEventResult> {
   const sessionId = payload.sid ?? getOrCreateSessionId(payload.classToken);
-  const client_ts = new Date().toISOString();
-  const client_event_id = crypto.getRandomValues
-    ? (() => {
-        // UUID v4
-        const b = new Uint8Array(16);
-        crypto.getRandomValues(b);
-        b[6] = (b[6] & 0x0f) | 0x40;
-        b[8] = (b[8] & 0x3f) | 0x80;
-        const hex = Array.from(b, (x) => x.toString(16).padStart(2, '0')).join('');
-        return (
-          hex.substring(0, 8) +
-          '-' +
-          hex.substring(8, 12) +
-          '-' +
-          hex.substring(12, 16) +
-          '-' +
-          hex.substring(16, 20) +
-          '-' +
-          hex.substring(20)
-        );
-      })()
-    : `${sessionId}-${client_ts}-${Math.random().toString(36).slice(2)}`;
+  const clientTimestamp = new Date().toISOString();
+  const clientEventId = boundedString(payload.clientEventId, 160) &&
+    payload.clientEventId.length >= 8
+    ? payload.clientEventId
+    : makeClientEventId(sessionId, clientTimestamp);
   const alias = getAliasFromLocalStorage(payload.classToken);
-  
-  const event: LearningEvent = {
+  let result = payload.result;
+
+  if (isRecord(payload.result) || alias || payload.checksum) {
+    const base: Record<string, unknown> = isRecord(payload.result) ? { ...payload.result } : {};
+    if (alias && base.alias == null) base.alias = alias;
+    if (payload.checksum) base.checksum = payload.checksum;
+    result = Object.keys(base).length > 0 ? base : payload.result;
+  }
+
+  const candidateEvent: LearningEvent = {
     actor_sid: sessionId,
     student_session_id: sessionId,
-    student_alias: alias || undefined, // ✅ Alias como columna separada
-    class_token: payload.classToken,
+    ...(alias ? { student_alias: alias } : {}),
+    ...(payload.classToken ? { class_token: payload.classToken } : {}),
     taller_id: payload.tallerId,
     paso_id: payload.pasoId,
     verbo,
-    result: (() => {
-      const base: any = payload.result && typeof payload.result === 'object' ? { ...(payload.result as any) } : {};
-      // Seguir incluyendo alias en result por compatibilidad
-      if (alias && base && typeof base === 'object' && base.alias == null) {
-        base.alias = alias;
-      }
-      if (payload.checksum) {
-        base.checksum = payload.checksum;
-      }
-      return Object.keys(base).length ? base : payload.result;
-    })(),
-    ts: new Date().toISOString(),
-    client_event_id,
-    client_ts,
+    ...(result !== undefined ? { result } : {}),
+    ts: clientTimestamp,
+    client_event_id: clientEventId,
+    client_ts: clientTimestamp,
   };
+  const event = normalizeLearningEvent(candidateEvent);
+  if (!event) {
+    return { status: 'not_persisted', reason: 'invalid_event', clientEventId };
+  }
 
-  // Persist first so navigation never waits on the network. The existing
-  // idempotent client_event_id makes background retries safe.
+  // Persist before networking so navigation never waits when either durable
+  // browser store is available.
   try {
     await idbAdd('events', event);
     scheduleQueueFlush();
+    return { status: 'queued', storage: 'indexeddb', clientEventId };
   } catch {
-    // IndexedDB can be unavailable in private/restricted contexts. Preserve
-    // the previous direct-send fallback instead of dropping the event.
-    if (navigator.onLine) {
-      await postEventsBatch([event]);
+    if (persistFallbackEvent(event)) {
+      scheduleQueueFlush();
+      return { status: 'queued', storage: 'localstorage', clientEventId };
     }
   }
+
+  // With no durable browser storage, a direct send is the last safe option. Its
+  // outcome is returned explicitly so a critical caller can avoid claiming an
+  // event was reported when it was not.
+  if (!browserIsOnline()) {
+    return { status: 'not_persisted', reason: 'storage_unavailable', clientEventId };
+  }
+  const direct = await postEventsBatch([event]);
+  if (direct === 'ok') return { status: 'sent', storage: 'network', clientEventId };
+  return {
+    status: 'not_persisted',
+    reason: direct === 'drop' ? 'server_rejected' : 'network_unavailable',
+    clientEventId,
+  };
 }
 
-/**
- * Last-chance delivery when the page goes away.
- *
- * Events are written to IndexedDB first and flushed 350ms later, so closing the
- * tab right after the final answer leaves them queued. They would ship on the
- * learner's next visit — except the last event of the study is `taller_completado`,
- * and after that there is no next visit. `sendBeacon` is the only transport the
- * browser guarantees during unload; a `fetch` here is cancelled with the page.
- *
- * The queue is not cleared on success: `sendBeacon` reports that the payload was
- * handed to the browser, never that the server accepted it. `client_event_id`
- * makes the duplicate harmless, and a dropped final event would not be.
- */
 const beaconed = new Set<string>();
 
 async function beaconFlush(): Promise<void> {
-  if (typeof navigator === 'undefined' || typeof navigator.sendBeacon !== 'function') return;
-  const entries = await idbGetAllEntries<LearningEvent>('events');
-  /**
-   * Only what this page has not already beaconed. `visibilitychange` fires
-   * every time the learner switches apps, and re-sending the whole queue on
-   * each one turns a phone that gets backgrounded ten times into ten full
-   * resends. The set is per page load, so a genuine unload after a reload
-   * still re-sends — which is the safe direction.
-   */
-  const pending = entries
-    .map((entry) => entry.value)
-    .filter((event) => !beaconed.has(event.client_event_id));
-  if (pending.length === 0) return;
+  try {
+    if (
+      typeof navigator === 'undefined' ||
+      typeof navigator.sendBeacon !== 'function'
+    ) return;
+    const collected = await collectQueuedEvents();
+    const pending = collected
+      .map((entry) => entry.event)
+      .filter((event) => !beaconed.has(event.client_event_id));
+    if (pending.length === 0) return;
 
-  // Same 60KB ceiling the normal path uses; sendBeacon also caps the payload.
-  const MAX_BYTES = 60 * 1024;
-  const send = (batch: LearningEvent[]) => {
-    if (batch.length === 0) return;
-    if (navigator.sendBeacon('/api/events/ingest', JSON.stringify({ events: batch }))) {
-      batch.forEach((event) => beaconed.add(event.client_event_id));
+    for (const batch of chunkEvents(pending)) {
+      const payload = JSON.stringify({ events: batch });
+      const blob = new Blob([payload], { type: 'application/json' });
+      if (navigator.sendBeacon('/api/events/ingest', blob)) {
+        batch.forEach((event) => beaconed.add(event.client_event_id));
+      }
     }
-  };
-
-  let batch: LearningEvent[] = [];
-  for (const event of pending) {
-    const tentative = [...batch, event];
-    if (new Blob([JSON.stringify({ events: tentative })]).size > MAX_BYTES) {
-      send(batch);
-      batch = [event];
-    } else {
-      batch = tentative;
-    }
+  } catch {
+    // Unload delivery is best-effort. Durable queues stay intact for retry.
   }
-  send(batch);
 }
 
-export function initTracking() {
-  if (typeof window === 'undefined') return;
-  window.addEventListener('online', () => {
-    scheduleQueueFlush();
+function safelyBeacon(): void {
+  void beaconFlush().catch(() => {
+    // See beaconFlush: keep event listeners rejection-safe even after refactors.
   });
-  /**
-   * `pagehide` fires on tab close, navigation and backgrounding on iOS, where
-   * `beforeunload` is unreliable. `visibilitychange` covers the phone being
-   * locked or the app switched away — the ordinary way a classroom session
-   * ends.
-   */
-  window.addEventListener('pagehide', () => {
-    void beaconFlush();
-  });
+}
+
+export function initTracking(): void {
+  if (typeof window === 'undefined' || trackingInitialized) return;
+  trackingInitialized = true;
+  window.addEventListener('online', scheduleQueueFlush);
+  window.addEventListener('pagehide', safelyBeacon);
   document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'hidden') void beaconFlush();
+    if (document.visibilityState === 'hidden') safelyBeacon();
   });
-  // Attempt flush on init
   scheduleQueueFlush();
 }

@@ -21,6 +21,10 @@ import {
   CREAR_MAX_RESPONSE_PART_LENGTH,
 } from '@/lib/crear/types';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
+import {
+  readBoundedJson,
+  RequestBodyTooLargeError,
+} from '@/lib/server/boundedJson';
 
 export const runtime = 'nodejs';
 /** The model call aborts at 4.5s; this is the ceiling for the whole request. */
@@ -32,6 +36,7 @@ const CrearLessonIdSchema = z.enum(
 
 const CLASSIFY_RATE_LIMIT = 30;
 const CLASSIFY_RATE_WINDOW_MS = 60_000;
+const CLASSIFY_MAX_BODY_BYTES = 32 * 1024;
 const workshopCache = new Map<CrearLessonId, CrearWorkshop>();
 
 const ClassifyRequestSchema = z.object({
@@ -200,7 +205,9 @@ export async function POST(req: Request) {
       );
     }
 
-    const body = ClassifyRequestSchema.parse(await req.json());
+    const body = ClassifyRequestSchema.parse(
+      await readBoundedJson(req, CLASSIFY_MAX_BODY_BYTES)
+    );
     const workshop = loadWorkshopFromPublic(body.tallerId);
     const step = findStep(workshop, body.pasoRefId);
     const classifier = step?.crear?.classifier;
@@ -274,8 +281,15 @@ export async function POST(req: Request) {
 
     return NextResponse.json(response);
   } catch (error) {
+    if (error instanceof RequestBodyTooLargeError) {
+      return NextResponse.json({ error: 'payload_too_large' }, { status: 413 });
+    }
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: 'invalid_payload', details: error.flatten() }, { status: 400 });
+    }
+
+    if (error instanceof SyntaxError) {
+      return NextResponse.json({ error: 'invalid_json' }, { status: 400 });
     }
 
     console.error('[api/classify] unexpected', (error as Error).message);
