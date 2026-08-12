@@ -1,8 +1,11 @@
-import { validateWorkshopJson } from '@/lib/workshops/schema';
+import { validateWorkshopJson } from '../workshops/schema';
+import { buildCrearFormAssemblyText } from './formAssembly';
+import { readModalForm } from './modalForm';
 import type {
   CrearBaselineProduction,
   CrearCaseArtifact,
   CrearClassifierBranch,
+  CrearFormAssemblyFeedback,
   CrearLearningOpportunity,
   CrearProductionTarget,
   CrearResponseCategory,
@@ -11,7 +14,7 @@ import type {
   CrearWorkshop,
 } from './types';
 
-const INPUT_MODES = new Set(['none', 'text', 'choice', 'match']);
+const INPUT_MODES = new Set(['none', 'text', 'choice', 'match', 'assembly']);
 const FASES = new Set(['pre_check', 'practica', 'post', 'transfer', 'teach_back']);
 const STAGES = new Set(['descubre', 'practica', 'aplica', 'recuerda']);
 const SCENES = new Set([
@@ -119,6 +122,24 @@ function validateProductionTarget(target: CrearProductionTarget, label: string):
     !Array.isArray(target.participles) ||
     target.participles.length === 0 ||
     target.participles.some((entry) => typeof entry !== 'string' || !entry.trim())
+  ) {
+    throw new Error(`CREAR JSON: ${label} is invalid`);
+  }
+}
+
+function validateFormAssemblyFeedback(
+  feedback: CrearFormAssemblyFeedback,
+  label: string
+): void {
+  if (
+    !feedback ||
+    typeof feedback !== 'object' ||
+    typeof feedback.rama !== 'string' ||
+    !feedback.rama.trim() ||
+    typeof feedback.title !== 'string' ||
+    !feedback.title.trim() ||
+    typeof feedback.body !== 'string' ||
+    !feedback.body.trim()
   ) {
     throw new Error(`CREAR JSON: ${label} is invalid`);
   }
@@ -236,6 +257,42 @@ function validateMeta(meta: CrearStepMeta, refId: string): void {
   }
   if (meta.productionTarget !== undefined) {
     validateProductionTarget(meta.productionTarget, `${refId}.crear.productionTarget`);
+  }
+  if (meta.verbSuggestion !== undefined) {
+    const suggestion = meta.verbSuggestion;
+    if (
+      !suggestion ||
+      typeof suggestion !== 'object' ||
+      typeof suggestion.label !== 'string' ||
+      !suggestion.label.trim() ||
+      typeof suggestion.base !== 'string' ||
+      !suggestion.base.trim() ||
+      typeof suggestion.participle !== 'string' ||
+      !suggestion.participle.trim() ||
+      suggestion.base.trim().toLocaleLowerCase('en') ===
+        suggestion.participle.trim().toLocaleLowerCase('en')
+    ) {
+      throw new Error(`CREAR JSON: ${refId}.crear.verbSuggestion is invalid`);
+    }
+    if (
+      meta.input !== 'text' ||
+      !meta.learningOpportunity?.constructs.includes('modal_form') ||
+      !meta.productionTarget
+    ) {
+      throw new Error(
+        `CREAR JSON: ${refId}.crear.verbSuggestion requires a modal_form text production target`
+      );
+    }
+    const suggestedParticiple = suggestion.participle.trim().toLocaleLowerCase('en');
+    if (
+      !meta.productionTarget.participles.some(
+        (participle) => participle.trim().toLocaleLowerCase('en') === suggestedParticiple
+      )
+    ) {
+      throw new Error(
+        `CREAR JSON: ${refId}.crear.verbSuggestion.participle must be accepted by productionTarget`
+      );
+    }
   }
   /**
    * `productionTarget` is the contract behind the `modal_form` construct, the
@@ -584,6 +641,149 @@ function validateMeta(meta: CrearStepMeta, refId: string): void {
       ) {
         throw new Error(`CREAR JSON: ${refId}.crear.certaintyMap.production is invalid`);
       }
+    }
+  }
+  if (meta.input === 'assembly' && meta.formAssembly === undefined) {
+    throw new Error(`CREAR JSON: ${refId}.crear.input assembly requires formAssembly`);
+  }
+  if (meta.formAssembly !== undefined) {
+    const assembly = meta.formAssembly;
+    if (meta.input !== 'assembly' || meta.scene !== 'practice') {
+      throw new Error(
+        `CREAR JSON: ${refId}.crear.formAssembly requires assembly input in the practice scene`
+      );
+    }
+    if (
+      meta.learningOpportunity?.constructs.length !== 1 ||
+      meta.learningOpportunity.constructs[0] !== 'modal_form' ||
+      meta.learningOpportunity.condition !== 'supported' ||
+      meta.learningOpportunity.novelty !== 'same_case' ||
+      meta.learningOpportunity.timing !== 'immediate'
+    ) {
+      throw new Error(
+        `CREAR JSON: ${refId}.crear.formAssembly requires a supported same-case immediate modal_form opportunity`
+      );
+    }
+    if (
+      meta.guideAvailable !== false ||
+      meta.revealFeedback !== false ||
+      meta.classifier !== undefined ||
+      meta.audio !== undefined
+    ) {
+      throw new Error(
+        `CREAR JSON: ${refId}.crear.formAssembly must use inline authored feedback without guide, classifier, or audio`
+      );
+    }
+    if (
+      !assembly ||
+      typeof assembly !== 'object' ||
+      typeof assembly.instruction !== 'string' ||
+      !assembly.instruction.trim() ||
+      typeof assembly.sentenceStart !== 'string' ||
+      !assembly.sentenceStart.trim() ||
+      typeof assembly.sentenceEnd !== 'string' ||
+      !assembly.sentenceEnd.trim() ||
+      assembly.slotCount !== 3 ||
+      typeof assembly.actionLabel !== 'string' ||
+      !assembly.actionLabel.trim() ||
+      typeof assembly.continueLabel !== 'string' ||
+      !assembly.continueLabel.trim()
+    ) {
+      throw new Error(`CREAR JSON: ${refId}.crear.formAssembly is invalid`);
+    }
+    if (!Array.isArray(assembly.tokens) || assembly.tokens.length !== 5) {
+      throw new Error(`CREAR JSON: ${refId}.crear.formAssembly.tokens must contain five items`);
+    }
+    const tokenIds = assembly.tokens.map((token, index) => {
+      if (
+        !token ||
+        typeof token !== 'object' ||
+        typeof token.id !== 'string' ||
+        !token.id.trim() ||
+        typeof token.label !== 'string' ||
+        !token.label.trim()
+      ) {
+        throw new Error(
+          `CREAR JSON: ${refId}.crear.formAssembly.tokens[${index}] is invalid`
+        );
+      }
+      return token.id;
+    });
+    if (
+      new Set(tokenIds).size !== tokenIds.length ||
+      new Set(assembly.tokens.map((token) => token.label.trim().toLocaleLowerCase('en'))).size !==
+        assembly.tokens.length
+    ) {
+      throw new Error(`CREAR JSON: ${refId}.crear.formAssembly.tokens must be unique`);
+    }
+    if (
+      !Array.isArray(assembly.correctSequence) ||
+      assembly.correctSequence.length !== assembly.slotCount ||
+      assembly.correctSequence.some(
+        (tokenId) => typeof tokenId !== 'string' || !tokenIds.includes(tokenId)
+      ) ||
+      new Set(assembly.correctSequence).size !== assembly.correctSequence.length
+    ) {
+      throw new Error(
+        `CREAR JSON: ${refId}.crear.formAssembly.correctSequence is invalid`
+      );
+    }
+    validateFormAssemblyFeedback(
+      assembly.success,
+      `${refId}.crear.formAssembly.success`
+    );
+    validateFormAssemblyFeedback(
+      assembly.fallback,
+      `${refId}.crear.formAssembly.fallback`
+    );
+    if (!Array.isArray(assembly.errorRules) || assembly.errorRules.length < 1) {
+      throw new Error(
+        `CREAR JSON: ${refId}.crear.formAssembly.errorRules must be non-empty`
+      );
+    }
+    assembly.errorRules.forEach((rule, index) => {
+      if (
+        !rule ||
+        typeof rule !== 'object' ||
+        !Number.isInteger(rule.slotIndex) ||
+        rule.slotIndex < 0 ||
+        rule.slotIndex >= assembly.slotCount ||
+        typeof rule.tokenId !== 'string' ||
+        !tokenIds.includes(rule.tokenId)
+      ) {
+        throw new Error(
+          `CREAR JSON: ${refId}.crear.formAssembly.errorRules[${index}] is invalid`
+        );
+      }
+      validateFormAssemblyFeedback(
+        rule.feedback,
+        `${refId}.crear.formAssembly.errorRules[${index}].feedback`
+      );
+    });
+    const branches = [
+      assembly.success.rama,
+      assembly.fallback.rama,
+      ...assembly.errorRules.map((rule) => rule.feedback.rama),
+    ];
+    if (new Set(branches).size !== branches.length) {
+      throw new Error(`CREAR JSON: ${refId}.crear.formAssembly branches must be unique`);
+    }
+    if (!meta.productionTarget) {
+      throw new Error(`CREAR JSON: ${refId}.crear.formAssembly requires productionTarget`);
+    }
+    const authoredSentence = buildCrearFormAssemblyText(
+      assembly,
+      assembly.correctSequence
+    );
+    const reading = readModalForm(authoredSentence, meta.productionTarget);
+    if (
+      !reading.wellFormed ||
+      !reading.subjectPresent ||
+      reading.expressedCategory !== meta.productionTarget.category
+    ) {
+      throw new Error(
+        `CREAR JSON: ${refId}.crear.formAssembly.correctSequence must satisfy productionTarget`
+      );
     }
   }
 

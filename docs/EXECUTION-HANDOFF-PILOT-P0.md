@@ -5,6 +5,11 @@
 **Objetivo:** llevar a producción el hardening ya implementado, cerrar la lectura pública de
 evidencia y devolver pruebas verificables. No tomar decisiones de producto.
 
+> **Excepción aprobada 2026-08-11, antes del primer participante:** el fundador autorizó
+> exactamente `docs/architecture/guided-modal-form-2026-08-11.md`. La lección vigente pasa a
+> 1.18.0 / `2026-08-11-forma-guiada` y vuelve a quedar congelada desde ahí. Las prohibiciones
+> de cambiar copy, JSON o añadir nodos siguen vigentes para cualquier otro cambio.
+
 ## Resultado esperado
 
 Al terminar deben cumplirse simultáneamente estas condiciones:

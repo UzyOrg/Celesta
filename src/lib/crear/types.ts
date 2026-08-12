@@ -4,7 +4,7 @@ export type CrearLessonId = 'CREAR-ENGLISH-DEDUCTION-V1';
 
 export type CrearFase = 'pre_check' | 'practica' | 'post' | 'transfer' | 'teach_back';
 
-export type CrearInputMode = 'none' | 'text' | 'choice' | 'match';
+export type CrearInputMode = 'none' | 'text' | 'choice' | 'match' | 'assembly';
 
 export type CrearExperienceStage = 'descubre' | 'practica' | 'aplica' | 'recuerda';
 
@@ -253,6 +253,54 @@ export interface CrearCertaintyMapAttempt {
   latencyMs?: number;
 }
 
+export interface CrearFormAssemblyToken {
+  id: string;
+  label: string;
+}
+
+export interface CrearFormAssemblyFeedback {
+  rama: string;
+  title: string;
+  body: string;
+}
+
+export interface CrearFormAssemblyErrorRule {
+  /** Zero-based position in the assembled modal phrase. */
+  slotIndex: number;
+  tokenId: string;
+  feedback: CrearFormAssemblyFeedback;
+}
+
+/**
+ * A supported construction task. The learner receives every piece and must
+ * choose and order the ones that form the authored sentence. It is not free
+ * production; that difference is what the `supported` condition records.
+ */
+export interface CrearFormAssembly {
+  instruction: string;
+  sentenceStart: string;
+  sentenceEnd: string;
+  slotCount: 3;
+  tokens: CrearFormAssemblyToken[];
+  correctSequence: string[];
+  success: CrearFormAssemblyFeedback;
+  errorRules: CrearFormAssemblyErrorRule[];
+  fallback: CrearFormAssemblyFeedback;
+  actionLabel: string;
+  continueLabel: string;
+}
+
+export interface CrearFormAssemblyAttempt {
+  selectedTokenIds: string[];
+  shownOrder: string[];
+  branch: string;
+  correct: boolean;
+  text: string;
+  attempt: number;
+  /** Time since this attempt became editable, in ms. */
+  latencyMs?: number;
+}
+
 /**
  * A short, pre-instruction baseline. Its language stays neutral so it can
  * measure evidence calibration without teaching the English modal mapping.
@@ -376,6 +424,17 @@ export interface CrearProductionTarget {
   participles: string[];
 }
 
+/**
+ * Optional lexical support shown on independent production prompts. The base
+ * form is learner-facing; `participle` exists so validation can prove the cue
+ * still belongs to the step's accepted production target.
+ */
+export interface CrearVerbSuggestion {
+  label: string;
+  base: string;
+  participle: string;
+}
+
 export interface CrearStepMeta {
   fase?: CrearFase;
   audio?: CrearAudioLine;
@@ -396,6 +455,8 @@ export interface CrearStepMeta {
   precheck?: CrearPrecheck;
   baselineProduction?: CrearBaselineProduction;
   certaintyMap?: CrearCertaintyMap;
+  formAssembly?: CrearFormAssembly;
+  verbSuggestion?: CrearVerbSuggestion;
   guideAvailable?: boolean;
   concepts?: CrearConceptCard[];
   comparison?: CrearComparison;

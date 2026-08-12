@@ -50,7 +50,9 @@ oculta hasta D7 y usa otro constructo para no ensayar el retest.
 
 - El probe usa el contrato de eventos existente y codifica su semántica en `result`.
 - No se automatiza la tarjeta para alumno/padre.
-- No se añade un nuevo nodo al artefacto congelado ni se cambia content/audio version.
+- No se añade otro nodo al artefacto congelado ni se vuelve a cambiar content/audio version.
+  La única excepción, aprobada antes del primer participante, es `guided-form` en la versión
+  1.18.0 descrita en `guided-modal-form-2026-08-11.md`.
 
 ## Verificación
 

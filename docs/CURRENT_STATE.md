@@ -34,31 +34,20 @@ completion, surveillance, streaks, or decorative gamification.
 Route: `/crear`
 
 Lesson: `CREAR-ENGLISH-DEDUCTION-V1`, content/audio version
-`2026-08-07-medicion-separada`, lesson version `1.17.1`.
+`2026-08-11-forma-guiada`, lesson version `1.18.0`.
 
 Content and audio versions must stay identical. `audioAssetsReady` in
 `CinematicEnglishPlayer.tsx` compares them and disables the entire voice layer
 when they diverge, so a content bump without an audio decision silently removes
 narration from every scene.
 
-`content_version` moved in 1.15.0, and it had to. It is the `localStorage` key
-for study state, and a baseline collected under the old translation-framed copy
-is not comparable with one collected under the corrected copy — keeping both in
-one partition would be worse than losing them. Pilot data is still zero, so the
-bump is free. No audio script changed, so both versions moved together and the
-voice layer stays on. **The freeze resumes from this bump** — no further
-`content_version` change until all five pilot learners have completed the day 7
-retest. Every bump partitions the cohort, and n=5 cannot absorb a single
-partition. See `docs/adr/0003-sincronizacion-audio-copy-y-documentos.md`,
-`docs/adr/0005-el-gate-compromete-la-certeza-la-pone-el-alumno.md` and
-`docs/adr/0006-medir-forma-y-certeza-por-separado.md`.
-
-Lesson 1.17.1 makes a presentation-only polish: the baseline helper now reads
-*“Todavía no, también es una respuesta.”*, title wrapping is natural rather
-than balanced, and active `/crear` type roles use the documented token scale.
-No narration script or measurement construct changed, so `content_version` and
-`audio_asset_version` remain pinned together at `2026-08-07-medicion-separada`
-under ADR 0003; the pilot cohort stays in one local-state partition.
+Lesson 1.18.0 adds the first supported observation of `modal_form` and optional
+base-verb support on the three production screens. The founder confirmed that
+no participant had started, so the content partition moves without splitting a
+cohort. No audio script or MP3 changed; both version fields still move together
+because their equality is the runtime voice gate. **The freeze resumes at
+1.18.0 / `2026-08-11-forma-guiada`** until the pilot cohort finishes D7. See
+ADR 0013 and `docs/architecture/guided-modal-form-2026-08-11.md`.
 
 The current session contains:
 
@@ -122,6 +111,18 @@ The current session contains:
 - specific, local error feedback without clearing other answers or creating a
   multi-error review loop;
 - a consultable guide whose use is recorded as assisted;
+- the same quiet lexical cue on all three production attempts — *“Verbo que
+  puedes usar: erase / work / paint”*. It shows the base form only, outside the
+  placeholder. On the baseline it remains absent from the self-efficacy gate
+  and appears only after the learner chooses Sí / Todavía no;
+- a separate `guided-form` node after the certainty map. It asks the learner to
+  build `Mateo might have worked on the poster` from five stable pieces:
+  `MIGHT`, `HAVE`, `HAS`, `WORK`, `WORKED`. The step isolates form, has no
+  `MUST`, audio, guide or classifier, and emits one ordinary
+  `envio_respuesta` per attempt with raw sentence, branch, latency, bank order,
+  `assisted: true` and the `supported/modal_form` opportunity. This is the
+  observation that makes `supported_only` reachable; it means correct
+  construction from supplied pieces, not free production;
 - a learner-paced, voiced bridge whose heading is the recording's own sentence
   — *“Cambia el caso, no la idea.”* — and whose body names both objects (*“Ya
   resolviste el cartel con ayuda. Ahora la maqueta de la feria, con menos
@@ -323,12 +324,18 @@ large-text cases retain ordinary page scrolling as an accessibility fallback.
 - `src/components/crear/v2/CinematicCaseArtifact.tsx` — functional visual case
   artifacts and clue states.
 - `src/components/crear/v2/CinematicCertaintyMap.tsx` — tap/drag certainty task.
+- `src/components/crear/v2/CinematicFormAssembly.tsx` — deterministic,
+  keyboard/touch construction of the supported modal-form sentence.
+- `src/components/crear/v2/CinematicVerbSuggestion.tsx` — shared base-verb cue
+  used identically by baseline, transfer and retest.
 - `src/components/crear/v2/CinematicAnswer.tsx` — answer surfaces.
 - `src/components/crear/v2/CinematicVoice.tsx` — narration control.
 - `src/lib/crear/` — study state, telemetry, contracts, and validation.
 - `src/lib/crear/learningEvidence.ts` — descriptive construct-level evidence
   observations.
 - `src/lib/crear/constructState.ts` — composite baseline and conservative claims.
+- `src/lib/crear/formAssembly.ts` — pure sentence construction and authored
+  branch evaluation for `guided-form`.
 - `src/lib/crear/retestTicket.ts` and `src/app/api/crear/retest/route.ts` — signed,
   server-timed D7 authorization.
 - `scripts/export-crear-pilot.ts` — internal CSV and human-readable pilot reader.
@@ -341,7 +348,7 @@ large-text cases retain ordinary page scrolling as an accessibility fallback.
 - `tests/e2e/crear-english-deduction.spec.ts` — behavioral and responsive
   regression suite.
 - `.hallmark/audit-chalk-over-film-2026-08-01.md` — current design audit.
-- `docs/adr/` — append-only decision records, 0001–0012.
+- `docs/adr/` — append-only decision records, 0001–0013.
 - `src/lib/crear/modalForm.ts` — structural reading of a production attempt.
 - `src/lib/crear/shuffle.ts` — per-study item order.
 - `.claude/launch.json` — `dev` (port 3000) and `dev-retest` (port 3005, sets
@@ -365,19 +372,21 @@ prompt aborts, and with `CI=true` it purges silently — so the same command
 behaves differently for the founder and for an agent. Playwright browsers are a
 one-time install: `npx playwright install chromium`.
 
-Most recent checks (2026-08-11, lesson 1.17.1 plus production hardening):
+Most recent checks (2026-08-11, lesson 1.18.0 plus production hardening):
 
-- `pnpm run typecheck` — passed.
-- `pnpm run build` — passed; only the documented dependency and legacy hook
+- `npm run typecheck` — passed.
+- `npm run build` — passed; only the documented dependency and legacy hook
   warnings remain.
-- `pnpm run lint` — zero errors and no warnings in the active `/crear` surface;
+- `npm run lint` — zero errors and no warnings in the active `/crear` surface;
   seven warnings remain inside gated legacy components.
-- `pnpm run lint:workshops` — passed with six unrelated legacy warnings.
+- `npm run lint:workshops` — passed with six unrelated legacy warnings.
 - `pnpm audit --prod` — no known vulnerabilities.
-- full Playwright suite — **78/78 passed** in 3.1 minutes, including API
+- full Playwright suite — **80/80 passed** in 3.5 minutes, including API
   hardening, signed D7,
   clean-profile recovery, composite-baseline properties, telemetry contract,
-  the next-challenge probe, the D7 learner receipt and the rule that
+  the new supported form node, its deterministic misconception branches,
+  reload/keyboard/responsive behavior, the next-challenge probe, the D7 learner
+  receipt and the rule that
   `preexisting` never receives an ascending visual hierarchy. The D7 receipt
   also passes at 320×812, 812×375 and 200% root text scaling without horizontal
   overflow; its primary action remains at least 44 px high.
@@ -388,19 +397,21 @@ Most recent checks (2026-08-11, lesson 1.17.1 plus production hardening):
   explicit traces, 925/925 retained. All 62 predate participant codes and the
   new D1 milestone, and 57 lack D7; the reader surfaces those gaps instead of
   deleting the rows.
-- full manual walkthrough of all thirteen screens at **320×812 and 375×812**
-  with `NEXT_PUBLIC_CREAR_RETEST_DELAY_HOURS=0`: no horizontal overflow, no
-  console errors, no 404s, and the primary action fully inside the viewport on
-  every screen without page scrolling. A second walkthrough skipping the
-  baseline confirms the closing receipt renders complete without the
-  comparison. `.claude/launch.json` carries a `dev-retest` configuration
+- automated full walkthrough of all fourteen screens with
+  `NEXT_PUBLIC_CREAR_RETEST_DELAY_HOURS=0`: no console errors or 404s. The new
+  node is additionally verified at 320×812, 375×812, 812×375 and 200% root text
+  scaling, without horizontal overflow and with 44 px task controls. A second
+  walkthrough skipping the baseline confirms the closing receipt renders
+  complete without the comparison. `.claude/launch.json` carries a `dev-retest` configuration
   (port 3005) that sets the retest delay and forces the local classifier;
 - telemetry re-verified in the browser, not only in tests: `baseline_gate_no`
   and `baseline_gate_yes` with separate latencies, `baseline_produccion` with
   raw `texto` and `baselineGate`, `baseline_produccion_omitida` with
   `baselineGate` and no `texto`, all three carrying
   `learningOpportunity.id === 'baseline-modal-form'`; `classifierSource` on the
-  production steps; a numeric `retestDueAt` inside `taller_completado`.
+  production steps; `guided-form` with raw sentence, branch, `attempt`,
+  `shownOrder`, `assisted: true` and the supported learning opportunity; a
+  numeric `retestDueAt` inside `taller_completado`.
 - the classifier case table passes end to end through `/api/classify` with
   `CREAR_CLASSIFIER_FORCE_LOCAL=1`: the only input that reaches `no_claro` is
   `I don't know`, including the L1 interference forms (`must to have`,
@@ -457,9 +468,11 @@ and the case breadcrumb is gone) and lesson 1.17.0 (the pre-pilot measurement
 audit: token-boundary matching and a verified subject, form scored apart from
 certainty, per-learner item order, a day 7 parallel form, and five smaller
 attribution fixes), plus lesson 1.17.1 (typography and helper-copy polish
-without a `content_version` bump) are all applied on top of commit `c8046df` and are
-uncommitted at this handoff. Their decisions are recorded as ADRs 0001–0006 in
-`docs/adr/`. ADR 0005 reverts ADR 0004 §1's *"the gate never blocks"* and
+without a `content_version` bump), plus lesson 1.18.0 (optional base-verb cues
+and the supported `guided-form` observation) are all applied on top of commit
+`c8046df` and are uncommitted at this handoff. The latest decision is ADR 0013;
+the earlier measurement decisions are recorded in ADRs 0001–0006. ADR 0005
+reverts ADR 0004 §1's *"the gate never blocks"* and
 §6.2's persistent rótulo, and corrects the copy ADR 0004 §4 considered settled.
 ADR 0006 reverts nothing: it delivers in the scoring what ADR 0004 §5 had
 already delivered in the screens.

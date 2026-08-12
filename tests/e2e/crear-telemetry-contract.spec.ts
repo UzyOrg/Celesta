@@ -5,7 +5,7 @@ import { expect, test, type Page } from '@playwright/test';
  * learner sees; this one asserts what survives them — the events that actually
  * leave the browser, in the shape a third party has to be able to read.
  *
- * It plays all thirteen steps, day 1 and the retest, because the construct
+ * It plays all fourteen steps, day 1 and the retest, because the construct
  * projection is only complete once the delayed observations exist, and the last
  * measured step is exactly the one whose row was being dropped.
  */
@@ -145,10 +145,20 @@ async function playWholeLesson(page: Page): Promise<void> {
   }
   await page.getByRole('button', { name: 'Comprobar', exact: true }).click();
 
-  // 6 · transfer-bridge
+  // 6 · guided-form — supported form on the same case.
+  for (const token of ['MIGHT', 'HAVE', 'WORKED']) {
+    await page.getByRole('button', {
+      name: `Colocar ${token} en el siguiente hueco`,
+      exact: true,
+    }).click();
+  }
+  await page.getByRole('button', { name: 'Comprobar', exact: true }).click();
   await page.getByRole('button', { name: 'Continuar al caso nuevo', exact: true }).click();
 
-  // 7 · transfer — supported, new case. One statement only.
+  // 7 · transfer-bridge
+  await page.getByRole('button', { name: 'Continuar al caso nuevo', exact: true }).click();
+
+  // 8 · transfer — supported, new case. One statement only.
   const transferId = await activeId(page, 'certainty-map-question', 'data-statement-id');
   await page.getByRole('button', {
     name: `Elegir ${MAP_TERMS[transferId]} para completar la frase`,
@@ -156,25 +166,25 @@ async function playWholeLesson(page: Page): Promise<void> {
   }).click();
   await page.getByRole('button', { name: 'Comprobar', exact: true }).click();
 
-  // 8 · transfer-check-certainty — independent, new case.
+  // 9 · transfer-check-certainty — independent, new case.
   await page.getByRole('radio', { name: 'Es posible', exact: true }).click();
   await page.getByRole('button', { name: 'Guardar decisión', exact: true }).click();
 
-  // 9 · transfer-production — independent form, new case.
+  // 10 · transfer-production — independent form, new case.
   await page.getByRole('textbox').fill('Nora might have worked on the model.');
   await page.getByRole('button', { name: 'Guardar mi frase', exact: true }).click();
   // This step does reveal feedback, unlike the measured ones around it.
   await page.getByRole('button', { name: 'Continuar', exact: true }).click();
 
-  // 10 · close
+  // 11 · close
   await page.getByRole('button', { name: 'Terminar por hoy', exact: true }).click();
 
-  // 11 · retest-certainty — delayed. The gate is already open because the
+  // 12 · retest-certainty — delayed. The gate is already open because the
   // Playwright server runs with NEXT_PUBLIC_CREAR_RETEST_DELAY_HOURS=0.
   await page.getByRole('radio', { name: 'Es posible', exact: true }).click();
   await page.getByRole('button', { name: 'Guardar decisión', exact: true }).click();
 
-  // 12 · retest-production — the last measured row, and the one that used to
+  // 13 · retest-production — the last measured row, and the one that used to
   // be missing from the projection.
   await page.getByRole('textbox').fill('Emi might have painted the mural.');
   await page.getByRole('button', { name: 'Terminar revisión', exact: true }).click();
@@ -217,7 +227,25 @@ test('a full run ships every measured step and a complete construct projection',
 
   const verbs = captured.events.map((event) => event.verbo);
   expect(verbs).toContain('inicio_taller');
-  expect(verbs.filter((verb) => verb === 'envio_respuesta').length).toBeGreaterThanOrEqual(8);
+  expect(verbs.filter((verb) => verb === 'envio_respuesta').length).toBeGreaterThanOrEqual(9);
+  expect(captured.events.find((event) =>
+    event.verbo === 'envio_respuesta' && event.paso_id === 'guided-form'
+  )?.result).toMatchObject({
+    fase: 'practica',
+    correcto: true,
+    rama: 'forma_guiada_correcta',
+    texto: 'Mateo MIGHT HAVE WORKED on the poster.',
+    assisted: true,
+    attempt: 1,
+    learningOpportunity: {
+      id: 'supported-modal-form-poster',
+      constructs: ['modal_form'],
+      condition: 'supported',
+      novelty: 'same_case',
+      timing: 'immediate',
+      cueFrame: 'presence_unobserved',
+    },
+  });
   expect(verbs.filter((verb) => verb === 'taller_completado')).toHaveLength(1);
 });
 

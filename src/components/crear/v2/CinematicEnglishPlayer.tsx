@@ -74,6 +74,7 @@ import type {
   CrearCertaintyMapSubmission,
   CrearCueFrame,
   CrearExperienceStage,
+  CrearFormAssemblyAttempt,
   CrearLearningObservation,
   CrearPaso,
   CrearPrecheckAttempt,
@@ -89,9 +90,10 @@ import {
   CinematicCertaintyMap,
   type CrearCertaintyMapPhase,
 } from './CinematicCertaintyMap';
+import { CinematicFormAssembly } from './CinematicFormAssembly';
 import { CinematicPrecheck } from './CinematicPrecheck';
 import { CinematicVoice } from './CinematicVoice';
-import { getLearningVisualMode, getScaffoldWithdrawMotion } from './sceneMotion';
+import { getLearningVisualMode } from './sceneMotion';
 import { useCinematicNarration } from './useCinematicNarration';
 import styles from './CinematicEnglishPlayer.hallmark.module.css';
 
@@ -2070,6 +2072,47 @@ export function CinematicEnglishPlayer() {
     );
   }
 
+  function handleFormAssemblyAttempt(assemblyAttempt: CrearFormAssemblyAttempt): void {
+    if (!currentStep) return;
+    setAttempt(assemblyAttempt.attempt);
+    persistAttempt(
+      currentStep,
+      assemblyAttempt.branch,
+      assemblyAttempt.correct,
+      assemblyAttempt.correct ? 1 : 0,
+      assemblyAttempt.text,
+      assemblyAttempt.attempt,
+      1,
+      undefined,
+      {
+        assisted: true,
+        evidenceCorrect: assemblyAttempt.correct,
+      }
+    );
+    queueAnswerTelemetry(
+      currentStep,
+      assemblyAttempt.branch,
+      assemblyAttempt.correct,
+      assemblyAttempt.correct ? 1 : 0,
+      assemblyAttempt.text,
+      assemblyAttempt.attempt,
+      undefined,
+      {
+        assisted: true,
+        latencyMs: assemblyAttempt.latencyMs,
+        shownOrder: assemblyAttempt.shownOrder,
+        ...(currentStep.crear?.learningOpportunity?.cueFrame
+          ? { cueFrame: currentStep.crear.learningOpportunity.cueFrame }
+          : {}),
+      }
+    );
+  }
+
+  function handleFormAssemblyComplete(): void {
+    if (!currentStep) return;
+    advance(currentStep, currentStep.crear?.nextRefId ?? null);
+  }
+
   function handlePrecheckComplete(): void {
     if (!currentStep) return;
     advance(currentStep, currentStep.crear?.nextRefId ?? null);
@@ -2683,7 +2726,6 @@ export function CinematicEnglishPlayer() {
   const learningVisualMode = feedback
     ? 'reflect'
     : getLearningVisualMode(getStepId(currentStep));
-  const scaffoldWithdrawMotion = getScaffoldWithdrawMotion(Boolean(prefersReducedMotion));
   const hideMapSceneCopy = Boolean(
     mode === 'match'
       && currentStep.crear?.certaintyMap
@@ -2695,9 +2737,21 @@ export function CinematicEnglishPlayer() {
       config={currentStep.crear.baselineProduction}
       pending={pending}
       placeholder={getPlaceholder(currentStep, 'Escribe una oración breve en inglés…')}
+      verbSuggestion={currentStep.crear.verbSuggestion}
       onGate={handleBaselineGate}
       onSubmit={handleBaselineSubmit}
       onFocusChange={setInputFocused}
+    />
+  ) : currentStep.crear?.formAssembly ? (
+    <CinematicFormAssembly
+      key={getStepId(currentStep)}
+      config={currentStep.crear.formAssembly}
+      pending={pending}
+      orderSeed={`${orderSeed}:${getStepId(currentStep)}`}
+      initialAttempt={attempt}
+      initialCompleted={Boolean(study.latestOutcomes[getStepId(currentStep)]?.correct)}
+      onAttempt={handleFormAssemblyAttempt}
+      onComplete={handleFormAssemblyComplete}
     />
   ) : currentStep.crear?.precheck ? (
     <CinematicPrecheck
@@ -2733,6 +2787,7 @@ export function CinematicEnglishPlayer() {
       pending={pending}
       minChars={currentStep.crear?.minChars}
       responseParts={currentStep.crear?.responseParts}
+      verbSuggestion={currentStep.crear?.verbSuggestion}
       choiceLanguage={currentScene === 'practice' ? 'en-US' : 'es-MX'}
       continueLabel={
         currentStep.crear?.actionLabel ?? (currentScene === 'closure'
@@ -2930,20 +2985,6 @@ export function CinematicEnglishPlayer() {
           </header>
 
           <article className={styles.scene}>
-              <AnimatePresence initial={false}>
-                {learningVisualMode === 'supported' ? (
-                  <motion.span
-                    animate={{ opacity: 1, scaleY: 1 }}
-                    aria-hidden="true"
-                    className={styles.supportRail}
-                    data-support-rail="true"
-                    exit={scaffoldWithdrawMotion.exit}
-                    initial={false}
-                    key="support-rail"
-                    transition={scaffoldWithdrawMotion.transition}
-                  />
-                ) : null}
-              </AnimatePresence>
               {currentStep.crear?.guideAvailable
                 && guideUnlocked
                 && guideStep

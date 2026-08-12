@@ -1,6 +1,6 @@
 # Diccionario de métricas · Piloto Celestea v1
 
-**Congelado:** 2026-08-10, antes del primer participante real.
+**Congelado:** 2026-08-11 para la lección 1.18.0, antes del primer participante real.
 
 ## Llaves y denominadores
 
@@ -30,9 +30,16 @@
 ## Aprendizaje
 
 - Baseline: resumen de todos los ítems observados del constructo, no el primero mostrado.
+- Forma con apoyo: primer intento en `guided-form`, con las piezas suministradas y
+  `assisted: true`. Un acierto demuestra construcción por selección y orden; no demuestra
+  recuperación ni producción independiente.
 - Transferencia inmediata: primer intento independiente, caso nuevo, inmediato.
 - D7: primer intento independiente, caso nuevo, diferido y autorizado por servidor.
 - Se reportan transiciones individuales; no se colapsan constructos en un score.
+- `supported_only` significa: baseline no demostrado + primer intento correcto en una
+  oportunidad `supported` + ninguna transferencia independiente correcta. En
+  `modal_form`, se debe leer literalmente como “construyó la secuencia correcta a partir de
+  piezas suministradas”; nunca como “ya casi”, dominio o producción autónoma.
 - `durable` significa evidencia compatible con capacidad en este ítem/condición, no dominio
   general ni causalidad de la lección.
 
