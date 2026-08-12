@@ -24,7 +24,10 @@ const productionContentSecurityPolicy = [
   "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' data: https://fonts.gstatic.com",
-  "img-src 'self' data: blob:",
+  // unicorn.studio serves the hero scene's own image assets from this origin.
+  // `connect-src` already allows the scene payload; the `<img>` tags it injects
+  // need the image directive as well.
+  "img-src 'self' data: blob: https://assets.unicorn.studio",
   "media-src 'self' data: blob:",
   "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://storage.googleapis.com",
   "worker-src 'self' blob:",
