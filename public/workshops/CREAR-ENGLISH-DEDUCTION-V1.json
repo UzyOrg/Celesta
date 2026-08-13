@@ -1,8 +1,8 @@
 {
   "id_taller": "CREAR-ENGLISH-DEDUCTION-V1",
-  "version": "1.18.0",
+  "version": "1.18.1",
   "schema_version": "0.1",
-  "content_version": "2026-08-11-forma-guiada",
+  "content_version": "2026-08-12-lenguaje-posibilidad",
   "audio_asset_version": "2026-08-11-forma-guiada",
   "titulo": "La maqueta de la feria",
   "metadata": {
@@ -446,7 +446,7 @@
           "participles": ["worked"]
         },
         "formAssembly": {
-          "instruction": "Elige tres piezas para completar la deducción.",
+          "instruction": "Elige tres piezas para completar la deducción. Una de ellas es la palabra de posibilidad: might, could o must.",
           "sentenceStart": "Mateo",
           "sentenceEnd": "on the poster.",
           "slotCount": 3,
@@ -461,9 +461,45 @@
           "success": {
             "rama": "forma_guiada_correcta",
             "title": "La forma quedó completa.",
-            "body": "Después del modal van have y la acción en participio."
+            "body": "Ese es el orden: la palabra de posibilidad (might), después have, después la acción terminada (worked)."
           },
           "errorRules": [
+            {
+              "slotIndex": 0,
+              "tokenId": "have",
+              "feedback": {
+                "rama": "misconcepcion_inicio_have",
+                "title": "Empieza por la posibilidad.",
+                "body": "HAVE va en segundo lugar. La primera pieza dice qué tan posible es: MIGHT."
+              }
+            },
+            {
+              "slotIndex": 0,
+              "tokenId": "has",
+              "feedback": {
+                "rama": "misconcepcion_inicio_has",
+                "title": "Empieza por la posibilidad.",
+                "body": "HAS no expresa posibilidad. La primera pieza es MIGHT."
+              }
+            },
+            {
+              "slotIndex": 0,
+              "tokenId": "work",
+              "feedback": {
+                "rama": "misconcepcion_inicio_base",
+                "title": "Empieza por la posibilidad.",
+                "body": "WORK es la acción y va al final. La primera pieza es MIGHT."
+              }
+            },
+            {
+              "slotIndex": 0,
+              "tokenId": "worked",
+              "feedback": {
+                "rama": "misconcepcion_inicio_participio",
+                "title": "Empieza por la posibilidad.",
+                "body": "WORKED es la acción terminada y va al final. La primera pieza es MIGHT."
+              }
+            },
             {
               "slotIndex": 1,
               "tokenId": "has",
@@ -474,19 +510,46 @@
               }
             },
             {
+              "slotIndex": 1,
+              "tokenId": "work",
+              "feedback": {
+                "rama": "misconcepcion_segunda_base",
+                "title": "Revisa la segunda pieza.",
+                "body": "Después de might va have, y la acción se queda para el final."
+              }
+            },
+            {
+              "slotIndex": 1,
+              "tokenId": "worked",
+              "feedback": {
+                "rama": "misconcepcion_segunda_participio",
+                "title": "Revisa la segunda pieza.",
+                "body": "Después de might va have. WORKED se queda para el final."
+              }
+            },
+            {
               "slotIndex": 2,
               "tokenId": "work",
               "feedback": {
                 "rama": "misconcepcion_participio_base",
                 "title": "Revisa la acción.",
-                "body": "Después de have va la forma pasada: worked."
+                "body": "Después de have va la forma terminada: worked."
+              }
+            },
+            {
+              "slotIndex": 2,
+              "tokenId": "has",
+              "feedback": {
+                "rama": "misconcepcion_tercera_has",
+                "title": "Revisa la acción.",
+                "body": "Falta la acción. Después de have va worked."
               }
             }
           ],
           "fallback": {
             "rama": "misconcepcion_orden_forma",
             "title": "Revisa el orden.",
-            "body": "La secuencia es modal, have y después la acción en participio."
+            "body": "El orden es: primero la palabra de posibilidad (might), después have, después la acción terminada (worked)."
           },
           "actionLabel": "Comprobar",
           "continueLabel": "Continuar al caso nuevo"
