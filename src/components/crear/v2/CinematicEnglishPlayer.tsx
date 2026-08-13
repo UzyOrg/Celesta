@@ -68,6 +68,7 @@ import {
 import type {
   ClassifyResponse,
   CrearBaselineGate,
+  CrearBranchTone,
   CrearClassifierBranch,
   CrearClassifierSource,
   CrearCertaintyMapAttempt,
@@ -104,6 +105,13 @@ interface FeedbackState {
   retry: boolean;
   nextRefId: string | null;
   correct: boolean;
+  /**
+   * Drives the sheet's signal separately from `correct`. Authored per branch so
+   * a deduction that reads well without the target structure is not shown the
+   * same way as an empty answer, while a certainty misconception keeps the
+   * adjustment signal even though it scores.
+   */
+  tone: CrearBranchTone;
 }
 
 interface RetestAccessResponse {
@@ -336,6 +344,7 @@ function buildBranchFeedback(
     retry,
     nextRefId: resolveNextRef(step, { rama: branchId, confianza: confidence }),
     correct,
+    tone: branch?.tono ?? (correct ? 'exito' : 'ajuste'),
   };
 }
 
@@ -364,6 +373,7 @@ function buildChoiceFeedback(
     body,
     actionLabel: retry ? 'Probar otra vez' : 'Continuar',
     retry,
+    tone: correct ? 'exito' : 'ajuste',
     nextRefId: resolveNextRef(step, { rama: branchId, confianza: 1 }),
     correct,
   };
@@ -2281,6 +2291,7 @@ export function CinematicEnglishPlayer() {
         body: currentStep.crear.certaintyMap.successBody,
         actionLabel: 'Continuar',
         retry: false,
+        tone: 'exito',
         nextRefId: currentStep.crear.nextRefId ?? null,
         correct: true,
       });
@@ -3112,6 +3123,7 @@ export function CinematicEnglishPlayer() {
               <motion.section
                 className={styles.feedbackSheet}
                 data-correct={feedback.correct ? 'true' : 'false'}
+                data-tone={feedback.tone}
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="feedback-title"
@@ -3121,7 +3133,7 @@ export function CinematicEnglishPlayer() {
                 transition={{ duration: prefersReducedMotion ? 0.12 : 0.36, ease: [0.22, 1, 0.36, 1] }}
               >
                 <span className={styles.feedbackSignal}>
-                  {feedback.correct ? <Check size={20} /> : <RotateCcw size={20} />}
+                  {feedback.tone === 'ajuste' ? <RotateCcw size={20} /> : <Check size={20} />}
                 </span>
                 <div>
                   <h2 id="feedback-title" lang="es-MX">{feedback.title}</h2>

@@ -40,6 +40,16 @@ export interface CrearLocalMatch {
   none?: string[];
 }
 
+/**
+ * How the feedback sheet should read, independent of `correcto`. A learner who
+ * expressed the deduction well without the target structure earned credit and
+ * should not get the same signal as one who wrote nothing usable. Turning an
+ * open possibility into a certainty stays an adjustment even though it scores:
+ * that is the misconception the lesson exists to correct, so it must not read
+ * as a partial win. Defaults to `exito` when correcto, `ajuste` otherwise.
+ */
+export type CrearBranchTone = 'exito' | 'parcial' | 'ajuste';
+
 export interface CrearClassifierBranch {
   rama: string;
   descripcion: string;
@@ -48,6 +58,7 @@ export interface CrearClassifierBranch {
   keywords?: string[];
   correcto: boolean;
   score?: number;
+  tono?: CrearBranchTone;
   pista?: boolean;
   feedback?: CrearBranchFeedback;
   match?: CrearLocalMatch;

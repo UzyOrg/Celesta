@@ -55,6 +55,7 @@ const BASELINE_PRODUCTION_FIELDS: readonly (keyof CrearBaselineProduction)[] = [
   'emptySubmitLabel',
   'submitLabel',
 ];
+const BRANCH_TONES = new Set(['exito', 'parcial', 'ajuste']);
 const LEARNING_CONDITIONS = new Set(['supported', 'independent']);
 const LEARNING_NOVELTIES = new Set(['same_case', 'new_case']);
 const LEARNING_TIMINGS = new Set(['immediate', 'delayed']);
@@ -167,6 +168,15 @@ function validateBranch(branch: CrearClassifierBranch, label: string): void {
   }
   if (branch.score !== undefined && (!Number.isFinite(branch.score) || branch.score < 0)) {
     throw new Error(`CREAR JSON: ${label}.score must be a non-negative number`);
+  }
+  if (branch.tono !== undefined && !BRANCH_TONES.has(branch.tono)) {
+    throw new Error(`CREAR JSON: ${label}.tono must be exito, parcial, or ajuste`);
+  }
+  if (branch.tono === 'exito' && !branch.correcto) {
+    throw new Error(`CREAR JSON: ${label}.tono exito requires correcto true`);
+  }
+  if (branch.tono === 'parcial' && (branch.score ?? 0) <= 0) {
+    throw new Error(`CREAR JSON: ${label}.tono parcial requires a positive score`);
   }
   if (branch.prioridad !== undefined && !Number.isFinite(branch.prioridad)) {
     throw new Error(`CREAR JSON: ${label}.prioridad must be a finite number`);

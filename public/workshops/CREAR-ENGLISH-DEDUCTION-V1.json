@@ -831,6 +831,7 @@
             },
             {
               "rama": "misconcepcion_forma",
+              "tono": "parcial",
               "descripcion": "The intended possibility is visible, but the auxiliary after the modal is wrong.",
               "ejemplos": ["Nora might changed it", "Nora could has edited it", "She might has helped"],
               "match": {
@@ -848,6 +849,7 @@
             },
             {
               "rama": "misconcepcion_forma_general",
+              "tono": "parcial",
               "descripcion": "Possibility modal is present but modal + have + past participle is malformed.",
               "prioridad": 70,
               "ejemplos": [
@@ -872,6 +874,7 @@
             },
             {
               "rama": "significado_sin_forma",
+              "tono": "parcial",
               "descripcion": "Communicatively valid possibility, in English or Spanish, without the target structure.",
               "prioridad": 60,
               "ejemplos": [
@@ -1118,6 +1121,7 @@
             },
             {
               "rama": "misconcepcion_forma",
+              "tono": "parcial",
               "descripcion": "The intended possibility is visible, but the auxiliary after the modal is wrong.",
               "ejemplos": ["Emi might painted it", "Emi could has helped", "She might has painted it"],
               "match": {
@@ -1136,6 +1140,7 @@
             },
             {
               "rama": "misconcepcion_forma_general",
+              "tono": "parcial",
               "descripcion": "Possibility modal is present but modal + have + past participle is malformed.",
               "prioridad": 70,
               "ejemplos": [
@@ -1161,6 +1166,7 @@
             },
             {
               "rama": "significado_sin_forma",
+              "tono": "parcial",
               "descripcion": "Communicatively valid possibility, in English or Spanish, without the target structure.",
               "prioridad": 60,
               "ejemplos": [
