@@ -1661,7 +1661,7 @@ test('guided form distinguishes have/has and work/worked with durable supported 
     exact: true,
   })).toBeVisible();
   await expect(page.getByText(
-    'Elige tres piezas para completar la deducción.',
+    'Elige tres piezas para completar la deducción. Una de ellas es la palabra de posibilidad: might, could o must.',
     { exact: true }
   )).toBeVisible();
   expect(await page.getByRole('heading', {
@@ -1669,7 +1669,7 @@ test('guided form distinguishes have/has and work/worked with durable supported 
     exact: true,
   }).evaluate((element) => getComputedStyle(element).fontSize)).toBe('22px');
   expect(await page.getByText(
-    'Elige tres piezas para completar la deducción.',
+    'Elige tres piezas para completar la deducción. Una de ellas es la palabra de posibilidad: might, could o must.',
     { exact: true }
   ).evaluate((element) => getComputedStyle(element).fontSize)).toBe('18px');
   for (const token of ['MIGHT', 'HAVE', 'HAS', 'WORK', 'WORKED']) {
@@ -1715,7 +1715,7 @@ test('guided form distinguishes have/has and work/worked with durable supported 
     exact: true,
   }).click();
   await page.getByRole('button', { name: 'Comprobar', exact: true }).click();
-  await expect(page.getByText('Después de have va la forma pasada: worked.', { exact: true }))
+  await expect(page.getByText('Después de have va la forma terminada: worked.', { exact: true }))
     .toBeVisible();
 
   await page.getByRole('button', {
@@ -3072,7 +3072,31 @@ test('lesson 1.18.0 adds supported form construction without weakening independe
       feedback: expect.objectContaining({ rama: 'misconcepcion_participio_base' }),
     }),
   ]));
-  expect(guidedForm?.formAssembly?.errorRules).toHaveLength(2);
+  expect(guidedForm?.formAssembly?.errorRules).toHaveLength(9);
+  /**
+   * A learner whose first piece is wrong used to fall through to the generic
+   * fallback, which named the modal category she had no word for and said
+   * nothing about her actual mistake. She hit it three times in a row and
+   * finished the step by permuting tokens. Every selection must now reach an
+   * authored rule, so the count above is a floor, not decoration: assert the
+   * property it exists to guarantee.
+   */
+  const assembly = guidedForm!.formAssembly!;
+  const tokenIds = assembly.tokens.map((token) => token.id);
+  const uncovered = tokenIds.flatMap((a) =>
+    tokenIds.flatMap((b) =>
+      tokenIds
+        .filter((c) => new Set([a, b, c]).size === 3)
+        .map((c) => [a, b, c])
+    )
+  ).filter((selection) =>
+    selection.join() !== assembly.correctSequence.join() &&
+    !assembly.errorRules.some((rule) => selection[rule.slotIndex] === rule.tokenId)
+  );
+  expect(uncovered).toEqual([]);
+  expect(
+    JSON.stringify([assembly.success, assembly.fallback, ...assembly.errorRules])
+  ).not.toMatch(/modal/i);
 
   const productionSuggestions = [
     ['precheck-production', 'erase', 'erased'],

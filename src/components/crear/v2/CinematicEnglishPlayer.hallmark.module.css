@@ -2068,9 +2068,21 @@
   width: 2.75rem;
 }
 
-.feedbackSheet[data-correct="true"] .feedbackSignal {
+.feedbackSheet[data-correct="true"] .feedbackSignal,
+.feedbackSheet[data-tone="exito"] .feedbackSignal {
   background-color: var(--color-success-soft);
   border-color: var(--color-success);
+  color: var(--color-success);
+}
+
+/**
+ * A deduction that reads well without the target structure earned credit, so it
+ * gets the success mark on a soft ground rather than the retry signal. The
+ * border stays neutral to keep it distinct from a fully correct answer.
+ */
+.feedbackSheet[data-tone="parcial"] .feedbackSignal {
+  background-color: var(--color-success-soft);
+  border-color: var(--color-rule-strong);
   color: var(--color-success);
 }
 
