@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap">
-<title>El caso de Ferrr</title>
+<title>El caso de Lupita</title>
 <style>
   /* Colors are lifted verbatim from the app's tokens.css so the card reads as
      the same product: near-black blue ground, warm-bone accent, and the color
@@ -337,66 +337,101 @@
   .d1 { animation-delay: .05s } .d2 { animation-delay: .18s } .d3 { animation-delay: .31s } .d4 { animation-delay: .44s }
   @keyframes rise { to { opacity: 1; transform: none; } }
   @media (prefers-reduced-motion: reduce) { .rise { animation: none; opacity: 1; transform: none; } }
+
+  /* ---------- the ladder of attempts ---------- */
+  .tries { display: flex; flex-direction: column; gap: .5rem; align-items: flex-start; }
+  .tries p {
+    margin: 0;
+    display: flex;
+    gap: .4em;
+    align-items: center;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(.8125rem, 2.5vw, 1.0625rem);
+    color: var(--muted-quiet);
+    opacity: .72;
+  }
+  .tries p.ok { color: var(--success); opacity: 1; }
+  .tries span {
+    border: 1px solid currentColor;
+    border-radius: var(--r-control);
+    padding: .22em .55em;
+  }
+
+  /* Long aliases would otherwise run past the body's overflow guard and get
+     clipped. Applied automatically to names over 12 characters. */
+  .hello.long {
+    font-size: clamp(1.75rem, 7.5vw, 3.75rem);
+    letter-spacing: -.04em;
+  }
 </style>
 </head>
 <body>
 <div class="wave" aria-hidden="true"></div>
 <div class="dots" aria-hidden="true"></div>
-
 <div class="wrap">
-
   <header class="slide s-cyan">
-    <p class="kicker rise d1">14 de agosto · Duración de la sesión 14 min 52 s</p>
-    <p class="hello rise d1">Ferrr</p>
+    <p class="kicker rise d1">13 de agosto · Duración de la sesión 16 min 5 s</p>
+    <p class="hello rise d1">Lupita</p>
     <p class="welcome rise d2">Esto es lo que probablemente no viste mientras lo hacías.</p>
     <div class="turn">
       <div class="card rise d3">
         <p class="tag">Lo primero que escribiste</p>
-        <q>I'm sure that camila erase the board</q>
-        <p class="when">Estabas segurísima.</p>
+        <q>Maybe its camila the impostor because come back whit hers hands stained</q>
+        <p class="when">Cuatro minutos escribiéndola. Ya usabas <b>maybe</b>, y ya explicabas por qué.</p>
       </div>
       <div class="card now rise d4">
         <p class="tag">Lo último que escribiste</p>
-        <q>Nora might worked</q>
-        <p class="when">Nueve minutos después ya no afirmabas, y ya estabas usando la estructura.</p>
+        <q>its probably that Nora was working in the model because she stay during the reccess and nobody saw whats doing</q>
+        <p class="when">Nueve minutos después, con todavía más evidencia.</p>
       </div>
     </div>
-    <p class="line rise d4">De <span class="lv">“yo sé”</span> a <span class="cy">“puede ser”</span> en nueve minutos.</p>
+    <p class="line rise d4">Tu forma de razonar no cambió. <span class="lv">Se hizo más grande.</span></p>
   </header>
 
   <section class="slide counts s-teal">
-    <div class="count rise d1"><b>60</b><span>órdenes posibles para armar la frase</span></div>
-    <div class="count rise d2"><b>1</b><span>intento que necesitaste</span></div>
-    <div class="count rise d3"><b>3</b><span>pistas que abriste</span></div>
-    <div class="count rise d4"><b>0</b><span>veces que te rendiste</span></div>
+    <div class="count rise d1"><b>16</b><span>minutos, y no te fuiste en ninguno</span></div>
+    <div class="count rise d2"><b>4</b><span>minutos escribiendo tu primera frase en inglés</span></div>
+    <div class="count rise d3"><b>5</b><span>órdenes distintas que probaste</span></div>
+    <div class="count rise d4"><b>0</b><span>ayudas que abriste</span></div>
   </section>
 
   <section class="slide s-cyan">
     <div class="built-block rise d1">
-      <p class="kicker">A la primera</p>
-      <p class="built">Mateo <mark class="t1">MIGHT</mark> <mark class="t2">HAVE</mark> <mark class="t3">WORKED</mark> on the poster.</p>
-      <p>Eso no es suerte. Es haber visto el patrón.</p>
+      <p class="kicker">Los cinco intentos</p>
+      <div class="tries">
+      <p><span>HAS</span> <span>MIGHT</span> <span>HAVE</span></p>
+      <p><span>HAS</span> <span>HAVE</span> <span>MIGHT</span></p>
+      <p><span>HAS</span> <span>MIGHT</span> <span>WORKED</span></p>
+      <p><span>HAVE</span> <span>HAS</span> <span>WORKED</span></p>
+      <p class="ok"><span>MIGHT</span> <span>HAVE</span> <span>WORKED</span></p>
+      </div>
+      <p>Cinco combinaciones distintas y ninguna repetida. No le estabas picando, estabas descartando.</p>
     </div>
   </section>
 
   <section class="slide s-amber">
-    <p class="line rise d1">Nadie que adivina pide tres pistas. <span class="am">Quien adivina, adivina rápido y se va.</span></p>
-    <p class="sub rise d2">Sabemos que nos estabas probando.</p>
-    <p class="sub rise d3">Te quedaste dos minutos y medio leyendo antes de contestar nada. En el último caso abriste la guía, luego la traducción, y hasta ocho segundos después intentaste. Pediste ayuda antes de equivocarte, no después.</p>
-    <p class="sub rise d4">Y cuando fallaste, probaste <b>posible</b> y luego <b>imposible</b>, los dos extremos, hasta dar con el bueno en quince segundos.</p>
+    <p class="line rise d1">Eres la única que escribió <span class="am">porque</span>.</p>
+    <p class="sub rise d2">En tu primera frase pusiste <i>because come back whit hers hands stained</i>. En la última, <i>because she stay during the reccess and nobody saw whats doing</i>.</p>
+    <p class="sub rise d3">Nadie más del piloto justificó su respuesta con la evidencia, ni una sola vez. Tú lo hiciste las dos veces, y la segunda con más detalle que la primera.</p>
+  </section>
+
+  <section class="slide s-teal">
+    <p class="line rise d1">Después de tu sesión <span class="cy">cambiamos el taller</span>.</p>
+    <p class="sub rise d2">La palabra <b>modal</b> ya no aparece en ninguna pantalla.</p>
+    <p class="sub rise d3">Donde había dos pistas ahora hay nueve, una para cada manera de equivocarse. Los cinco órdenes que probaste tienen respuesta propia. Ninguno vuelve a quedarse sin explicación.</p>
   </section>
 
   <section class="slide s-lavender">
-    <p class="line rise d1">Te falta <span class="lv">una palabra</span>.</p>
-    <p class="sub rise d2">Escribiste <i>Nora might worked</i>. Lo difícil ya lo tienes. Falta el <i>have</i> de en medio.</p>
-    <p class="fix rise d3">Nora might <span class="add">have</span> worked.</p>
+    <p class="line rise d1">Lo último que escribiste <span class="lv">dice todo lo que había que decir</span>.</p>
+    <p class="sub rise d2">Nombraste a la sospechosa, dijiste que era probable y explicaste con qué evidencia. En inglés eso se arma así.</p>
+    <p class="fix rise d4">Nora might <span class="add">have</span> worked on the model.</p>
   </section>
 
   <footer class="end">
     <p>En siete días te buscamos otra vez. No para calificarte, para ver qué se te quedó.</p>
     <p class="sig">Celestea · La maqueta de la feria</p>
   </footer>
-
 </div>
 </body>
 </html>
