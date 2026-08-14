@@ -35,9 +35,10 @@
     --lavender:     rgb(166 132 255);
     --dot:          rgb(196 216 255 / 0.24);
 
+    /* Only the two faces the app itself declares. tokens.css has no monospace,
+       and uppercase monospace labels read as machine chrome on a letter. */
     --font-display: "Bricolage Grotesque", "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
     --font-body:    "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
-    --font-util:    ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
 
     --r-control: 0.875rem;
     --r-surface: 1.25rem;
@@ -116,10 +117,9 @@
   .s-amber    { --bloom: oklch(82% 0.11 82 / 0.17);   --bloom-x: 30%; }
 
   .kicker {
-    font-family: var(--font-util);
-    font-size: .6875rem;
-    letter-spacing: .18em;
-    text-transform: uppercase;
+    font-family: var(--font-body);
+    font-size: .9375rem;
+    font-weight: 500;
     color: var(--muted-quiet);
     margin: 0;
   }
@@ -193,10 +193,9 @@
     border-color: oklch(78% 0.105 166 / 0.42);
   }
   .card .tag {
-    font-family: var(--font-util);
-    font-size: .625rem;
-    letter-spacing: .16em;
-    text-transform: uppercase;
+    font-family: var(--font-body);
+    font-size: .875rem;
+    font-weight: 600;
     color: var(--muted-quiet);
     margin: 0;
   }
@@ -281,6 +280,8 @@
   .built .t2 { color: var(--lavender); }
   .built .t3 { color: var(--success); }
   .built-block p { margin: 0; font-size: 1.0625rem; color: var(--ink-soft); max-width: 40ch; }
+  /* Outranks the rule above, which would otherwise blow the label up to body size. */
+  .built-block .kicker { font-size: .875rem; font-weight: 600; color: var(--muted-quiet); }
 
   /* ---------- the fix ---------- */
   .fix {
@@ -318,12 +319,11 @@
     text-wrap: balance;
   }
   .end .sig {
-    font-family: var(--font-util);
-    font-size: .6875rem;
-    letter-spacing: .18em;
-    text-transform: uppercase;
+    font-family: var(--font-body);
+    font-size: .9375rem;
+    font-weight: 500;
+    letter-spacing: 0;
     color: var(--muted-quiet);
-    font-weight: 400;
     max-width: none;
   }
 
