@@ -2361,6 +2361,75 @@
   justify-content: flex-start;
 }
 
+/**
+ * The reflection block sits between the headline and the evidence receipt: what
+ * she wrote a week ago, what she wrote today, and one chance to write it again.
+ */
+.reflection {
+  display: grid;
+  gap: var(--space-md);
+  margin-block-end: var(--space-xl);
+  text-align: start;
+}
+
+/* `.day7Phrase` already closes with a rule, so this block only needs the room. */
+.rewrite {
+  display: grid;
+  gap: var(--space-xs);
+  padding-block-start: var(--space-2xs);
+}
+
+.rewrite label {
+  color: var(--color-ink);
+  font-size: var(--text-base);
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.rewriteHint {
+  color: var(--color-muted);
+  font-size: var(--text-sm);
+  line-height: 1.45;
+  margin: 0;
+}
+
+.rewriteHint strong {
+  color: var(--color-accent);
+  font-weight: 700;
+}
+
+.rewriteInput {
+  background: var(--color-paper-raised);
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius-control);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  line-height: 1.45;
+  margin-block-start: var(--space-2xs);
+  padding: var(--space-sm);
+  resize: vertical;
+  width: 100%;
+}
+
+.rewriteInput:focus-visible {
+  border-color: var(--color-focus);
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.rewrite .secondaryAction {
+  justify-self: start;
+  margin-block-start: var(--space-2xs);
+}
+
+.rewriteDone {
+  color: var(--color-muted);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  margin: 0;
+}
+
 .day7Receipt {
   display: grid;
   gap: var(--space-lg);

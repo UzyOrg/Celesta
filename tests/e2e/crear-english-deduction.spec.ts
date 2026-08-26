@@ -149,6 +149,8 @@ interface CapturedLearningEvent {
     stage?: string;
     objective?: string;
     reminderAccepted?: boolean;
+    practice?: boolean;
+    scored?: boolean;
     retestDelayHours?: number;
     retestDueAt?: number;
     mapping?: Record<string, string>;
@@ -1372,6 +1374,46 @@ test('completes a low-friction session and preserves transfer plus D7 evidence',
     .toBeVisible();
   await expect(day7Receipt).toContainText('Lo que todavía no sabemos');
   await expect(day7Receipt).toContainText('Este registro es tuyo.');
+
+  /**
+   * The closing reflection. It runs after `taller_completado`, so nothing it
+   * collects can move the retention measurement. The `/api/crear/day1` fetch is
+   * not stubbed here on purpose: this asserts the fallback to the local ledger,
+   * which is what a learner returning on the same phone actually gets.
+   */
+  const reflection = page.getByRole('region', {
+    name: 'Tus dos frases, una semana aparte',
+    exact: true,
+  });
+  await expect(reflection).toBeVisible();
+  await expect(reflection).toContainText('con la estructura completa');
+  await expect(reflection.getByText('Nora might have worked on the model.', { exact: true }))
+    .toBeVisible();
+  await expect(reflection.getByText('Emi might have painted the mural.', { exact: true }))
+    .toBeVisible();
+  await expect(page.getByText(
+    'Hace una semana leíste las pistas y elegiste la certeza correcta.',
+    { exact: false }
+  )).toBeVisible();
+  await capture(page, 'celestea-v21-day7-reflection-375.png');
+
+  const rewriteBox = page.getByRole('textbox', { name: /¿cómo quedaría la de Emi\?/i });
+  await expect(rewriteBox).toBeVisible();
+  await rewriteBox.fill('Emi might have painted the mural.');
+  await page.getByRole('button', { name: 'Guardar mi frase', exact: true }).click();
+  await expect(page.getByText('No se califica', { exact: false })).toBeVisible();
+
+  // The practice rewrite must never look like a scored retention attempt.
+  await expect.poll(() => telemetry.filter(
+    (event) => event.paso_id === 'rewrite-day7'
+  )).toHaveLength(1);
+  const rewriteEvent = telemetry.find((event) => event.paso_id === 'rewrite-day7');
+  expect(rewriteEvent?.verbo).toBe('envio_respuesta');
+  expect(rewriteEvent?.result?.scored).toBe(false);
+  expect(rewriteEvent?.result?.practice).toBe(true);
+  expect(rewriteEvent?.result).not.toHaveProperty('rama');
+  expect(rewriteEvent?.result).not.toHaveProperty('score');
+  expect(rewriteEvent?.result).not.toHaveProperty('correcto');
   await capture(page, 'celestea-v20-day7-evidence-receipt-375.png');
   // One statement-level observation plus one aggregate event for the single
   // supported transfer item.
