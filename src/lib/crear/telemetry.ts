@@ -241,6 +241,35 @@ export async function trackCrearMarketSignal(
   });
 }
 
+/**
+ * The rewrite offered on the Day 7 closing screen, after the learner has already
+ * been shown her own Day 1 sentence. It is practice, not measurement: by then
+ * she has seen the answer, so scoring it would say nothing about retention.
+ *
+ * It lands on its own `paso_id` and carries no `rama`, `score` or `correcto`,
+ * so no retention query can pick it up by accident.
+ */
+export async function trackCrearRewrite(
+  input: TrackCrearStepInput & { texto: string; moment: 'day7' }
+): Promise<void> {
+  await trackEvent('envio_respuesta', {
+    tallerId: input.tallerId,
+    pasoId: `rewrite-${input.moment}`,
+    result: {
+      ...(input.studyId ? { studyId: input.studyId } : {}),
+      texto: input.texto,
+      moment: input.moment,
+      practice: true,
+      scored: false,
+    },
+    checksum: input.checksum,
+    classToken: input.classToken,
+    clientEventId: input.studyId
+      ? `crear:${input.studyId}:rewrite-${input.moment}`
+      : undefined,
+  });
+}
+
 export async function trackCrearHint(
   input: TrackCrearStepInput & {
     rama: string;

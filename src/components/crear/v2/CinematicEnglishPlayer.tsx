@@ -60,6 +60,7 @@ import {
   trackCrearComplete,
   trackCrearHint,
   trackCrearMarketSignal,
+  trackCrearRewrite,
   trackCrearRetestScheduled,
   trackCrearStart,
   trackCrearStepComplete,
@@ -123,6 +124,25 @@ interface RetestAccessResponse {
   notBefore: number;
   expiresAt: number;
   serverNow?: number;
+}
+
+/**
+ * Day 1 read back from telemetry rather than from `localStorage`, so the Day 7
+ * closing screen still has its comparison column when the learner returns on a
+ * different phone or with the browser cleared.
+ */
+interface Day1Attempt {
+  text: string;
+  rama: string | null;
+  score: number | null;
+  correcto: boolean;
+  ts: string;
+}
+
+interface Day1Recall {
+  studyId: string;
+  production: Day1Attempt | null;
+  certainty: Day1Attempt | null;
 }
 
 type RetestAuthorization =
@@ -840,6 +860,9 @@ export function CinematicEnglishPlayer() {
     status: 'idle',
   });
   const [retestRetryCycle, setRetestRetryCycle] = useState(0);
+  const [day1Recall, setDay1Recall] = useState<Day1Recall | null>(null);
+  const [rewrite, setRewrite] = useState('');
+  const [rewriteSent, setRewriteSent] = useState(false);
   const [marketProbe, setMarketProbe] = useState<MarketProbeState | null>(null);
   const [structuredView, setStructuredView] = useState<'explore' | 'answer'>('explore');
   const [certaintyPhase, setCertaintyPhase] = useState<CrearCertaintyMapPhase>('map');
@@ -980,6 +1003,22 @@ export function CinematicEnglishPlayer() {
           if (ticketAccess.lessonId !== loaded.id_taller) {
             throw new Error('Este enlace corresponde a otra experiencia.');
           }
+          /**
+           * Best effort. The closing screen falls back to the local ledger, and
+           * a missing Day 1 quote must never keep a learner out of her retest.
+           */
+          void fetch('/api/crear/day1', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ticket: rawRetestTicket }),
+            cache: 'no-store',
+            signal: bootController.signal,
+          })
+            .then((day1Response) => (day1Response.ok ? day1Response.json() : null))
+            .then((payload: Day1Recall | null) => {
+              if (payload && !bootController.signal.aborted) setDay1Recall(payload);
+            })
+            .catch(() => undefined);
         }
 
         /**
@@ -2387,6 +2426,25 @@ export function CinematicEnglishPlayer() {
     });
   }
 
+  /**
+   * The closing rewrite. It runs after `taller_completado`, so the retention
+   * measurement is already closed and nothing here can move it.
+   */
+  async function submitRewrite(): Promise<void> {
+    const texto = rewrite.trim();
+    if (!lesson || !study || texto.length === 0 || rewriteSent) return;
+    setRewriteSent(true);
+    await trackCrearRewrite({
+      classToken,
+      tallerId: lesson.id_taller,
+      pasoId: 'rewrite-day7',
+      checksum: lesson.checksum,
+      studyId: study.studyId,
+      texto,
+      moment: 'day7',
+    });
+  }
+
   function openMarketProbe(moment: CrearMarketProbeMoment): void {
     setMarketProbe({ moment, reminderAccepted: false, pending: false, confirmed: false });
     void trackMarketProbe(moment, 'opened');
@@ -2524,13 +2582,112 @@ export function CinematicEnglishPlayer() {
     ];
     const daySevenPhrase = study.latestOutcomes['retest-production']?.text.trim();
 
+    /**
+     * Day 1 comes from telemetry when the fetch landed, and from the local
+     * ledger otherwise. Returning on a second phone wipes the ledger, and the
+     * whole point of this screen is the Day 1 column.
+     */
+    const localDayOne = study.latestOutcomes['transfer-production'];
+    const dayOneText = day1Recall?.production?.text ?? localDayOne?.text.trim() ?? null;
+    const dayOneWasComplete =
+      day1Recall?.production?.correcto ?? localDayOne?.correct ?? false;
+    const dayOneAt = day1Recall?.production?.ts ?? null;
+    const dayOneCertaintyOk =
+      day1Recall?.certainty?.correcto
+      ?? study.latestOutcomes['transfer-check-certainty']?.correct
+      ?? null;
+    const daySevenCertaintyOk = study.latestOutcomes['retest-certainty']?.correct === true;
+
+    /**
+     * Only ever states something the two sittings actually show. A learner who
+     * missed the certainty today is told what is true of her return, not
+     * congratulated on something she did not do.
+     */
+    const retentionLine =
+      daySevenCertaintyOk && dayOneCertaintyOk === true
+        ? 'Hace una semana leíste las pistas y elegiste la certeza correcta. Hoy, con un caso que no habías visto, elegiste la misma. Esa es la parte difícil y sigue contigo.'
+        : daySevenCertaintyOk
+          ? 'Hoy leíste las pistas y elegiste bien la certeza, con un caso que no habías visto.'
+          : 'Volviste una semana después y resolviste un caso nuevo sin repasar. Eso era lo que estábamos midiendo.';
+
+    const dayOneCaption = dayOneWasComplete
+      ? 'Esto lo escribiste tú hace una semana, con la estructura completa'
+      : 'Esto escribiste tú hace una semana';
+    const dayOneStamp = dayOneAt
+      ? new Intl.DateTimeFormat('es-MX', { day: 'numeric', month: 'long' }).format(new Date(dayOneAt))
+      : null;
+
+    /**
+     * Only a Day 1 sentence that carried the structure can be held up as the
+     * model. Offering someone her own incomplete sentence as the thing to copy
+     * teaches her the error she came back to correct.
+     */
+    const rewritePrompt = dayOneText && dayOneWasComplete
+      ? 'Tu frase del día 1 era sobre Nora. Ahora que ya la tienes enfrente, ¿cómo quedaría la de Emi?'
+      : 'Ya viste cómo se arma. ¿Cómo quedaría la de Emi?';
+
     return (
       <main className={styles.pageShell} data-scene="closure" data-learning-mode="reflect" data-celestea-create="true" lang="es-MX">
         <AmbientField paused={ambientPaused} />
         <section className={`${styles.completionScene} ${styles.day7CompletionScene}`}>
           <span className={styles.completionMark}><Check size={28} /></span>
           <h1>Volviste y cerraste el caso.</h1>
-          <p>Ahora sí puedes comparar el caso nuevo con lo que hiciste una semana después.</p>
+          <p>{retentionLine}</p>
+
+          <section aria-labelledby="day7-reflection-label" className={styles.reflection}>
+            <p className={styles.receiptLabel} id="day7-reflection-label">
+              Tus dos frases, una semana aparte
+            </p>
+            {dayOneText ? (
+              <figure className={styles.day7Phrase}>
+                <figcaption>
+                  {dayOneCaption}
+                  {dayOneStamp ? ` · ${dayOneStamp}` : ''}
+                </figcaption>
+                <blockquote lang="en-US">{dayOneText}</blockquote>
+              </figure>
+            ) : null}
+            {daySevenPhrase ? (
+              <figure className={styles.day7Phrase}>
+                <figcaption>Hoy escribiste</figcaption>
+                <blockquote lang="en-US">{daySevenPhrase}</blockquote>
+              </figure>
+            ) : null}
+
+            <div className={styles.rewrite}>
+              {rewriteSent ? (
+                <p className={styles.rewriteDone} role="status">
+                  Guardada. No se califica: la escribiste después de ver la respuesta, así que
+                  cuenta como práctica y no cambia nada de tu revisión.
+                </p>
+              ) : (
+                <>
+                  <label htmlFor="day7-rewrite">{rewritePrompt}</label>
+                  <p className={styles.rewriteHint}>
+                    Va <strong>might have</strong> y después la acción terminada.
+                  </p>
+                  <textarea
+                    className={styles.rewriteInput}
+                    id="day7-rewrite"
+                    lang="en-US"
+                    maxLength={240}
+                    onChange={(event) => setRewrite(event.target.value)}
+                    placeholder="Emi … the mural."
+                    rows={2}
+                    value={rewrite}
+                  />
+                  <button
+                    className={styles.secondaryAction}
+                    disabled={rewrite.trim().length === 0}
+                    onClick={() => void submitRewrite()}
+                    type="button"
+                  >
+                    Guardar mi frase
+                  </button>
+                </>
+              )}
+            </div>
+          </section>
           <section
             aria-labelledby="day7-receipt-label"
             className={styles.day7Receipt}
