@@ -2618,17 +2618,10 @@ export function CinematicEnglishPlayer() {
       : null;
 
     /**
-     * Nothing below a beat exists until she asks for it, the same rule ADR 0004
-     * set for the baseline gate. The screen holds one idea at a time instead of
-     * arriving as a page of prose.
+     * Her two answers arrive together; only the receipt waits behind a tap.
+     * Separation is space, not rules — `.hallmark/audit-chalk-over-film` settles
+     * that for this system.
      */
-    const revealMotion = prefersReducedMotion
-      ? { initial: { opacity: 0 }, animate: { opacity: 1 } }
-      : { initial: { opacity: 0, y: 8 }, animate: { opacity: 1, y: 0 } };
-    const revealTransition = {
-      duration: prefersReducedMotion ? 0.12 : 0.24,
-      ease: [0.16, 1, 0.3, 1] as const,
-    };
 
     return (
       <main className={styles.pageShell} data-scene="closure" data-learning-mode="reflect" data-celestea-create="true" lang="es-MX">
@@ -2638,85 +2631,49 @@ export function CinematicEnglishPlayer() {
           <h1>Volviste y cerraste el caso.</h1>
 
           <div className={styles.beats}>
+            <div className={styles.beat}>
+              <p className={styles.receiptLabel}>Tu lectura de las pistas</p>
+              <dl className={styles.thenNow}>
+                <div>
+                  <dt>Hace una semana</dt>
+                  <dd data-ok={dayOne.certaintyOk ? 'true' : undefined}>
+                    {dayOne.certainty ?? 'No disponible aquí'}
+                    {dayOne.certaintyOk ? <Check size={15} /> : null}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Hoy</dt>
+                  <dd data-ok={daySeven.certaintyOk ? 'true' : undefined}>
+                    {daySeven.certainty ?? 'No disponible aquí'}
+                    {daySeven.certaintyOk ? <Check size={15} /> : null}
+                  </dd>
+                </div>
+              </dl>
+              {certaintyNote ? <p className={styles.beatNote}>{certaintyNote}</p> : null}
+            </div>
+
+            <div className={styles.beat}>
+              <p className={styles.receiptLabel}>Tu frase en inglés</p>
+              <figure className={styles.thenNowQuote}>
+                <figcaption>Hace una semana</figcaption>
+                <blockquote lang="en-US">{dayOne.phrase ?? 'No disponible aquí'}</blockquote>
+              </figure>
+              <figure className={styles.thenNowQuote} data-now="true">
+                <figcaption>Hoy</figcaption>
+                <blockquote lang="en-US">{daySeven.phrase ?? 'No disponible aquí'}</blockquote>
+              </figure>
+              {phraseNote ? <p className={styles.beatNote}>{phraseNote}</p> : null}
+            </div>
+
             {closingBeat === 0 ? (
               <button
                 className={styles.secondaryAction}
-                onClick={() => setClosingBeat(1)}
+                onClick={() => setClosingBeat(3)}
                 type="button"
               >
-                Ver cómo te fue
+                Ver mi registro
               </button>
             ) : null}
-
-            <AnimatePresence initial={false}>
-              {closingBeat >= 1 ? (
-                <motion.div
-                  animate={revealMotion.animate}
-                  className={styles.beat}
-                  initial={revealMotion.initial}
-                  key="beat-certainty"
-                  transition={revealTransition}
-                >
-                  <p className={styles.receiptLabel}>Tu lectura de las pistas</p>
-                  <dl className={styles.thenNow}>
-                    <div>
-                      <dt>Hace una semana</dt>
-                      <dd data-ok={dayOne.certaintyOk ? 'true' : undefined}>
-                        {dayOne.certainty ?? 'No disponible aquí'}
-                        {dayOne.certaintyOk ? <Check size={15} /> : null}
-                      </dd>
-                    </div>
-                    <div>
-                      <dt>Hoy</dt>
-                      <dd data-ok={daySeven.certaintyOk ? 'true' : undefined}>
-                        {daySeven.certainty ?? 'No disponible aquí'}
-                        {daySeven.certaintyOk ? <Check size={15} /> : null}
-                      </dd>
-                    </div>
-                  </dl>
-                  {certaintyNote ? <p className={styles.beatNote}>{certaintyNote}</p> : null}
-                  {closingBeat === 1 ? (
-                    <button
-                      className={styles.secondaryAction}
-                      onClick={() => setClosingBeat(2)}
-                      type="button"
-                    >
-                      Ver tu frase
-                    </button>
-                  ) : null}
-                </motion.div>
-              ) : null}
-
-              {closingBeat >= 2 ? (
-                <motion.div
-                  animate={revealMotion.animate}
-                  className={styles.beat}
-                  initial={revealMotion.initial}
-                  key="beat-phrase"
-                  transition={revealTransition}
-                >
-                  <p className={styles.receiptLabel}>Tu frase en inglés</p>
-                  <figure className={styles.thenNowQuote}>
-                    <figcaption>Hace una semana</figcaption>
-                    <blockquote lang="en-US">{dayOne.phrase ?? 'No disponible aquí'}</blockquote>
-                  </figure>
-                  <figure className={styles.thenNowQuote} data-now="true">
-                    <figcaption>Hoy</figcaption>
-                    <blockquote lang="en-US">{daySeven.phrase ?? 'No disponible aquí'}</blockquote>
-                  </figure>
-                  {phraseNote ? <p className={styles.beatNote}>{phraseNote}</p> : null}
-                  {closingBeat === 2 ? (
-                    <button
-                      className={styles.secondaryAction}
-                      onClick={() => setClosingBeat(3)}
-                      type="button"
-                    >
-                      Ver mi registro
-                    </button>
-                  ) : null}
-                </motion.div>
-              ) : null}
-            </AnimatePresence>
           </div>
 
           {closingBeat >= 3 ? (

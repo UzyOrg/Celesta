@@ -2426,17 +2426,17 @@
 /*
  * Quotes, not parsed structure. One learner's sentence ran twenty words with a
  * `because` clause, so nothing here may assume a three-part shape.
+ *
+ * Separated by space, never by a rail. The audit settled this for the answer
+ * rows — "tactile rows separated by space rather than horizontal rules" — and a
+ * bar down the side of a quote is the same tell turned sideways.
  */
 .thenNowQuote {
-  border-inline-start: 2px solid var(--color-rule);
   display: grid;
   gap: var(--space-3xs);
   margin: 0;
-  padding-inline-start: var(--space-sm);
   width: 100%;
 }
-
-.thenNowQuote[data-now="true"] { border-inline-start-color: var(--color-rule-strong); }
 
 .thenNowQuote figcaption {
   color: var(--color-muted-quiet);
