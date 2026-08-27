@@ -1361,6 +1361,33 @@ test('completes a low-friction session and preserves transfer plus D7 evidence',
     name: 'Volviste y cerraste el caso.',
     exact: true,
   })).toBeVisible();
+
+  /**
+   * ADR 0004 applied to the close: nothing below a beat exists until the learner
+   * asks for it. The receipt and the coda must not be on screen at arrival.
+   */
+  await expect(page.getByText('Tu lectura de las pistas', { exact: true })).toHaveCount(0);
+  await expect(page.getByRole('region', {
+    name: 'Tu evidencia de una semana después',
+    exact: true,
+  })).toHaveCount(0);
+  await capture(page, 'celestea-v21-day7-beat0-375.png');
+
+  await page.getByRole('button', { name: 'Ver cómo te fue', exact: true }).click();
+  await expect(page.getByText('Tu lectura de las pistas', { exact: true })).toBeVisible();
+  await expect(page.getByText('La misma lectura, siete días después.', { exact: true }))
+    .toBeVisible();
+  await expect(page.getByText('Tu frase en inglés', { exact: true })).toHaveCount(0);
+
+  await page.getByRole('button', { name: 'Ver tu frase', exact: true }).click();
+  await expect(page.getByText('Tu frase en inglés', { exact: true })).toBeVisible();
+  await expect(page.getByText('Nora might have worked on the model.', { exact: true }))
+    .toBeVisible();
+  await expect(page.getByText('La estructura completa, otra vez.', { exact: true }))
+    .toBeVisible();
+  await capture(page, 'celestea-v21-day7-beats-375.png');
+
+  await page.getByRole('button', { name: 'Ver mi registro', exact: true }).click();
   const day7Receipt = page.getByRole('region', {
     name: 'Tu evidencia de una semana después',
     exact: true,
@@ -1370,40 +1397,26 @@ test('completes a low-friction session and preserves transfer plus D7 evidence',
   await expect(day7Receipt).toContainText('Interpretación de las pistas');
   await expect(day7Receipt).toContainText('Forma en inglés');
   await expect(day7Receipt.locator('dd[data-status="independent"]')).toHaveCount(4);
+  // ADR 0012 requires the receipt to carry the D7 sentence on its own.
   await expect(day7Receipt.getByText('Emi might have painted the mural.', { exact: true }))
     .toBeVisible();
   await expect(day7Receipt).toContainText('Lo que todavía no sabemos');
   await expect(day7Receipt).toContainText('Este registro es tuyo.');
+  await capture(page, 'celestea-v21-day7-receipt-375.png');
 
   /**
-   * The closing reflection. It runs after `taller_completado`, so nothing it
-   * collects can move the retention measurement. The `/api/crear/day1` fetch is
-   * not stubbed here on purpose: this asserts the fallback to the local ledger,
-   * which is what a learner returning on the same phone actually gets.
+   * The coda: one field, after the receipt, never scored. The `/api/crear/day1`
+   * fetch is left unstubbed on purpose, so this also covers the fallback to the
+   * local ledger that a learner returning on the same phone actually gets.
    */
-  const reflection = page.getByRole('region', {
-    name: 'Tus dos frases, una semana aparte',
-    exact: true,
-  });
-  await expect(reflection).toBeVisible();
-  await expect(reflection).toContainText('con la estructura completa');
-  await expect(reflection.getByText('Nora might have worked on the model.', { exact: true }))
+  const coda = page.getByRole('textbox', { name: '¿Cómo la escribirías ahora?', exact: true });
+  await expect(coda).toBeVisible();
+  await coda.fill('Emi might have painted the mural.');
+  await page.getByRole('button', { name: 'Guardar', exact: true }).click();
+  await expect(page.getByText('Guardada. No cuenta para tu revisión.', { exact: true }))
     .toBeVisible();
-  await expect(reflection.getByText('Emi might have painted the mural.', { exact: true }))
-    .toBeVisible();
-  await expect(page.getByText(
-    'Hace una semana leíste las pistas y elegiste la certeza correcta.',
-    { exact: false }
-  )).toBeVisible();
-  await capture(page, 'celestea-v21-day7-reflection-375.png');
 
-  const rewriteBox = page.getByRole('textbox', { name: /¿cómo quedaría la de Emi\?/i });
-  await expect(rewriteBox).toBeVisible();
-  await rewriteBox.fill('Emi might have painted the mural.');
-  await page.getByRole('button', { name: 'Guardar mi frase', exact: true }).click();
-  await expect(page.getByText('No se califica', { exact: false })).toBeVisible();
-
-  // The practice rewrite must never look like a scored retention attempt.
+  // The coda must never look like a scored retention attempt.
   await expect.poll(() => telemetry.filter(
     (event) => event.paso_id === 'rewrite-day7'
   )).toHaveLength(1);
@@ -2541,6 +2554,23 @@ test('the day 7 receipt keeps unavailable day 1 evidence explicit on a recovered
   await page.setViewportSize({ width: 320, height: 812 });
   await page.goto('/crear');
 
+  /**
+   * The hard case for the beats: no Day 1 on this device, so each comparison has
+   * one side missing. It must read as unavailable, never as a failure by the
+   * learner, and no beat may claim a retention that the two sittings cannot show.
+   */
+  await page.getByRole('button', { name: 'Ver cómo te fue', exact: true }).click();
+  await expect(page.getByText('Tu lectura de las pistas', { exact: true })).toBeVisible();
+  await expect(page.getByText('No disponible aquí', { exact: true })).toHaveCount(1);
+  await expect(page.getByText('La misma lectura, siete días después.', { exact: true }))
+    .toHaveCount(0);
+
+  await page.getByRole('button', { name: 'Ver tu frase', exact: true }).click();
+  await expect(page.getByText('Tu frase en inglés', { exact: true })).toBeVisible();
+  await expect(page.getByText('No disponible aquí', { exact: true })).toHaveCount(2);
+  await capture(page, 'celestea-v21-day7-beats-sin-dia1-320.png');
+
+  await page.getByRole('button', { name: 'Ver mi registro', exact: true }).click();
   const receipt = page.getByRole('region', {
     name: 'Tu evidencia de una semana después',
     exact: true,

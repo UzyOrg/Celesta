@@ -861,6 +861,7 @@ export function CinematicEnglishPlayer() {
   });
   const [retestRetryCycle, setRetestRetryCycle] = useState(0);
   const [day1Recall, setDay1Recall] = useState<Day1Recall | null>(null);
+  const [closingBeat, setClosingBeat] = useState(0);
   const [rewrite, setRewrite] = useState('');
   const [rewriteSent, setRewriteSent] = useState(false);
   const [marketProbe, setMarketProbe] = useState<MarketProbeState | null>(null);
@@ -2580,51 +2581,54 @@ export function CinematicEnglishPlayer() {
         daySeven: receiptEvidenceStatus(formState?.delayed),
       },
     ];
-    const daySevenPhrase = study.latestOutcomes['retest-production']?.text.trim();
 
     /**
      * Day 1 comes from telemetry when the fetch landed, and from the local
-     * ledger otherwise. Returning on a second phone wipes the ledger, and the
-     * whole point of this screen is the Day 1 column.
+     * ledger otherwise. Returning on a second phone wipes the ledger, and both
+     * of these beats are built around the Day 1 column.
      */
-    const localDayOne = study.latestOutcomes['transfer-production'];
-    const dayOneText = day1Recall?.production?.text ?? localDayOne?.text.trim() ?? null;
-    const dayOneWasComplete =
-      day1Recall?.production?.correcto ?? localDayOne?.correct ?? false;
-    const dayOneAt = day1Recall?.production?.ts ?? null;
-    const dayOneCertaintyOk =
-      day1Recall?.certainty?.correcto
-      ?? study.latestOutcomes['transfer-check-certainty']?.correct
-      ?? null;
-    const daySevenCertaintyOk = study.latestOutcomes['retest-certainty']?.correct === true;
+    const localForm = study.latestOutcomes['transfer-production'];
+    const localCertainty = study.latestOutcomes['transfer-check-certainty'];
+    const dayOne = {
+      phrase: day1Recall?.production?.text ?? localForm?.text.trim() ?? null,
+      phraseOk: day1Recall?.production?.correcto ?? localForm?.correct ?? null,
+      certainty: day1Recall?.certainty?.text ?? localCertainty?.text.trim() ?? null,
+      certaintyOk: day1Recall?.certainty?.correcto ?? localCertainty?.correct ?? null,
+    };
+    const daySeven = {
+      phrase: study.latestOutcomes['retest-production']?.text.trim() ?? null,
+      phraseOk: study.latestOutcomes['retest-production']?.correct ?? null,
+      certainty: study.latestOutcomes['retest-certainty']?.text.trim() ?? null,
+      certaintyOk: study.latestOutcomes['retest-certainty']?.correct ?? null,
+    };
 
     /**
-     * Only ever states something the two sittings actually show. A learner who
-     * missed the certainty today is told what is true of her return, not
-     * congratulated on something she did not do.
+     * A line only appears when the two sittings actually support it. Everything
+     * else is left to the two quotes: a learner who missed both is shown what
+     * she wrote, not a sentence dressing it up or scolding her for it.
      */
-    const retentionLine =
-      daySevenCertaintyOk && dayOneCertaintyOk === true
-        ? 'Hace una semana leíste las pistas y elegiste la certeza correcta. Hoy, con un caso que no habías visto, elegiste la misma. Esa es la parte difícil y sigue contigo.'
-        : daySevenCertaintyOk
-          ? 'Hoy leíste las pistas y elegiste bien la certeza, con un caso que no habías visto.'
-          : 'Volviste una semana después y resolviste un caso nuevo sin repasar. Eso era lo que estábamos midiendo.';
-
-    const dayOneCaption = dayOneWasComplete
-      ? 'Esto lo escribiste tú hace una semana, con la estructura completa'
-      : 'Esto escribiste tú hace una semana';
-    const dayOneStamp = dayOneAt
-      ? new Intl.DateTimeFormat('es-MX', { day: 'numeric', month: 'long' }).format(new Date(dayOneAt))
+    const certaintyNote =
+      dayOne.certaintyOk && daySeven.certaintyOk ? 'La misma lectura, siete días después.'
+      : dayOne.certaintyOk === false && daySeven.certaintyOk ? 'Hoy la leíste mejor que hace una semana.'
+      : null;
+    const phraseNote =
+      dayOne.phraseOk && daySeven.phraseOk ? 'La estructura completa, otra vez.'
+      : dayOne.phraseOk === false && daySeven.phraseOk ? 'Hoy sí salió la estructura.'
+      : dayOne.phraseOk && daySeven.phraseOk === false ? 'Hace una semana la tenías completa.'
       : null;
 
     /**
-     * Only a Day 1 sentence that carried the structure can be held up as the
-     * model. Offering someone her own incomplete sentence as the thing to copy
-     * teaches her the error she came back to correct.
+     * Nothing below a beat exists until she asks for it, the same rule ADR 0004
+     * set for the baseline gate. The screen holds one idea at a time instead of
+     * arriving as a page of prose.
      */
-    const rewritePrompt = dayOneText && dayOneWasComplete
-      ? 'Tu frase del día 1 era sobre Nora. Ahora que ya la tienes enfrente, ¿cómo quedaría la de Emi?'
-      : 'Ya viste cómo se arma. ¿Cómo quedaría la de Emi?';
+    const revealMotion = prefersReducedMotion
+      ? { initial: { opacity: 0 }, animate: { opacity: 1 } }
+      : { initial: { opacity: 0, y: 8 }, animate: { opacity: 1, y: 0 } };
+    const revealTransition = {
+      duration: prefersReducedMotion ? 0.12 : 0.24,
+      ease: [0.16, 1, 0.3, 1] as const,
+    };
 
     return (
       <main className={styles.pageShell} data-scene="closure" data-learning-mode="reflect" data-celestea-create="true" lang="es-MX">
@@ -2632,114 +2636,180 @@ export function CinematicEnglishPlayer() {
         <section className={`${styles.completionScene} ${styles.day7CompletionScene}`}>
           <span className={styles.completionMark}><Check size={28} /></span>
           <h1>Volviste y cerraste el caso.</h1>
-          <p>{retentionLine}</p>
 
-          <section aria-labelledby="day7-reflection-label" className={styles.reflection}>
-            <p className={styles.receiptLabel} id="day7-reflection-label">
-              Tus dos frases, una semana aparte
-            </p>
-            {dayOneText ? (
-              <figure className={styles.day7Phrase}>
-                <figcaption>
-                  {dayOneCaption}
-                  {dayOneStamp ? ` · ${dayOneStamp}` : ''}
-                </figcaption>
-                <blockquote lang="en-US">{dayOneText}</blockquote>
-              </figure>
-            ) : null}
-            {daySevenPhrase ? (
-              <figure className={styles.day7Phrase}>
-                <figcaption>Hoy escribiste</figcaption>
-                <blockquote lang="en-US">{daySevenPhrase}</blockquote>
-              </figure>
+          <div className={styles.beats}>
+            {closingBeat === 0 ? (
+              <button
+                className={styles.secondaryAction}
+                onClick={() => setClosingBeat(1)}
+                type="button"
+              >
+                Ver cómo te fue
+              </button>
             ) : null}
 
-            <div className={styles.rewrite}>
-              {rewriteSent ? (
-                <p className={styles.rewriteDone} role="status">
-                  Guardada. No se califica: la escribiste después de ver la respuesta, así que
-                  cuenta como práctica y no cambia nada de tu revisión.
-                </p>
-              ) : (
-                <>
-                  <label htmlFor="day7-rewrite">{rewritePrompt}</label>
-                  <p className={styles.rewriteHint}>
-                    Va <strong>might have</strong> y después la acción terminada.
-                  </p>
-                  <textarea
-                    className={styles.rewriteInput}
-                    id="day7-rewrite"
-                    lang="en-US"
-                    maxLength={240}
-                    onChange={(event) => setRewrite(event.target.value)}
-                    placeholder="Emi … the mural."
-                    rows={2}
-                    value={rewrite}
-                  />
-                  <button
-                    className={styles.secondaryAction}
-                    disabled={rewrite.trim().length === 0}
-                    onClick={() => void submitRewrite()}
-                    type="button"
-                  >
-                    Guardar mi frase
-                  </button>
-                </>
-              )}
-            </div>
-          </section>
-          <section
-            aria-labelledby="day7-receipt-label"
-            className={styles.day7Receipt}
-          >
-            <p className={styles.receiptLabel} id="day7-receipt-label">
-              Tu evidencia de una semana después
-            </p>
-            <div className={styles.day7EvidenceRows}>
-              {day7Dimensions.map((dimension) => (
-                <article className={styles.day7EvidenceRow} key={dimension.id}>
-                  <h2>{dimension.label}</h2>
-                  <dl className={styles.day7Moments}>
+            <AnimatePresence initial={false}>
+              {closingBeat >= 1 ? (
+                <motion.div
+                  animate={revealMotion.animate}
+                  className={styles.beat}
+                  initial={revealMotion.initial}
+                  key="beat-certainty"
+                  transition={revealTransition}
+                >
+                  <p className={styles.receiptLabel}>Tu lectura de las pistas</p>
+                  <dl className={styles.thenNow}>
                     <div>
-                      <dt>Día 1 · caso nuevo</dt>
-                      <dd data-status={dimension.dayOne}>
-                        {receiptEvidenceLabel(dimension.dayOne, 'no disponible aquí')}
+                      <dt>Hace una semana</dt>
+                      <dd data-ok={dayOne.certaintyOk ? 'true' : undefined}>
+                        {dayOne.certainty ?? 'No disponible aquí'}
+                        {dayOne.certaintyOk ? <Check size={15} /> : null}
                       </dd>
                     </div>
                     <div>
-                      <dt>Día 7 · hoy</dt>
-                      <dd data-status={dimension.daySeven}>
-                        {receiptEvidenceLabel(dimension.daySeven)}
+                      <dt>Hoy</dt>
+                      <dd data-ok={daySeven.certaintyOk ? 'true' : undefined}>
+                        {daySeven.certainty ?? 'No disponible aquí'}
+                        {daySeven.certaintyOk ? <Check size={15} /> : null}
                       </dd>
                     </div>
                   </dl>
-                </article>
-              ))}
-            </div>
-            {daySevenPhrase ? (
-              <figure className={styles.day7Phrase}>
-                <figcaption>Una semana después escribiste</figcaption>
-                <blockquote lang="en-US">{daySevenPhrase}</blockquote>
-              </figure>
-            ) : null}
-            <div className={styles.day7EvidenceLimit}>
-              <p className={styles.receiptLabel}>Lo que todavía no sabemos</p>
-              <p>
-                Esto describe estos dos casos. Todavía no muestra cómo te irá con otros
-                temas o situaciones.
-              </p>
-              <strong>Este registro es tuyo.</strong>
-            </div>
-          </section>
-          <div className={styles.completionActions}>
-            <button className={styles.primaryAction} type="button" onClick={() => openMarketProbe('day7')}>
-              Quiero otro reto
-            </button>
-            <button className={styles.secondaryAction} type="button" onClick={() => window.location.assign('/')}>
-              Volver al inicio
-              <ArrowLeft size={17} />
-            </button>
+                  {certaintyNote ? <p className={styles.beatNote}>{certaintyNote}</p> : null}
+                  {closingBeat === 1 ? (
+                    <button
+                      className={styles.secondaryAction}
+                      onClick={() => setClosingBeat(2)}
+                      type="button"
+                    >
+                      Ver tu frase
+                    </button>
+                  ) : null}
+                </motion.div>
+              ) : null}
+
+              {closingBeat >= 2 ? (
+                <motion.div
+                  animate={revealMotion.animate}
+                  className={styles.beat}
+                  initial={revealMotion.initial}
+                  key="beat-phrase"
+                  transition={revealTransition}
+                >
+                  <p className={styles.receiptLabel}>Tu frase en inglés</p>
+                  <figure className={styles.thenNowQuote}>
+                    <figcaption>Hace una semana</figcaption>
+                    <blockquote lang="en-US">{dayOne.phrase ?? 'No disponible aquí'}</blockquote>
+                  </figure>
+                  <figure className={styles.thenNowQuote} data-now="true">
+                    <figcaption>Hoy</figcaption>
+                    <blockquote lang="en-US">{daySeven.phrase ?? 'No disponible aquí'}</blockquote>
+                  </figure>
+                  {phraseNote ? <p className={styles.beatNote}>{phraseNote}</p> : null}
+                  {closingBeat === 2 ? (
+                    <button
+                      className={styles.secondaryAction}
+                      onClick={() => setClosingBeat(3)}
+                      type="button"
+                    >
+                      Ver mi registro
+                    </button>
+                  ) : null}
+                </motion.div>
+              ) : null}
+            </AnimatePresence>
           </div>
+
+          {closingBeat >= 3 ? (
+            <>
+              <section
+                aria-labelledby="day7-receipt-label"
+                className={styles.day7Receipt}
+              >
+                <p className={styles.receiptLabel} id="day7-receipt-label">
+                  Tu evidencia de una semana después
+                </p>
+                <div className={styles.day7EvidenceRows}>
+                  {day7Dimensions.map((dimension) => (
+                    <article className={styles.day7EvidenceRow} key={dimension.id}>
+                      <h2>{dimension.label}</h2>
+                      <dl className={styles.day7Moments}>
+                        <div>
+                          <dt>Día 1 · caso nuevo</dt>
+                          <dd data-status={dimension.dayOne}>
+                            {receiptEvidenceLabel(dimension.dayOne, 'no disponible aquí')}
+                          </dd>
+                        </div>
+                        <div>
+                          <dt>Día 7 · hoy</dt>
+                          <dd data-status={dimension.daySeven}>
+                            {receiptEvidenceLabel(dimension.daySeven)}
+                          </dd>
+                        </div>
+                      </dl>
+                    </article>
+                  ))}
+                </div>
+                {daySeven.phrase ? (
+                  <figure className={styles.day7Phrase}>
+                    <figcaption>Una semana después escribiste</figcaption>
+                    <blockquote lang="en-US">{daySeven.phrase}</blockquote>
+                  </figure>
+                ) : null}
+                <div className={styles.day7EvidenceLimit}>
+                  <p className={styles.receiptLabel}>Lo que todavía no sabemos</p>
+                  <p>
+                    Esto describe estos dos casos. Todavía no muestra cómo te irá con otros
+                    temas o situaciones.
+                  </p>
+                  <strong>Este registro es tuyo.</strong>
+                </div>
+              </section>
+
+              {/*
+                * A coda, not a lesson. It runs after `taller_completado`, carries no
+                * tiles, no hint and no second attempt, and is never scored.
+                */}
+              <div className={styles.coda}>
+                {rewriteSent ? (
+                  <p className={styles.codaDone} role="status">
+                    Guardada. No cuenta para tu revisión.
+                  </p>
+                ) : (
+                  <>
+                    <label htmlFor="day7-rewrite">¿Cómo la escribirías ahora?</label>
+                    <textarea
+                      className={styles.codaInput}
+                      id="day7-rewrite"
+                      lang="en-US"
+                      maxLength={240}
+                      onChange={(event) => setRewrite(event.target.value)}
+                      placeholder="Emi … the mural."
+                      rows={2}
+                      value={rewrite}
+                    />
+                    <button
+                      className={styles.secondaryAction}
+                      disabled={rewrite.trim().length === 0}
+                      onClick={() => void submitRewrite()}
+                      type="button"
+                    >
+                      Guardar
+                    </button>
+                  </>
+                )}
+              </div>
+
+              <div className={styles.completionActions}>
+                <button className={styles.primaryAction} type="button" onClick={() => openMarketProbe('day7')}>
+                  Quiero otro reto
+                </button>
+                <button className={styles.secondaryAction} type="button" onClick={() => window.location.assign('/')}>
+                  Volver al inicio
+                  <ArrowLeft size={17} />
+                </button>
+              </div>
+            </>
+          ) : null}
         </section>
       </main>
     );
