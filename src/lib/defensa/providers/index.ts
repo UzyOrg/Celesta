@@ -1,0 +1,60 @@
+import 'server-only';
+import { config } from '../config';
+import { crearLlmAnthropic, crearLlmOpenai } from './llm';
+import { crearLlmMock, crearSttMock, crearTtsMock } from './mock';
+import { crearSttAssemblyai, crearSttDeepgram } from './stt';
+import type { Proveedores, ProveedorLlm, ProveedorStt, ProveedorTts } from './tipos';
+import { crearTtsElevenlabs } from './tts';
+
+/**
+ * Elige los proveedores según las variables de entorno:
+ *
+ *   DEFENSA_LLM_PROVIDER   openai | anthropic | mock
+ *   DEFENSA_STT_PROVIDER   deepgram | assemblyai | mock
+ *   DEFENSA_TTS_PROVIDER   elevenlabs | mock
+ *
+ * Cambiar de proveedor es cambiar una variable; los servicios solo conocen las
+ * interfaces de providers/tipos.ts. Las llaves y el modelo se leen en cada
+ * llamada, nunca se guardan en una constante.
+ */
+export function crearLlm(): ProveedorLlm {
+  switch (config.proveedorLlm()) {
+    case 'openai':
+      return crearLlmOpenai({ clave: config.claveOpenai, modelo: (tarea) => (tarea === 'clasificar_turno' ? config.modeloClasificador() : config.modeloPlan()) });
+    case 'anthropic':
+      return crearLlmAnthropic({ clave: config.claveAnthropic, modelo: (tarea) => (tarea === 'clasificar_turno' ? config.modeloClasificador() : config.modeloPlan()) });
+    default:
+      return crearLlmMock();
+  }
+}
+
+export function crearStt(): ProveedorStt {
+  switch (config.proveedorStt()) {
+    case 'deepgram':
+      return crearSttDeepgram({ clave: config.claveDeepgram, modelo: config.modeloStt });
+    case 'assemblyai':
+      return crearSttAssemblyai({ clave: config.claveAssemblyai, modelo: config.modeloStt });
+    default:
+      return crearSttMock(() => process.env.DEFENSA_MOCK_STT_TEXTO?.trim() || undefined);
+  }
+}
+
+export function crearTts(): ProveedorTts {
+  switch (config.proveedorTts()) {
+    case 'elevenlabs':
+      return crearTtsElevenlabs({
+        clave: config.claveElevenlabs,
+        voz: config.vozElevenlabs,
+        modelo: config.modeloElevenlabs,
+        sinRegistro: () => process.env.DEFENSA_ELEVENLABS_SIN_REGISTRO === '1',
+      });
+    default:
+      return crearTtsMock();
+  }
+}
+
+export function crearProveedores(): Proveedores {
+  return { llm: crearLlm(), stt: crearStt(), tts: crearTts() };
+}
+
+export type { Proveedores, ProveedorLlm, ProveedorStt, ProveedorTts } from './tipos';
