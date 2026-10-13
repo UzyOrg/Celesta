@@ -28,7 +28,24 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'NEXT_DIST_DIR=.next-playwright CREAR_CLASSIFIER_FORCE_LOCAL=1 NEXT_PUBLIC_CREAR_RETEST_DELAY_HOURS=0 CREAR_RETEST_TEST_MODE=1 CREAR_RETEST_DELAY_HOURS=0 CREAR_RETEST_SIGNING_SECRET=playwright-only-retest-secret-000000000 pnpm exec next dev --hostname 127.0.0.1 --port 3001',
+    // Las variables van en `env` y no antepuestas al comando: `VAR=1 comando` no
+    // existe en cmd.exe, así que así la suite arranca igual en Windows y en Linux.
+    command: 'npx next dev --hostname 127.0.0.1 --port 3001',
+    env: {
+      NEXT_DIST_DIR: '.next-playwright',
+      CREAR_CLASSIFIER_FORCE_LOCAL: '1',
+      NEXT_PUBLIC_CREAR_RETEST_DELAY_HOURS: '0',
+      CREAR_RETEST_TEST_MODE: '1',
+      CREAR_RETEST_DELAY_HOURS: '0',
+      CREAR_RETEST_SIGNING_SECRET: 'playwright-only-retest-secret-000000000',
+      // Defensas orales: almacén en memoria y proveedores falsos, sin llaves ni red.
+      DEFENSA_ALMACEN: 'memoria',
+      DEFENSA_SIGNING_SECRET: 'playwright-only-defensa-secret-00000000000',
+      DEFENSA_LLM_PROVIDER: 'mock',
+      DEFENSA_STT_PROVIDER: 'mock',
+      DEFENSA_TTS_PROVIDER: 'mock',
+      CRON_SECRET: 'playwright-only-cron-secret',
+    },
     url: 'http://127.0.0.1:3001/crear',
     reuseExistingServer: false,
     timeout: 120_000,
