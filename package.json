@@ -20,7 +20,8 @@
     "evidence:check": "node -e \"const fs=require('fs');const need=['ssr.log','ssr_analyze.txt','export.csv','rate_limit_csv_429.txt','rate_limit_ingest_429.txt','transparency.json','explain_analyze_teacher.txt','explain_analyze_student.txt'];const miss=need.filter(f=>!fs.existsSync('docs/evidence/'+f));console.log(miss.length?('Faltan: '+miss.join(', ')):'OK');\"",
     "pilot:export": "tsx scripts/export-crear-pilot.ts",
     "invite:teacher": "tsx scripts/invite-teacher.ts",
-    "test:unit": "playwright test -c playwright.unit.config.ts"
+    "test:unit": "playwright test -c playwright.unit.config.ts",
+    "defensa:actividad": "tsx --conditions=react-server scripts/defensa-actividad.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.0.1",
