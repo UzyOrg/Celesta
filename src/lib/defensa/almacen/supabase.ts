@@ -176,6 +176,11 @@ export function crearRepoSupabase(db: SupabaseClient): RepoDefensa {
       return { alumno: await actualizar(ganador.id), nuevo: false };
     },
     alumnoPorId: (id) => uno<AlumnoRow>('alumnoPorId', db.from(TABLAS.alumnos).select('*').eq('id', id).maybeSingle()),
+    alumnoPorMatricula: (actividadId, matricula) =>
+      uno<AlumnoRow>(
+        'alumnoPorMatricula',
+        db.from(TABLAS.alumnos).select('*').eq('actividad_id', actividadId).eq('matricula', matricula).maybeSingle(),
+      ),
     actualizarModoAlumno: (id, modo, ahora) =>
       ejecutar('actualizarModoAlumno', db.from(TABLAS.alumnos).update({ modo_preferido: modo, actualizado_en: ahora }).eq('id', id)),
     guardarConsentimientos: (alumnoId, items, ahora) =>
@@ -216,6 +221,11 @@ export function crearRepoSupabase(db: SupabaseClient): RepoDefensa {
       uno<EntregaRow>(
         'ultimaEntrega',
         db.from(TABLAS.entregas).select('*').eq('alumno_id', alumnoId).order('version', { ascending: false }).limit(1).maybeSingle(),
+      ),
+    ultimaEntregaLista: (alumnoId) =>
+      uno<EntregaRow>(
+        'ultimaEntregaLista',
+        db.from(TABLAS.entregas).select('*').eq('alumno_id', alumnoId).eq('estado', 'lista').order('version', { ascending: false }).limit(1).maybeSingle(),
       ),
     actualizarEntrega: (id, parche) =>
       exigirUno<EntregaRow>('actualizarEntrega', db.from(TABLAS.entregas).update(aColumnas(parche)).eq('id', id).select().single()),
@@ -269,6 +279,13 @@ export function crearRepoSupabase(db: SupabaseClient): RepoDefensa {
     turnoPorId: (id) => uno<TurnoRow>('turnoPorId', db.from(TABLAS.turnos).select('*').eq('id', id).maybeSingle()),
     turnosDeDefensa: (defensaId) =>
       varios<TurnoRow>('turnosDeDefensa', db.from(TABLAS.turnos).select('*').eq('defensa_id', defensaId).order('numero', { ascending: true })),
+    turnosDeDefensas: (defensaIds) =>
+      defensaIds.length === 0
+        ? Promise.resolve([])
+        : varios<TurnoRow>(
+            'turnosDeDefensas',
+            db.from(TABLAS.turnos).select('*').in('defensa_id', [...defensaIds]).order('defensa_id').order('numero', { ascending: true }),
+          ),
     async crearTurno(datos) {
       const { data, error } = await db.from(TABLAS.turnos).insert(aColumnas(datos)).select().single();
       if (error?.code === UNICO_REPETIDO) throw new DefensaError('ocupado', 409);
@@ -407,6 +424,13 @@ export function crearArchivosSupabase(db: SupabaseClient): AlmacenArchivos {
       const { data, error } = await cubo(bucket).list(carpeta, { search: nombre, limit: 20 });
       if (error) fallar('archivos.existe', { code: (error as { statusCode?: string }).statusCode });
       return (data ?? []).some((archivo) => archivo.name === nombre);
+    },
+    async listar(bucket, carpeta) {
+      const { data, error } = await cubo(bucket).list(carpeta, { limit: 1000 });
+      if (error) fallar('archivos.listar', { code: (error as { statusCode?: string }).statusCode });
+      return (data ?? [])
+        .filter((archivo) => archivo.id !== null)
+        .map((archivo) => ({ nombre: archivo.name, creadoEn: archivo.created_at ?? null }));
     },
     async borrar(bucket, rutas) {
       for (let i = 0; i < rutas.length; i += 100) {

@@ -170,6 +170,8 @@ export interface LineaTranscrita {
   /** Minuto y segundo dentro de la respuesta. */
   tiempo: string;
   inicioMs: number;
+  /** Dónde termina la línea dentro del audio de la respuesta. */
+  finMs: number;
   segmentos: SegmentoLinea[];
   /** Algún tramo de la línea lo aclaró el alumno. */
   aclarada: boolean;
@@ -218,6 +220,7 @@ export function construirLineas(idBase: string, palabras: readonly PalabraTransc
       id: `${idBase}:${n}`,
       tiempo: tiempoCorto((grupo[0] as PalabraTranscrita).inicioMs),
       inicioMs: (grupo[0] as PalabraTranscrita).inicioMs,
+      finMs: (grupo[grupo.length - 1] as PalabraTranscrita).finMs,
       segmentos,
       aclarada: segmentos.some((s) => s.aclarado === true),
     };

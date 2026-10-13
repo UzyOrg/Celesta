@@ -115,6 +115,11 @@ export interface ReporteGenerado {
   citasDescartadas: number;
 }
 
+export interface ReporteDelModelo extends ReporteGenerado {
+  proveedor: string;
+  modelo: string;
+}
+
 // ── Citas: aparecen tal cual o no cuentan ───────────────────────────────────
 
 const MIN_PALABRAS_CITA = 3;
@@ -329,7 +334,7 @@ export interface EntradaReporte {
  * cumple el esquema se reintenta una vez; si vuelve a fallar, lanza (el servicio
  * guarda el reporte como "error" y el profesor ve la transcripción sin niveles).
  */
-export async function generarReporte(llm: ProveedorLlm, entrada: EntradaReporte): Promise<ReporteGenerado> {
+export async function generarReporte(llm: ProveedorLlm, entrada: EntradaReporte): Promise<ReporteDelModelo> {
   const mensaje = construirMensajeReporte(entrada.registro, entrada.objetivos, entrada.turnos);
   let ultimaCausa: unknown = null;
 
@@ -344,7 +349,13 @@ export async function generarReporte(llm: ProveedorLlm, entrada: EntradaReporte)
         timeoutMs: entrada.timeoutMs ?? 40_000,
       });
       const valida = ReporteLlmSchema.safeParse(respuesta.json);
-      if (valida.success) return construirReporte(valida.data, entrada.turnos, entrada.objetivos);
+      if (valida.success) {
+        return {
+          ...construirReporte(valida.data, entrada.turnos, entrada.objetivos),
+          proveedor: respuesta.proveedor,
+          modelo: respuesta.modelo,
+        };
+      }
       ultimaCausa = valida.error;
     } catch (error) {
       ultimaCausa = error;

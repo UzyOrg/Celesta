@@ -162,6 +162,9 @@ export function crearRepoMemoria(estado: EstadoMemoria): RepoDefensa & { estado:
     async alumnoPorId(id) {
       return unica(estado.alumnos.get(id));
     },
+    async alumnoPorMatricula(actividadId, matricula) {
+      return unica(Array.from(estado.alumnos.values()).find((a) => a.actividadId === actividadId && a.matricula === matricula));
+    },
     async actualizarModoAlumno(id, modo, ahora) {
       const fila = estado.alumnos.get(id);
       if (fila) {
@@ -213,6 +216,10 @@ export function crearRepoMemoria(estado: EstadoMemoria): RepoDefensa & { estado:
     },
     async ultimaEntrega(alumnoId) {
       const propias = Array.from(estado.entregas.values()).filter((e) => e.alumnoId === alumnoId);
+      return unica(propias.sort((a, b) => b.version - a.version)[0]);
+    },
+    async ultimaEntregaLista(alumnoId) {
+      const propias = Array.from(estado.entregas.values()).filter((e) => e.alumnoId === alumnoId && e.estado === 'lista');
       return unica(propias.sort((a, b) => b.version - a.version)[0]);
     },
     async actualizarEntrega(id, parche) {
@@ -313,6 +320,13 @@ export function crearRepoMemoria(estado: EstadoMemoria): RepoDefensa & { estado:
       return Array.from(estado.turnos.values())
         .filter((t) => t.defensaId === defensaId)
         .sort((a, b) => a.numero - b.numero)
+        .map(copia);
+    },
+    async turnosDeDefensas(defensaIds) {
+      const ids = new Set(defensaIds);
+      return Array.from(estado.turnos.values())
+        .filter((t) => ids.has(t.defensaId))
+        .sort((a, b) => a.defensaId.localeCompare(b.defensaId) || a.numero - b.numero)
         .map(copia);
     },
     async crearTurno(datos) {
@@ -482,6 +496,12 @@ export function crearArchivosMemoria(estado: EstadoMemoria): AlmacenArchivos {
     },
     async existe(bucket, ruta) {
       return estado.archivos.has(clave(bucket, ruta));
+    },
+    async listar(bucket, carpeta) {
+      const prefijo = `${clave(bucket, carpeta)}/`;
+      return Array.from(estado.archivos.keys())
+        .filter((k) => k.startsWith(prefijo) && !k.slice(prefijo.length).includes('/'))
+        .map((k) => ({ nombre: k.slice(prefijo.length), creadoEn: null }));
     },
     async borrar(bucket, rutas) {
       for (const ruta of rutas) estado.archivos.delete(clave(bucket, ruta));

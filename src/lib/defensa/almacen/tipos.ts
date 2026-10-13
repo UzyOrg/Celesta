@@ -274,6 +274,8 @@ export interface RepoDefensa {
     ahora: string;
   }): Promise<{ alumno: AlumnoRow; nuevo: boolean }>;
   alumnoPorId(id: string): Promise<AlumnoRow | null>;
+  /** Busca sin crear: lo usa la entrada cuando el enlace ya está desactivado. */
+  alumnoPorMatricula(actividadId: string, matricula: string): Promise<AlumnoRow | null>;
   actualizarModoAlumno(id: string, modo: ModoRespuesta, ahora: string): Promise<void>;
   guardarConsentimientos(
     alumnoId: string,
@@ -287,6 +289,8 @@ export interface RepoDefensa {
   entregaPorId(id: string): Promise<EntregaRow | null>;
   /** La última versión, en cualquier estado. */
   ultimaEntrega(alumnoId: string): Promise<EntregaRow | null>;
+  /** La última versión que ya tiene texto: la que se defiende aunque haya un intento posterior rechazado. */
+  ultimaEntregaLista(alumnoId: string): Promise<EntregaRow | null>;
   actualizarEntrega(id: string, parche: Partial<Omit<EntregaRow, 'id' | 'alumnoId' | 'actividadId' | 'version'>>): Promise<EntregaRow>;
 
   // Planes
@@ -311,6 +315,8 @@ export interface RepoDefensa {
   // Turnos
   turnoPorId(id: string): Promise<TurnoRow | null>;
   turnosDeDefensa(defensaId: string): Promise<TurnoRow[]>;
+  /** Los turnos de varias defensas de una vez, ordenados por defensa y número. */
+  turnosDeDefensas(defensaIds: readonly string[]): Promise<TurnoRow[]>;
   crearTurno(datos: NuevoTurno): Promise<TurnoRow>;
   actualizarTurno(id: string, parche: Partial<Omit<TurnoRow, 'id' | 'defensaId' | 'numero'>>): Promise<TurnoRow>;
   registrarParteAudio(turnoId: string, indice: number, ruta: string, bytes: number, ahora: string): Promise<void>;
@@ -349,6 +355,8 @@ export interface AlmacenArchivos {
   subir(bucket: Bucket, ruta: string, datos: Uint8Array, mime: string): Promise<void>;
   descargar(bucket: Bucket, ruta: string): Promise<Uint8Array | null>;
   existe(bucket: Bucket, ruta: string): Promise<boolean>;
+  /** Archivos directamente dentro de una carpeta (sin entrar en subcarpetas). */
+  listar(bucket: Bucket, carpeta: string): Promise<Array<{ nombre: string; creadoEn: string | null }>>;
   borrar(bucket: Bucket, rutas: readonly string[]): Promise<void>;
   /** Enlace de lectura que caduca; `nombreDescarga` fuerza un nombre de archivo al guardar. */
   urlFirmadaDescarga(

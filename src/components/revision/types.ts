@@ -15,14 +15,21 @@ import type { PreguntaDefensa } from '../defensa/types';
 /* Tiempo                                                                   */
 /* ------------------------------------------------------------------------ */
 
-/** Día corto tal como lo escribe el diseño: "vie 9", "sáb 10". */
-export type DiaCorto = 'lun 5' | 'mar 6' | 'mié 7' | 'jue 8' | 'vie 9' | 'sáb 10';
+/** Día corto tal como lo escribe el diseño: "vie 9", "sáb 10" (abreviatura del día y número). */
+export type DiaCorto = string;
 
-/** Momento exacto del escenario, sin depender del reloj del navegador. */
+/**
+ * Momento exacto, ya formateado por el servidor en hora de México: el navegador
+ * nunca lo recalcula, así servidor y navegador pintan siempre lo mismo.
+ */
 export interface MarcaDeTiempo {
   dia: DiaCorto;
   /** Hora de 24 h con minutos, por ejemplo "21:05". */
   hora: string;
+  /** Mes en letra ("octubre"). Si falta, se asume octubre, el del escenario de ejemplo. */
+  mes?: string;
+  /** Milisegundos desde 1970: sirve para ordenar y para sumar días sin errores de calendario. */
+  instante?: number;
 }
 
 /* ------------------------------------------------------------------------ */
@@ -90,6 +97,10 @@ export type EstadoAlumno = 'sin-entregar' | 'sin-defensa' | 'por-revisar' | 'rev
 
 export interface Alumno {
   matricula: string;
+  /** La defensa real que se revisa (con datos reales). */
+  defensaId?: string;
+  /** La entrega que se descarga (con datos reales): la última versión con texto. */
+  entregaId?: string;
   /** "Aguilar Ramos, Sofía", como llega del registro. */
   nombreRegistro: string;
   /** "Sofía Aguilar Ramos", como se lee en pantalla. */
@@ -180,6 +191,10 @@ export interface LineaReporte {
 /** Audio original de una frase que el alumno marcó o aclaró. */
 export interface ParteParaOir {
   id: 'marcada' | 'aclarada';
+  /** Con datos reales: de qué respuesta sale el audio y qué tramo (dentro del audio de esa respuesta). */
+  turnoId?: string;
+  desdeMs?: number;
+  hastaMs?: number;
   /** Texto de la tarjeta, ya redactado. */
   descripcion: string;
   /** Nombre accesible del botón de reproducir. */
@@ -201,8 +216,20 @@ export interface RespuestaReporte {
   parteParaOir?: ParteParaOir;
   /** Lo que faltó en la respuesta, si aplica. */
   faltante?: string;
+  /** Repreguntas y transferencia sobre este mismo objetivo, con su respuesta. */
+  adicionales?: readonly TurnoAdicionalReporte[];
   /** Lectura redactada de la respuesta, para cuando el profesor pregunta dónde dudó. */
   analisis?: string;
+}
+
+/** Una pregunta más sobre el mismo objetivo (repregunta o transferencia) y lo que respondió. */
+export interface TurnoAdicionalReporte {
+  etiqueta: 'Repregunta' | 'Transferencia';
+  pregunta: string;
+  modo: ModoRespuesta;
+  calidad: string;
+  lineas?: readonly LineaReporte[];
+  textoEscrito?: string;
 }
 
 export interface BloqueReporte {
@@ -219,6 +246,10 @@ export interface ReporteAlumno {
   completo: boolean;
   /** Resumen redactado de la defensa, para cuando el profesor lo pide. */
   resumen?: string;
+  /** Aviso sobre el estado del reporte ("se está preparando", "quedó incompleta"...). */
+  aviso?: string;
+  /** `false` cuando el audio ya se borró (a los 7 días). Solo con datos reales. */
+  audioDisponible?: boolean;
   bloques: readonly BloqueReporte[];
 }
 
@@ -247,6 +278,8 @@ export type CierreReporte = 'si' | 'parte' | 'no';
 
 /** Todo lo que necesita la vista del grupo del profesor. */
 export interface DatosGrupo {
+  /** `true` cuando los datos vienen del servidor; `false`/ausente en el escenario de ejemplo. */
+  conectado?: boolean;
   profesora: Profesora;
   actividad: ActividadProfesor;
   alumnos: readonly Alumno[];
@@ -261,6 +294,8 @@ export interface DatosGrupo {
 
 /** Todo lo que necesita la vista del reporte de un alumno. */
 export interface DatosReporte {
+  /** La defensa que se está leyendo (con datos reales), para guardar los dos toques y el tiempo. */
+  defensaId?: string;
   grupo: DatosGrupo;
   alumno: Alumno;
   reporte: ReporteAlumno;
