@@ -46,6 +46,7 @@ import { z } from 'zod';
 import { crearClienteServicio, crearRepoSupabase } from '../src/lib/defensa/almacen/supabase';
 import type { ActividadRow, RepoDefensa } from '../src/lib/defensa/almacen/tipos';
 import { LIMITES, config } from '../src/lib/defensa/config';
+import { DefensaError } from '../src/lib/defensa/errores';
 import { emitirAccesoProfesor, generarTokenGrupo } from '../src/lib/defensa/firmas';
 
 dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
@@ -86,6 +87,24 @@ const Actividad = z
 function salir(mensaje: string): never {
   console.error(`\nError: ${mensaje}\n`);
   process.exit(1);
+}
+
+/**
+ * Revisa lo necesario ANTES de escribir nada: así un `crear` no deja una actividad a medias
+ * por no poder firmar el enlace, y el mensaje dice qué variable falta.
+ */
+function exigirConfiguracion(opciones: { firma: boolean }): void {
+  const faltan: string[] = [];
+  if (!config.supabaseUrl()) faltan.push('NEXT_PUBLIC_SUPABASE_URL');
+  if (!config.supabaseServicio()) faltan.push('SUPABASE_SERVICE_ROLE_KEY');
+  if (opciones.firma) {
+    const secreto = config.secretoFirma();
+    if (!secreto) faltan.push('DEFENSA_SIGNING_SECRET');
+    else if (secreto.length < 32) faltan.push('DEFENSA_SIGNING_SECRET (tiene menos de 32 caracteres)');
+  }
+  if (faltan.length > 0) {
+    salir(`Falta configurar en .env.local: ${faltan.join(', ')}. Los nombres están en .env.example.`);
+  }
 }
 
 function bandera(args: string[], nombre: string): string | null {
@@ -150,6 +169,7 @@ async function crear(args: string[]): Promise<void> {
     return;
   }
 
+  exigirConfiguracion({ firma: true });
   const repo = crearRepoSupabase(crearClienteServicio());
   const actividad = await repo.crearActividad({
     tokenGrupo: generarTokenGrupo(),
@@ -175,6 +195,7 @@ async function crear(args: string[]): Promise<void> {
 }
 
 async function enlace(args: string[]): Promise<void> {
+  exigirConfiguracion({ firma: true });
   const repo = crearRepoSupabase(crearClienteServicio());
   const actividad = await buscar(repo, args[0] ?? salir('Falta el código o el id de la actividad.'));
   const dias = Number(bandera(args, '--dias') ?? NaN);
@@ -184,6 +205,7 @@ async function enlace(args: string[]): Promise<void> {
 }
 
 async function rotar(args: string[]): Promise<void> {
+  exigirConfiguracion({ firma: true });
   const repo = crearRepoSupabase(crearClienteServicio());
   const actividad = await buscar(repo, args[0] ?? salir('Falta el código o el id de la actividad.'));
   const nueva = await repo.actualizarActividad(actividad.id, { accesoVersion: actividad.accesoVersion + 1 });
@@ -193,6 +215,7 @@ async function rotar(args: string[]): Promise<void> {
 }
 
 async function cambiarEnlaceDelGrupo(args: string[], activo: boolean): Promise<void> {
+  exigirConfiguracion({ firma: false });
   const repo = crearRepoSupabase(crearClienteServicio());
   const actividad = await buscar(repo, args[0] ?? salir('Falta el código o el id de la actividad.'));
   await repo.actualizarActividad(actividad.id, { enlaceActivo: activo });
@@ -204,6 +227,7 @@ async function cambiarEnlaceDelGrupo(args: string[], activo: boolean): Promise<v
 }
 
 async function estado(args: string[]): Promise<void> {
+  exigirConfiguracion({ firma: false });
   const repo = crearRepoSupabase(crearClienteServicio());
   const actividad = await buscar(repo, args[0] ?? salir('Falta el código o el id de la actividad.'));
   console.log(`\n  ${actividad.nombre} (${actividad.curso} ${actividad.grupo})`);
@@ -235,6 +259,11 @@ async function main(): Promise<void> {
 
 main().catch((error: unknown) => {
   // Nunca se imprime el mensaje completo de un error de base: podría traer datos.
-  console.error(`\nError: ${error instanceof Error ? error.name : 'desconocido'}. Revisa .env.local (URL y llave de Supabase) y que la migración esté aplicada.\n`);
+  if (error instanceof DefensaError && error.codigo === 'no_configurado') {
+    console.error('\nError: falta configuración (variables de Supabase o DEFENSA_SIGNING_SECRET). Revisa .env.local y .env.example.\n');
+  } else {
+    const causa = error instanceof DefensaError ? `${error.name} (${error.codigo})` : error instanceof Error ? error.name : 'desconocido';
+    console.error(`\nError: ${causa}. Revisa .env.local (URL y llave de Supabase) y que la migración esté aplicada en esa base.\n`);
+  }
   process.exit(1);
 });
