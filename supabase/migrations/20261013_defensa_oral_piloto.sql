@@ -37,7 +37,8 @@ create table if not exists public.defensa_actividades (
   ejemplos_docente text check (ejemplos_docente is null or char_length(ejemplos_docente) <= 20000),
   contexto_curso text check (contexto_curso is null or char_length(contexto_curso) <= 2000),
   registro text not null default 'tu' check (registro in ('tu', 'usted')),
-  -- [{ "id": "O1", "text": "..." }], máximo tres.
+  -- [{ "id": "O1", "text": "..." }], máximo tres. Pueden llevar, aparte, "corto", "alias" y "tema"
+  -- (apodos que usa la pantalla del profesor); el modelo solo ve id y text.
   objetivos jsonb not null check (
     jsonb_typeof(objetivos) = 'array' and jsonb_array_length(objetivos) between 1 and 3
   ),
@@ -166,7 +167,7 @@ create table if not exists public.defensa_defensas (
   -- Reloj activo de la defensa (sin las pausas de aclaración).
   duracion_activa_ms integer not null default 0 check (duracion_activa_ms >= 0),
   aclaracion_ms integer not null default 0 check (aclaracion_ms >= 0),
-  -- Líneas que el alumno marcó con "No lo dije así": [{ "turno_id": "...", "linea": "..." }].
+  -- Líneas que el alumno marcó con "No lo dije así": [{ "turnoId": "...", "linea": "..." }].
   marcas_revision jsonb not null default '[]'::jsonb,
   -- Cuánto estrés dio comparado con un examen escrito: 0 (mucho menos) a 4 (mucho más).
   nivel_estres smallint check (nivel_estres between 0 and 4),
@@ -196,7 +197,8 @@ create table if not exists public.defensa_turnos (
   modo_respuesta text check (modo_respuesta in ('voz', 'escrito')),
   -- Lo que el alumno dijo o escribió, ya con la aclaración aplicada.
   texto_respuesta text,
-  -- Palabras de la transcripción con confianza y tiempo: [{ "t": "...", "i": ms, "f": ms, "c": 0..1 }].
+  -- Palabras de la transcripción con confianza y tiempo:
+  -- [{ "texto": "...", "inicioMs": 0, "finMs": 0, "confianza": 0..1, "aclarada"?, "noEntendida"? }].
   transcripcion jsonb,
   clase text check (clase in ('solida', 'vaga', 'fuera_de_tema', 'sin_respuesta')),
   clase_fuente text check (clase_fuente in ('modelo', 'regla')),
@@ -206,8 +208,8 @@ create table if not exists public.defensa_turnos (
   duracion_respuesta_ms integer check (duracion_respuesta_ms is null or duracion_respuesta_ms >= 0),
   silencios integer not null default 0 check (silencios >= 0),
   repeticiones integer not null default 0 check (repeticiones >= 0),
-  -- { "estado": "pendiente|aclarada|no_entendido", "inicio_ms", "fin_ms", "antes", "despues",
-  --   "indice_inicio", "indice_fin", "modo", "texto", "duracion_ms" }
+  -- { "estado": "pendiente|aclarada|no_entendido", "indiceInicio", "indiceFin", "inicioMs", "finMs",
+  --   "antes", "despues", "modo", "texto", "duracionMs" } (duracionMs = lo que duró la pausa)
   aclaracion jsonb,
   preguntado_en timestamptz not null default now(),
   respondido_en timestamptz,
@@ -364,7 +366,9 @@ values
     array[
       'application/pdf',
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'text/plain'
+      'text/plain',
+      -- El zip que arma "Descargar todos los trabajos" para el profesor (se borra al día siguiente).
+      'application/zip'
     ]
   ),
   (

@@ -30,6 +30,16 @@ export type ValorToque = 'si' | 'parte' | 'no' | 'no_se';
 /** Los dos buckets privados. */
 export type Bucket = 'trabajos' | 'audio';
 
+/** Un objetivo de la actividad. Los apodos son opcionales y solo los usa la pantalla del profesor. */
+export interface ObjetivoActividad extends Objective {
+  /** Versión corta para las gráficas del grupo. */
+  corto?: string;
+  /** Cómo se nombra en una frase: "El de la muestra". */
+  alias?: string;
+  /** El tema, para completar "explicaron ...": "su muestra". */
+  tema?: string;
+}
+
 export interface ActividadRow {
   id: string;
   tokenGrupo: string;
@@ -43,7 +53,7 @@ export interface ActividadRow {
   ejemplosDocente: string | null;
   contextoCurso: string | null;
   registro: Registro;
-  objetivos: Objective[];
+  objetivos: ObjetivoActividad[];
   duracion: DuracionDefensa;
   fechaLimite: string;
   limiteEnvios: number;

@@ -236,8 +236,10 @@ export interface BloqueReporte {
   objetivo: Objetivo;
   nivel: EvidenciaObjetivo;
   pregunta: PreguntaDefensa;
-  /** `null` si este alumno no tiene transcripción de ejemplo. */
+  /** `null` si este alumno no tiene transcripción de ejemplo o no respondió. */
   respuesta: RespuestaReporte | null;
+  /** Con datos reales, por qué no hay respuesta (no se preguntó, no alcanzó a responder). */
+  mensajeSinRespuesta?: string;
 }
 
 export interface ReporteAlumno {
