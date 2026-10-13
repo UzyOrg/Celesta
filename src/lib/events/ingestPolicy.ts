@@ -49,6 +49,20 @@ function isBoundedJsonValue(value: unknown): value is JsonValue {
   return true;
 }
 
+/**
+ * Prefijos de `taller_id` que solo escribe el servidor. Las defensas orales
+ * registran sus eventos desde sus propias rutas (ver src/lib/defensa/eventos.ts);
+ * si la ingesta pública los aceptara, cualquier navegador podría fabricar
+ * entregas, respuestas o toques de profesor con solo conocer el formato.
+ */
+export const TALLER_ID_PREFIJOS_RESERVADOS = ['defensa:'] as const;
+
+/** Compara con NFKC y sin mayúsculas para que `Defensa：` (dos puntos de ancho completo) tampoco pase. */
+export function esTallerIdReservado(tallerId: string): boolean {
+  const normalizado = tallerId.normalize('NFKC').trim().toLowerCase();
+  return TALLER_ID_PREFIJOS_RESERVADOS.some((prefijo) => normalizado.startsWith(prefijo));
+}
+
 const EventSchema = z.object({
   actor_sid: z.string().trim().min(1).max(256),
   student_session_id: z.string().trim().min(1).max(256).optional(),
@@ -70,7 +84,10 @@ const EventSchema = z.object({
   ts: z.string().max(64).datetime(),
   client_event_id: z.string().trim().min(8).max(160),
   client_ts: z.string().max(64).datetime(),
-}).strict();
+}).strict().refine(
+  (event) => !esTallerIdReservado(event.taller_id),
+  { message: 'taller_id is reserved for server-side events', path: ['taller_id'] }
+);
 
 const PayloadSchema = z.object({
   events: z.array(EventSchema).min(1).max(200),
