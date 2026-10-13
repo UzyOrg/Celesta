@@ -136,7 +136,7 @@ export function BloqueDeObjetivo({ bloque, alumno, resaltado, sonando, alTocarPa
             {!respuesta ? (
               <div className={styles.escrito}>
                 <span className={styles.sinTranscripcion}>
-                  {`La transcripción de ${alumno.primerNombre} no está en esta demostración.`}
+                  {bloque.mensajeSinRespuesta ?? `La transcripción de ${alumno.primerNombre} no está en esta demostración.`}
                 </span>
               </div>
             ) : null}
@@ -160,6 +160,35 @@ export function BloqueDeObjetivo({ bloque, alumno, resaltado, sonando, alTocarPa
                 </span>
               </p>
             ) : null}
+
+            {respuesta?.adicionales?.map((adicional, indice) => (
+              <div key={`${adicional.etiqueta}-${indice}`} className={styles.adicional}>
+                <div className={styles.encabezadoRespuesta}>
+                  <Chip tono="tenue">{adicional.etiqueta}</Chip>
+                  <Chip tono="contorno" tamano={24}>
+                    {adicional.calidad}
+                  </Chip>
+                </div>
+                <p className={styles.preguntaAdicional}>{adicional.pregunta}</p>
+                {adicional.lineas ? (
+                  <div className={styles.transcripcion}>
+                    {adicional.lineas.map((linea) => (
+                      <div key={linea.tiempo} className={styles.linea}>
+                        <span className={styles.tiempo}>{linea.tiempo}</span>
+                        <span className={styles.texto}>
+                          <Fragmentos fragmentos={linea.fragmentos} />
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
+                {adicional.textoEscrito ? (
+                  <div className={styles.escrito}>
+                    <span className={styles.texto}>{adicional.textoEscrito}</span>
+                  </div>
+                ) : null}
+              </div>
+            ))}
           </div>
         </div>
       </div>

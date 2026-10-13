@@ -202,6 +202,8 @@ export interface MenuLateral {
   entradas: readonly EntradaMenu[];
   /** "Nueva actividad" se ve activa mientras se arma una. */
   nuevaActiva: boolean;
+  /** Con datos reales todavía no se crean actividades desde la pantalla: la entrada no se ofrece. */
+  sinNueva?: boolean;
 }
 
 function desdeOtra(actividad: ActividadMenu): EntradaMenu {
@@ -217,14 +219,16 @@ export function construirMenu(
   actividad: ActividadProfesor,
   resumen: ResumenGrupo,
   otras: readonly ActividadMenu[],
+  conectado = false,
 ): MenuLateral {
+  const sinNueva = conectado ? { sinNueva: true } : {};
   if (contexto === 'nueva') {
-    return { entradas: otras.map(desdeOtra), nuevaActiva: true };
+    return { entradas: otras.map(desdeOtra), nuevaActiva: true, ...sinNueva };
   }
   const detalle =
     contexto === 'enlace'
       ? `Grupo ${actividad.grupo}, nueva`
       : `Grupo ${actividad.grupo}, ${resumen.porRevisar} por revisar`;
   const actual: EntradaMenu = { id: actividad.token, nombre: actividad.nombre, detalle, activa: true };
-  return { entradas: [actual, ...otras.map(desdeOtra)], nuevaActiva: false };
+  return { entradas: [actual, ...otras.map(desdeOtra)], nuevaActiva: false, ...sinNueva };
 }

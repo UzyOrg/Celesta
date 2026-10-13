@@ -9,7 +9,7 @@ import type {
   RespuestaDescarga,
 } from '../../../components/defensa/contrato';
 import type { PreguntaDefensa } from '../../../components/defensa/types';
-import { colaDeRevision } from '../../../components/revision/derivados';
+import { alumnosEnEstado, colaDeRevision, ordenarAlumnos } from '../../../components/revision/derivados';
 import { marcaCorta, marcaDeFecha } from '../../../components/revision/fechas';
 import type {
   Alumno,
@@ -296,8 +296,12 @@ export async function datosDelGrupo(ctx: Ctx, actividad: ActividadRow, tokenProf
       totalAlumnos: alumnos.length,
     },
     alumnos,
-    // Con datos reales no hay "el alumno de ejemplo": la pantalla busca por nombre en `alumnos`.
-    alumnoBuscado: alumnos.find((a) => a.defensa !== null) ?? alumnos[0] ?? sinAlumno(),
+    // Con datos reales no hay "el alumno de ejemplo": el primero de la cola de revisión, o el primero con defensa.
+    alumnoBuscado:
+      ordenarAlumnos('por-revisar', alumnosEnEstado(alumnos, 'por-revisar'))[0] ??
+      alumnos.find((a) => a.defensa !== null) ??
+      alumnos[0] ??
+      sinAlumno(),
     otrasActividades: [],
     descarga: {
       archivo: `trabajos-${aSlug(actividad.grupo || actividad.nombre)}-${aSlug(actividad.nombre)}.zip`,

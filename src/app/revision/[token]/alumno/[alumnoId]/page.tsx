@@ -6,6 +6,9 @@ import { construirMenu, resumenDelGrupo } from '@/components/revision/derivados'
 import { MarcoProfesor } from '@/components/revision/MarcoProfesor';
 import { ReporteDelAlumno } from '@/components/revision/ReporteDelAlumno';
 
+// El enlace firmado y los datos del grupo cambian con cada visita: nunca se prerenderiza.
+export const dynamic = 'force-dynamic';
+
 interface PaginaReporteProps {
   params: Promise<{ token: string; alumnoId: string }>;
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -30,13 +33,12 @@ export async function generateMetadata({ params, searchParams }: PaginaReportePr
 }
 
 /**
- * Reporte de un alumno: `/revision/<token>/alumno/<matrícula>` (en la demostración,
+ * Reporte de un alumno: `/revision/<enlace firmado>/alumno/<matrícula>` (en desarrollo,
  * `/revision/demo/alumno/20231457`).
  *
  * Primero se le pregunta al profesor qué cree del alumno ("Antes de ver su
- * reporte"); `?vista=reporte` abre el reporte directo. Solo el alumno de
- * ejemplo trae transcripción completa. Si la matrícula no existe en el grupo o
- * el alumno no tiene defensa, responde "no encontrado".
+ * reporte"); `?vista=reporte` abre el reporte directo. Si la matrícula no existe
+ * en el grupo o el alumno no tiene defensa, responde "no encontrado".
  */
 export default async function PaginaReporte({ params, searchParams }: PaginaReporteProps) {
   const { token, alumnoId } = await params;
@@ -51,7 +53,7 @@ export default async function PaginaReporte({ params, searchParams }: PaginaRepo
 
   const { grupo } = datos;
   const resumen = resumenDelGrupo(grupo.alumnos);
-  const menu = construirMenu('revisar', grupo.actividad, resumen, grupo.otrasActividades);
+  const menu = construirMenu('revisar', grupo.actividad, resumen, grupo.otrasActividades, grupo.conectado === true);
 
   return (
     <MarcoProfesor token={grupo.actividad.token} menu={menu} profesora={grupo.profesora} forma="pagina">

@@ -31,7 +31,7 @@ export function BarraLateral({ token, menu, profesora, fija = false, decorativa 
         <div className={styles.marca}>
           <LogoCelestea tamano={28} conNombre />
         </div>
-        <div className={styles.nueva}>Nueva actividad</div>
+        {menu.sinNueva ? null : <div className={styles.nueva}>Nueva actividad</div>}
         <div className={styles.actividades}>
           <span className={styles.titulo}>Actividades</span>
           {menu.entradas.map((entrada) => (
@@ -54,14 +54,16 @@ export function BarraLateral({ token, menu, profesora, fija = false, decorativa 
         <LogoCelestea tamano={28} conNombre />
       </div>
 
-      <Link
-        href={`${rutaGrupo}/nueva`}
-        className={menu.nuevaActiva ? `${styles.nueva} ${styles.nuevaActiva}` : styles.nueva}
-        aria-current={menu.nuevaActiva ? 'page' : undefined}
-      >
-        <Plus size={18} strokeWidth={2} strokeLinecap="round" aria-hidden="true" />
-        Nueva actividad
-      </Link>
+      {menu.sinNueva ? null : (
+        <Link
+          href={`${rutaGrupo}/nueva`}
+          className={menu.nuevaActiva ? `${styles.nueva} ${styles.nuevaActiva}` : styles.nueva}
+          aria-current={menu.nuevaActiva ? 'page' : undefined}
+        >
+          <Plus size={18} strokeWidth={2} strokeLinecap="round" aria-hidden="true" />
+          Nueva actividad
+        </Link>
+      )}
 
       <nav aria-label="Actividades" className={styles.actividades}>
         <span className={styles.titulo}>Actividades</span>

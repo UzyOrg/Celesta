@@ -4,17 +4,22 @@ import Link from 'next/link';
 import { useEffect, useRef } from 'react';
 import type { KeyboardEvent } from 'react';
 import { Avatar } from '../celeste/Avatar';
+import { apiProfesor } from './clienteProfesor';
 import { construirMenu, resumenDelGrupo } from './derivados';
 import { diaLargo } from './fechas';
 import { MarcoProfesor } from './MarcoProfesor';
-import type { DatosReporte } from './types';
+import type { DatosReporte, ValorToque } from './types';
 import styles from './AntesDeVerReporte.module.css';
 
 interface AntesDeVerReporteProps {
   datos: DatosReporte;
 }
 
-const OPCIONES = ['Sí', 'En parte', 'No'] as const;
+const OPCIONES: readonly { texto: string; valor: ValorToque }[] = [
+  { texto: 'Sí', valor: 'si' },
+  { texto: 'En parte', valor: 'parte' },
+  { texto: 'No', valor: 'no' },
+];
 
 /**
  * "Antes de ver su reporte": se le pide al profesor que diga qué cree del
@@ -22,8 +27,9 @@ const OPCIONES = ['Sí', 'En parte', 'No'] as const;
  * idea con lo que mostró la defensa. El alumno nunca ve esta respuesta.
  *
  * Es un diálogo que no se puede cerrar con Escape ni tocando el fondo: la
- * salida es contestar o elegir "No sé". En el prototipo la respuesta no se
- * guarda; cualquiera de las cuatro opciones lleva al reporte.
+ * salida es contestar o elegir "No sé". Con datos reales la respuesta se guarda
+ * (sale aunque la página cambie enseguida) y cualquiera de las cuatro opciones
+ * lleva al reporte; en el escenario de ejemplo no se guarda.
  */
 export function AntesDeVerReporte({ datos }: AntesDeVerReporteProps) {
   const { grupo, alumno, cola } = datos;
@@ -42,7 +48,13 @@ export function AntesDeVerReporte({ datos }: AntesDeVerReporteProps) {
   }, []);
 
   const resumen = resumenDelGrupo(grupo.alumnos);
-  const menu = construirMenu('revisar', actividad, resumen, grupo.otrasActividades);
+  const menu = construirMenu('revisar', actividad, resumen, grupo.otrasActividades, grupo.conectado === true);
+
+  // El toque se avisa sin esperar: si falla, el profesor sigue al reporte igual.
+  const guardarToque = (valor: ValorToque) => {
+    if (!grupo.conectado || !datos.defensaId) return;
+    void apiProfesor.toque(actividad.token, { defensaId: datos.defensaId, tipo: 'antes', valor }).catch(() => undefined);
+  };
 
   // El foco da la vuelta dentro del diálogo.
   const alTeclear = (evento: KeyboardEvent<HTMLDivElement>) => {
@@ -124,8 +136,8 @@ export function AntesDeVerReporte({ datos }: AntesDeVerReporteProps) {
           </h1>
           <div className={styles.opciones}>
             {OPCIONES.map((opcion) => (
-              <Link key={opcion} href={rutaReporte} className={styles.opcion}>
-                {opcion}
+              <Link key={opcion.valor} href={rutaReporte} className={styles.opcion} onClick={() => guardarToque(opcion.valor)}>
+                {opcion.texto}
               </Link>
             ))}
           </div>
@@ -133,7 +145,7 @@ export function AntesDeVerReporte({ datos }: AntesDeVerReporteProps) {
             <p id="descripcion-antes" className={styles.nota}>
               {`${alumno.primerNombre} no ve tu respuesta. Nos dice si el reporte te sirve.`}
             </p>
-            <Link href={rutaReporte} className={styles.noSe}>
+            <Link href={rutaReporte} className={styles.noSe} onClick={() => guardarToque('no_se')}>
               No sé
             </Link>
           </div>

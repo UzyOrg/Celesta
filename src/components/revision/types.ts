@@ -274,6 +274,9 @@ export interface ColaReporte {
 
 export type CierreReporte = 'si' | 'parte' | 'no';
 
+/** Lo que el profesor contesta antes de ver el reporte; "no sé" solo existe ahí. */
+export type ValorToque = CierreReporte | 'no_se';
+
 /* ------------------------------------------------------------------------ */
 /* Paquetes de datos que entregan las consultas                             */
 /* ------------------------------------------------------------------------ */

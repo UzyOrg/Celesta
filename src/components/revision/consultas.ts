@@ -1,3 +1,10 @@
+import 'server-only';
+import { cache } from 'react';
+import { esProduccion } from '@/lib/defensa/config';
+import { DefensaError } from '@/lib/defensa/errores';
+import { autenticarProfesor } from '@/lib/defensa/servicios/acceso';
+import { contextoDeSolicitud } from '@/lib/defensa/servicios/contexto';
+import { datosDelGrupo, datosDelReporte } from '@/lib/defensa/servicios/profesor';
 import { PREGUNTAS, TOKENS_CONOCIDOS } from '../defensa/mock';
 import type { PreguntaDefensa } from '../defensa/types';
 import { colaDeRevision } from './derivados';
@@ -15,51 +22,77 @@ import {
 import type { Alumno, BloqueReporte, DatosGrupo, DatosReporte, Objetivo, ReporteAlumno } from './types';
 
 /**
- * Consultas del lado del profesor.
+ * Consultas del lado del profesor (servidor).
  *
- * ESTE ES EL PUNTO DE CONEXIÓN con datos reales. Hoy cada función responde con
- * el escenario de `mock.ts`; para conectar un servidor se reemplaza el cuerpo
- * de estas funciones por un `fetch` o una consulta a base de datos, sin tocar
- * ninguna página ni componente. Todas son asíncronas a propósito, para que el
- * cambio no altere las firmas.
+ * El enlace de la dirección (`/revision/<enlace>`) es el enlace firmado que se le entregó al
+ * profesor: se verifica la firma, que no haya caducado y que no se haya cambiado la versión
+ * de acceso de la actividad (ver `autenticarProfesor`). Un enlace que no sirve responde
+ * "no encontrado", igual que uno que nunca existió.
  *
- * Una versión real también comprobaría aquí que la sesión pertenece al dueño
- * de la actividad: el token por sí solo no autoriza nada.
+ * Solo fuera de producción, los códigos `demo` y `3b-encuesta` abren el escenario de ejemplo
+ * de `mock.ts`, para revisar el diseño sin base de datos. En producción nunca se sirve.
  */
 
-/** Un token razonable: minúsculas, letras, números y guiones. */
-function limpiarToken(token: string): string {
-  let texto = token;
+/** El enlace tal como llegó, sin tocar mayúsculas: la firma las distingue. */
+function decodificar(valor: string): string {
   try {
-    texto = decodeURIComponent(token);
+    return decodeURIComponent(valor).trim();
   } catch {
-    // Un token con % suelto se usa tal cual y simplemente no existirá.
+    // Un valor con % suelto simplemente no existe.
+    return '';
   }
-  return texto
-    .trim()
+}
+
+/** Un código de ejemplo razonable: minúsculas, letras, números y guiones. */
+function limpiarCodigoDeEjemplo(valor: string): string {
+  return valor
     .toLowerCase()
     .replace(/[^a-z0-9-]+/g, '-')
     .replace(/^-+|-+$/g, '')
     .slice(0, 48);
 }
 
-/**
- * Datos del grupo de la profesora para la actividad `token`: actividad,
- * alumnos y menú. En el prototipo solo existen `demo` y `3b-encuesta`; otro
- * token devuelve `null` y la página responde "no encontrado".
- */
-export async function obtenerGrupoPorToken(token: string): Promise<DatosGrupo | null> {
-  const limpio = limpiarToken(token);
-  if (!TOKENS_CONOCIDOS.includes(limpio)) return null;
-  return {
-    profesora: PROFESORA,
-    actividad: { ...ACTIVIDAD_PROFESOR, token: limpio },
-    alumnos: ALUMNOS,
-    alumnoBuscado: ALUMNO_BUSCADO,
-    otrasActividades: OTRAS_ACTIVIDADES,
-    descarga: DESCARGA_DEMO,
-  };
+function esDeEjemplo(token: string): string | null {
+  if (esProduccion()) return null;
+  const limpio = limpiarCodigoDeEjemplo(decodificar(token));
+  return TOKENS_CONOCIDOS.includes(limpio) ? limpio : null;
 }
+
+/** Verifica el enlace del profesor. `null` si no sirve; los demás fallos siguen siendo fallos. */
+async function accesoDelProfesor(token: string) {
+  const enlace = decodificar(token);
+  if (!enlace || enlace.length > 800) return null;
+  const ctx = contextoDeSolicitud();
+  try {
+    const actividad = await autenticarProfesor(ctx, enlace);
+    return { ctx, actividad, enlace };
+  } catch (error) {
+    if (error instanceof DefensaError && error.codigo === 'no_autorizado') return null;
+    throw error;
+  }
+}
+
+/**
+ * Datos del grupo del profesor: actividad, alumnos y menú. Con datos reales sale de la base
+ * de datos; si el enlace no sirve devuelve `null` y la página responde "no encontrado".
+ * Se memoriza por solicitud: `generateMetadata` y la página la llaman con el mismo enlace.
+ */
+export const obtenerGrupoPorToken = cache(async (token: string): Promise<DatosGrupo | null> => {
+  const ejemplo = esDeEjemplo(token);
+  if (ejemplo) {
+    return {
+      profesora: PROFESORA,
+      actividad: { ...ACTIVIDAD_PROFESOR, token: ejemplo },
+      alumnos: ALUMNOS,
+      alumnoBuscado: ALUMNO_BUSCADO,
+      otrasActividades: OTRAS_ACTIVIDADES,
+      descarga: DESCARGA_DEMO,
+    };
+  }
+  const acceso = await accesoDelProfesor(token);
+  if (!acceso) return null;
+  return datosDelGrupo(acceso.ctx, acceso.actividad, acceso.enlace);
+});
 
 /** Reporte con las tres preguntas sin respuesta para quien no tiene transcripción de ejemplo. */
 function reporteReducido(
@@ -76,19 +109,21 @@ function reporteReducido(
 }
 
 /**
- * Reporte de un alumno por matrícula, o `null` si no existe en el grupo o no
- * tiene defensa que revisar. Solo Ana (20231457) trae transcripción completa
- * en el prototipo; los demás muestran su evidencia y las preguntas.
+ * Reporte de un alumno por matrícula, o `null` si no existe en el grupo o no tiene defensa
+ * que revisar. En el escenario de ejemplo solo Ana (20231457) trae transcripción completa.
  */
-export async function obtenerReporte(token: string, alumnoId: string): Promise<DatosReporte | null> {
-  const grupo = await obtenerGrupoPorToken(token);
-  if (!grupo) return null;
-  const matricula = alumnoId.trim();
-  const alumno = grupo.alumnos.find((candidato) => candidato.matricula === matricula);
-  if (!alumno || !alumno.defensa) return null;
-  const reporte =
-    alumno.matricula === MATRICULA_DEMO
-      ? REPORTE_ANA
-      : reporteReducido(alumno, OBJETIVOS, PREGUNTAS);
-  return { grupo, alumno, reporte, cola: colaDeRevision(grupo.alumnos, alumno.matricula) };
-}
+export const obtenerReporte = cache(async (token: string, alumnoId: string): Promise<DatosReporte | null> => {
+  const matricula = decodificar(alumnoId);
+  if (esDeEjemplo(token)) {
+    const grupo = await obtenerGrupoPorToken(token);
+    if (!grupo) return null;
+    const alumno = grupo.alumnos.find((candidato) => candidato.matricula === matricula);
+    if (!alumno || !alumno.defensa) return null;
+    const reporte =
+      alumno.matricula === MATRICULA_DEMO ? REPORTE_ANA : reporteReducido(alumno, OBJETIVOS, PREGUNTAS);
+    return { grupo, alumno, reporte, cola: colaDeRevision(grupo.alumnos, alumno.matricula) };
+  }
+  const acceso = await accesoDelProfesor(token);
+  if (!acceso || !matricula) return null;
+  return datosDelReporte(acceso.ctx, acceso.actividad, acceso.enlace, matricula);
+});

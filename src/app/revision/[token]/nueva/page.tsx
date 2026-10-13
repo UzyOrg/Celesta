@@ -7,6 +7,9 @@ import { MarcoProfesor } from '@/components/revision/MarcoProfesor';
 import { normalizarPasoNueva, PASO_FINAL, TOKEN_DE_LA_NUEVA } from '@/components/revision/nueva';
 import { NuevaActividad } from '@/components/revision/NuevaActividad';
 
+// El enlace firmado y los datos del grupo cambian con cada visita: nunca se prerenderiza.
+export const dynamic = 'force-dynamic';
+
 interface PaginaNuevaProps {
   params: Promise<{ token: string }>;
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -35,7 +38,8 @@ export default async function PaginaNueva({ params, searchParams }: PaginaNuevaP
   const consulta = await searchParams;
   const grupo = await obtenerGrupoPorToken(token);
 
-  if (!grupo) notFound();
+  // Con datos reales la actividad se da de alta con el script (docs/defensas/backend.md): esta pantalla es solo el diseño.
+  if (!grupo || grupo.conectado) notFound();
 
   const vista = normalizarPasoNueva(consulta.paso);
   const resumen = resumenDelGrupo(grupo.alumnos);

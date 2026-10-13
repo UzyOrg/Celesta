@@ -4,9 +4,11 @@ import { ChevronLeft, ChevronRight, Download, Headphones } from 'lucide-react';
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Avatar } from '../celeste/Avatar';
+import { Reproductor } from '../defensa/reproductor';
 import { ETIQUETA_NIVEL, IconoNivel } from '../celeste/IconoNivel';
 import { BarraDeCelestea } from './BarraDeCelestea';
 import { BloqueDeObjetivo } from './BloqueDeObjetivo';
+import { apiProfesor, bajarArchivo, ErrorDelProfesor } from './clienteProfesor';
 import { CierreDelReporte } from './CierreDelReporte';
 import { cantidadEnLetra, conteoPorObjetivo, resumenDelGrupo } from './derivados';
 import { diaDeBorradoDelAudio, marcaCorta } from './fechas';
@@ -15,6 +17,7 @@ import { clasificarPreguntaReporte, SUGERENCIAS_REPORTE } from './intenciones';
 import type { RamaReporte } from './intenciones';
 import { RespuestaEnReporte } from './RespuestaEnReporte';
 import type { CierreReporte, DatosReporte, ParteParaOir } from './types';
+import { useTiempoDeRevision } from './useTiempoDeRevision';
 import styles from './ReporteDelAlumno.module.css';
 
 interface ReporteDelAlumnoProps {
@@ -37,8 +40,11 @@ function esCierre(valor: string | null): valor is CierreReporte {
  * de cierre para el profesor. Abajo, una barra para preguntarle a Celestea
  * sobre esta defensa.
  *
- * Los audios, la descarga y las respuestas de Celestea son simulados. La
- * respuesta de cierre se guarda solo en este navegador.
+ * Con datos reales (`grupo.conectado`) el audio suena de verdad (un enlace que caduca, solo
+ * el tramo marcado o aclarado), la descarga baja el trabajo, la respuesta de cierre se guarda
+ * en el servidor y se mide el tiempo que el reporte está abierto. En el escenario de ejemplo
+ * todo eso es simulado. Las respuestas de Celestea a las preguntas salen de reglas de palabras
+ * sobre este mismo reporte, sin modelo de lenguaje.
  */
 export function ReporteDelAlumno({ datos }: ReporteDelAlumnoProps) {
   const { grupo, alumno, reporte, cola } = datos;
@@ -46,15 +52,25 @@ export function ReporteDelAlumno({ datos }: ReporteDelAlumnoProps) {
   const token = actividad.token;
   const rutaInicio = `/revision/${token}`;
   const rutaAlumno = (matricula: string) => `/revision/${token}/alumno/${matricula}`;
+  const conectado = grupo.conectado === true;
+  const defensaId = datos.defensaId;
+
+  useTiempoDeRevision(token, defensaId, conectado);
 
   const [sonando, setSonando] = useState<ParteParaOir['id'] | null>(null);
   const [brillo, setBrillo] = useState<number | null>(null);
   const [descargado, setDescargado] = useState(false);
+  const [descargando, setDescargando] = useState(false);
+  const [errorDeDescarga, setErrorDeDescarga] = useState<string | null>(null);
+  const [errorDeAudio, setErrorDeAudio] = useState<string | null>(null);
   const [cierre, setCierre] = useState<CierreReporte | null>(null);
   const [texto, setTexto] = useState('');
   const [barraAbierta, setBarraAbierta] = useState(true);
   const [pregunta, setPregunta] = useState('');
   const [respuesta, setRespuesta] = useState<EstadoRespuesta | null>(null);
+
+  const [reproductor] = useState(() => new Reproductor());
+  const sonandoAhora = useRef<ParteParaOir['id'] | null>(null);
 
   const temporizadores = useRef<{
     audio?: ReturnType<typeof setTimeout>;
@@ -70,10 +86,11 @@ export function ReporteDelAlumno({ datos }: ReporteDelAlumnoProps) {
       clearTimeout(guardados.brillo);
       clearTimeout(guardados.pensar);
       clearTimeout(guardados.descarga);
+      reproductor.liberar();
     };
-  }, []);
+  }, [reproductor]);
 
-  // La respuesta de cierre se recuerda en este navegador (aún no hay servidor donde guardarla).
+  // La respuesta de cierre también se recuerda en este navegador, para que al volver se vea contestada.
   const claveCierre = `celestea-revision-cierre-${token}-${alumno.matricula}`;
   useEffect(() => {
     try {
@@ -87,13 +104,16 @@ export function ReporteDelAlumno({ datos }: ReporteDelAlumnoProps) {
   const elegirCierre = useCallback(
     (valor: CierreReporte) => {
       setCierre(valor);
+      if (conectado && defensaId) {
+        void apiProfesor.toque(token, { defensaId, tipo: 'despues', valor }).catch(() => undefined);
+      }
       try {
         window.localStorage.setItem(claveCierre, valor);
       } catch {
         // La respuesta sigue en pantalla aunque no se pueda recordar.
       }
     },
-    [claveCierre],
+    [claveCierre, conectado, defensaId, token],
   );
 
   const brillar = useCallback((numero: number) => {
@@ -102,18 +122,68 @@ export function ReporteDelAlumno({ datos }: ReporteDelAlumnoProps) {
     temporizadores.current.brillo = setTimeout(() => setBrillo(null), MS_DESTELLO);
   }, []);
 
-  const tocarParte = useCallback((parte: ParteParaOir) => {
-    clearTimeout(temporizadores.current.audio);
-    setSonando((actual) => (actual === parte.id ? null : parte.id));
-    // Si ya sonaba, el toque lo detiene; si no, suena el largo de la parte y se detiene solo.
-    temporizadores.current.audio = setTimeout(() => setSonando(null), parte.milisegundos);
-  }, []);
+  const tocarParte = useCallback(
+    async (parte: ParteParaOir) => {
+      clearTimeout(temporizadores.current.audio);
+      setErrorDeAudio(null);
+      if (!conectado) {
+        setSonando((actual) => (actual === parte.id ? null : parte.id));
+        // Si ya sonaba, el toque lo detiene; si no, suena el largo de la parte y se detiene solo.
+        temporizadores.current.audio = setTimeout(() => setSonando(null), parte.milisegundos);
+        return;
+      }
+      // Con audio real: el toque detiene lo que suena o pide un enlace y reproduce solo ese tramo.
+      if (sonandoAhora.current === parte.id) {
+        reproductor.detener();
+        sonandoAhora.current = null;
+        setSonando(null);
+        return;
+      }
+      if (!defensaId || !parte.turnoId) return;
+      sonandoAhora.current = parte.id;
+      setSonando(parte.id);
+      try {
+        const { url } = await apiProfesor.audio(token, { defensaId, turnoId: parte.turnoId });
+        const tramo =
+          parte.desdeMs !== undefined && parte.hastaMs !== undefined ? { desdeMs: parte.desdeMs, hastaMs: parte.hastaMs } : undefined;
+        const resultado = await reproductor.reproducir(url, tramo);
+        if (resultado === 'error' || resultado === 'bloqueado') {
+          setErrorDeAudio('No se pudo reproducir el audio. Inténtalo otra vez.');
+        }
+      } catch (causa) {
+        setErrorDeAudio(causa instanceof ErrorDelProfesor ? causa.message : 'No se pudo reproducir el audio. Inténtalo otra vez.');
+      } finally {
+        // Solo suelta lo suyo: si ya empezó otra parte, esa sigue sonando.
+        if (sonandoAhora.current === parte.id) {
+          sonandoAhora.current = null;
+          setSonando(null);
+        }
+      }
+    },
+    [conectado, defensaId, reproductor, token],
+  );
 
-  const descargar = useCallback(() => {
+  const descargar = useCallback(async () => {
     clearTimeout(temporizadores.current.descarga);
-    setDescargado(true);
-    temporizadores.current.descarga = setTimeout(() => setDescargado(false), MS_DESCARGA);
-  }, []);
+    if (!conectado) {
+      setDescargado(true);
+      temporizadores.current.descarga = setTimeout(() => setDescargado(false), MS_DESCARGA);
+      return;
+    }
+    if (!alumno.entregaId || descargando) return;
+    setDescargando(true);
+    setErrorDeDescarga(null);
+    try {
+      const recibida = await apiProfesor.descarga(token, { alcance: 'uno', entregaId: alumno.entregaId });
+      bajarArchivo(recibida.url, recibida.nombre);
+      setDescargado(true);
+      temporizadores.current.descarga = setTimeout(() => setDescargado(false), MS_DESCARGA);
+    } catch (causa) {
+      setErrorDeDescarga(causa instanceof ErrorDelProfesor ? causa.message : 'No pudimos bajar el trabajo. Inténtalo otra vez.');
+    } finally {
+      setDescargando(false);
+    }
+  }, [alumno.entregaId, conectado, descargando, token]);
 
   const conteos = useMemo(() => conteoPorObjetivo(grupo.alumnos, actividad.objetivos), [grupo.alumnos, actividad.objetivos]);
   const resumenGrupo = useMemo(() => resumenDelGrupo(grupo.alumnos), [grupo.alumnos]);
@@ -217,7 +287,7 @@ export function ReporteDelAlumno({ datos }: ReporteDelAlumnoProps) {
           </div>
           <button type="button" className={styles.descargar} onClick={descargar}>
             <Download size={18} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" />
-            {descargado ? 'Descargado' : 'Descargar trabajo'}
+            {descargando ? 'Preparando…' : descargado ? 'Descargado' : errorDeDescarga ? 'Inténtalo otra vez' : 'Descargar trabajo'}
           </button>
         </header>
 
@@ -239,6 +309,12 @@ export function ReporteDelAlumno({ datos }: ReporteDelAlumnoProps) {
           ))}
         </section>
 
+        {reporte.aviso ? (
+          <div className={styles.nota}>
+            <span>{reporte.aviso}</span>
+          </div>
+        ) : null}
+
         {!reporte.completo ? (
           <div className={styles.nota}>
             <span>{`Esta demostración solo trae la transcripción y el audio de ${grupo.alumnoBuscado.nombreCorto}.`}</span>
@@ -254,7 +330,11 @@ export function ReporteDelAlumno({ datos }: ReporteDelAlumnoProps) {
               </span>
             ) : null}
             {hayVoz && alumno.defensa ? (
-              <span>{`El audio se borra el ${diaDeBorradoDelAudio(alumno.defensa)}`}</span>
+              <span>
+                {reporte.audioDisponible === false
+                  ? 'El audio ya se borró'
+                  : `El audio se borra el ${diaDeBorradoDelAudio(alumno.defensa)}`}
+              </span>
             ) : null}
           </div>
         ) : null}
@@ -299,7 +379,7 @@ export function ReporteDelAlumno({ datos }: ReporteDelAlumnoProps) {
         {contestada ? `Celestea respondió: ${contestada.texto}` : ''}
       </p>
       <p role="status" className={styles.soloLector}>
-        {descargado ? `Se descargó el trabajo de ${alumno.nombre}` : ''}
+        {errorDeDescarga ?? errorDeAudio ?? (descargado ? `Se descargó el trabajo de ${alumno.nombre}` : '')}
       </p>
     </div>
   );

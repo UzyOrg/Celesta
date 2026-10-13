@@ -4,7 +4,7 @@ import { Avatar } from '../celeste/Avatar';
 import { Chip } from '../celeste/Chip';
 import { Pildora } from './Pildora';
 import { TarjetaDeCelestea } from './TarjetaDeCelestea';
-import type { EstadoAlumno, FilaGrupo, SeccionGrupo } from './types';
+import type { Alumno, EstadoAlumno, FilaGrupo, SeccionGrupo } from './types';
 import styles from './TarjetaGrupo.module.css';
 
 interface TarjetaGrupoProps {
@@ -16,7 +16,7 @@ interface TarjetaGrupoProps {
   rutaReporte: (matricula: string) => string;
   /** Reporte directo, para quienes ya fueron revisados. */
   rutaReporteDirecto: (matricula: string) => string;
-  alDescargarTrabajo: (nombre: string) => void;
+  alDescargarTrabajo: (alumno: Alumno) => void;
 }
 
 /** "Grupo 3B por estado": cuatro secciones plegables con cada alumno y lo que se puede hacer con él. */
@@ -82,7 +82,7 @@ interface FilaProps {
   estado: EstadoAlumno;
   rutaReporte: (matricula: string) => string;
   rutaReporteDirecto: (matricula: string) => string;
-  alDescargarTrabajo: (nombre: string) => void;
+  alDescargarTrabajo: (alumno: Alumno) => void;
 }
 
 function Fila({ fila, estado, rutaReporte, rutaReporteDirecto, alDescargarTrabajo }: FilaProps) {
@@ -132,7 +132,7 @@ function Fila({ fila, estado, rutaReporte, rutaReporteDirecto, alDescargarTrabaj
           type="button"
           className={styles.bajar}
           aria-label={`Descargar el trabajo de ${alumno.nombre}`}
-          onClick={() => alDescargarTrabajo(alumno.nombre)}
+          onClick={() => alDescargarTrabajo(alumno)}
         >
           <Download size={17} strokeWidth={2} aria-hidden="true" />
         </button>

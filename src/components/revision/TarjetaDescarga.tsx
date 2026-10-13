@@ -12,11 +12,13 @@ interface TarjetaDescargaProps {
   sinEntregar: number;
   /** El archivo ya está listo y descargado. */
   lista: boolean;
+  /** No se pudo armar el archivo: se dice por qué y se ofrece intentar otra vez. */
+  error?: string | null;
   alDescargarOtraVez: () => void;
 }
 
 /** El archivo comprimido con todos los trabajos entregados, con su avance. */
-export function TarjetaDescarga({ descarga, entregaron, sinEntregar, lista, alDescargarOtraVez }: TarjetaDescargaProps) {
+export function TarjetaDescarga({ descarga, entregaron, sinEntregar, lista, error = null, alDescargarOtraVez }: TarjetaDescargaProps) {
   return (
     <TarjetaDeCelestea etiqueta="Descarga de trabajos" conRelleno>
       <div className={styles.fila}>
@@ -29,7 +31,7 @@ export function TarjetaDescarga({ descarga, entregaron, sinEntregar, lista, alDe
             {`${entregaron} archivos, ${descarga.megabytes} MB`}
           </span>
         </div>
-        {lista ? (
+        {lista || error ? (
           <Pildora
             variante="contorno"
             alto={44}
@@ -39,7 +41,7 @@ export function TarjetaDescarga({ descarga, entregaron, sinEntregar, lista, alDe
             icono={<Download size={17} strokeWidth={2} aria-hidden="true" />}
             onClick={alDescargarOtraVez}
           >
-            Descargar otra vez
+            {error ? 'Intentar otra vez' : 'Descargar otra vez'}
           </Pildora>
         ) : null}
       </div>
@@ -50,8 +52,8 @@ export function TarjetaDescarga({ descarga, entregaron, sinEntregar, lista, alDe
         </div>
         <div className={styles.pie}>
           <span role="status" className={styles.estado}>
-            {lista ? <Check size={14} strokeWidth={2.4} aria-hidden="true" className={styles.listo} /> : null}
-            {lista ? 'Descargado' : 'Preparando…'}
+            {lista && !error ? <Check size={14} strokeWidth={2.4} aria-hidden="true" className={styles.listo} /> : null}
+            {error ?? (lista ? 'Descargado' : 'Preparando…')}
           </span>
           <span>No incluye a los {sinEntregar} que no entregaron</span>
         </div>

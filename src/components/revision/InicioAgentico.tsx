@@ -4,6 +4,7 @@ import { ArrowRight, Check, ChevronLeft } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { BarraDeCelestea } from './BarraDeCelestea';
+import { apiProfesor, bajarArchivo, ErrorDelProfesor } from './clienteProfesor';
 import {
   alumnosEnEstado,
   conteoPorObjetivo,
@@ -36,7 +37,7 @@ import { TarjetaAvance } from './TarjetaAvance';
 import { TarjetaDescarga } from './TarjetaDescarga';
 import { TarjetaGrupo } from './TarjetaGrupo';
 import { TarjetaObjetivos } from './TarjetaObjetivos';
-import type { ClaveFijable, DatosGrupo, EscenaConsulta, EscenaProfesor, EstadoAlumno } from './types';
+import type { Alumno, ClaveFijable, DatosGrupo, EscenaConsulta, EscenaProfesor, EstadoAlumno } from './types';
 import styles from './InicioAgentico.module.css';
 
 interface InicioAgenticoProps {
@@ -83,14 +84,15 @@ function leerFijados(crudo: string | null): Fijados | null {
  * Celestea. Lo que se pide se contesta con componentes ya escritos (avance,
  * alumno, descarga, objetivos, lista); nada se inventa en el momento.
  *
- * Todo es simulado: las peticiones se enrutan con reglas de palabras
- * (`intenciones.ts`), las descargas no descargan y el dictado no usa el
- * micrófono.
+ * Las peticiones se enrutan con reglas de palabras (`intenciones.ts`), sin modelo de
+ * lenguaje. Con datos reales (`grupo.conectado`) las descargas bajan los trabajos de
+ * verdad; en el escenario de ejemplo son simuladas y el dictado no usa el micrófono.
  */
 export function InicioAgentico({ grupo, escenaInicial }: InicioAgenticoProps) {
   const router = useRouter();
   const { actividad, profesora, alumnos, descarga, alumnoBuscado } = grupo;
   const token = actividad.token;
+  const conectado = grupo.conectado === true;
 
   const [escena, setEscena] = useState<EscenaProfesor>(escenaInicial);
   const [pregunta, setPregunta] = useState<string | null>(null);
@@ -102,9 +104,11 @@ export function InicioAgentico({ grupo, escenaInicial }: InicioAgenticoProps) {
   const [fijadosCargados, setFijadosCargados] = useState(false);
   const [abiertas, setAbiertas] = useState<SeccionesAbiertas>(SECCIONES_DE_INICIO);
   const [descargaLista, setDescargaLista] = useState(false);
+  const [descargaError, setDescargaError] = useState<string | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
 
   const contenido = useRef<HTMLDivElement>(null);
+  const solicitudDeDescarga = useRef(0);
   const temporizadores = useRef<{
     pensar?: ReturnType<typeof setTimeout>;
     descarga?: ReturnType<typeof setTimeout>;
@@ -137,17 +141,61 @@ export function InicioAgentico({ grupo, escenaInicial }: InicioAgenticoProps) {
     temporizadores.current.aviso = setTimeout(() => setAviso(null), MS_AVISO);
   }, []);
 
+  /** Arma el zip con el último trabajo de cada alumno y lo baja. Un enlace que caduca, no un archivo guardado. */
+  const descargarTodos = useCallback(async () => {
+    solicitudDeDescarga.current += 1;
+    const solicitud = solicitudDeDescarga.current;
+    setDescargaLista(false);
+    setDescargaError(null);
+    try {
+      const recibida = await apiProfesor.descarga(token, { alcance: 'todos' });
+      if (solicitud !== solicitudDeDescarga.current) return;
+      bajarArchivo(recibida.url, recibida.nombre);
+      setDescargaLista(true);
+    } catch (causa) {
+      if (solicitud !== solicitudDeDescarga.current) return;
+      setDescargaError(causa instanceof ErrorDelProfesor ? causa.message : 'No pudimos armar el archivo. Inténtalo otra vez.');
+    }
+  }, [token]);
+
   const iniciarDescarga = useCallback(() => {
+    if (conectado) {
+      void descargarTodos();
+      return;
+    }
     clearTimeout(temporizadores.current.descarga);
     setDescargaLista(false);
     temporizadores.current.descarga = setTimeout(() => setDescargaLista(true), MS_DESCARGA);
-  }, []);
+  }, [conectado, descargarTodos]);
+
+  /** El trabajo de una persona: con datos reales baja su última versión; en el ejemplo solo avisa. */
+  const descargarTrabajo = useCallback(
+    async (alumno: Alumno) => {
+      if (!conectado) {
+        avisar(`Se descargó el trabajo de ${alumno.nombre}`);
+        return;
+      }
+      if (!alumno.entregaId) {
+        avisar(`${alumno.primerNombre} todavía no entrega su trabajo`);
+        return;
+      }
+      try {
+        const recibida = await apiProfesor.descarga(token, { alcance: 'uno', entregaId: alumno.entregaId });
+        bajarArchivo(recibida.url, recibida.nombre);
+        avisar(`Se descargó el trabajo de ${alumno.nombre}`);
+      } catch (causa) {
+        avisar(causa instanceof ErrorDelProfesor ? causa.message : 'No pudimos bajar el trabajo. Inténtalo otra vez.');
+      }
+    },
+    [conectado, token, avisar],
+  );
 
   // Abrir directo `?escena=descarga` también arma el archivo.
   useEffect(() => {
     if (escenaInicial === 'descarga') iniciarDescarga();
     const guardados = temporizadores.current;
     return () => {
+      solicitudDeDescarga.current += 1;
       clearTimeout(guardados.pensar);
       clearTimeout(guardados.descarga);
       clearTimeout(guardados.dictado);
@@ -197,7 +245,9 @@ export function InicioAgentico({ grupo, escenaInicial }: InicioAgenticoProps) {
       if (!limpia) return;
       const intencion = interpretarPeticion(limpia);
       if (intencion.destino.tipo === 'accion') {
-        router.push(`/revision/${token}/nueva`);
+        // Con datos reales las actividades todavía se dan de alta con el script, no desde esta pantalla.
+        if (conectado) avisar('Por ahora las actividades las damos de alta nosotros. Pídenos la tuya.');
+        else router.push(`/revision/${token}/nueva`);
         return;
       }
       const siguiente: EscenaConsulta | 'otro' =
@@ -213,7 +263,7 @@ export function InicioAgentico({ grupo, escenaInicial }: InicioAgenticoProps) {
         if (siguiente === 'descarga') iniciarDescarga();
       }, MS_PENSANDO);
     },
-    [router, token, iniciarDescarga],
+    [router, token, iniciarDescarga, conectado, avisar],
   );
 
   const irA = useCallback((siguiente: EscenaConsulta) => {
@@ -371,7 +421,7 @@ export function InicioAgentico({ grupo, escenaInicial }: InicioAgenticoProps) {
                     objetivos={actividad.objetivos}
                     rutaReporte={rutaReporte(alumnoBuscado.matricula)}
                     rutaPartes={rutaReporteDirecto(alumnoBuscado.matricula)}
-                    alDescargarTrabajo={() => avisar(`Se descargó el trabajo de ${alumnoBuscado.nombre}`)}
+                    alDescargarTrabajo={() => descargarTrabajo(alumnoBuscado)}
                     fijado={fijados.ana}
                     alAlternarFijado={() => alternarFijado('ana')}
                   />
@@ -386,7 +436,8 @@ export function InicioAgentico({ grupo, escenaInicial }: InicioAgenticoProps) {
                     entregaron={resumen.entregaron}
                     sinEntregar={resumen.sinEntregar}
                     lista={descargaLista}
-                    alDescargarOtraVez={() => avisar(`Se descargó ${descarga.archivo}`)}
+                    error={descargaError}
+                    alDescargarOtraVez={() => (conectado ? iniciarDescarga() : avisar(`Se descargó ${descarga.archivo}`))}
                   />
                 </>
               ) : null}
@@ -412,7 +463,7 @@ export function InicioAgentico({ grupo, escenaInicial }: InicioAgenticoProps) {
                     alAlternarSeccion={alternarSeccion}
                     rutaReporte={rutaReporte}
                     rutaReporteDirecto={rutaReporteDirecto}
-                    alDescargarTrabajo={(nombre) => avisar(`Se descargó el trabajo de ${nombre}`)}
+                    alDescargarTrabajo={descargarTrabajo}
                   />
                 </>
               ) : null}
@@ -443,7 +494,7 @@ export function InicioAgentico({ grupo, escenaInicial }: InicioAgenticoProps) {
         alPedirSugerencia={pedir}
         pensando={escena === 'pensando'}
         escuchando={escuchando}
-        alAlternarDictado={alternarDictado}
+        alAlternarDictado={conectado ? undefined : alternarDictado}
         placeholder={escuchando ? 'Te escucho…' : 'Pide lo que quieras ver o hacer…'}
         etiquetaCampo="Pídele algo a Celestea"
         etiquetaBotonCerrado="Pregúntale a Celestea"
