@@ -624,7 +624,6 @@ export function useFlujoDefensa(actividad: ActividadAlumno, opciones: OpcionesFl
       }
     }, 1_000);
     return () => window.clearInterval(intervalo);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [modo, claveDePregunta, reinicioSilencio, actividad.segundosSilencio, irA]);
 
   // El volumen del micrófono mantiene viva la conversación: mientras haya voz no hay "sin prisa".
