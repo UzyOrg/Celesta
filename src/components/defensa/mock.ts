@@ -1,17 +1,14 @@
-import type { ActividadAlumno, PreguntaDefensa } from './types';
+import type { PreguntaDefensa } from './types';
 
 /**
- * Escenario de ejemplo del flujo del alumno.
+ * Datos de ejemplo que todavía usa la vista previa de diseño del profesor
+ * (`/revision/demo`, solo fuera de producción; ver `revision/consultas.ts`).
  *
- * Es el mismo escenario que usa el profesor (`revision/mock.ts`): Ana Torres
- * Ruiz, matrícula 20231457, entrega el viernes 9 de octubre a las 21:05 y
- * defiende a las 21:32. Los textos son los de los diseños aprobados.
- *
- * Para conectar datos reales se reemplaza `consultas.ts`; los componentes solo
- * conocen los tipos de `types.ts`.
+ * El flujo del alumno ya no lee nada de aquí: su actividad, su entrega y sus
+ * preguntas salen del servidor (ver `consultas.ts` y `clienteApi.ts`).
  */
 
-/** Enlaces del grupo que el prototipo reconoce. `demo` es el de pruebas. */
+/** Enlace de la vista previa del profesor. */
 export const TOKEN_DEMO = 'demo';
 export const TOKENS_CONOCIDOS: readonly string[] = [TOKEN_DEMO, '3b-encuesta'];
 
@@ -35,72 +32,3 @@ export const PREGUNTAS: readonly PreguntaDefensa[] = [
     pregunta: 'Si lo repitieras, ¿qué cambiarías primero?',
   },
 ];
-
-export const ACTIVIDAD_ALUMNO_DEMO: ActividadAlumno = {
-  token: TOKEN_DEMO,
-  // El diseño del alumno llama a la tarjeta "Proyecto final"; el profesor la
-  // guarda como "Encuesta sobre hábitos de estudio". Se respetan ambos textos.
-  nombre: 'Proyecto final',
-  curso: 'Metodología de la investigación',
-  grupo: '3B',
-  cierreTarjeta: 'viernes 9',
-  alumnoDemo: { nombre: 'Ana Torres Ruiz', matricula: '20231457' },
-  trabajo: {
-    titulo: 'Encuesta sobre hábitos de estudio',
-    curso: 'Metodología de la investigación',
-    archivo: 'encuesta-habitos.pdf',
-    paginas: 12,
-  },
-  horaEntrega: '21:05',
-  horaDefensa: '21:32',
-  fechaSello: '9 de octubre',
-  sello: 'Entregado el viernes 9 de octubre a las 21:05',
-  preguntas: PREGUNTAS,
-  segundosSilencio: 30,
-  aclaracion: {
-    antes: '…la muestra fue',
-    despues: 'porque solo tenía dos semanas.',
-    relleno: 'de cuarenta personas',
-  },
-  revision: [
-    {
-      pregunta: PREGUNTAS[0] as PreguntaDefensa,
-      lineas: [
-        {
-          id: 'l1',
-          tiempo: '00:14',
-          segmentos: [{ texto: 'Porque con la encuesta llegaba a más compañeros en menos tiempo.' }],
-        },
-        {
-          id: 'l2',
-          tiempo: '00:19',
-          segmentos: [{ texto: 'Con entrevistas solo hubiera podido hablar con unos cinco.' }],
-          marcadaDeInicio: true,
-        },
-      ],
-    },
-    {
-      pregunta: PREGUNTAS[1] as PreguntaDefensa,
-      lineas: [
-        {
-          id: 'l3',
-          tiempo: '00:41',
-          segmentos: [
-            { texto: 'Quería más, pero la muestra fue ' },
-            { texto: 'de cuarenta personas', aclarado: true },
-          ],
-          aclarada: true,
-        },
-        {
-          id: 'l4',
-          tiempo: '00:47',
-          segmentos: [{ texto: 'porque solo tenía dos semanas.' }],
-        },
-      ],
-    },
-    {
-      pregunta: PREGUNTAS[2] as PreguntaDefensa,
-      porEscrito: 'Lo haría en dos facultades para comparar, y daría más tiempo para que contesten.',
-    },
-  ],
-};

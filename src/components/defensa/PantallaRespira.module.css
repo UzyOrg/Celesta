@@ -80,3 +80,34 @@
     transform: scaleX(1);
   }
 }
+
+/* Lo que explicó bien y dónde dudó en el ensayo: texto y símbolo, nunca nota ni porcentaje. */
+.resumen {
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+  gap: 10px;
+  margin: 28px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.punto {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  color: var(--c-texto-suave);
+  font-size: 15px;
+  line-height: 1.35;
+}
+
+.puntoIcono {
+  flex: none;
+  margin-top: 2px;
+  color: var(--c-acento);
+}
+
+.puntoRotulo {
+  color: var(--c-texto);
+  font-weight: 600;
+}

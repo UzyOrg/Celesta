@@ -1,5 +1,5 @@
 import { File } from 'lucide-react';
-import type { TrabajoDeEjemplo } from './types';
+import type { TrabajoEntregado } from './types';
 import { Boton } from '@/components/celeste/Boton';
 import { Personaje } from '@/components/celeste/Personaje';
 import { retraso } from '@/components/celeste/variablesCss';
@@ -7,7 +7,7 @@ import animaciones from '@/components/celeste/animaciones.module.css';
 import styles from './PantallaArchivo.module.css';
 
 interface PantallaArchivoProps {
-  trabajo: TrabajoDeEjemplo;
+  trabajo: TrabajoEntregado;
   alCambiar: () => void;
   alEntregar: () => void;
 }
@@ -35,7 +35,7 @@ export function PantallaArchivo({ trabajo, alCambiar, alEntregar }: PantallaArch
           <div className={styles.archivo}>
             <File size={18} strokeWidth={1.75} className={styles.iconoArchivo} aria-hidden="true" />
             <span className={styles.nombre}>{trabajo.archivo}</span>
-            <span className={styles.paginas}>{trabajo.paginas} páginas</span>
+            <span className={styles.paginas}>{trabajo.detalle}</span>
           </div>
         </div>
 

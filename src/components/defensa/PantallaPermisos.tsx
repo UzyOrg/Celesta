@@ -5,6 +5,7 @@ import { Interruptor } from '@/components/celeste/Interruptor';
 import { Personaje } from '@/components/celeste/Personaje';
 import { retraso } from '@/components/celeste/variablesCss';
 import animaciones from '@/components/celeste/animaciones.module.css';
+import { AvisoDeError } from './AvisoDeError';
 import { CabezaConBurbuja } from './CabezaConBurbuja';
 import { DialogoPrivacidad } from './DialogoPrivacidad';
 import styles from './PantallaPermisos.module.css';
@@ -16,6 +17,10 @@ interface PantallaPermisosProps {
   aceptaciones: Aceptaciones;
   alCambiar: (indice: 0 | 1 | 2, valor: boolean) => void;
   alAceptar: () => void;
+  /** Se está creando la sesión en el servidor. */
+  ocupado?: boolean;
+  /** Algo no salió al entrar (enlace desactivado, sin conexión...). */
+  error?: string | null;
 }
 
 const FILAS: readonly { indice: 0 | 1 | 2; etiqueta: string; entrada: number }[] = [
@@ -25,7 +30,7 @@ const FILAS: readonly { indice: 0 | 1 | 2; etiqueta: string; entrada: number }[]
 ];
 
 /** Paso 3: tres interruptores, todos apagados al llegar; hay que activarlos a conciencia. */
-export function PantallaPermisos({ aceptaciones, alCambiar, alAceptar }: PantallaPermisosProps) {
+export function PantallaPermisos({ aceptaciones, alCambiar, alAceptar, ocupado = false, error = null }: PantallaPermisosProps) {
   const idAyuda = useId();
   const [avisoAbierto, setAvisoAbierto] = useState(false);
   const todos = aceptaciones.every(Boolean);
@@ -64,15 +69,17 @@ export function PantallaPermisos({ aceptaciones, alCambiar, alAceptar }: Pantall
       <p id={idAyuda} className={styles.ayuda} hidden={todos}>
         Activa los tres para seguir.
       </p>
+      <AvisoDeError mensaje={error} />
       <Boton
         tamano={64}
-        aria-disabled={!todos}
+        aria-disabled={!todos || ocupado}
+        aria-busy={ocupado}
         aria-describedby={todos ? undefined : idAyuda}
         onClick={() => {
-          if (todos) alAceptar();
+          if (todos && !ocupado) alAceptar();
         }}
       >
-        Aceptar
+        {ocupado ? 'Un momento…' : 'Aceptar'}
       </Boton>
 
       <DialogoPrivacidad abierto={avisoAbierto} alCerrar={() => setAvisoAbierto(false)} />

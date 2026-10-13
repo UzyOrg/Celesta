@@ -1,12 +1,15 @@
 import { File } from 'lucide-react';
-import type { ActividadAlumno } from './types';
 import { Boton } from '@/components/celeste/Boton';
 import { retraso } from '@/components/celeste/variablesCss';
 import animaciones from '@/components/celeste/animaciones.module.css';
 import styles from './PantallaEntregado.module.css';
 
 interface PantallaEntregadoProps {
-  actividad: ActividadAlumno;
+  /** Frase accesible del sello: "Entregado el viernes 9 de octubre a las 21:05". */
+  sello: string;
+  /** Hora de entrega ("21:05") y día ("9 de octubre"), en hora de México. */
+  hora: string;
+  fecha: string;
   /** Nombre del archivo o del texto que se entregó. */
   nombreDelTrabajo: string;
   alCambiar: () => void;
@@ -17,11 +20,11 @@ interface PantallaEntregadoProps {
 const PALABRAS_DEL_ANILLO: readonly string[] = Array.from({ length: 6 }, (_, indice) => `${(indice * 100) / 6}%`);
 
 /** Paso 7: el sello de entrega. Lo entregado ya cuenta, pase lo que pase en la defensa. */
-export function PantallaEntregado({ actividad, nombreDelTrabajo, alCambiar, alSeguir }: PantallaEntregadoProps) {
+export function PantallaEntregado({ sello, hora, fecha, nombreDelTrabajo, alCambiar, alSeguir }: PantallaEntregadoProps) {
   return (
     <div className={styles.raiz}>
       <div className={styles.escena}>
-        <div className={styles.sello} role="img" aria-label={actividad.sello}>
+        <div className={styles.sello} role="img" aria-label={sello}>
           <span className={styles.impacto} />
           <span className={styles.estampa}>
             <span className={styles.anillo}>
@@ -39,8 +42,8 @@ export function PantallaEntregado({ actividad, nombreDelTrabajo, alCambiar, alSe
               </svg>
             </span>
             <span className={styles.disco}>
-              <span className={styles.hora}>{actividad.horaEntrega}</span>
-              <span className={styles.fecha}>{actividad.fechaSello}</span>
+              <span className={styles.hora}>{hora}</span>
+              <span className={styles.fecha}>{fecha}</span>
             </span>
           </span>
         </div>

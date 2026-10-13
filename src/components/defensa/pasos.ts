@@ -132,7 +132,7 @@ export interface ContextoDeNavegacion {
 /**
  * Paso siguiente al pulsar el botón principal.
  * - Quien escribe se salta la prueba de micrófono.
- * - En el ensayo, al terminar la revisión se vuelve a "Cuando quieras".
+ * - Tanto en el ensayo como en la defensa, al terminar la revisión sigue la pregunta de estrés.
  * - "Silencio" es un estado de la pregunta: al terminar, ambos siguen igual.
  */
 export function pasoSiguiente(paso: PasoAlumnoId, contexto: ContextoDeNavegacion): PasoAlumnoId | null {
@@ -143,7 +143,8 @@ export function pasoSiguiente(paso: PasoAlumnoId, contexto: ContextoDeNavegacion
     case 'silencio':
       return 'aclaracion';
     case 'revisar':
-      return contexto.ensayo ? 'respira' : 'estres';
+      // Tras el ensayo también se pregunta por el estrés: se mide después de la práctica y de la defensa.
+      return 'estres';
     case 'listo':
       return null;
     default: {
@@ -171,3 +172,65 @@ export const TITULO_DE_PASO: Readonly<Record<PasoAlumnoId, string>> = {
   estres: 'Más o menos estrés que un examen escrito',
   listo: 'Listo',
 };
+
+/* ------------------------------------------------------------------------ */
+/* Qué pasos se pueden mostrar                                              */
+/* ------------------------------------------------------------------------ */
+
+/** Lo que hay hasta ahora; decide a qué pantalla se puede llegar (por la dirección, "atrás" o al recargar). */
+export interface ContextoDeAlcance {
+  haySesion: boolean;
+  hayEntrega: boolean;
+  /** La defensa o el ensayo que está en pantalla, si lo hay. */
+  actual: {
+    estado: 'en_curso' | 'por_revisar' | 'entregada' | 'abandonada' | 'incompleta';
+    hayPregunta: boolean;
+    hayAclaracion: boolean;
+    hayRevision: boolean;
+    esEnsayo: boolean;
+  } | null;
+  /** La defensa de verdad ya se entregó. */
+  defensaEntregada: boolean;
+}
+
+/**
+ * Un paso solo se muestra si existe lo que ese paso necesita: no hay "pregunta" sin una
+ * pregunta ni "revisar" sin una defensa terminada. Así una dirección compartida, un
+ * regreso del navegador o una recarga nunca dejan una pantalla vacía.
+ */
+export function pasoAlcanzable(paso: PasoAlumnoId, c: ContextoDeAlcance): boolean {
+  switch (paso) {
+    case 'inicio':
+    case 'quien':
+    case 'permisos':
+      return true;
+    case 'voz':
+    case 'trabajo':
+      return c.haySesion;
+    case 'archivo':
+    case 'entregado':
+    case 'hola':
+    case 'respira':
+      return c.haySesion && c.hayEntrega;
+    case 'pregunta':
+    case 'silencio':
+      return c.actual?.estado === 'en_curso' && c.actual.hayPregunta;
+    case 'aclaracion':
+      return c.actual?.estado === 'en_curso' && c.actual.hayAclaracion;
+    case 'revisar':
+      return c.actual?.estado === 'por_revisar' && c.actual.hayRevision;
+    case 'estres':
+      return c.actual?.estado === 'entregada';
+    case 'listo':
+      return c.defensaEntregada;
+    default:
+      return false;
+  }
+}
+
+/** A dónde mandar a quien pide un paso al que todavía no puede llegar. */
+export function pasoDeRespaldo(c: ContextoDeAlcance): PasoAlumnoId {
+  if (!c.haySesion) return 'inicio';
+  if (!c.hayEntrega) return 'trabajo';
+  return 'respira';
+}

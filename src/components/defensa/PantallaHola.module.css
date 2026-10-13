@@ -84,3 +84,14 @@
     opacity: 1;
   }
 }
+
+/* La prueba de micrófono avisa con calma: mismo aspecto que "Te oigo bien", en tono cálido. */
+.aviso {
+  height: auto;
+  min-height: 36px;
+  padding: 8px 14px;
+  background: rgba(255, 217, 138, 0.12);
+  color: var(--c-oro-claro);
+  text-align: left;
+  line-height: 1.3;
+}

@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
-import type { ActividadAlumno } from './types';
 import { Personaje } from '@/components/celeste/Personaje';
 import { retraso, variablesCss } from '@/components/celeste/variablesCss';
 import animaciones from '@/components/celeste/animaciones.module.css';
 import styles from './PantallaListo.module.css';
 
 interface PantallaListoProps {
-  actividad: ActividadAlumno;
+  /** Hora en que llegó el trabajo y hora en que se entregó la defensa ("21:05", "21:32"). */
+  horaEntrega: string;
+  horaDefensa: string;
 }
 
 interface Chispa {
@@ -41,7 +42,7 @@ const MILISEGUNDOS_HASTA_EL_AVISO = 1700;
  * su piel Celestia. La piel se guardaría en el perfil de la persona; aquí solo
  * se muestra el momento del desbloqueo.
  */
-export function PantallaListo({ actividad }: PantallaListoProps) {
+export function PantallaListo({ horaEntrega, horaDefensa }: PantallaListoProps) {
   const [conPiel, setConPiel] = useState(false);
   const [conAviso, setConAviso] = useState(false);
 
@@ -82,7 +83,7 @@ export function PantallaListo({ actividad }: PantallaListoProps) {
         Listo.
       </h1>
       <p className={`${styles.horas} ${animaciones.entra}`} style={retraso(0.45, 0.7)}>
-        Trabajo a las {actividad.horaEntrega}, defensa a las {actividad.horaDefensa}
+        Trabajo a las {horaEntrega}, defensa a las {horaDefensa}
       </p>
       <p className={`${styles.profe} ${animaciones.entra}`} style={retraso(0.6, 0.7)}>
         Tu profe califica donde siempre.

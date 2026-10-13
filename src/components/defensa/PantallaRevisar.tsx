@@ -1,44 +1,19 @@
 import { Flag, Pencil } from 'lucide-react';
-import type { ActividadAlumno, BloqueRevision, LineaRevision } from './types';
-import type { ModoDeRespuesta } from './pasos';
+import type { BloqueRevision } from './types';
 import { retraso } from '@/components/celeste/variablesCss';
 import animaciones from '@/components/celeste/animaciones.module.css';
 import styles from './PantallaRevisar.module.css';
 
 interface PantallaRevisarProps {
-  actividad: ActividadAlumno;
-  modo: ModoDeRespuesta;
+  /** Cada pregunta con lo que la persona respondió, ya con la aclaración aplicada. */
+  bloques: readonly BloqueRevision[];
   /** Líneas marcadas con "No lo dije así", por identificador. */
   marcas: Readonly<Record<string, boolean>>;
   alAlternarMarca: (idLinea: string) => void;
-  /** Respuestas escritas durante la defensa, por identificador de pregunta. */
-  respuestasEscritas: Readonly<Record<string, string>>;
-  /** Lo que la persona escribió al aclarar (vacío si lo dijo en voz alta). */
-  aclaracionEscrita: string;
-}
-
-/** Texto plano de una línea de transcripción. */
-function textoDeLinea(linea: LineaRevision): string {
-  return linea.segmentos.map((segmento) => segmento.texto).join('');
-}
-
-/** Respuesta por escrito del bloque: lo tecleado, o la versión de ejemplo. */
-function textoEscritoDe(bloque: BloqueRevision, escritas: Readonly<Record<string, string>>): string {
-  const tecleado = escritas[bloque.pregunta.id];
-  if (tecleado && tecleado.trim().length > 0) return tecleado.trim();
-  if (bloque.porEscrito) return bloque.porEscrito;
-  return (bloque.lineas ?? []).map(textoDeLinea).join(' ');
 }
 
 /** Paso 13: la persona revisa su transcripción y marca lo que no dijo así. */
-export function PantallaRevisar({
-  actividad,
-  modo,
-  marcas,
-  alAlternarMarca,
-  respuestasEscritas,
-  aclaracionEscrita,
-}: PantallaRevisarProps) {
+export function PantallaRevisar({ bloques, marcas, alAlternarMarca }: PantallaRevisarProps) {
   return (
     <div className={styles.raiz}>
       <section className={`${styles.titulos} ${animaciones.entra}`} style={retraso(0.05)}>
@@ -46,8 +21,8 @@ export function PantallaRevisar({
         <p className={styles.indicacion}>Toca lo que no dijiste así.</p>
       </section>
 
-      {actividad.revision.map((bloque, indiceBloque) => {
-        const escrito = modo === 'escrito' || !bloque.lineas;
+      {bloques.map((bloque, indiceBloque) => {
+        const escrito = !bloque.lineas;
         return (
           <section
             key={bloque.pregunta.id}
@@ -69,7 +44,7 @@ export function PantallaRevisar({
                 <span className={styles.lapiz}>
                   <Pencil size={16} strokeWidth={2} role="img" aria-label="Por escrito" />
                 </span>
-                <span>{textoEscritoDe(bloque, respuestasEscritas)}</span>
+                <span>{bloque.porEscrito ?? ''}</span>
               </div>
             ) : (
               (bloque.lineas ?? []).map((linea) => {
@@ -85,13 +60,13 @@ export function PantallaRevisar({
                     <span className={styles.tiempo}>{linea.tiempo}</span>
                     <span className={styles.contenido}>
                       <span>
-                        {linea.segmentos.map((segmento) =>
+                        {linea.segmentos.map((segmento, posicion) =>
                           segmento.aclarado ? (
-                            <span key={segmento.texto} className={styles.aclarado}>
-                              {aclaracionEscrita.trim().length > 0 ? aclaracionEscrita.trim() : segmento.texto}
+                            <span key={`${posicion}-${segmento.texto}`} className={styles.aclarado}>
+                              {segmento.texto}
                             </span>
                           ) : (
-                            <span key={segmento.texto}>{segmento.texto}</span>
+                            <span key={`${posicion}-${segmento.texto}`}>{segmento.texto}</span>
                           ),
                         )}
                       </span>

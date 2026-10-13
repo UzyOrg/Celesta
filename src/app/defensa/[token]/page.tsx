@@ -6,7 +6,11 @@ import { leerBandera, leerModo, normalizarPaso } from '@/components/defensa/paso
 
 export const metadata: Metadata = {
   title: 'Tu defensa oral | Celestea',
+  robots: { index: false, follow: false },
 };
+
+// El enlace depende de la actividad guardada (y de si sigue activo): nunca se prerenderiza.
+export const dynamic = 'force-dynamic';
 
 interface PaginaDefensaProps {
   params: Promise<{ token: string }>;
@@ -14,12 +18,13 @@ interface PaginaDefensaProps {
 }
 
 /**
- * Enlace del alumno: `/defensa/<token>` (el token de demostración es `demo`).
+ * Enlace de grupo del alumno: `/defensa/<token>`. En desarrollo, con el almacén en memoria,
+ * el token de ejemplo es `demo-celestea` (ver `src/lib/defensa/almacen/semilla.ts`).
  *
  * Un solo flujo con máquina de pasos del lado del cliente. `?paso=<id>` (o un
- * número del 1 al 15) abre cualquier paso, `?ensayo=1` abre el ensayo privado y
- * `?modo=escrito` abre la respuesta por escrito. Hoy el token se resuelve con el
- * escenario de ejemplo (ver `consultas.ts`).
+ * número del 1 al 15) abre un paso si ya se puede llegar a él, `?ensayo=1` pide el
+ * ensayo privado y `?modo=escrito` pide la respuesta por escrito. La página solo lee lo
+ * que es de todo el grupo; lo de cada persona llega por la API con su sesión.
  */
 export default async function PaginaDefensa({ params, searchParams }: PaginaDefensaProps) {
   const { token } = await params;

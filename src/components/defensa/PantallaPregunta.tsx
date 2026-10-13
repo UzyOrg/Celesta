@@ -7,6 +7,7 @@ import { Boton } from '@/components/celeste/Boton';
 import { Personaje } from '@/components/celeste/Personaje';
 import { retraso } from '@/components/celeste/variablesCss';
 import animaciones from '@/components/celeste/animaciones.module.css';
+import { AvisoDeError } from './AvisoDeError';
 import styles from './PantallaPregunta.module.css';
 
 interface PantallaPreguntaProps {
@@ -15,6 +16,12 @@ interface PantallaPreguntaProps {
   enSilencio: boolean;
   modo: ModoDeRespuesta;
   ensayo: boolean;
+  /** Celestea está diciendo la pregunta: todavía no se graba. */
+  preguntando: boolean;
+  /** Se está enviando la respuesta ("Listo" ya se pulsó). */
+  ocupado: boolean;
+  /** Algo no salió (sin conexión, no se pudo procesar el audio...). */
+  error: string | null;
   textoEscrito: string;
   alCambiarTexto: (texto: string) => void;
   alEscribir: () => void;
@@ -34,6 +41,9 @@ export function PantallaPregunta({
   enSilencio,
   modo,
   ensayo,
+  preguntando,
+  ocupado,
+  error,
   textoEscrito,
   alCambiarTexto,
   alEscribir,
@@ -47,6 +57,7 @@ export function PantallaPregunta({
   const temporizador = useRef<number | null>(null);
   const escribe = modo === 'escrito';
   const sinTexto = escribe && textoEscrito.trim().length === 0;
+  const bloqueado = sinTexto || ocupado;
 
   useEffect(
     () => () => {
@@ -56,6 +67,7 @@ export function PantallaPregunta({
   );
 
   const repetir = () => {
+    if (ocupado) return;
     setRepeticiones((valor) => valor + 1);
     setAvisoRepeticion(true);
     if (temporizador.current !== null) window.clearTimeout(temporizador.current);
@@ -74,9 +86,11 @@ export function PantallaPregunta({
         ) : null}
         {/* Al repetir la pregunta cambia la clave y la frase vuelve a aparecer. */}
         <div key={repeticiones} className={styles.pregunta}>
-          <p className={`${styles.contexto} ${animaciones.entra}`} style={retraso(0.1)}>
-            {pregunta.contexto}
-          </p>
+          {pregunta.contexto ? (
+            <p className={`${styles.contexto} ${animaciones.entra}`} style={retraso(0.1)}>
+              {pregunta.contexto}
+            </p>
+          ) : null}
           <h1 className={`${styles.titulo} ${animaciones.entra}`} style={retraso(0.25)}>
             {pregunta.pregunta}
           </h1>
@@ -98,6 +112,7 @@ export function PantallaPregunta({
                 id={idCampo}
                 className={styles.texto}
                 rows={5}
+                maxLength={4000}
                 value={textoEscrito}
                 onChange={(evento) => alCambiarTexto(evento.target.value)}
               />
@@ -125,7 +140,7 @@ export function PantallaPregunta({
             <BarrasDeVoz preset="pregunta" />
             <span className={styles.estado}>
               <span className={styles.latido} aria-hidden="true" />
-              {avisoRepeticion ? 'Repito la pregunta' : 'Te escucho'}
+              {ocupado ? 'Un momento…' : avisoRepeticion ? 'Repito la pregunta' : preguntando ? 'Escucha la pregunta' : 'Te escucho'}
             </span>
           </>
         )}
@@ -133,12 +148,13 @@ export function PantallaPregunta({
       </section>
 
       <section className={styles.pie}>
+        <AvisoDeError mensaje={error} />
         <div className={styles.dos}>
           <Boton variante="tarjeta" tamano={52} icono={<RotateCcw size={16} strokeWidth={2} />} onClick={repetir}>
             Repetir pregunta
           </Boton>
           {escribe ? (
-            <Boton variante="tarjeta" tamano={52} icono={<Mic size={16} strokeWidth={2} />} onClick={alHablar}>
+            <Boton variante="tarjeta" tamano={52} icono={<Mic size={16} strokeWidth={2} />} onClick={() => !ocupado && alHablar()}>
               Prefiero hablar
             </Boton>
           ) : (
@@ -146,8 +162,8 @@ export function PantallaPregunta({
               variante="tarjeta"
               tamano={52}
               icono={<Keyboard size={16} strokeWidth={1.9} />}
-              className={enSilencio ? styles.sugerido : ''}
-              onClick={alEscribir}
+              className={enSilencio || error ? styles.sugerido : ''}
+              onClick={() => !ocupado && alEscribir()}
             >
               Prefiero escribir
             </Boton>
@@ -155,12 +171,13 @@ export function PantallaPregunta({
         </div>
         <Boton
           tamano={64}
-          aria-disabled={sinTexto}
+          aria-disabled={bloqueado}
+          aria-busy={ocupado}
           onClick={() => {
-            if (!sinTexto) alListo();
+            if (!bloqueado) alListo();
           }}
         >
-          Listo
+          {ocupado ? 'Enviando…' : 'Listo'}
         </Boton>
       </section>
     </div>

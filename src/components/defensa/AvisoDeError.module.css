@@ -1,0 +1,20 @@
+.region {
+  align-self: stretch;
+}
+
+.aviso {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0 0 12px;
+  color: var(--c-oro-claro);
+  font-size: 14px;
+  line-height: 1.35;
+  text-align: left;
+}
+
+.icono {
+  flex: none;
+  margin-top: 1px;
+  color: var(--c-oro);
+}
