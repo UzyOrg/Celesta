@@ -1,0 +1,80 @@
+.contenido {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 12px 24px 28px;
+}
+
+.encabezado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.titulo {
+  margin: 0;
+  font-size: 26px;
+  line-height: 1.1;
+  font-weight: 650;
+  letter-spacing: -0.025em;
+}
+
+.cerrar {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  margin-right: -10px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--c-texto);
+  cursor: pointer;
+}
+
+.cerrar:hover {
+  background: var(--c-hover);
+}
+
+.campoCaja {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.etiqueta {
+  color: var(--c-texto-2);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.campo {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 180px;
+  padding: 14px 16px;
+  border: 1.5px solid var(--c-linea);
+  border-radius: 18px;
+  background: var(--c-tarjeta);
+  color: var(--c-texto);
+  font-family: inherit;
+  font-size: 16px;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.campoCaja .campo:focus {
+  border-color: var(--c-acento);
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(140, 200, 255, 0.14);
+}
+
+.acciones {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}

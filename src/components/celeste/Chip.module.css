@@ -1,0 +1,95 @@
+.chip {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  /* El diseño no declara box-sizing en las pastillas: el borde (si lo hay) se suma a la altura. */
+  box-sizing: content-box;
+  border-radius: 999px;
+  line-height: normal;
+  white-space: nowrap;
+}
+
+.icono {
+  display: inline-flex;
+  flex: none;
+}
+
+/* ───────── Alturas ───────── */
+
+.alto-22 {
+  gap: 5px;
+  height: 22px;
+  padding: 0 8px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.alto-24 {
+  gap: 6px;
+  height: 24px;
+  padding: 0 10px;
+  font-size: 12px;
+}
+
+.alto-28 {
+  gap: 7px;
+  height: 28px;
+  padding: 0 11px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* ───────── Tonos ───────── */
+
+.tono-neutro {
+  background: var(--c-superficie-2);
+  color: var(--c-texto-suave);
+}
+
+.tono-tenue {
+  background: var(--c-superficie-2);
+  color: var(--c-texto-2);
+}
+
+.tono-oir {
+  background: rgba(255, 217, 138, 0.1);
+  color: var(--c-oro-claro);
+}
+
+.tono-destacado {
+  background: rgba(255, 217, 138, 0.12);
+  color: var(--c-oro-claro);
+  font-weight: 600;
+}
+
+.tono-contorno {
+  border: 1px solid var(--c-linea);
+  background: transparent;
+  color: var(--c-texto-2);
+  font-weight: 400;
+}
+
+.tono-conteo {
+  justify-content: center;
+  min-width: 22px;
+  padding: 0 7px;
+  background: var(--c-superficie-2);
+  box-sizing: border-box;
+  color: var(--c-texto);
+  font-weight: 600;
+}
+
+.tono-explico {
+  background: rgba(140, 200, 255, 0.1);
+  color: var(--c-texto);
+}
+
+.tono-en-parte {
+  background: rgba(90, 147, 230, 0.14);
+  color: var(--c-texto);
+}
+
+.tono-no-salio {
+  background: rgba(61, 99, 173, 0.18);
+  color: var(--c-texto);
+}

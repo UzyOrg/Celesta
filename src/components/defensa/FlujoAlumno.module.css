@@ -1,0 +1,20 @@
+/* Cada paso ocupa todo el alto del <main>: sus botones se pegan al borde inferior. */
+.pantalla {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* La revisión es larga: el botón de entregar queda siempre a la vista. */
+.pieRevision {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  padding: 16px 20px 28px;
+  border-top: 1px solid var(--c-superficie-2);
+  background: var(--c-fondo);
+}

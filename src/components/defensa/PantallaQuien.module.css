@@ -1,0 +1,58 @@
+.raiz {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  padding: 32px 24px 28px;
+}
+
+.campos {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 40px;
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.etiqueta {
+  color: var(--c-texto-2);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.entrada {
+  height: 60px;
+  box-sizing: border-box;
+  padding: 0 20px;
+  border: 1.5px solid var(--c-linea);
+  border-radius: 18px;
+  background: var(--c-tarjeta);
+  color: var(--c-texto);
+  font-family: inherit;
+  font-size: 19px;
+  font-weight: 500;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.matricula {
+  letter-spacing: 0.04em;
+}
+
+/* El diseño muestra el campo activo con un borde de acento y un halo suave. */
+.campo .entrada:focus {
+  border: 2px solid var(--c-acento);
+  padding: 0 19.5px;
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(140, 200, 255, 0.14);
+}
+
+.relleno {
+  flex: 1;
+  min-height: 24px;
+}

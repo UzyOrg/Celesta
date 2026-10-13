@@ -1,0 +1,278 @@
+/* Página que crece: el menú acompaña a quien lee y la barra de Celestea se pega abajo. */
+.raiz {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: center;
+  box-sizing: border-box;
+  padding: 20px 40px 0;
+}
+
+.columna {
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+  width: 100%;
+  max-width: 900px;
+}
+
+/* ───────── Migas y cola ───────── */
+
+.migas {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.volver {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 40px;
+  margin-left: -8px;
+  padding: 0 14px 0 8px;
+  border-radius: 10px;
+  color: var(--c-texto-2);
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.volver:hover {
+  background: var(--c-tarjeta);
+  color: var(--c-texto);
+}
+
+.cola {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.posicion {
+  margin-right: 4px;
+  font-size: 13.5px;
+  color: var(--c-texto-2);
+}
+
+.flecha {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* El diseño no declara box-sizing en estos enlaces: el borde se suma a los 40 px. */
+  box-sizing: content-box;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--c-linea);
+  border-radius: 10px;
+  color: var(--c-texto-2);
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.flecha:hover {
+  background: var(--c-hover);
+  color: var(--c-texto);
+}
+
+/* ───────── Cabecera ───────── */
+
+.cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  animation: entrar 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.identidad {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  min-width: 0;
+}
+
+.textos {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.nombre {
+  margin: 0;
+  font-size: 34px;
+  font-weight: 650;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  overflow-wrap: anywhere;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 14px;
+  font-size: 13.5px;
+  color: var(--c-texto-2);
+}
+
+.matricula {
+  font-family: var(--c-mono);
+  font-size: 12.5px;
+}
+
+.descargar {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  box-sizing: border-box;
+  height: 44px;
+  padding: 0 18px;
+  border: 1px solid var(--c-linea);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--c-texto);
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.descargar:hover {
+  background: var(--c-hover);
+}
+
+/* ───────── Resumen por objetivo ───────── */
+
+.resumen {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
+  gap: 12px;
+  animation: entrar 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) 0.06s both;
+}
+
+.objetivo {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-sizing: border-box;
+  padding: 16px 18px;
+  border: 1px solid var(--c-linea-suave);
+  border-radius: 16px;
+  background: var(--c-tarjeta);
+  color: var(--c-texto);
+  text-decoration: none;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.objetivo:hover {
+  border-color: var(--c-linea-hover);
+  background: #111a2e;
+}
+
+.objetivoNumero {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--c-apagado);
+}
+
+.objetivoTexto {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.objetivoNivel {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+/* ───────── Nota sobre el audio ───────── */
+
+.nota {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  margin: -8px 0 -6px;
+  font-size: 13px;
+  color: var(--c-texto-2);
+}
+
+.notaOir {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.notaIcono {
+  color: var(--c-oro);
+}
+
+.soloLector {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@keyframes entrar {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cabecera,
+  .resumen {
+    animation: none;
+  }
+
+  .volver,
+  .flecha,
+  .descargar,
+  .objetivo {
+    transition: none;
+  }
+}
+
+@media (max-width: 560px) {
+  .raiz {
+    padding: 14px 16px 0;
+  }
+
+  .columna {
+    gap: 20px;
+  }
+
+  .nombre {
+    font-size: 28px;
+  }
+
+  .identidad {
+    gap: 14px;
+  }
+}

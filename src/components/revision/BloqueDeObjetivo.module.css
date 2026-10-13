@@ -1,0 +1,241 @@
+.bloque {
+  box-sizing: border-box;
+  overflow: hidden;
+  border: 1px solid var(--c-linea-suave);
+  border-radius: 20px;
+  background: var(--c-tarjeta);
+  /* Al llegar desde un enlace interno no queda pegado al borde de la ventana. */
+  scroll-margin-top: 20px;
+}
+
+.bloque:focus {
+  outline: none;
+}
+
+.destello {
+  animation: destello 1.6s ease-out both;
+}
+
+/* ───────── Franja del objetivo ───────── */
+
+.franja {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  padding: 13px 22px;
+  border-bottom: 1px solid var(--c-linea-suave);
+  background: var(--c-franja);
+}
+
+.objetivo {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  font-size: 14px;
+  color: var(--c-texto);
+}
+
+.objetivoNumero {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--c-apagado);
+}
+
+/* ───────── Cuerpo ───────── */
+
+.cuerpo {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  padding: 22px 24px 26px;
+}
+
+.fila {
+  display: flex;
+  gap: 14px;
+}
+
+.avatarPregunta {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  /* El diseño no declara box-sizing: el borde se suma al diámetro. */
+  box-sizing: content-box;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--c-linea);
+  border-radius: 999px;
+  background: var(--c-panel);
+}
+
+.textos {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.numeroPregunta {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--c-apagado);
+}
+
+.pregunta {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.45;
+  text-wrap: pretty;
+}
+
+/* ───────── Respuesta ───────── */
+
+.respuesta {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.encabezadoRespuesta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 12px;
+}
+
+.autor {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--c-texto-suave);
+}
+
+.transcripcion {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 6px;
+  border-radius: 14px;
+  background: var(--c-panel);
+}
+
+.linea {
+  display: grid;
+  grid-template-columns: 50px minmax(0, 1fr);
+  gap: 10px;
+  padding: 7px 10px;
+}
+
+.tiempo {
+  padding-top: 3px;
+  font-family: var(--c-mono);
+  font-size: 12px;
+  color: var(--c-apagado);
+}
+
+.texto {
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+/* La frase que el alumno marcó como "no lo dije así": subrayado punteado dorado. */
+.subrayado {
+  background: transparent;
+  color: inherit;
+  text-decoration: underline dotted var(--c-oro);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 6px;
+}
+
+/* La parte que el alumno completó al aclarar: recuadro dorado. */
+.recuadro {
+  padding: 1px 6px;
+  border: 1.5px solid var(--c-oro);
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  white-space: nowrap;
+}
+
+.escrito {
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: var(--c-panel);
+}
+
+.sinTranscripcion {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--c-texto-2);
+}
+
+.faltante {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 2px 0 0;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(90, 147, 230, 0.08);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--c-texto-suave);
+}
+
+.faltanteIcono {
+  flex: none;
+  margin-top: 2px;
+  color: var(--c-acento);
+}
+
+.faltanteRotulo {
+  font-weight: 600;
+  color: var(--c-texto);
+}
+
+@keyframes destello {
+  0% {
+    box-shadow: 0 0 0 2px rgba(140, 200, 255, 0.7);
+  }
+
+  100% {
+    box-shadow: 0 0 0 2px rgba(140, 200, 255, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .destello {
+    animation: none;
+  }
+}
+
+@media (max-width: 560px) {
+  .franja {
+    padding: 13px 16px;
+  }
+
+  .cuerpo {
+    padding: 18px 16px 22px;
+  }
+
+  .fila {
+    gap: 10px;
+  }
+
+  .linea {
+    grid-template-columns: 44px minmax(0, 1fr);
+    gap: 8px;
+    padding: 7px 6px;
+  }
+}

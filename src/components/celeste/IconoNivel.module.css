@@ -1,0 +1,20 @@
+.icono {
+  display: block;
+  flex: none;
+}
+
+.explico {
+  fill: var(--c-ev-explico);
+}
+
+.parteAro {
+  stroke: var(--c-ev-parte);
+}
+
+.parteMitad {
+  fill: var(--c-ev-parte);
+}
+
+.noSalio {
+  stroke: var(--c-ev-no);
+}

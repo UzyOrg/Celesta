@@ -1,0 +1,168 @@
+.raiz {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 22px;
+  padding: 12px 20px 20px;
+}
+
+.titulos {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0 4px;
+}
+
+.titulo {
+  margin: 0;
+  font-size: 32px;
+  line-height: 1.08;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+}
+
+.indicacion {
+  margin: 0;
+  color: var(--c-texto-2);
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+.bloque {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cabeza {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: 10px;
+  padding: 0 12px 6px;
+}
+
+.numero {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  box-sizing: border-box;
+  border: 1.5px solid var(--c-acento);
+  border-radius: 999px;
+  color: var(--c-acento);
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+.preguntaTexto {
+  margin: 0;
+  color: var(--c-texto-2);
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.linea {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  padding: 10px 12px;
+  border: 1.5px solid transparent;
+  border-radius: 16px;
+  background: transparent;
+  color: var(--c-texto);
+  font-family: inherit;
+  font-size: 16px;
+  line-height: 1.5;
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.linea:hover {
+  background: var(--c-hover);
+}
+
+.marcada,
+.marcada:hover {
+  border-color: var(--c-acento);
+  background: var(--c-seleccion);
+  animation: brillo 2.4s ease-in-out 1s infinite;
+}
+
+.tiempo {
+  padding-top: 4px;
+  color: var(--c-texto-2);
+  font-family: var(--c-mono);
+  font-size: 12px;
+}
+
+.contenido {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.aclarado {
+  text-decoration: underline dotted var(--c-acento);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
+}
+
+.etiqueta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  box-sizing: border-box;
+  padding: 0 9px;
+  border-radius: 7px;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.etiquetaMarca {
+  background: var(--c-acento);
+  color: var(--c-sobre-acento);
+}
+
+.etiquetaAclarado {
+  /* El diseño no declara box-sizing en esta etiqueta: 24 px de contenido más el borde (26 px). */
+  box-sizing: content-box;
+  border: 1px solid var(--c-acento);
+  color: var(--c-acento);
+}
+
+.escrito {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  padding: 10px 12px;
+  border-radius: 16px;
+  background: var(--c-tarjeta);
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.lapiz {
+  display: flex;
+  padding-top: 4px;
+  color: var(--c-texto-2);
+}
+
+@keyframes brillo {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(140, 200, 255, 0);
+  }
+
+  50% {
+    box-shadow: 0 0 0 5px rgba(140, 200, 255, 0.16);
+  }
+}

@@ -1,0 +1,109 @@
+.cuerpo {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 22px 22px 24px;
+}
+
+.cifra {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.numero {
+  font-size: 56px;
+  line-height: 0.9;
+  font-weight: 600;
+  letter-spacing: -0.04em;
+}
+
+.numeroTexto {
+  color: var(--c-texto-2);
+  font-size: 17px;
+}
+
+.leyenda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 22px;
+  color: var(--c-texto-2);
+  font-size: 13.5px;
+}
+
+.leyendaItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.muestra {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+}
+
+.muestraExplico {
+  background: var(--c-ev-explico);
+}
+
+.muestraParte {
+  background: var(--c-ev-parte);
+}
+
+.muestraNo {
+  background: var(--c-ev-no);
+}
+
+.mono {
+  color: var(--c-texto);
+  font-family: var(--c-mono);
+}
+
+.columnas {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
+  gap: 16px 24px;
+  margin-top: 6px;
+  padding-top: 18px;
+  border-top: 1px solid var(--c-linea-suave);
+}
+
+.columna {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tituloColumna {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 4px;
+  color: var(--c-texto-2);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.persona {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 40px;
+}
+
+.personaTextos {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.nombre {
+  font-size: 15px;
+}
+
+.estado {
+  color: var(--c-texto-2);
+  font-size: 12.5px;
+}

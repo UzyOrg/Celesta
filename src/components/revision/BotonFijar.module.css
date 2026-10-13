@@ -1,0 +1,30 @@
+.boton {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  box-sizing: border-box;
+  height: 40px;
+  padding: 0 14px;
+  border: 1px solid var(--c-linea);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--c-texto);
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: normal;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.boton:hover {
+  background: var(--c-hover);
+}
+
+.fijado {
+  border-color: rgba(140, 200, 255, 0.45);
+  color: var(--c-acento);
+}

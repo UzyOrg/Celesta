@@ -1,0 +1,172 @@
+.raiz {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  padding: 0 24px 28px;
+}
+
+.escena {
+  display: flex;
+  justify-content: center;
+  padding-top: 40px;
+}
+
+.sello {
+  position: relative;
+  width: 210px;
+  height: 210px;
+}
+
+.impacto {
+  position: absolute;
+  inset: 0;
+  box-sizing: border-box;
+  border: 2px solid rgba(140, 200, 255, 0.6);
+  border-radius: 999px;
+  animation: impacto 1s ease-out 0.55s both;
+}
+
+.estampa {
+  position: absolute;
+  inset: 0;
+  animation: sellar 0.8s cubic-bezier(0.3, 1.4, 0.5, 1) 0.2s both;
+}
+
+.anillo {
+  position: absolute;
+  inset: 0;
+  animation: girar 18s linear infinite;
+}
+
+.textoAnillo {
+  fill: var(--c-acento);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.085em;
+}
+
+.disco {
+  position: absolute;
+  left: 37px;
+  top: 37px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 136px;
+  height: 136px;
+  border-radius: 999px;
+  background: radial-gradient(circle at 36% 30%, #f4faff 0%, #c4e3ff 22%, #8cc8ff 55%, #6a93f5 100%);
+  box-shadow: 0 0 60px rgba(140, 200, 255, 0.3);
+  color: var(--c-sobre-acento);
+}
+
+.hora {
+  font-size: 40px;
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+}
+
+.fecha {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.textos {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 44px;
+}
+
+.titulo {
+  margin: 0;
+  font-size: 54px;
+  line-height: 0.95;
+  font-weight: 700;
+  letter-spacing: -0.045em;
+}
+
+.subtitulo {
+  margin: 0;
+  color: var(--c-texto-2);
+  font-size: 19px;
+  line-height: 1.3;
+}
+
+.relleno {
+  flex: 1;
+  min-height: 24px;
+}
+
+.pie {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.archivo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 8px 8px 16px;
+  border: 1px solid var(--c-linea);
+  border-radius: 20px;
+  background: var(--c-tarjeta);
+}
+
+.iconoArchivo {
+  flex: none;
+  color: var(--c-acento);
+}
+
+.nombre {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 15px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@keyframes sellar {
+  0% {
+    opacity: 0;
+    transform: scale(1.8) rotate(-24deg);
+  }
+
+  55% {
+    opacity: 1;
+    transform: scale(0.94) rotate(2deg);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0);
+  }
+}
+
+@keyframes impacto {
+  0% {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+
+  10% {
+    opacity: 0.9;
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1.55);
+  }
+}
+
+@keyframes girar {
+  to {
+    transform: rotate(360deg);
+  }
+}

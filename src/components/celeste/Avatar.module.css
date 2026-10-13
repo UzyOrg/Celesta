@@ -1,0 +1,15 @@
+.avatar {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: var(--lado);
+  height: var(--lado);
+  border-radius: 999px;
+  background: var(--fondo-avatar);
+  color: var(--tinta-avatar);
+  font-size: var(--letra);
+  font-weight: 700;
+  line-height: 1;
+  user-select: none;
+}

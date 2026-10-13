@@ -1,0 +1,173 @@
+.hilo {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  padding-top: 24px;
+}
+
+/* ───────── Celestea ───────── */
+
+.celestea {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  animation: entrar 0.4s ease both;
+}
+
+.contenido {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.texto {
+  margin: 4px 0 0;
+  font-size: 16.5px;
+  line-height: 1.55;
+  text-wrap: pretty;
+}
+
+.objetivos {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  box-sizing: border-box;
+  padding: 8px;
+  border: 1px solid var(--c-linea-suave);
+  border-radius: 18px;
+  background: var(--c-tarjeta);
+}
+
+.objetivo {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 12px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.objetivo:hover {
+  background: var(--c-hover);
+}
+
+.casilla {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  margin: 1px 0 0;
+  accent-color: var(--c-acento);
+  cursor: pointer;
+}
+
+.casilla:focus-visible {
+  outline: 2px solid var(--c-foco);
+  outline-offset: 2px;
+}
+
+.objetivoTextos {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.objetivoTitulo {
+  font-size: 15.5px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--c-texto);
+}
+
+.apagado {
+  color: var(--c-apagado);
+}
+
+.criterio {
+  font-size: 12.5px;
+  color: var(--c-apagado);
+}
+
+.acciones {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.pista {
+  margin: 0;
+  font-size: 13.5px;
+  color: var(--c-texto-2);
+}
+
+/* ───────── Profesor ───────── */
+
+.profesor {
+  display: flex;
+  justify-content: flex-end;
+  animation: entrar 0.3s ease both;
+}
+
+.burbuja {
+  box-sizing: border-box;
+  max-width: 82%;
+  padding: 12px 18px;
+  border-radius: 20px 20px 6px 20px;
+  background: var(--c-superficie-2);
+  font-size: 15.5px;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+  white-space: pre-line;
+}
+
+/* ───────── Pensando ───────── */
+
+.pensando {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  animation: entrar 0.3s ease both;
+}
+
+.textoPensando {
+  font-size: 15px;
+  color: var(--c-texto-2);
+}
+
+@keyframes entrar {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .celestea,
+  .profesor,
+  .pensando {
+    animation: none;
+  }
+
+  .objetivo {
+    transition: none;
+  }
+}
+
+@media (max-width: 560px) {
+  .burbuja {
+    max-width: 92%;
+  }
+}

@@ -1,0 +1,257 @@
+.raiz {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  padding: 4px 24px 28px;
+}
+
+.reloj {
+  /* El diseño no declara box-sizing: los 30 px son de contenido y el borde se suma (32 px). */
+  box-sizing: content-box;
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 30px;
+  padding: 0 12px;
+  border: 1px solid var(--c-linea);
+  border-radius: 999px;
+  background: var(--c-tarjeta);
+  color: var(--c-texto-2);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.cabeza {
+  margin-top: 24px;
+}
+
+.frase {
+  margin: 32px 0 0;
+  font-size: 26px;
+  line-height: 1.7;
+  font-weight: 500;
+  letter-spacing: -0.015em;
+  text-wrap: pretty;
+}
+
+/* El hueco marca "esto es lo que falta": borde discontinuo, relleno que respira y cursor. */
+.hueco {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-width: 116px;
+  height: 40px;
+  box-sizing: border-box;
+  padding-left: 12px;
+  overflow: hidden;
+  vertical-align: middle;
+  border: 2px dashed var(--c-acento);
+  border-radius: 12px;
+}
+
+.huecoLleno {
+  padding-right: 12px;
+  border-style: solid;
+  background: rgba(140, 200, 255, 0.14);
+}
+
+.relleno {
+  color: var(--c-texto);
+  font-size: 20px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.pulso {
+  position: absolute;
+  inset: 0;
+  background: var(--c-acento);
+  animation: hueco 1.8s ease-in-out infinite;
+}
+
+.cursor {
+  position: relative;
+  width: 2px;
+  height: 22px;
+  border-radius: 1px;
+  background: var(--c-texto);
+  animation: cursor 1.1s linear infinite;
+}
+
+.oir {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 26px;
+  padding: 12px 14px;
+  border: 1px solid var(--c-linea);
+  border-radius: 20px;
+  background: var(--c-tarjeta);
+  color: var(--c-texto);
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.oir:hover {
+  border-color: var(--c-linea-hover);
+}
+
+.reproducir {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  /* El diseño no declara box-sizing: 44 px de contenido más el borde. */
+  box-sizing: content-box;
+  border: 1.5px solid var(--c-acento);
+  border-radius: 999px;
+  color: var(--c-acento);
+}
+
+.oirTextos {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.oirTitulo {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.onda {
+  display: block;
+  width: 100%;
+}
+
+.zonaHueco {
+  fill: var(--c-acento);
+  fill-opacity: 0.14;
+}
+
+.barraApagada {
+  fill: #2a3756;
+}
+
+.barraAcento {
+  fill: var(--c-acento);
+}
+
+.cabezal {
+  fill: var(--c-texto);
+  opacity: 0;
+}
+
+.cabezalActivo {
+  animation: cabezal 2.2s linear infinite;
+}
+
+.garantia {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 14px 0 0;
+  padding: 0 4px;
+  color: var(--c-texto-2);
+  font-size: 14px;
+}
+
+.garantia svg {
+  flex: none;
+}
+
+.espacio {
+  flex: 1;
+  min-height: 24px;
+}
+
+.escribir {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.etiqueta {
+  color: var(--c-texto-2);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.entrada {
+  height: 60px;
+  box-sizing: border-box;
+  padding: 0 20px;
+  border: 1.5px solid var(--c-linea);
+  border-radius: 18px;
+  background: var(--c-tarjeta);
+  color: var(--c-texto);
+  font-family: inherit;
+  font-size: 19px;
+  font-weight: 500;
+}
+
+.campo .entrada:focus {
+  border-color: var(--c-acento);
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(140, 200, 255, 0.14);
+}
+
+.acciones {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+@keyframes hueco {
+  0%,
+  100% {
+    opacity: 0.15;
+  }
+
+  50% {
+    opacity: 0.6;
+  }
+}
+
+@keyframes cursor {
+  0%,
+  49% {
+    opacity: 1;
+  }
+
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* El cabezal recorre la zona resaltada (51 unidades de ancho en el dibujo). */
+@keyframes cabezal {
+  0% {
+    opacity: 0;
+    transform: translateX(0);
+  }
+
+  10%,
+  90% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateX(50px);
+  }
+}

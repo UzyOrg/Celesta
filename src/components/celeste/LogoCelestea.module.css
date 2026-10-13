@@ -1,0 +1,49 @@
+.marca {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.solo {
+  display: inline-flex;
+}
+
+.nombre {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: normal;
+}
+
+.simbolo {
+  display: block;
+  flex: none;
+}
+
+.anilloFondo {
+  stroke: var(--c-acento);
+  stroke-opacity: 0.35;
+}
+
+.planeta {
+  fill: var(--c-acento);
+}
+
+.anilloFrente {
+  stroke: var(--c-acento);
+  stroke-opacity: 0.8;
+}
+
+.luna {
+  fill: var(--c-oro-claro);
+}
+
+@keyframes girar {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.girando {
+  animation: girar 1.1s linear infinite;
+}

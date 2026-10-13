@@ -1,0 +1,58 @@
+.raiz {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  padding: 48px 24px 32px;
+}
+
+.titulo {
+  margin: 0;
+  font-size: 34px;
+  line-height: 1.08;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  text-wrap: balance;
+}
+
+.relleno {
+  flex: 1;
+  min-height: 32px;
+}
+
+.opciones {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.opcion {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  min-height: 132px;
+  box-sizing: border-box;
+  padding: 18px 2px 12px;
+  border: 1px solid var(--c-linea);
+  border-radius: 20px;
+  background: var(--c-tarjeta);
+  color: var(--c-texto);
+  font-family: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease;
+}
+
+.opcion:hover {
+  border-color: var(--c-acento);
+  background: var(--c-hover);
+}
+
+.etiqueta {
+  font-size: 12px;
+  line-height: 1.2;
+  font-weight: 600;
+  text-align: center;
+}

@@ -1,0 +1,88 @@
+.fila {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+}
+
+.icono {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: var(--c-superficie-2);
+  color: var(--c-acento);
+}
+
+.textos {
+  display: flex;
+  flex: 1 1 220px;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.archivo {
+  overflow: hidden;
+  font-size: 17px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.detalle {
+  color: var(--c-texto-2);
+  font-size: 14px;
+}
+
+.avance {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pista {
+  height: 6px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--c-linea-suave);
+}
+
+.relleno {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--c-acento);
+  transform-origin: left center;
+  animation: progreso 1.7s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+.pie {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--c-texto-2);
+  font-size: 13px;
+}
+
+.estado {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.listo {
+  color: var(--c-acento);
+}
+
+@keyframes progreso {
+  from {
+    transform: scaleX(0);
+  }
+
+  to {
+    transform: scaleX(1);
+  }
+}

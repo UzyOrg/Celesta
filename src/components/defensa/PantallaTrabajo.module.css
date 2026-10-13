@@ -1,0 +1,128 @@
+.raiz {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  padding: 32px 24px 28px;
+}
+
+.zona {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 26px;
+  /* El diseño no declara box-sizing: los 316 px son de contenido y el borde se suma. */
+  box-sizing: content-box;
+  height: 316px;
+  margin-top: 32px;
+  padding: 0;
+  border: 2px dashed rgba(140, 200, 255, 0.4);
+  border-radius: 28px;
+  background: var(--c-panel-opcion);
+  color: var(--c-texto);
+  font-family: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: border-color 0.2s ease;
+}
+
+.zona:hover {
+  border-color: rgba(140, 200, 255, 0.7);
+}
+
+.ilustracion {
+  position: relative;
+  width: 136px;
+  height: 152px;
+  animation: flotar 4.5s ease-in-out infinite;
+}
+
+.hojaAtras {
+  position: absolute;
+  left: 30px;
+  top: 0;
+  width: 96px;
+  height: 124px;
+  box-sizing: border-box;
+  border: 1px solid var(--c-linea);
+  border-radius: 16px;
+  background: var(--c-superficie-2);
+  transform: rotate(8deg);
+}
+
+.hoja {
+  position: absolute;
+  left: 8px;
+  top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  width: 96px;
+  height: 124px;
+  box-sizing: border-box;
+  padding: 20px 14px;
+  border-radius: 16px;
+  background: var(--c-texto);
+  transform: rotate(-4deg);
+}
+
+.linea {
+  display: block;
+  height: 7px;
+  border-radius: 4px;
+  background: #c9d3e6;
+}
+
+.subir {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 50px;
+  height: 50px;
+  border-radius: 999px;
+  background: var(--c-acento);
+  color: var(--c-sobre-acento);
+  box-shadow: 0 8px 24px rgba(140, 200, 255, 0.35);
+  animation: rebotar 1.6s ease-in-out infinite;
+}
+
+.ayuda {
+  color: var(--c-texto-2);
+  font-size: 14px;
+}
+
+.relleno {
+  flex: 1;
+  min-height: 24px;
+}
+
+.acciones {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+@keyframes flotar {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes rebotar {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-7px);
+  }
+}

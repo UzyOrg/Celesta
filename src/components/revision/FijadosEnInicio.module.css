@@ -1,0 +1,152 @@
+.seccion {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 56px;
+  animation: entrar 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) 0.12s both;
+}
+
+.titulo {
+  margin: 0;
+  color: var(--c-texto-2);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.rejilla {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(260px, 100%), 1fr));
+  gap: 12px;
+}
+
+.tarjeta {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-sizing: border-box;
+  padding: 16px 12px 18px 20px;
+  border: 1px solid var(--c-linea-suave);
+  border-radius: 18px;
+  background: var(--c-tarjeta);
+}
+
+.cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.rotulo {
+  color: var(--c-texto-2);
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.quitar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--c-apagado);
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.quitar:hover {
+  background: var(--c-superficie-2);
+  color: var(--c-texto);
+}
+
+.cifra {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-top: -8px;
+}
+
+.numero {
+  font-size: 36px;
+  line-height: 1;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+}
+
+.numeroTexto {
+  color: var(--c-texto-2);
+  font-size: 14px;
+}
+
+.persona {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: -8px;
+}
+
+.personaTextos {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.personaNombre {
+  font-size: 15.5px;
+  font-weight: 600;
+}
+
+.personaEstado {
+  color: var(--c-texto-2);
+  font-size: 13px;
+}
+
+.objetivo {
+  margin-top: -8px;
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.enlace {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--c-acento);
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.enlace:hover {
+  color: var(--c-acento-enlace);
+}
+
+.enlaceVinculo {
+  line-height: normal;
+}
+
+@keyframes entrar {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}

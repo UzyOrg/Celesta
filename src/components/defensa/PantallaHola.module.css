@@ -1,0 +1,86 @@
+.raiz {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  padding: 68px 24px 28px;
+}
+
+.barras {
+  margin-top: 44px;
+}
+
+.titulo {
+  margin: 28px 0 0;
+  font-size: 46px;
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  text-align: center;
+}
+
+.estado {
+  display: flex;
+  justify-content: center;
+  min-height: 36px;
+  margin-top: 20px;
+}
+
+.oigo {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: rgba(140, 200, 255, 0.14);
+  color: var(--c-acento);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.preparando {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 18px;
+  color: var(--c-texto-2);
+  font-size: 14px;
+}
+
+.puntos {
+  display: flex;
+  gap: 3px;
+}
+
+.punto {
+  width: 4px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--c-texto-2);
+  animation: puntos 1.2s ease-in-out infinite;
+}
+
+.relleno {
+  flex: 1;
+  min-height: 24px;
+}
+
+.acciones {
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+  gap: 10px;
+}
+
+@keyframes puntos {
+  0%,
+  100% {
+    opacity: 0.2;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}

@@ -1,0 +1,29 @@
+.fila {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.burbuja {
+  min-width: 0;
+  padding: 14px 18px;
+  border: 1px solid var(--c-linea);
+  border-radius: 22px 22px 22px 6px;
+  background: var(--c-tarjeta);
+}
+
+.titulo {
+  margin: 0;
+  font-size: 24px;
+  line-height: 1.15;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.tituloMenor {
+  margin: 0;
+  font-size: 22px;
+  line-height: 1.2;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}

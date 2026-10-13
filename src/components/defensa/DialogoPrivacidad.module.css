@@ -1,0 +1,76 @@
+.contenido {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 12px 24px 28px;
+}
+
+.encabezado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.titulo {
+  margin: 0;
+  font-size: 26px;
+  line-height: 1.1;
+  font-weight: 650;
+  letter-spacing: -0.025em;
+}
+
+.cerrar {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  margin-right: -10px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--c-texto);
+  cursor: pointer;
+}
+
+.cerrar:hover {
+  background: var(--c-hover);
+}
+
+.lista {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 0;
+}
+
+.punto {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 16px;
+  border: 1px solid var(--c-linea);
+  border-radius: 18px;
+  background: var(--c-tarjeta);
+}
+
+.puntoTitulo {
+  font-size: 15px;
+  font-weight: 650;
+}
+
+.puntoTexto {
+  margin: 0;
+  color: var(--c-texto-2);
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+.nota {
+  margin: 0;
+  color: var(--c-apagado);
+  font-size: 13px;
+}

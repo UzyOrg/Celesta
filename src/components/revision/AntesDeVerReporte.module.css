@@ -1,0 +1,282 @@
+/* Lo que queda detrás del diálogo: se marca `inert` desde el componente. */
+.detras {
+  display: block;
+}
+
+/* El reporte, vacío y desenfocado: solo da la idea de lo que viene después. */
+.esqueleto {
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+  width: 100%;
+  max-width: 900px;
+}
+
+.migas {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 40px;
+  font-size: 14px;
+  color: var(--c-texto-2);
+}
+
+.identidad {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.textos {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.nombre {
+  font-size: 34px;
+  font-weight: 650;
+  letter-spacing: -0.03em;
+}
+
+.meta {
+  font-size: 13.5px;
+  color: var(--c-texto-2);
+}
+
+.fichas {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.ficha {
+  height: 112px;
+  border: 1px solid var(--c-linea-suave);
+  border-radius: 16px;
+  background: var(--c-tarjeta);
+}
+
+.bloque {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-sizing: border-box;
+  height: 460px;
+  padding: 24px;
+  border: 1px solid var(--c-linea-suave);
+  border-radius: 20px;
+  background: var(--c-tarjeta);
+}
+
+.lineaCorta {
+  width: 60%;
+  height: 12px;
+  border-radius: 6px;
+  background: var(--c-linea);
+}
+
+.lineaLarga {
+  width: 86%;
+  height: 16px;
+  margin-top: 12px;
+  border-radius: 8px;
+  background: var(--c-linea);
+}
+
+.caja {
+  height: 90px;
+  margin-top: 18px;
+  border-radius: 14px;
+  background: var(--c-panel);
+}
+
+.cajaOro {
+  height: 60px;
+  border-radius: 14px;
+  background: rgba(255, 217, 138, 0.08);
+}
+
+/* ───────── Diálogo ───────── */
+
+.velo {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: 24px;
+  overflow-y: auto;
+  background: rgba(4, 7, 15, 0.55);
+  animation: fondo 0.3s ease both;
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 560px;
+  margin: auto;
+  padding: 36px 36px 28px;
+  border: 1px solid var(--c-linea);
+  border-radius: 24px;
+  background: var(--c-tarjeta);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+  animation: dialogo 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) 0.1s both;
+}
+
+.panel:focus {
+  outline: none;
+}
+
+.persona {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.personaTextos {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.personaNombre {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.personaRotulo {
+  font-size: 13.5px;
+  color: var(--c-texto-2);
+}
+
+.titulo {
+  margin: -6px 0 0;
+  font-size: 30px;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  text-wrap: balance;
+}
+
+.opciones {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.opcion {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* El diseño no declara box-sizing en estos enlaces: el borde se suma a los 60 px. */
+  box-sizing: content-box;
+  height: 60px;
+  border: 1px solid var(--c-linea);
+  border-radius: 16px;
+  background: var(--c-panel-opcion);
+  color: var(--c-texto);
+  font-size: 16px;
+  font-weight: 600;
+  text-decoration: none;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    transform 0.15s ease;
+}
+
+.opcion:hover {
+  border-color: var(--c-acento);
+  background: var(--c-hover);
+  transform: translateY(-1px);
+}
+
+.pie {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.nota {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--c-texto-2);
+}
+
+.noSe {
+  display: inline-flex;
+  align-items: center;
+  height: 44px;
+  margin-right: -14px;
+  padding: 0 14px;
+  border-radius: 12px;
+  color: var(--c-texto-2);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.noSe:hover {
+  background: var(--c-hover);
+  color: var(--c-texto);
+}
+
+@keyframes fondo {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes dialogo {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .velo,
+  .panel {
+    animation: none;
+  }
+
+  .opcion,
+  .noSe {
+    transition: none;
+  }
+
+  .opcion:hover {
+    transform: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .panel {
+    padding: 28px 22px 22px;
+    gap: 22px;
+  }
+
+  .titulo {
+    font-size: 26px;
+  }
+}

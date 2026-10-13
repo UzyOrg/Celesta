@@ -1,0 +1,192 @@
+.raiz {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}
+
+.cabeza {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 24px 0;
+}
+
+.ensayo {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 30px;
+  padding: 0 12px;
+  border: 1px solid var(--c-linea);
+  border-radius: 999px;
+  background: var(--c-tarjeta);
+  color: var(--c-texto-2);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.pregunta {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.contexto {
+  margin: 0;
+  color: var(--c-texto-2);
+  font-size: 17px;
+  line-height: 1.4;
+  text-wrap: pretty;
+}
+
+.titulo {
+  margin: 0;
+  font-size: 33px;
+  line-height: 1.08;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  text-wrap: balance;
+}
+
+.centro {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 30px;
+  min-height: 0;
+  padding: 16px 24px;
+}
+
+.centroSilencio {
+  gap: 26px;
+}
+
+.centroEscribe {
+  justify-content: flex-start;
+  gap: 20px;
+  padding-top: 28px;
+}
+
+.estado {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--c-acento);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.latido {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--c-acento);
+  animation: puntos 1.4s ease-in-out infinite;
+}
+
+.sinPrisa {
+  /* El diseño no declara box-sizing: los 44 px son de contenido y el borde se suma (46 px). */
+  box-sizing: content-box;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  height: 44px;
+  padding: 0 18px;
+  border: 1px solid var(--c-linea);
+  border-radius: 999px;
+  background: var(--c-tarjeta);
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.sinPrisa svg {
+  color: var(--c-acento);
+}
+
+.campo {
+  display: flex;
+  align-self: stretch;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.etiqueta {
+  color: var(--c-texto-2);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.texto {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 132px;
+  padding: 14px 16px;
+  border: 1.5px solid var(--c-linea);
+  border-radius: 18px;
+  background: var(--c-tarjeta);
+  color: var(--c-texto);
+  font-family: inherit;
+  font-size: 17px;
+  line-height: 1.45;
+  resize: vertical;
+}
+
+.campo .texto:focus {
+  border-color: var(--c-acento);
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(140, 200, 255, 0.14);
+}
+
+.aviso {
+  color: var(--c-acento);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.pie {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0 24px 28px;
+}
+
+.dos {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+/* En silencio, la opción de escribir se resalta con un pulso suave: "aquí hay otra salida". */
+.dos .sugerido {
+  border-color: var(--c-acento);
+  animation: sugerir 2.4s ease-in-out 0.8s infinite;
+}
+
+@keyframes puntos {
+  0%,
+  100% {
+    opacity: 0.25;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes sugerir {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(140, 200, 255, 0);
+  }
+
+  50% {
+    box-shadow: 0 0 0 6px rgba(140, 200, 255, 0.2);
+  }
+}

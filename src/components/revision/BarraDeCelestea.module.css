@@ -1,0 +1,264 @@
+/* ───────── Dónde vive la barra ───────── */
+
+/* Inicio: flota abajo en el centro del contenido, sobre un degradado que apaga lo que pasa por detrás. */
+.raizInicio {
+  position: absolute;
+  right: 0;
+  bottom: 18px;
+  left: 0;
+  z-index: 5;
+  display: flex;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: 0 20px;
+  pointer-events: none;
+}
+
+/* Reporte: se pega al borde inferior de la ventana mientras se lee. */
+.raizReporte {
+  position: sticky;
+  bottom: 18px;
+  z-index: 5;
+  display: flex;
+  justify-content: center;
+  margin: 0 0 22px;
+  pointer-events: none;
+}
+
+.columnaInicio,
+.columnaReporte {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  pointer-events: auto;
+  animation: subir 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.columnaInicio {
+  align-items: center;
+  max-width: 820px;
+}
+
+.columnaReporte {
+  align-items: stretch;
+  max-width: 760px;
+}
+
+/* ───────── Sugerencias ───────── */
+
+.sugerencias {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+.sugerencia {
+  display: inline-flex;
+  align-items: center;
+  box-sizing: border-box;
+  height: 38px;
+  padding: 0 14px;
+  border: 1px solid var(--c-linea);
+  border-radius: 999px;
+  background: rgba(15, 22, 40, 0.94);
+  color: var(--c-texto-suave);
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.sugerencia:hover {
+  border-color: var(--c-acento);
+  color: var(--c-texto);
+}
+
+/* ───────── La barra ───────── */
+
+.barra {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-sizing: border-box;
+  width: 100%;
+  padding: 8px 8px 8px 16px;
+  border: 1px solid var(--c-linea-compositor);
+  border-radius: 26px;
+  background: rgba(15, 22, 40, 0.97);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+  transition: border-color 0.2s ease;
+}
+
+.barra:focus-within {
+  border-color: var(--c-acento);
+}
+
+.escuchando,
+.escuchando:focus-within {
+  border-color: var(--c-oro);
+}
+
+.logo {
+  flex: none;
+}
+
+.soloLector {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.campo {
+  flex: 1;
+  min-width: 0;
+  height: 46px;
+  padding: 0 4px;
+  border: 0;
+  background: transparent;
+  color: var(--c-texto);
+  font: inherit;
+  font-size: 16px;
+}
+
+.columnaInicio .campo {
+  height: 48px;
+  font-size: 16.5px;
+}
+
+/* El foco se ve en el borde de toda la barra (:focus-within), no en el campo solo. */
+.barra .campo:focus,
+.barra .campo:focus-visible {
+  outline: none;
+}
+
+.microfono,
+.enviar {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.microfono {
+  background: transparent;
+  color: var(--c-texto-2);
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.microfono:hover {
+  color: var(--c-texto);
+}
+
+.microfonoActivo,
+.microfonoActivo:hover {
+  background: var(--c-oro);
+  color: var(--c-sobre-oro);
+  animation: latido 1.2s ease-out infinite;
+}
+
+.enviar {
+  background: var(--c-linea-compositor);
+  color: var(--c-sobre-acento);
+  cursor: default;
+  transition: background-color 0.2s ease;
+}
+
+.enviarListo {
+  background: var(--c-acento);
+  cursor: pointer;
+}
+
+.ocultar {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--c-apagado);
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.ocultar:hover {
+  color: var(--c-texto);
+}
+
+.pie {
+  color: var(--c-apagado);
+  font-size: 12px;
+}
+
+/* ───────── Barra escondida ───────── */
+
+.mostrar {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  box-sizing: border-box;
+  height: 50px;
+  padding: 0 18px 0 14px;
+  border: 1px solid var(--c-linea-compositor);
+  border-radius: 999px;
+  background: rgba(15, 22, 40, 0.97);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+  color: var(--c-texto);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  pointer-events: auto;
+  animation: subir 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  transition: border-color 0.15s ease;
+}
+
+.mostrar:hover {
+  border-color: var(--c-acento);
+}
+
+.mostrarFlecha {
+  color: var(--c-texto-2);
+}
+
+@keyframes subir {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes latido {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 217, 138, 0.45);
+  }
+
+  50% {
+    box-shadow: 0 0 0 8px rgba(255, 217, 138, 0);
+  }
+}

@@ -1,0 +1,15 @@
+.avatar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* El diseño no declara box-sizing: el borde se suma al diámetro. */
+  box-sizing: content-box;
+  border-radius: 999px;
+  background: var(--c-tarjeta);
+  border: 1px solid var(--c-linea);
+}
+
+.panel {
+  background: var(--c-panel);
+}

@@ -1,0 +1,139 @@
+.lateral {
+  display: flex;
+  flex: 1 1 248px;
+  flex-direction: column;
+  gap: 28px;
+  box-sizing: border-box;
+  padding: 24px 16px 20px;
+  border-right: 1px solid var(--c-lateral-borde);
+  background: var(--c-lateral);
+}
+
+/*
+ * En una página larga el menú acompaña a quien lee. Solo cuando está al lado
+ * del contenido (808 px = 248 del menú + 560 de la base del contenido); si el
+ * menú pasa arriba, en pantallas angostas, se desplaza con la página.
+ */
+@media (min-width: 808px) {
+  .fija {
+    position: sticky;
+    top: 0;
+    align-self: flex-start;
+    height: 100vh;
+    height: 100dvh;
+  }
+}
+
+.marca {
+  /* El logo es "inline-flex": como hijo flex no deja el hueco de la línea de texto debajo. */
+  display: flex;
+  align-items: center;
+  padding: 4px 8px;
+}
+
+.nueva {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  /* El diseño no declara box-sizing: el borde se suma a los 44 px. */
+  box-sizing: content-box;
+  height: 44px;
+  border: 1px solid var(--c-linea);
+  border-radius: 12px;
+  color: var(--c-texto);
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background-color 0.15s ease;
+}
+
+.nueva:hover {
+  background: var(--c-hover);
+}
+
+.nuevaActiva {
+  border-color: var(--c-acento);
+  background: var(--c-hover);
+}
+
+.actividades {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.titulo {
+  padding: 0 12px 8px;
+  color: var(--c-apagado);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.entrada {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  color: var(--c-texto);
+  text-decoration: none;
+  transition: background-color 0.15s ease;
+}
+
+.entrada:hover {
+  background: var(--c-tarjeta);
+}
+
+.entradaActiva,
+.entradaActiva:hover {
+  background: var(--c-hover);
+}
+
+.entradaNombre {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.entradaActiva .entradaNombre {
+  font-weight: 600;
+}
+
+.entradaDetalle {
+  color: var(--c-texto-2);
+  font-size: 12.5px;
+}
+
+.espacio {
+  flex: 1;
+}
+
+.usuario {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+}
+
+/* En el diseño las iniciales de quien usa la sesión miden 13 px. */
+.usuario > :first-child {
+  font-size: 13px;
+}
+
+.usuarioTextos {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.usuarioNombre {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.usuarioRol {
+  color: var(--c-texto-2);
+  font-size: 12.5px;
+}

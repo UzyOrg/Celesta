@@ -1,0 +1,125 @@
+.cabecera {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 56px;
+  flex: none;
+}
+
+.marca {
+  padding: 0 24px;
+}
+
+/* En el inicio, la marca va solo como palabra, sin el símbolo. */
+.nombre {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: normal;
+}
+
+.progreso {
+  gap: 8px;
+  padding: 0 24px 0 8px;
+}
+
+/* Sin "Volver" la barra conserva el mismo borde izquierdo que en los demás pasos. */
+.progresoSinVolver {
+  gap: 8px;
+  padding: 0 24px 0 60px;
+}
+
+.boton {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--c-texto);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.boton:hover {
+  background: var(--c-hover);
+}
+
+.pista {
+  flex: 1;
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--c-superficie-2);
+}
+
+.relleno {
+  width: 100%;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--c-acento);
+  transform: scaleX(var(--avance, 0));
+  transform-origin: left center;
+  transition: transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.centrada {
+  justify-content: center;
+}
+
+.defensa {
+  justify-content: space-between;
+  padding: 0 8px;
+}
+
+.etiqueta {
+  color: var(--c-texto-2);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.espacio {
+  flex: none;
+  width: 44px;
+  height: 44px;
+}
+
+.entrega {
+  justify-content: space-between;
+  padding: 0 8px 0 20px;
+}
+
+.sello {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: rgba(140, 200, 255, 0.14);
+  color: var(--c-acento);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.omitir {
+  display: flex;
+  align-items: center;
+  height: 44px;
+  padding: 0 12px;
+  border: 0;
+  background: transparent;
+  color: var(--c-texto-2);
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.omitir:hover {
+  color: var(--c-texto);
+}

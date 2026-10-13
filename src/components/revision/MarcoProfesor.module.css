@@ -1,0 +1,56 @@
+.marco {
+  display: flex;
+  flex-wrap: wrap;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--c-fondo);
+  color: var(--c-texto);
+}
+
+.bloqueado {
+  position: relative;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.principal {
+  flex: 999 1 560px;
+  min-width: 0;
+}
+
+/* Una sola pantalla: el contenido se desplaza adentro y la barra de Celestea flota abajo. */
+.agente {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+}
+
+/* Conversación y borrador lado a lado; si no caben, el borrador pasa debajo. */
+.dividido {
+  display: flex;
+  flex-wrap: wrap;
+  height: 100vh;
+  height: 100dvh;
+}
+
+/* Página que crece: el contenido define su alto (y pone su propio relleno). */
+.pagina {
+  display: flex;
+  flex-direction: column;
+}
+
+.principalBloqueada {
+  box-sizing: border-box;
+  display: flex;
+  justify-content: center;
+  padding: 20px 40px;
+}
+
+/* El reporte que se esconde detrás de la pregunta previa. */
+.difuminado {
+  opacity: 0.65;
+  filter: blur(7px);
+}

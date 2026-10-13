@@ -1,0 +1,82 @@
+.raiz {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  padding: 64px 24px 28px;
+}
+
+/* La sombra se achica cuando la esfera salta: es parte del mismo gesto. */
+.sombra {
+  width: 124px;
+  height: 14px;
+  margin-top: 14px;
+  border-radius: 50%;
+  background: rgba(140, 200, 255, 0.18);
+  animation: sombra 4s ease-in-out infinite;
+}
+
+.titulo {
+  margin: 36px 0 0;
+  font-size: 40px;
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: -0.045em;
+  text-align: center;
+}
+
+.apoyo {
+  margin: 14px 0 0;
+  color: var(--c-texto-2);
+  font-size: 15px;
+  text-align: center;
+}
+
+.relleno {
+  flex: 1;
+  min-height: 24px;
+}
+
+.acciones {
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+  gap: 10px;
+}
+
+.ensayo {
+  flex-direction: column;
+  gap: 1px;
+  line-height: 1.2;
+}
+
+.ensayoTitulo {
+  display: block;
+}
+
+.ensayoNota {
+  display: block;
+  color: var(--c-texto-2);
+  font-size: 12.5px;
+  font-weight: 500;
+}
+
+@keyframes sombra {
+  0%,
+  78%,
+  100% {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+
+  86% {
+    opacity: 0.45;
+    transform: scaleX(0.65);
+  }
+
+  93% {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+}

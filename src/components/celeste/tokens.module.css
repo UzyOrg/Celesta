@@ -1,0 +1,123 @@
+/*
+ * Tema "Celeste" (oscuro) de las pantallas de defensas orales.
+ *
+ * Los tokens se definen una sola vez en el contenedor `.tema`; todo lo que
+ * vive debajo (alumno, profesor, componentes de `celeste/`) los hereda con
+ * var(--c-*). No usan tokens.css ni el sistema "chalk over film": esta
+ * superficie tiene su propia paleta aprobada (ver docs/defensas/ui-prototipo.md).
+ *
+ * Tipografía: Bricolage Grotesque en tipo oración para todo el texto; DM Mono
+ * solo para horas, duraciones, matrículas, conteos y direcciones. Nada de
+ * etiquetas en mayúsculas con letter-spacing.
+ */
+
+.tema {
+  /* Superficies */
+  --c-fondo: #070b16;
+  --c-lateral: #0a0f1d;
+  --c-lateral-borde: #141c30;
+  --c-tarjeta: #0f1628;
+  --c-hover: #131c33;
+  --c-superficie-2: #16203a;
+  --c-panel: #0b1020;
+  --c-panel-opcion: #0b1222;
+  --c-franja: #0c1222;
+  --c-seleccion: #0e1a30;
+
+  /* Líneas */
+  --c-linea: #22304d;
+  --c-linea-suave: #1a2440;
+  --c-linea-compositor: #2a3858;
+  --c-linea-hover: #2e3e62;
+
+  /* Texto */
+  --c-texto: #eef2fa;
+  --c-texto-2: #93a0ba;
+  --c-texto-suave: #c4d2ea;
+  --c-apagado: #7f8ca8;
+  --c-pendiente: #5d6a88;
+
+  /* Acento y oro */
+  --c-acento: #8cc8ff;
+  --c-acento-hover: #a9d6ff;
+  --c-acento-enlace: #c4e3ff;
+  --c-sobre-acento: #06122a;
+  --c-oro: #ffd98a;
+  --c-oro-claro: #ffe7a8;
+  --c-sobre-oro: #1a1405;
+
+  /* Evidencia ordinal: siempre con texto o símbolo, nunca solo color */
+  --c-ev-explico: #8cc8ff;
+  --c-ev-parte: #5a93e6;
+  --c-ev-no: #3d63ad;
+
+  /* Foco visible */
+  --c-foco: #c4e3ff;
+
+  /* Tipografía */
+  --c-fuente: var(--font-bricolage), 'Bricolage Grotesque', system-ui, sans-serif;
+  --c-mono: var(--font-dm-mono), 'DM Mono', ui-monospace, monospace;
+
+  /* Contenedor temático a pantalla completa */
+  background: var(--c-fondo);
+  color: var(--c-texto);
+  color-scheme: dark;
+  font-family: var(--c-fuente);
+  /* globals.css (Tailwind base) fija line-height: 1.5 en html; los diseños usan
+     "normal" salvo donde lo indican, así que se restablece aquí. */
+  line-height: normal;
+  min-height: 100vh;
+  min-height: 100dvh;
+  position: relative;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-size-adjust: 100%;
+}
+
+.tema :where(*) {
+  scrollbar-color: var(--c-linea) transparent;
+  scrollbar-width: thin;
+}
+
+/* Foco visible coherente para todo lo interactivo de la superficie. */
+.tema :where(a, button, input, textarea, select, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--c-foco);
+  outline-offset: 2px;
+}
+
+.tema :where(input, textarea)::placeholder {
+  color: var(--c-apagado);
+  opacity: 1;
+}
+
+.tema ::selection {
+  background: rgba(140, 200, 255, 0.3);
+  color: var(--c-texto);
+}
+
+/*
+ * Movimiento reducido.
+ *
+ * Todo el movimiento de esta superficie (entradas, flotar, ondas, giros,
+ * transiciones) solo clarifica un estado; si la persona pidió menos
+ * movimiento, se apaga completo y el contenido queda en su estado final.
+ * framer-motion se configura aparte con MotionConfig reducedMotion="user".
+ */
+@media (prefers-reduced-motion: reduce) {
+  .tema *,
+  .tema *::before,
+  .tema *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/*
+ * El layout raíz pinta el body con #0D1117. Mientras haya un tema Celeste en
+ * pantalla, el body usa el mismo fondo (#070B16) para que no se vea otro tono
+ * al rebotar el scroll en el móvil. `:has()` deja de aplicar al salir de estas
+ * rutas; en navegadores sin `:has()` solo se pierde ese matiz.
+ */
+:global(body):has(.tema) {
+  background-color: #070b16;
+}

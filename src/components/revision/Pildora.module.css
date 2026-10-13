@@ -1,0 +1,89 @@
+.pildora {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  gap: var(--espacio, 8px);
+  /* Como todo <button>: la altura incluye el borde (también cuando es un enlace, por parecer igual). */
+  box-sizing: border-box;
+  height: var(--alto, 44px);
+  min-width: var(--ancho-minimo, 0);
+  margin: 0;
+  padding: 0 var(--relleno, 18px);
+  border: 0 solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--c-texto);
+  font-family: inherit;
+  font-size: var(--letra, 15px);
+  font-weight: var(--peso, 650);
+  line-height: normal;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.completo {
+  display: flex;
+  width: 100%;
+}
+
+.icono {
+  display: inline-flex;
+  flex: none;
+}
+
+.texto {
+  min-width: 0;
+}
+
+/* ───────── Variantes ───────── */
+
+.variante-primaria {
+  border-width: 0;
+  background: var(--c-acento);
+  color: var(--c-sobre-acento);
+}
+
+.variante-primaria:hover {
+  background: var(--c-acento-hover);
+  color: var(--c-sobre-acento);
+}
+
+.variante-contorno {
+  border-width: 1px;
+  border-color: var(--c-linea);
+  background: transparent;
+  color: var(--c-texto);
+}
+
+.variante-contorno:hover {
+  background: var(--c-hover);
+  color: var(--c-texto);
+}
+
+/* Fondo apagado que se enciende con el acento al pasar encima (el "Abrir" de las listas). */
+.variante-suave {
+  border-width: 0;
+  background: var(--c-superficie-2);
+  color: var(--c-texto);
+}
+
+.variante-suave:hover {
+  background: var(--c-acento);
+  color: var(--c-sobre-acento);
+}
+
+.pildora:active {
+  transform: scale(0.985);
+}
+
+.pildora:disabled,
+.pildora[aria-disabled='true'] {
+  cursor: not-allowed;
+}

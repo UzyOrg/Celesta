@@ -1,0 +1,706 @@
+/*
+ * Personaje de Celestea.
+ * Toda la geometría sale de --o (diámetro), así que el mismo CSS sirve de 40 a 190 px.
+ * Las proporciones están medidas sobre las pantallas del diseño (56, 64, 132, 140, 160 y 190 px).
+ */
+
+.personaje {
+  --tinta: #0a1433;
+  --flota: clamp(4px, calc(var(--o) * 0.0625), 10px);
+  --vel-luna: 7s;
+  position: relative;
+  display: block;
+  flex: none;
+  width: var(--o);
+  height: var(--o);
+  pointer-events: none;
+}
+
+.entra {
+  animation: pop 0.6s cubic-bezier(0.3, 1.4, 0.5, 1) var(--retraso-entra, 0s) both;
+}
+
+.movimiento,
+.balanceo {
+  position: absolute;
+  inset: 0;
+}
+
+/* ───────── Esfera ───────── */
+
+.esfera {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: radial-gradient(circle at 36% 30%, #f4faff 0%, #c4e3ff 20%, #8cc8ff 46%, #5b7cfa 80%, #3e4fcb 100%);
+  box-shadow:
+    inset calc(var(--o) * -0.064) calc(var(--o) * -0.09) calc(var(--o) * 0.18) rgba(18, 26, 96, 0.45),
+    0 0 calc(var(--o) * 0.45) rgba(140, 200, 255, 0.3);
+}
+
+/* ───────── Piel Celestia ───────── */
+
+.celeste {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: 999px;
+  background: radial-gradient(circle at 34% 28%, #4b6bdb 0%, #2c3fa3 32%, #1a2670 64%, #0e1546 100%);
+  box-shadow:
+    inset 0 0 0 max(1px, calc(var(--o) * 0.0094)) rgba(170, 215, 255, 0.55),
+    inset 0 0 calc(var(--o) * 0.18) rgba(140, 200, 255, 0.4),
+    0 0 calc(var(--o) * 0.38) rgba(140, 200, 255, 0.32);
+  opacity: 0;
+  transition: opacity 0.9s ease 0.35s;
+}
+
+.constelacion {
+  position: absolute;
+  left: calc(var(--o) * -0.25);
+  top: calc(var(--o) * -0.25);
+  width: calc(var(--o) * 1.5);
+  height: calc(var(--o) * 1.5);
+  animation: girar 60s linear infinite;
+}
+
+.constelacionSvg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.lineas {
+  fill: none;
+  stroke: #aad7ff;
+  stroke-width: 1;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.55;
+}
+
+.estrellas {
+  fill: #eaf4ff;
+}
+
+.estrellasDoradas {
+  fill: #ffe7a8;
+}
+
+.polvo {
+  fill: #eaf4ff;
+  opacity: 0.55;
+}
+
+.vidrio {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: radial-gradient(circle at 30% 22%, rgba(255, 255, 255, 0.28) 0%, rgba(255, 255, 255, 0) 36%);
+}
+
+/* En tamaños chicos, la constelación se reduce a dos puntos. */
+.puntoBlanco,
+.puntoDorado {
+  position: absolute;
+  width: max(1.5px, calc(var(--o) * 0.06));
+  height: max(1.5px, calc(var(--o) * 0.06));
+  border-radius: 999px;
+}
+
+.puntoBlanco {
+  left: calc(var(--o) * 0.235);
+  top: calc(var(--o) * 0.206);
+  background: #eaf4ff;
+}
+
+.puntoDorado {
+  left: calc(var(--o) * 0.706);
+  top: calc(var(--o) * 0.706);
+  background: #ffe7a8;
+}
+
+/* Anillo y luna: el trazo abierto por arriba hace que la luna pase "detrás" del planeta. */
+.orbita {
+  position: absolute;
+  left: calc(var(--o) * -0.1625);
+  top: calc(var(--o) * -0.1625);
+  width: calc(var(--o) * 1.325);
+  height: calc(var(--o) * 1.325);
+  transform: rotate(-16deg) scaleY(0.5);
+  opacity: 0;
+  transition: opacity 0.9s ease 0.35s;
+}
+
+.celesteVisible {
+  opacity: 1;
+}
+
+.orbitaTrazo {
+  position: absolute;
+  inset: 0;
+  box-sizing: border-box;
+  border-radius: 999px;
+  border: 1.5px solid transparent;
+  border-right-color: rgba(140, 200, 255, 0.35);
+  border-bottom-color: rgba(140, 200, 255, 0.35);
+  border-left-color: rgba(140, 200, 255, 0.35);
+}
+
+.orbitaGiro {
+  position: absolute;
+  inset: 0;
+  animation: girar var(--vel-luna) linear infinite;
+}
+
+.lunaContragiro {
+  --luna: max(4px, calc(var(--o) * 0.0625));
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  width: var(--luna);
+  height: var(--luna);
+  margin: calc(var(--luna) / -2) 0 0 calc(var(--luna) / -2);
+  animation: girar var(--vel-luna) linear infinite reverse;
+}
+
+.lunaAplanada {
+  width: 100%;
+  height: 100%;
+  transform: scaleY(2);
+}
+
+.luna {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 999px;
+  background: #ffe7a8;
+  box-shadow: 0 0 calc(var(--o) * 0.075) rgba(255, 231, 168, 0.9);
+  animation: lunaVis var(--vel-luna) linear infinite;
+}
+
+/* ───────── Cara ───────── */
+
+.cara {
+  --w: 0.09;
+  --h: 0.165;
+  --sep: 0.165;
+  --arriba: 0.35;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(var(--o) * var(--arriba));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--o) * var(--sep));
+  transform: translate(calc(var(--o) * var(--mx, 0)), calc(var(--o) * var(--my, 0)));
+}
+
+.caraGrande {
+  --w: 0.075;
+  --h: 0.125;
+  --sep: 0.15;
+  --arriba: 0.3625;
+}
+
+.miraAlrededor {
+  animation: mirar 6s ease-in-out infinite;
+}
+
+.ojo {
+  flex: none;
+  box-sizing: border-box;
+  width: calc(var(--o) * var(--w));
+  height: calc(var(--o) * var(--h));
+  border-radius: calc(var(--o) * var(--w) / 2);
+  background: var(--tinta);
+}
+
+.parpadea .ojo {
+  animation: parpadeo var(--ritmo-parpadeo, 4.2s) ease-in-out infinite;
+}
+
+.tintaClara {
+  --tinta: #f4f9ff;
+}
+
+.tintaClara .ojo {
+  box-shadow: 0 0 calc(var(--o) * 0.0625) rgba(200, 230, 255, 0.7);
+}
+
+/* Atento: ojos un poco más grandes y mirando apenas hacia abajo. */
+.expresion-atento {
+  --w: 0.114;
+  --h: 0.227;
+  --sep: 0.18;
+  --arriba: 0.3;
+}
+
+.caraGrande.expresion-atento {
+  --w: 0.0875;
+  --h: 0.15;
+  --sep: 0.1375;
+  --arriba: 0.4;
+}
+
+/* Escucha: dos arcos hacia abajo, sonrientes y cerrados. */
+.expresion-escucha {
+  --w: 0.2;
+  --h: 0.11;
+  --sep: 0.14;
+  --arriba: 0.385;
+}
+
+.caraGrande.expresion-escucha {
+  --w: 0.118;
+  --h: 0.059;
+  --sep: 0.151;
+  --arriba: 0.382;
+}
+
+.expresion-escucha .ojo {
+  background: none;
+  border-bottom: max(2px, calc(var(--o) * 0.024)) solid var(--tinta);
+  border-radius: 0 0 calc(var(--o) * 0.18) calc(var(--o) * 0.18);
+  box-shadow: none;
+}
+
+.caraGrande.expresion-escucha .ojo {
+  border-bottom-width: calc(var(--o) * 0.0215);
+  border-radius: 0 0 calc(var(--o) * 0.085) calc(var(--o) * 0.085);
+}
+
+/* Feliz: dos arcos hacia arriba. */
+.expresion-feliz {
+  --w: 0.2;
+  --h: 0.11;
+  --sep: 0.14;
+  --arriba: 0.37;
+}
+
+.caraGrande.expresion-feliz {
+  --w: 0.129;
+  --h: 0.064;
+  --sep: 0.157;
+  --arriba: 0.386;
+}
+
+.expresion-feliz .ojo {
+  background: none;
+  border-top: max(2px, calc(var(--o) * 0.025)) solid var(--tinta);
+  border-radius: calc(var(--o) * 0.18) calc(var(--o) * 0.18) 0 0;
+  box-shadow: none;
+}
+
+.caraGrande.expresion-feliz .ojo {
+  border-top-width: calc(var(--o) * 0.025);
+  border-radius: calc(var(--o) * 0.1) calc(var(--o) * 0.1) 0 0;
+}
+
+/* Confundido: un ojo y una rayita. */
+.expresion-confundido {
+  --sep: 0.17;
+  --arriba: 0.36;
+}
+
+.caraGrande.expresion-confundido {
+  --sep: 0.1125;
+  --arriba: 0.375;
+}
+
+.raya {
+  flex: none;
+  width: calc(var(--o) * 0.14);
+  height: calc(var(--o) * 0.047);
+  border-radius: calc(var(--o) * 0.03);
+  background: var(--tinta);
+}
+
+.caraGrande .raya {
+  width: calc(var(--o) * 0.1125);
+  height: calc(var(--o) * 0.031);
+}
+
+/* Asombrado: dos círculos claros con borde oscuro. */
+.expresion-asombrado {
+  --w: 0.159;
+  --h: 0.159;
+  --sep: 0.159;
+  --arriba: 0.295;
+}
+
+.caraGrande.expresion-asombrado {
+  --w: 0.14;
+  --h: 0.14;
+  --sep: 0.15;
+  --arriba: 0.3;
+}
+
+.expresion-asombrado .ojo {
+  border: max(1.5px, calc(var(--o) * 0.045)) solid var(--tinta);
+  border-radius: 999px;
+  background: #f4f9ff;
+  box-shadow: none;
+}
+
+.tintaClara.expresion-asombrado .ojo {
+  --tinta: #f4f9ff;
+  background: #0a1433;
+}
+
+/* ───────── Movimientos ───────── */
+
+.flotar {
+  animation: flotar 4s ease-in-out infinite;
+}
+
+.latir {
+  animation: latir 0.9s ease-in-out infinite;
+}
+
+.respira {
+  animation: saltito 4s ease-in-out infinite;
+}
+
+.respira .balanceo {
+  transform-origin: 50% 100%;
+  animation: esperar 4s ease-in-out infinite;
+}
+
+.saltar {
+  --vel-luna: 2s;
+  animation: saltar 2.6s ease-in-out infinite;
+}
+
+.celebrar {
+  --vel-luna: 2s;
+  animation:
+    celebrar 1.2s cubic-bezier(0.3, 0.7, 0.4, 1) 0.05s both,
+    flotar 4s ease-in-out 1.3s infinite;
+}
+
+.inclina {
+  animation: ladearUna 0.5s ease-out 1.2s both;
+}
+
+.ladeo {
+  animation: ladear 2.6s ease-in-out infinite;
+}
+
+.calma {
+  animation: calma 4s ease-in-out infinite;
+}
+
+.calmaRapida {
+  animation: calma 2.8s ease-in-out infinite;
+}
+
+.tiembla {
+  animation: temblar 0.35s linear infinite;
+}
+
+.tiemblaFuerte {
+  animation: temblar2 0.18s linear infinite;
+}
+
+/* Las líneas de la constelación laten cuando el personaje oye o celebra. */
+.latir .lineas {
+  animation: pulso 0.9s ease-in-out infinite;
+}
+
+.calma .lineas,
+.calmaRapida .lineas {
+  animation: pulso 1.6s ease-in-out infinite;
+}
+
+.saltar .lineas,
+.celebrar .lineas {
+  animation: pulso 0.5s ease-in-out infinite;
+}
+
+/* ───────── Ondas ───────── */
+
+.onda {
+  position: absolute;
+  inset: 0;
+  box-sizing: border-box;
+  border-radius: 999px;
+  border: max(1.5px, calc(var(--o) * 0.0105)) solid rgba(140, 200, 255, 0.5);
+  animation: onda var(--ritmo-ondas, 2.4s) ease-out var(--retraso-onda, 0s) infinite;
+}
+
+/* ───────── Cuadros clave ───────── */
+
+@keyframes pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+
+  70% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes flotar {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(calc(-1 * var(--flota)));
+  }
+}
+
+@keyframes latir {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.045);
+  }
+}
+
+@keyframes saltito {
+  0%,
+  78%,
+  100% {
+    transform: translateY(0);
+  }
+
+  86% {
+    transform: translateY(calc(var(--o) * -0.095));
+  }
+
+  93% {
+    transform: translateY(0);
+  }
+}
+
+@keyframes esperar {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+
+  25% {
+    transform: rotate(-7deg);
+  }
+
+  75% {
+    transform: rotate(7deg);
+  }
+}
+
+@keyframes saltar {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  40% {
+    transform: translateY(calc(var(--o) * -0.1));
+  }
+
+  60% {
+    transform: translateY(calc(var(--o) * -0.07));
+  }
+}
+
+@keyframes celebrar {
+  0% {
+    transform: translateY(0) scale(1, 1);
+  }
+
+  30% {
+    transform: translateY(calc(var(--o) * -0.375)) scale(0.94, 1.06);
+  }
+
+  55% {
+    transform: translateY(0) scale(1.12, 0.86);
+  }
+
+  70% {
+    transform: translateY(calc(var(--o) * -0.075)) scale(0.97, 1.03);
+  }
+
+  85% {
+    transform: translateY(0) scale(1.03, 0.97);
+  }
+
+  100% {
+    transform: translateY(0) scale(1, 1);
+  }
+}
+
+@keyframes ladear {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+
+  30% {
+    transform: rotate(-10deg);
+  }
+
+  60% {
+    transform: rotate(4deg);
+  }
+}
+
+@keyframes ladearUna {
+  from {
+    transform: rotate(0);
+  }
+
+  to {
+    transform: rotate(-12deg);
+  }
+}
+
+@keyframes calma {
+  0%,
+  100% {
+    transform: scale(0.92);
+  }
+
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+@keyframes temblar {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+
+  25% {
+    transform: translate(-1px, 1px);
+  }
+
+  50% {
+    transform: translate(1px, -1px);
+  }
+
+  75% {
+    transform: translate(-1px, -1px);
+  }
+}
+
+@keyframes temblar2 {
+  0%,
+  100% {
+    transform: translate(0, 0) rotate(0);
+  }
+
+  20% {
+    transform: translate(-2px, 1px) rotate(-4deg);
+  }
+
+  40% {
+    transform: translate(2px, -1px) rotate(3deg);
+  }
+
+  60% {
+    transform: translate(-1px, -2px) rotate(-3deg);
+  }
+
+  80% {
+    transform: translate(1px, 2px) rotate(4deg);
+  }
+}
+
+@keyframes mirar {
+  0%,
+  15% {
+    transform: translate(0, 0);
+  }
+
+  22%,
+  34% {
+    transform: translate(calc(var(--o) * -0.0875), 0);
+  }
+
+  44%,
+  56% {
+    transform: translate(calc(var(--o) * 0.0875), 0);
+  }
+
+  66%,
+  80% {
+    transform: translate(0, calc(var(--o) * 0.1));
+  }
+
+  90%,
+  100% {
+    transform: translate(0, 0);
+  }
+}
+
+@keyframes parpadeo {
+  0%,
+  90%,
+  100% {
+    transform: scaleY(1);
+  }
+
+  94% {
+    transform: scaleY(0.1);
+  }
+}
+
+@keyframes onda {
+  0% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1.85);
+  }
+}
+
+@keyframes girar {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes lunaVis {
+  0%,
+  55%,
+  95%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  62%,
+  88% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+}
+
+@keyframes pulso {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}

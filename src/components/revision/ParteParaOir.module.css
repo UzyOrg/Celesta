@@ -1,0 +1,137 @@
+.tarjeta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  /* El diseño no declara box-sizing: el borde se suma a la caja. */
+  box-sizing: content-box;
+  padding: 10px 14px 10px 10px;
+  border: 1px solid rgba(255, 217, 138, 0.22);
+  border-radius: 14px;
+  background: rgba(255, 217, 138, 0.05);
+  transition: border-color 0.2s ease;
+}
+
+.sonando {
+  border-color: rgba(255, 217, 138, 0.55);
+}
+
+.boton {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: var(--c-oro);
+  color: var(--c-sobre-oro);
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.boton:hover {
+  transform: scale(1.06);
+}
+
+.cuerpo {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+}
+
+.descripcion {
+  font-size: 13.5px;
+  color: var(--c-texto);
+}
+
+.visual {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.onda {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 20px;
+  overflow: hidden;
+}
+
+.barra {
+  flex: none;
+  width: 3px;
+  height: var(--alto);
+  border-radius: 2px;
+  background: #5c5640;
+  animation: onda 0.9s ease-in-out var(--retraso) infinite;
+  animation-play-state: paused;
+  transition: background-color 0.2s ease;
+}
+
+.sonando .barra {
+  background: var(--c-oro);
+  animation-play-state: running;
+}
+
+.pista {
+  height: 2px;
+  overflow: hidden;
+  border-radius: 2px;
+  background: var(--c-linea-suave);
+}
+
+.progreso {
+  height: 2px;
+  background: var(--c-oro);
+  transform-origin: left center;
+  animation: progreso var(--duracion) linear both;
+}
+
+.duracion {
+  font-family: var(--c-mono);
+  font-size: 12px;
+  color: var(--c-texto-2);
+}
+
+@keyframes onda {
+  0%,
+  100% {
+    transform: scaleY(0.45);
+  }
+
+  50% {
+    transform: scaleY(1);
+  }
+}
+
+@keyframes progreso {
+  from {
+    transform: scaleX(0);
+  }
+
+  to {
+    transform: scaleX(1);
+  }
+}
+
+/* Sin movimiento: las barras quedan quietas y el progreso no se dibuja; el botón y el borde dicen que suena. */
+@media (prefers-reduced-motion: reduce) {
+  .barra {
+    animation: none;
+  }
+
+  .progreso {
+    animation: none;
+    transform: scaleX(0);
+  }
+
+  .boton {
+    transition: none;
+  }
+}

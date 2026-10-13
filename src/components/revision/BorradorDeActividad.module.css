@@ -1,0 +1,178 @@
+.borrador {
+  display: flex;
+  flex: 1 1 360px;
+  flex-direction: column;
+  box-sizing: border-box;
+  max-width: 420px;
+  min-width: 0;
+  height: 100vh;
+  height: 100dvh;
+  border-left: 1px solid var(--c-lateral-borde);
+  background: var(--c-lateral);
+}
+
+.cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 22px 24px 14px;
+}
+
+.titulo {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  font-size: 16px;
+  font-weight: 650;
+}
+
+.avance {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--c-apagado);
+}
+
+.editar {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  box-sizing: border-box;
+  height: 40px;
+  margin-right: -10px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--c-acento);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.editar:hover {
+  background: var(--c-hover);
+  color: var(--c-acento-enlace);
+}
+
+.pista {
+  height: 3px;
+  margin: 0 24px;
+  overflow: hidden;
+  border-radius: 3px;
+  background: var(--c-superficie-2);
+}
+
+.relleno {
+  width: 100%;
+  height: 3px;
+  background: var(--c-acento);
+  transform-origin: left center;
+  transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.campos {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 0;
+  margin: 0;
+  padding: 14px 24px 16px;
+  overflow-y: auto;
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0 -12px;
+  padding: 12px;
+  border-radius: 12px;
+}
+
+.reciente {
+  animation: llenar 1.4s ease both;
+}
+
+.nombre {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--c-apagado);
+}
+
+.valor {
+  margin: 0;
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: var(--c-texto);
+  overflow-wrap: anywhere;
+  white-space: pre-line;
+}
+
+.pendiente {
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  height: 30px;
+  margin: 0;
+  padding: 0 10px;
+  border: 1px dashed var(--c-linea);
+  border-radius: 8px;
+  font-size: 13px;
+  /* El diseño usa #5d6a88 (3,6:1 sobre #0a0f1d); aquí se sube a #7f8ca8 (5,7:1) para que "Pendiente" se lea. */
+  color: var(--c-apagado);
+}
+
+.pie {
+  padding: 16px 24px 22px;
+  border-top: 1px solid var(--c-lateral-borde);
+}
+
+.deshabilitado {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 100%;
+  height: 52px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--c-hover);
+  color: var(--c-apagado);
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: not-allowed;
+}
+
+@keyframes llenar {
+  0% {
+    opacity: 0;
+    transform: translateY(6px);
+    background-color: rgba(140, 200, 255, 0.16);
+  }
+
+  40% {
+    opacity: 1;
+    transform: none;
+    background-color: rgba(140, 200, 255, 0.16);
+  }
+
+  100% {
+    background-color: rgba(140, 200, 255, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reciente {
+    animation: none;
+  }
+
+  .relleno {
+    transition: none;
+  }
+}

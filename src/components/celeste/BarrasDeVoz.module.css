@@ -1,0 +1,72 @@
+.barras {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  height: 40px;
+  --alto: 36px;
+  --color: var(--c-acento);
+}
+
+.alta {
+  height: 40px;
+  --alto: 36px;
+}
+
+.media {
+  gap: 4px;
+  height: 32px;
+  --alto: 28px;
+}
+
+.quieta {
+  height: 24px;
+  --alto: 24px;
+  --color: var(--c-texto-2);
+}
+
+.barra {
+  flex: none;
+  width: 4px;
+  height: var(--alto);
+  border-radius: 2px;
+  background: var(--color);
+  opacity: var(--opacidad, 1);
+  animation: barra var(--dur) ease-in-out var(--desfase) infinite;
+}
+
+.quieta .barra {
+  animation-name: quieto;
+}
+
+@keyframes barra {
+  0%,
+  100% {
+    transform: scaleY(0.25);
+  }
+
+  50% {
+    transform: scaleY(1);
+  }
+}
+
+@keyframes quieto {
+  0%,
+  100% {
+    transform: scaleY(0.1);
+  }
+
+  50% {
+    transform: scaleY(0.2);
+  }
+}
+
+/* Sin movimiento: una onda fija, no una fila de barras iguales. */
+@media (prefers-reduced-motion: reduce) {
+  .barra {
+    transform: scaleY(var(--fija, 0.6));
+  }
+
+  .quieta .barra {
+    transform: scaleY(0.15);
+  }
+}
