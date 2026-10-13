@@ -4,6 +4,23 @@ Este documento describe la interfaz de las defensas orales de Celestea, construi
 
 Estado verificado el 12 de octubre de 2026 sobre una copia limpia del repositorio en el commit `8f386cd`, solo con estos archivos nuevos añadidos.
 
+> **Actualización del 13 de octubre de 2026.** La interfaz ya está conectada a un servidor real
+> en la rama `feat/defensas-backend` (base de datos, modelo de lenguaje, transcripción, voz,
+> audio por partes, descargas y reporte). Cómo funciona, cómo ponerlo en marcha y qué falta está en
+> [`backend.md`](./backend.md). Este documento sigue describiendo el diseño y las decisiones de
+> interfaz; las secciones que dejaron de ser ciertas se actualizaron y lo que sigue simulado se
+> dice abajo. Cambios que importan al abrir las direcciones:
+>
+> - Alumno: `/defensa/demo` **ya no existe**. El código del grupo sale de la base de datos; con
+>   el almacén en memoria (`DEFENSA_ALMACEN=memoria`) la actividad de demostración es
+>   `/defensa/demo-celestea`. Las direcciones con `?paso=`, `?ensayo=` y `?modo=` siguen,
+>   pero un paso solo se muestra si ya existe lo que necesita (no hay "pregunta" sin una
+>   pregunta); si no, se vuelve al paso que corresponde.
+> - Profesor: el código de la dirección es el **enlace firmado** que da el script
+>   (`pnpm defensa:actividad crear`) o, en memoria, el que se imprime en la consola. Los códigos
+>   `demo` y `3b-encuesta` siguen abriendo el escenario de ejemplo **solo fuera de producción**.
+> - `/revision/<enlace>/nueva` es solo el diseño: con datos reales responde "no encontrado".
+
 ## Qué incluye
 
 | Lado | Ruta | Qué muestra |
@@ -90,25 +107,33 @@ src/components/
 
 Todo el estilo está en CSS Modules; no hay Tailwind ni estilos en línea salvo variables CSS calculadas.
 
-## Dónde vive el ejemplo y cómo cambiarlo por datos reales
+## De dónde salen los datos
 
-| Qué | Archivo | Qué hacer al conectar |
+| Qué | Archivo | Con datos reales |
 | --- | --- | --- |
-| Actividad que ve el alumno | `defensa/mock.ts`, leída solo por `defensa/consultas.ts` | Reemplazar el cuerpo de `obtenerActividadPorToken`. |
-| Grupo, alumnos y actividades del profesor | `revision/mock.ts`, leído solo por `revision/consultas.ts` | Reemplazar `obtenerGrupoPorToken`. |
-| Reporte de un alumno | `revision/mock.ts` (`REPORTE_ANA`) | Reemplazar `obtenerReporte`. |
+| Actividad que ve el alumno | `defensa/consultas.ts` | Lee la actividad por el código del grupo (`src/lib/defensa/almacen`). `defensa/mock.ts` ya no alimenta al alumno. |
+| Entrega, plan, defensa y transcripción del alumno | `defensa/clienteApi.ts` y `defensa/useFlujoDefensa.ts` | Van por `/api/defensa` con la sesión firmada del alumno; nada de eso viaja en la página. |
+| Grupo, alumnos y reporte del profesor | `revision/consultas.ts` | Verifica el enlace firmado y lee de la base de datos (`src/lib/defensa/servicios/profesor.ts`). `revision/mock.ts` solo se usa para el escenario de ejemplo fuera de producción. |
+| Descarga, audio de una parte, toques y tiempo de revisión | `revision/clienteProfesor.ts` | Van por `/api/defensa` con el enlace del profesor como portador. |
 | Conteos y estados | `revision/derivados.ts` | No cambia: todo se calcula desde la lista de alumnos. |
-| A qué respuesta lleva lo que escribe el profesor | `revision/intenciones.ts` | Reemplazar `interpretarPeticion` por un clasificador de servidor que solo pueda devolver una de `RAMAS_PERMITIDAS`; si falla, volver a las reglas locales. |
-| Guion de "Nueva actividad" | `revision/nueva.ts` | Sustituir el guion fijo por el flujo real de borrador y por la creación del enlace. |
+| A qué respuesta lleva lo que escribe el profesor | `revision/intenciones.ts` | Sigue siendo reglas de palabras, sin modelo de lenguaje. |
+| Guion de "Nueva actividad" | `revision/nueva.ts` | Sigue siendo el diseño con un guion fijo; con datos reales la pantalla no se ofrece. |
 
-Las tres funciones de consulta son asíncronas a propósito, así que el cambio no altera ninguna página ni componente. Una versión real también debe comprobar en el servidor que la sesión es la dueña de la actividad: el token por sí solo no autoriza nada.
+Lo que ya es real: la entrega del trabajo, el plan de preguntas, la defensa por voz o por
+escrito, la aclaración puntual, la transcripción, el reporte con citas verificadas, el audio
+original de la frase marcada o aclarada, la descarga de trabajos, los dos toques del profesor y
+el tiempo de revisión. También: copiar al portapapeles, el enlace de WhatsApp (`wa.me`, solo si
+el profesor lo toca) y tres datos guardados en el navegador con `localStorage`:
 
-Lo que sí es real hoy: copiar al portapapeles, el enlace de WhatsApp (`wa.me`, solo si el profesor lo toca), y dos datos guardados en el navegador con `localStorage`:
+- `celestea-defensa-sesion-<código>`: la sesión firmada del alumno y su modo (voz o escrito), para
+  retomar sin volver a poner nombre y matrícula.
+- `celestea-revision-fijados-<enlace>`: las respuestas que el profesor fija ("Fijado por ti").
+- `celestea-revision-cierre-<enlace>-<matrícula>`: su respuesta a "¿El reporte coincide con lo que
+  piensas?" (además se guarda en el servidor).
 
-- `celestea-revision-fijados-<token>`: las respuestas que el profesor fija ("Fijado por ti").
-- `celestea-revision-cierre-<token>-<matrícula>`: su respuesta a "¿El reporte coincide con lo que piensas?".
-
-Lo que está simulado: reproducir audio, dictado, grabación y micrófono del alumno, subir o pegar el trabajo (no se envía a ningún lado), descargas, compartir en Moodle, "Editar a mano" y pedir cambios por mensaje en la nueva actividad, y todas las respuestas de Celestea. Los textos de estado de esas acciones dicen que son de la demostración.
+Lo que sigue simulado: compartir en Moodle, "Editar a mano" y pedir cambios por mensaje en la
+nueva actividad, el dictado del profesor (se oculta con datos reales) y, en el escenario de
+ejemplo, el audio, las descargas y los toques.
 
 ## Desviaciones de AGENTS.md y por qué
 
@@ -121,31 +146,13 @@ No se editó `AGENTS.md`, `CURRENT_STATE.md` ni el contrato tipográfico. Estas 
 | Sección 1.2: "chalk over film" | Se usa la paleta Celeste (fondo `#070B16`, acento `#8CC8FF`, evidencia `#8CC8FF`, `#5A93E6`, `#3D63AD`) con tarjetas y cápsulas, sin el video de olas. | Es lo que muestran los diseños aprobados. La regla pide evitar una interfaz de neón cian por defecto, "excessive cards" y "floating pills"; el diseño aprobado tiene azul cielo, tarjetas y cápsulas. |
 | Sección 1.7: contrato tipográfico | Se usan Bricolage Grotesque y DM Mono locales y tamaños que no están en la escala 12, 14, 16, 18, 22, 28, 36 (por ejemplo 13, 13,5, 14,5, 15, 17, 19, 26, 30, 34, 40, 48, 54, 60 y 68 px). No se usan los tokens `--celestea-text-*`. | Los diseños fijan esos tamaños. DM Mono solo sale en horas, duraciones, matrículas, conteos y direcciones. Los tokens propios están en `celeste/tokens.module.css`. |
 | Sección 1.1: CSS Modules y cero Tailwind | Se cumple. Pero el layout raíz sigue trayendo el preflight de Tailwind. | El CSS nuevo declara `box-sizing` donde el diseño lo necesita. No se tocó el layout raíz. |
-| Sección 1.4: sin conexión | Las rutas no hacen peticiones y las fuentes son locales. | El layout raíz sigue pidiendo Google Fonts (ya estaba así y no se tocó). |
+| Sección 1.4: sin conexión | Las fuentes son locales, pero ahora la defensa necesita red: la entrega, cada respuesta y el reporte pasan por el servidor. | La grabación sale por partes y se reintenta con espera creciente, y la sesión se guarda en el teléfono para retomar; aun así, no funciona sin conexión. El layout raíz sigue pidiendo Google Fonts (ya estaba así y no se tocó). |
 | Sección 1.5: movimiento | `framer-motion` solo se usa para el vuelo del personaje entre pantallas, con `MotionConfig reducedMotion="user"`. El resto son animaciones de CSS con `prefers-reduced-motion`. | Respetar movimiento reducido sin añadir dependencias. |
-| Secciones 2, 3 y 5: voz, plomería y telemetría | No se graba audio, no hay `trackEvent`, ni `session.ts`, ni Supabase. | Es solo interfaz. Al conectar hay que reutilizar la plomería y definir el contrato de eventos sin inventar `verbo` nuevos. |
-| Sección 2: en v1 la entrada del alumno es texto y la voz es opcional | El flujo es de voz con alternativa escrita siempre disponible. El audio solo empieza tras un toque y nunca se pide cámara. | Así son los diseños y las reglas de producto de la defensa. Hoy no se pide el micrófono; cuando se pida, `next.config.js` manda `Permissions-Policy: microphone=()` y habrá que abrirlo solo para `/defensa`. |
-| Sección 6: proponer antes de construir | Se construyó sobre diseños ya aprobados, sin propuesta de arquitectura. | Queda pendiente el ADR 0014. |
+| Secciones 2, 3 y 5: voz, plomería y telemetría | Se graba y se transcribe la voz, un modelo escribe el plan y el reporte, la sesión es propia (`firmas.ts`) y los eventos los escribe el servidor (no `trackEvent`, `session.ts` ni `alias.ts`). | Los eventos sí ruedan sobre `eventos_de_aprendizaje` con los mismos verbos y el detalle en `result`, sin texto; el prefijo `defensa:` está reservado. El resto es lo que autorizaría el ADR 0014 (borrador). |
+| Sección 2: en v1 la entrada del alumno es texto y la voz es opcional | El flujo es de voz con alternativa escrita siempre disponible. El audio solo empieza tras un toque y nunca se pide cámara. | Así son los diseños y las reglas de producto de la defensa. El micrófono solo se pide tras un toque y `next.config.js` lo permite únicamente en `/defensa` (`microphone=(self)`); en el resto del sitio sigue en `microphone=()`. La cámara nunca. |
+| Sección 6: proponer antes de construir | Se construyó sobre diseños ya aprobados, sin propuesta de arquitectura. | El ADR 0014 está escrito como **borrador** (`docs/adr/0014-...`), con el cambio propuesto a `AGENTS.md`, sin aplicar. Mientras no se apruebe, las rutas están ocultas en producción. |
 | Carpetas | Contratos (`types.ts`) y ejemplo (`mock.ts`) viven junto a los componentes, no en `src/lib/`. | Así lo pidió el encargo. Al conectar datos reales conviene mover `types.ts` y `consultas.ts` a `src/lib/defensas/`. |
-| `productionSurface.ts` | Las rutas nuevas no están en la lista de rutas retiradas, así que en producción se verían con datos de ejemplo. | No se modificó el archivo. Diff propuesto más abajo. |
-
-### Diff propuesto (no aplicado) para ocultar las rutas en producción mientras sean un ejemplo
-
-`src/lib/server/productionSurface.ts`, dentro de `RETIRED_PRODUCTION_ROUTE_PREFIXES`:
-
-```diff
-   '/dashboard',
-   '/demo',
-+  '/defensa',
-   '/grupos',
-   '/join',
-   '/missions',
-   '/pilot-login',
-+  '/revision',
-   '/transparencia-ia',
-```
-
-Las pruebas existentes (`tests/e2e/production-surface.spec.ts`) no listan estas rutas, así que no se rompen.
+| `productionSurface.ts` | `/defensa`, `/revision` y `/api/defensa` están en `NOT_YET_OPEN_PRODUCTION_ROUTE_PREFIXES`: en producción responden como retiradas hasta que `DEFENSA_PUBLICA=1`. | Mientras el ADR 0014 no esté aprobado. |
 
 ## Diferencias con los diseños
 
@@ -168,13 +175,14 @@ Profesor:
 - La barra lateral se queda fija al desplazarse en páginas largas.
 - En pantallas angostas la barra lateral se apila arriba del contenido, como en el diseño; no hay menú compacto.
 - Con ningún objetivo elegido, "Crear enlace" explica qué falta.
-- "Antes de ver su reporte" es un diálogo que no se cierra con Escape; sus cuatro salidas llevan al reporte y la respuesta no se guarda.
-- "Revisar uno por uno" lleva al reporte de Ana, el único con transcripción.
-- Las otras actividades del menú llevan al mismo grupo de ejemplo.
-- La página "no encontrado" del profesor vuelve a `/revision/demo`.
+- "Antes de ver su reporte" es un diálogo que no se cierra con Escape; sus cuatro salidas llevan al reporte y, con datos reales, la respuesta se guarda sin frenar la navegación.
+- "Revisar uno por uno" lleva al primero de la cola de revisión (en el ejemplo, a Ana, la única con transcripción).
+- Con datos reales no se ofrece "Nueva actividad" y el menú muestra solo la actividad del enlace.
+- Con datos reales, cada pregunta puede traer debajo una repregunta o una transferencia con su respuesta, y un aviso si el análisis de Celestea todavía se está preparando.
+- La página "no encontrado" del profesor vuelve a `/revision/demo` (solo existe fuera de producción).
 - El dominio del enlace que se comparte (`celestea.mx/d/<token>`) es ilustrativo; la ruta real es `/defensa/<token>`.
 
-## Verificación hecha
+## Verificación del prototipo (12 de octubre, antes de conectar el servidor)
 
 - `pnpm typecheck`: sin errores.
 - `pnpm lint`: 0 errores y 7 advertencias que ya existían (en `components/grupos` y `components/workshop`); ninguna viene de los archivos nuevos.
@@ -193,13 +201,19 @@ Profesor:
 
 ## Siguientes pasos
 
-1. Escribir y aprobar el ADR 0014 (superficie de profesor y enlaces de grupo dentro del producto).
-2. Ocultar `/defensa` y `/revision` en producción con el diff de arriba mientras sean un ejemplo.
-3. Conectar datos: reemplazar los tres cuerpos de `consultas.ts`, con sesión del profesor y comprobación de que es el dueño.
-4. Guardar las respuestas del alumno y el audio (con borrado a los 7 días), pedir el micrófono solo tras un toque y abrir `Permissions-Policy` solo en `/defensa`.
-5. Clasificar la evidencia ("lo explicó", "en parte", "no salió") en servidor, con un clasificador que solo elija ramas ya escritas, y que `interpretarPeticion` use el mismo principio. Nada de generar la interfaz con el modelo.
-6. Decidir cómo se redactan los objetivos de una actividad nueva sin que el modelo escriba contenido de lecciones en tiempo de ejecución.
-7. Sustituir `localStorage` (fijados y cierre del reporte) por almacenamiento del servidor.
-8. Diseñar el menú del profesor para celular y hacer una auditoría de accesibilidad con herramienta y lector de pantalla real.
-9. Agregar pruebas e2e de estas rutas en `tests/e2e/` (aquí no se tocó esa carpeta).
-10. Definir el dominio o acortador del enlace que se comparte.
+Lo hecho y lo pendiente del servidor está en [`backend.md`](./backend.md). Del lado de la interfaz:
+
+1. Aprobar o ajustar el ADR 0014 (borrador) y, solo entonces, abrir las rutas en producción con
+   `DEFENSA_PUBLICA=1`.
+2. Probar el flujo con llaves reales y con teléfonos de gama baja en datos móviles: la subida
+   directa firmada a Supabase, la grabación por partes con una red que se cae y el audio que
+   arranca tras un toque en iPhone.
+3. Pantalla del profesor para crear actividades (hoy es el script `pnpm defensa:actividad`) y
+   lista del grupo.
+4. Diseñar el resumen de práctica del ensayo y la pieza visual de las citas del reporte; hoy son
+   una lista de texto y la transcripción con la frase resaltada.
+5. Diseñar el menú del profesor para celular y hacer una auditoría de accesibilidad con
+   herramienta y lector de pantalla real.
+6. Sustituir `localStorage` de "fijados" por almacenamiento del servidor si hace falta que
+   sobrevivan a otro navegador.
+7. Definir el dominio o acortador del enlace que se comparte.

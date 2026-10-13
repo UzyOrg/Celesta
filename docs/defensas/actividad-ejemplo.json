@@ -1,0 +1,18 @@
+{
+  "nombre": "Encuesta sobre hábitos de estudio",
+  "curso": "Metodología de la investigación",
+  "grupo": "3B",
+  "profesor": "Laura Méndez",
+  "consigna": "Diseña y aplica una encuesta sobre hábitos de estudio en tu facultad. En tu reporte justifica el método que elegiste, explica cómo definiste tu muestra y reconoce los límites de tu estudio.",
+  "rubrica": "Criterio 1: justifica la elección del método. Criterio 2: define y justifica la muestra. Criterio 3: reconoce los límites del estudio.",
+  "contextoCurso": "Metodología de la investigación, tercer semestre.",
+  "registro": "tu",
+  "duracion": "corta",
+  "fechaLimite": "2026-10-23T23:59:00-06:00",
+  "limiteEnvios": 60,
+  "objetivos": [
+    { "texto": "Justifica por qué eligió una encuesta", "corto": "Justifica el método", "alias": "El del método", "tema": "su método" },
+    { "texto": "Explica cómo definió su muestra", "corto": "Explica su muestra", "alias": "El de la muestra", "tema": "su muestra" },
+    { "texto": "Reconoce los límites de su estudio", "corto": "Reconoce límites", "alias": "El de los límites", "tema": "los límites de su estudio" }
+  ]
+}
