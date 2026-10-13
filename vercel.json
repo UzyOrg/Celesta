@@ -3,8 +3,17 @@
   "framework": "nextjs",
   "regions": ["iad1"],
   "functions": {
+    "src/app/api/defensa/**": {
+      "maxDuration": 60
+    },
     "src/app/api/**": {
       "maxDuration": 10
     }
-  }
+  },
+  "crons": [
+    {
+      "path": "/api/defensa/mantenimiento",
+      "schedule": "17 9 * * *"
+    }
+  ]
 }

@@ -23,6 +23,14 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
+  // Oral defences do not use the Supabase session: students and teachers enter
+  // with signed links and Bearer tokens, so there is nothing to refresh, no CSRF
+  // cookie to set and no reason to call Supabase on every page load.
+  const { pathname } = request.nextUrl
+  if (pathname === '/defensa' || pathname.startsWith('/defensa/') || pathname === '/revision' || pathname.startsWith('/revision/')) {
+    return NextResponse.next()
+  }
+
   let response = NextResponse.next({
     request: {
       headers: request.headers,

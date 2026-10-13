@@ -5,9 +5,18 @@
  *
  * @type {import('next').NextConfig}
  */
+/**
+ * El micrófono está cerrado en todo el sitio salvo en /defensa, donde el alumno habla
+ * y solo el propio sitio (`self`) puede pedirlo: ningún iframe ni script ajeno. La cámara
+ * sigue cerrada en todas partes, también en /defensa: no hay cámara ni vigilancia.
+ */
+const permissionsPolicy = (microphone) => ({
+  key: 'Permissions-Policy',
+  value: `camera=(), geolocation=(), microphone=${microphone}, payment=(), usb=()`,
+});
+
 const commonSecurityHeaders = [
   { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
-  { key: 'Permissions-Policy', value: 'camera=(), geolocation=(), microphone=(), payment=(), usb=()' },
   { key: 'X-Content-Type-Options', value: 'nosniff' },
   { key: 'X-Frame-Options', value: 'DENY' },
   { key: 'X-DNS-Prefetch-Control', value: 'off' },
@@ -28,7 +37,8 @@ const productionContentSecurityPolicy = [
   // `connect-src` already allows the scene payload; the `<img>` tags it injects
   // need the image directive as well.
   "img-src 'self' data: blob: https://assets.unicorn.studio",
-  "media-src 'self' data: blob:",
+  // Las preguntas de voz y el audio original llegan de Storage con enlaces firmados que caducan.
+  "media-src 'self' data: blob: https://*.supabase.co",
   "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://storage.googleapis.com",
   "worker-src 'self' blob:",
   "manifest-src 'self'",
@@ -52,7 +62,11 @@ const nextConfig = {
         { key: 'Strict-Transport-Security', value: 'max-age=31536000; includeSubDomains' }
       );
     }
-    return [{ source: '/:path*', headers }];
+    // Cuando dos reglas fijan el mismo encabezado, gana la última: /defensa abre el micrófono.
+    return [
+      { source: '/:path*', headers: [...headers, permissionsPolicy('()')] },
+      { source: '/defensa/:path*', headers: [permissionsPolicy('(self)')] },
+    ];
   },
   async rewrites() {
     return [
