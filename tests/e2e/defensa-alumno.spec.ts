@@ -71,6 +71,50 @@ async function responderPorEscrito(page: Page): Promise<void> {
   });
 }
 
+test('valida nombre y matrícula antes de llegar a los permisos', async ({ page }) => {
+  await page.goto(RUTA);
+  await page.getByRole('button', { name: 'Empezar' }).click();
+  await page.getByLabel('Nombre completo').fill('12345');
+  await page.getByLabel('Matrícula').fill('DEMO-VALIDACION');
+  await page.getByRole('button', { name: 'Seguir' }).click({ force: true });
+  await expect(page.getByRole('heading', { name: '¿Quién eres?' })).toBeVisible();
+  expect(await page.getByLabel('Nombre completo').evaluate((campo: HTMLInputElement) => campo.validationMessage)).toContain('nombre');
+  await page.getByLabel('Nombre completo').fill('Prueba Local');
+  await page.getByLabel('Matrícula').fill('1');
+  await page.getByRole('button', { name: 'Seguir' }).click({ force: true });
+  await expect(page.getByRole('heading', { name: '¿Quién eres?' })).toBeVisible();
+  expect(await page.getByLabel('Matrícula').evaluate((campo: HTMLInputElement) => campo.validationMessage)).toContain('3 a 30');
+  await page.getByLabel('Matrícula').fill('a01 234');
+  await page.getByRole('button', { name: 'Seguir' }).click();
+  await expect(page.getByRole('heading', { name: 'Tres sí y seguimos.' })).toBeVisible();
+});
+
+test('permite reintentar una sesión fallida sin perder los switches', async ({ page }, testInfo) => {
+  let intentos = 0;
+  await page.route('**/api/defensa/sesion', async (ruta) => {
+    intentos += 1;
+    if (intentos === 1) await ruta.fulfill({ status: 503, contentType: 'application/json', body: JSON.stringify({ error: 'no_configurado', mensaje: 'El servicio no está configurado.' }) });
+    else await ruta.continue();
+  });
+  await page.goto(RUTA);
+  await page.getByRole('button', { name: 'Empezar' }).click();
+  await page.getByLabel('Nombre completo').fill('Prueba Local');
+  await page.getByLabel('Matrícula').fill(matriculaNueva());
+  await page.getByRole('button', { name: 'Seguir' }).click();
+  for (const interruptor of await page.getByRole('switch').all()) await interruptor.check({ force: true });
+  await page.getByRole('button', { name: 'Aceptar' }).click();
+  await expect(page.getByText('El servicio no está configurado.')).toBeVisible();
+  for (const interruptor of await page.getByRole('switch').all()) await expect(interruptor).toBeChecked();
+  await page.getByRole('button', { name: 'Aceptar' }).click();
+  await expect(page.getByRole('heading', { name: '¿Hablas o escribes?' })).toBeVisible();
+  expect(intentos).toBe(2);
+  // Espera a que terminen las entradas finitas; no altera las animaciones del producto.
+  await page.evaluate(async () => {
+    await Promise.all(document.getAnimations().filter((a) => Number.isFinite(a.effect?.getTiming().iterations)).map((a) => a.finished.catch(() => undefined)));
+  });
+  await page.screenshot({ path: testInfo.outputPath('permisos-resueltos.png'), scale: 'css' });
+});
+
 test.describe('alumno por escrito', () => {
   test('recorre el flujo completo sin micrófono y entrega', async ({ page }) => {
     await entrarYSubirTrabajo(page, 'Escribir');

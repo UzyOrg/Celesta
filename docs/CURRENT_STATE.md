@@ -6,6 +6,20 @@ This is a compact handoff for a fresh Codex task. It records the current
 checkpoint, not permanent repository policy. Read `AGENTS.md` first; it wins
 over deprecated documents in this repository.
 
+## Backend de defensas · checkpoint separado, 2026-10-14
+
+Base `feat/defensas-backend` (`010fd8d`); correcciones en `codex/defensas-backend-fixes`.
+Arranque sin llaves: `npm run dev:defensa`. Se comparte la validación de identidad entre UI
+y API, se comprueba la firma antes de guardar al alumno y se añade diagnóstico operativo.
+Las pruebas usan credenciales ficticias explícitas. Verificado: typecheck, lint (0 errores,
+7 avisos heredados), build y npm test (292 unitarias + 43 E2E).
+
+El [informe y pendientes](defensas/revision-2026-10-14.md) distingue lo comprobado en memoria
+de las conexiones reales pendientes. [Operación](defensas/backend.md). No se ejecutaron
+migraciones ni se modificaron credenciales, animaciones, estilos o el runtime de `/crear`.
+El ADR 0014 sigue en borrador. Lo que sigue es el checkpoint histórico de `/crear` de agosto;
+no acredita el estado actual del piloto ni la disponibilidad de defensas en producción.
+
 ## Product decision
 
 Celestea is a B2C, voice-first learning companion for Mexican prepa students.

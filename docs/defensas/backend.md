@@ -84,8 +84,9 @@ Los nombres están en [`.env.example`](../../.env.example). Resumen:
 | `NEXT_PUBLIC_SITE_URL` | Para que los enlaces salgan completos | Sin diagonal final. |
 | Las de Supabase de siempre | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` | La subida directa del archivo usa la llave anónima solo para llegar al bucket con un enlace firmado. |
 
-Con `DEFENSA_LLM_PROVIDER`, `DEFENSA_STT_PROVIDER` y `DEFENSA_TTS_PROVIDER` en `mock` todo el
-flujo funciona sin llaves ni red (respuestas falsas): sirve para desarrollar y para las pruebas.
+Poner los tres proveedores en `mock` solo simula modelo, transcripción y voz. La base sigue
+siendo Supabase salvo que se seleccione `DEFENSA_ALMACEN=memoria`, y la sesión requiere una
+firma válida. Para una demo completa sin configurar nada, usa el comando de la sección 4.
 
 ### 3. Dar de alta una actividad
 
@@ -108,13 +109,46 @@ cambiando la versión de acceso (`rotar`). El enlace del grupo tiene un límite 
 ### 4. Desarrollo local sin Supabase
 
 ```bash
-DEFENSA_ALMACEN=memoria DEFENSA_SIGNING_SECRET=<32+ caracteres> CRON_SECRET=<16+ caracteres> \
-DEFENSA_LLM_PROVIDER=mock DEFENSA_STT_PROVIDER=mock DEFENSA_TTS_PROVIDER=mock pnpm dev
+npm run dev:defensa
+# Si el puerto 3000 está ocupado:
+npm run dev:defensa -- --port 3006
 ```
 
-Arranca con una actividad de demostración ya creada y al iniciar imprime en la consola los dos
-enlaces: el del alumno es `/defensa/demo-celestea` y el del profesor trae su firma. Además, solo
-fuera de producción, `/revision/demo` abre el escenario de ejemplo del diseño (datos falsos).
+Funciona en macOS y Windows. Selecciona memoria y los tres proveedores mock, genera secretos
+temporales y usa valores ficticios de Supabase para el layout compartido. Esos valores se
+imponen a `.env.local`: la demo no apunta a tu base real. Se niega a arrancar en Vercel o
+producción. No modifica tu archivo de variables.
+
+Abre `http://127.0.0.1:3000/defensa/demo-celestea` (ajusta el puerto si lo cambiaste).
+La consola imprime el enlace firmado del profesor. Al reiniciar se pierden las entregas y
+caducan las sesiones de esta demo. `/revision/demo` sigue siendo la vista previa del diseño.
+
+### 5. Diagnóstico antes de usar servicios reales
+
+```bash
+npm run defensa:diagnostico
+npm run defensa:diagnostico -- --supabase
+npm run defensa:diagnostico -- --proveedores
+```
+
+- Sin opciones: revisa variables de `.env.local` y `.env` sin red ni valores visibles.
+  Sale con código 1 si falta algo.
+- `--supabase`: comprueba las doce tablas, las columnas de eventos utilizadas por el código
+  y que los dos buckets existan y sean privados. Solo HEAD/metadatos: no lee filas ni crea
+  registros. No sustituye la comprobación de permisos con anon/authenticated.
+- `--proveedores`: hace llamadas reales con costo usando texto ficticio. Comprueba los dos
+  modelos, voz y transcripción. Usa los adaptadores sin fallback local, para no ocultar
+  errores. Los proveedores mock se reportan como SIMULADO, nunca como una cuenta validada.
+- Si usas transcripción real y voz mock, añade `--audio ruta/a/muestra.wav` (o MP3, máximo
+  2 MB). Usa una grabación ficticia: el archivo se envía al transcriptor.
+
+Todavía hay que comprobar mediante un recorrido real con datos ficticios: subida firmada
+desde el navegador, escritura de eventos, generación del plan completo y calidad de STT.
+
+En un proyecto Supabase vacío, las dos migraciones indicadas arriba **no crean**
+`eventos_de_aprendizaje`: la de defensas la reutiliza y la de seguridad solo cierra objetos
+existentes. Hace falta el esquema base compatible de eventos. El diagnóstico detecta esa
+ausencia; aquí no se inventa ni instala otro esquema.
 
 ## Partes del servidor
 
@@ -181,6 +215,11 @@ El cron diario (`/api/defensa/mantenimiento`, 9:17 UTC) también cierra por inac
 las defensas abandonadas a medias, descarta las entregas que nunca llegaron al bucket
 (3 h) y genera los reportes de las incompletas.
 
+**Preview no ejecuta el cron automáticamente.** Vercel solo programa invocaciones en
+producción. En Preview se prueba el endpoint manualmente con su autorización; no se puede
+asumir que el audio se limpiará solo.
+Fuente: [documentación de Vercel](https://vercel.com/docs/cron-jobs/quickstart).
+
 ## Qué sigue simulado en la interfaz
 
 - **Nueva actividad con Celestea** (`/revision/<enlace>/nueva`): con datos reales no existe
@@ -194,14 +233,15 @@ las defensas abandonadas a medias, descarta las entregas que nunca llegaron al b
 ## Pruebas
 
 ```bash
-pnpm typecheck && pnpm lint
-pnpm test:unit                    # 282 pruebas, sin servidor ni red
-PLAYWRIGHT_CHANNEL=msedge pnpm exec playwright test tests/e2e/defensa-api.spec.ts \
+npm run typecheck
+npm run lint
+npm run test:unit
+npx playwright test tests/e2e/defensa-api.spec.ts \
   tests/e2e/defensa-alumno.spec.ts tests/e2e/defensa-profesor.spec.ts
 ```
 
 Las pruebas del navegador arrancan su propio servidor con almacén en memoria y proveedores
-`mock` (ver `playwright.config.ts`). La del alumno con voz usa el micrófono falso de Chrome o
+`mock` y credenciales ficticias explícitas (ver `playwright.config.ts`). La del alumno con voz usa el micrófono falso de Chrome o
 Edge (`--use-fake-device-for-media-stream`); `PLAYWRIGHT_CHANNEL=msedge` sirve si no hay Chrome.
 
 ## Qué falta

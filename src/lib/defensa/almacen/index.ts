@@ -18,8 +18,8 @@ const CLAVE = '__celesteaDefensaAlmacen';
 function anunciarDemo(actividadId: string, accesoVersion: number): void {
   const sitio = config.urlSitio() ?? 'http://localhost:3000';
   console.info(`[defensa] Almacén en memoria con actividad de demostración. Alumno: ${sitio}/defensa/${TOKEN_GRUPO_DEMO}`);
-  if (!config.secretoFirma()) {
-    console.info('[defensa] Sin DEFENSA_SIGNING_SECRET no hay enlace del profesor ni sesiones: defínelo en .env.local.');
+  if ((config.secretoFirma()?.length ?? 0) < 32) {
+    console.info('[defensa] DEFENSA_SIGNING_SECRET requiere al menos 32 caracteres. Para la demo sin configuración usa npm run dev:defensa.');
     return;
   }
   const { token } = emitirAccesoProfesor(actividadId, accesoVersion, { duracionMs: 7 * 24 * 60 * 60 * 1000 });

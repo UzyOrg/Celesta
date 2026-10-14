@@ -44,9 +44,12 @@ export type ResultadoVerificacion<T extends ClaimsDefensa> =
 
 const MIN_SECRETO = 32;
 
-function secreto(): string {
+export function exigirSecretoFirma(): string {
   const valor = config.secretoFirma();
-  if (!valor || valor.length < MIN_SECRETO) throw new DefensaError('no_configurado', 503);
+  if (!valor || valor.length < MIN_SECRETO) {
+    console.error('defensa_configuracion', { variable: 'DEFENSA_SIGNING_SECRET', minimoCaracteres: MIN_SECRETO });
+    throw new DefensaError('no_configurado', 503);
+  }
   return valor;
 }
 
@@ -84,7 +87,7 @@ function leerClaims(carga: string): ClaimsDefensa | null {
   }
 }
 
-export function firmarToken(claims: ClaimsDefensa, clave: string = secreto()): string {
+export function firmarToken(claims: ClaimsDefensa, clave: string = exigirSecretoFirma()): string {
   if (clave.length < MIN_SECRETO) throw new DefensaError('no_configurado', 503);
   const carga = codificar(claims);
   return `${carga}.${firmaDe(clave, claims.p, carga)}`;
@@ -94,7 +97,7 @@ export function verificarToken<P extends ClaimsDefensa['p']>(
   token: string,
   proposito: P,
   ahora: number = Date.now(),
-  clave: string = secreto(),
+  clave: string = exigirSecretoFirma(),
 ): ResultadoVerificacion<Extract<ClaimsDefensa, { p: P }>> {
   if (token.length > 1_024) return { ok: false, razon: 'malformado' };
   const partes = token.split('.');

@@ -21,7 +21,9 @@
     "pilot:export": "tsx scripts/export-crear-pilot.ts",
     "invite:teacher": "tsx scripts/invite-teacher.ts",
     "test:unit": "playwright test -c playwright.unit.config.ts",
-    "defensa:actividad": "tsx --conditions=react-server scripts/defensa-actividad.ts"
+    "defensa:actividad": "tsx --conditions=react-server scripts/defensa-actividad.ts",
+    "dev:defensa": "node scripts/defensa-dev.mjs",
+    "defensa:diagnostico": "tsx --conditions=react-server scripts/defensa-diagnostico.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.0.1",

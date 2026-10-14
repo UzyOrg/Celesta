@@ -57,6 +57,23 @@ test.describe('entrada del alumno', () => {
     expect(sesion.actividad.id).toBe(actividad.id);
   });
 
+  for (const secreto of ['', 'demasiado-corto']) {
+    test(`sin una firma válida no persiste al alumno ni consentimientos (${secreto || 'ausente'})`, async () => {
+      const { ctx, estado } = crearMundo();
+      const actividad = await crearActividadDePrueba(ctx);
+      const anterior = process.env.DEFENSA_SIGNING_SECRET;
+      process.env.DEFENSA_SIGNING_SECRET = secreto;
+      try {
+        expect(await codigoDe(() => entrarComoAlumno(ctx, actividad))).toBe('no_configurado');
+        expect(estado.alumnos.size).toBe(0);
+        expect(estado.consentimientos).toHaveLength(0);
+      } finally {
+        if (anterior === undefined) delete process.env.DEFENSA_SIGNING_SECRET;
+        else process.env.DEFENSA_SIGNING_SECRET = anterior;
+      }
+    });
+  }
+
   test('volver a entrar con la misma matrícula retoma al mismo alumno y no cambia su nombre', async () => {
     const { ctx } = crearMundo();
     const actividad = await crearActividadDePrueba(ctx);

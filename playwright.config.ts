@@ -32,6 +32,11 @@ export default defineConfig({
     // existe en cmd.exe, así que así la suite arranca igual en Windows y en Linux.
     command: 'npx next dev --hostname 127.0.0.1 --port 3001',
     env: {
+      // Aísla también el layout heredado y los lectores: nunca heredar credenciales reales de .env.local.
+      NEXT_PUBLIC_SUPABASE_URL: 'http://127.0.0.1:9',
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: 'playwright-only-anon-placeholder',
+      SUPABASE_SERVICE_ROLE_KEY: 'playwright-only-service-placeholder',
+      NEXT_PUBLIC_SITE_URL: 'http://127.0.0.1:3001',
       NEXT_DIST_DIR: '.next-playwright',
       CREAR_CLASSIFIER_FORCE_LOCAL: '1',
       NEXT_PUBLIC_CREAR_RETEST_DELAY_HOURS: '0',

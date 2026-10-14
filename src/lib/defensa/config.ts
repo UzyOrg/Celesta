@@ -1,4 +1,5 @@
 import 'server-only';
+import { MAX_NOMBRE_CARACTERES } from '../../components/defensa/identidad';
 
 /**
  * Límites y variables de entorno de las defensas orales.
@@ -31,7 +32,7 @@ export const LIMITES = {
   /** Respuesta por escrito. */
   respuestaCaracteres: 4_000,
   aclaracionCaracteres: 400,
-  nombreCaracteres: 120,
+  nombreCaracteres: MAX_NOMBRE_CARACTERES,
   /** Duración de cada parte que corta el MediaRecorder. */
   parteAudioMs: 4_000,
   /** Cuánto dura una sesión del alumno y el acceso del profesor. */
