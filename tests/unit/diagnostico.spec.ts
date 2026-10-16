@@ -116,3 +116,15 @@ test('las columnas que consulta el diagnóstico existen en la migración de las 
     for (const columna of (COLUMNAS_POR_TABLA[tabla] ?? '').split(',')) expect(existentes, `${tabla}.${columna}`).toContain(columna);
   }
 });
+
+test('ElevenLabs para voz y transcripción pide la llave una sola vez', () => {
+  const base = { ...envDemo, DEFENSA_STT_PROVIDER: 'elevenlabs', DEFENSA_TTS_PROVIDER: 'elevenlabs', DEFENSA_ELEVENLABS_VOICE_ID: 'voz-ficticia' };
+  const sinLlave = revisarConfiguracion(base);
+  expect(sinLlave.filter((r) => r.nombre === 'DEFENSA_ELEVENLABS_API_KEY')).toHaveLength(1);
+  expect(sinLlave.find((r) => r.nombre === 'DEFENSA_ELEVENLABS_API_KEY')?.estado).toBe('error');
+  const soloTranscripcion = revisarConfiguracion({ ...envDemo, DEFENSA_STT_PROVIDER: 'elevenlabs' });
+  expect(soloTranscripcion.find((r) => r.nombre === 'DEFENSA_STT_PROVIDER')?.estado).toBe('ok');
+  expect(soloTranscripcion.find((r) => r.nombre === 'DEFENSA_ELEVENLABS_API_KEY')?.estado).toBe('error');
+  const completa = revisarConfiguracion({ ...base, DEFENSA_ELEVENLABS_API_KEY: 'llave-ficticia' });
+  expect(completa.filter((r) => r.nombre === 'DEFENSA_ELEVENLABS_API_KEY').map((r) => r.estado)).toEqual(['ok']);
+});

@@ -77,8 +77,8 @@ Los nombres están en [`.env.example`](../../.env.example). Resumen:
 | `DEFENSA_ALMACEN` | `supabase` (por defecto) o `memoria` | `memoria` solo existe fuera de producción. |
 | `DEFENSA_LLM_PROVIDER`, `DEFENSA_LLM_MODEL`, `DEFENSA_LLM_MODEL_CLASIFICADOR` | Modelo de lenguaje (`openai`, `anthropic` o `mock`) | Sin modelo por defecto a propósito: elige uno vigente. |
 | `DEFENSA_OPENAI_API_KEY` / `DEFENSA_ANTHROPIC_API_KEY` | Llave del modelo elegido | Solo servidor. |
-| `DEFENSA_STT_PROVIDER`, `DEFENSA_STT_MODEL`, `DEFENSA_STT_IDIOMA` | Transcripción (`deepgram`, `assemblyai` o `mock`) | Debe dar confianza y momento por palabra. |
-| `DEFENSA_DEEPGRAM_API_KEY` / `DEFENSA_ASSEMBLYAI_API_KEY` | Llave del transcriptor elegido | |
+| `DEFENSA_STT_PROVIDER`, `DEFENSA_STT_MODEL`, `DEFENSA_STT_IDIOMA` | Transcripción (`elevenlabs`, `deepgram`, `assemblyai` o `mock`) | Debe dar confianza y momento por palabra. Con `elevenlabs` se usa Scribe v2 por lotes (`scribe_v2`) y la confianza es `exp(logprob)`, otra escala que la de Deepgram: calibra el umbral con audio real. No usa tiempo real. |
+| `DEFENSA_DEEPGRAM_API_KEY` / `DEFENSA_ASSEMBLYAI_API_KEY` | Llave del transcriptor elegido | Con `elevenlabs` se usa `DEFENSA_ELEVENLABS_API_KEY`, la misma de la voz (su llave debe tener permiso de Speech to Text). |
 | `DEFENSA_UMBRAL_CONFIANZA` | Debajo de esta confianza una palabra puede pedir aclaración | 0,55 por defecto; el valor final sale de la etapa 1 del piloto. |
 | `DEFENSA_TTS_PROVIDER`, `DEFENSA_ELEVENLABS_API_KEY`, `DEFENSA_ELEVENLABS_VOICE_ID`, `DEFENSA_ELEVENLABS_MODEL`, `DEFENSA_ELEVENLABS_SIN_REGISTRO` | Voz de Celestea | |
 | `NEXT_PUBLIC_SITE_URL` | Para que los enlaces salgan completos | Sin diagonal final. |
@@ -249,7 +249,7 @@ Edge (`--use-fake-device-for-media-stream`); `PLAYWRIGHT_CHANNEL=msedge` sirve s
 - Probar con **llaves reales** el modelo, la transcripción y la voz, y la subida firmada directa
   a Supabase. Todo lo verificado aquí fue con proveedores `mock` y almacén en memoria; la
   migración se validó en una base PGlite, no en Supabase.
-- Comparar dos transcriptores (Deepgram y AssemblyAI) con audio real de estudiantes mexicanos y
+- Comparar transcriptores (ElevenLabs Scribe, Deepgram y AssemblyAI) con audio real de estudiantes mexicanos y
   fijar `DEFENSA_UMBRAL_CONFIANZA`.
 - Borrar a los 90 días del cierre de la cohorte (decisión de retención pendiente) y definir qué
   significa "cerrar la cohorte" (hoy existe la columna `cohorte_cerrada_en`, sin pantalla ni job).

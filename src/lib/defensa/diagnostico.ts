@@ -37,7 +37,7 @@ export function revisarConfiguracion(env: Record<string, string | undefined>): C
 
   for (const [nombre, permitidos] of [
     ['DEFENSA_LLM_PROVIDER', ['openai', 'anthropic', 'mock']],
-    ['DEFENSA_STT_PROVIDER', ['deepgram', 'assemblyai', 'mock']],
+    ['DEFENSA_STT_PROVIDER', ['deepgram', 'assemblyai', 'elevenlabs', 'mock']],
     ['DEFENSA_TTS_PROVIDER', ['elevenlabs', 'mock']],
   ] as const) {
     const elegido = valor(nombre) || 'mock';
@@ -53,6 +53,8 @@ export function revisarConfiguracion(env: Record<string, string | undefined>): C
   }
   if (valor('DEFENSA_STT_PROVIDER') === 'deepgram') exigir('DEFENSA_DEEPGRAM_API_KEY');
   if (valor('DEFENSA_STT_PROVIDER') === 'assemblyai') exigir('DEFENSA_ASSEMBLYAI_API_KEY');
+  // La misma llave sirve para voz y transcripción: no se pide dos veces.
+  if (valor('DEFENSA_STT_PROVIDER') === 'elevenlabs' && valor('DEFENSA_TTS_PROVIDER') !== 'elevenlabs') exigir('DEFENSA_ELEVENLABS_API_KEY');
   if (valor('DEFENSA_TTS_PROVIDER') === 'elevenlabs') {
     exigir('DEFENSA_ELEVENLABS_API_KEY');
     exigir('DEFENSA_ELEVENLABS_VOICE_ID');

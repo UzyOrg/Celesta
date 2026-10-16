@@ -59,7 +59,7 @@ export const PRESUPUESTO_DEFENSA = {
 } as const;
 
 export type ProveedorLlm = 'openai' | 'anthropic' | 'mock';
-export type ProveedorStt = 'deepgram' | 'assemblyai' | 'mock';
+export type ProveedorStt = 'deepgram' | 'assemblyai' | 'elevenlabs' | 'mock';
 export type ProveedorTts = 'elevenlabs' | 'mock';
 export type TipoAlmacen = 'supabase' | 'memoria';
 
@@ -104,7 +104,7 @@ export const config = {
   claveOpenai: () => texto('DEFENSA_OPENAI_API_KEY'),
   claveAnthropic: () => texto('DEFENSA_ANTHROPIC_API_KEY'),
 
-  proveedorStt: () => elegir<ProveedorStt>('DEFENSA_STT_PROVIDER', ['deepgram', 'assemblyai', 'mock'], 'mock'),
+  proveedorStt: () => elegir<ProveedorStt>('DEFENSA_STT_PROVIDER', ['deepgram', 'assemblyai', 'elevenlabs', 'mock'], 'mock'),
   modeloStt: () => texto('DEFENSA_STT_MODEL'),
   idiomaStt: () => texto('DEFENSA_STT_IDIOMA') ?? 'es',
   claveDeepgram: () => texto('DEFENSA_DEEPGRAM_API_KEY'),
