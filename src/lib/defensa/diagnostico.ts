@@ -112,13 +112,30 @@ export async function probarProveedores(proveedores: Proveedores, audio?: AudioS
   return resultados;
 }
 
-const TABLAS = ['actividades', 'alumnos', 'consentimientos', 'perfiles', 'entregas', 'planes', 'defensas', 'turnos', 'audio_partes', 'reportes', 'toques_profesor', 'tiempos_revision'];
+/**
+ * Cada tabla con una columna que sí tiene en la migración: `defensa_perfiles` y
+ * `defensa_audio_partes` no tienen `id`, y pedirlo daría 42703 aunque la tabla exista.
+ */
+export const COLUMNAS_POR_TABLA: Readonly<Record<string, string>> = {
+  defensa_actividades: 'id',
+  defensa_alumnos: 'id',
+  defensa_consentimientos: 'id',
+  defensa_perfiles: 'alumno_id',
+  defensa_entregas: 'id',
+  defensa_planes: 'id',
+  defensa_defensas: 'id',
+  defensa_turnos: 'id',
+  defensa_audio_partes: 'turno_id,indice',
+  defensa_reportes: 'id',
+  defensa_toques_profesor: 'id',
+  defensa_tiempos_revision: 'id',
+  eventos_de_aprendizaje: 'client_event_id,actor_sid,student_session_id,student_alias,class_token,taller_id,paso_id,verbo,result,ts,client_ts',
+};
 
 /** Solo HEAD y metadatos de buckets: no descarga respuestas ni crea registros. */
 export async function probarSupabase(db: SupabaseClient): Promise<Comprobacion[]> {
   const resultados: Comprobacion[] = [];
-  for (const tabla of [...TABLAS.map((t) => `defensa_${t}`), 'eventos_de_aprendizaje']) {
-    const columnas = tabla === 'eventos_de_aprendizaje' ? 'client_event_id,actor_sid,student_session_id,student_alias,class_token,taller_id,paso_id,verbo,result,ts,client_ts' : 'id';
+  for (const [tabla, columnas] of Object.entries(COLUMNAS_POR_TABLA)) {
     resultados.push(await comprobar(tabla, async () => {
       const { error } = await db.from(tabla).select(columnas, { head: true }).limit(0);
       if (error) {

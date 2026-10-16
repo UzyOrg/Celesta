@@ -1,7 +1,9 @@
 import { expect, test } from '@playwright/test';
 import '../support/sinServerOnly';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { probarProveedores, probarSupabase, revisarConfiguracion } from '../../src/lib/defensa/diagnostico';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { COLUMNAS_POR_TABLA, probarProveedores, probarSupabase, revisarConfiguracion } from '../../src/lib/defensa/diagnostico';
 import type { Proveedores } from '../../src/lib/defensa/providers/tipos';
 
 const envDemo = {
@@ -93,4 +95,24 @@ test('Supabase se comprueba sin leer filas ni escribir; detecta eventos ausentes
   const resultados = await probarSupabase(db);
   expect(tablas).toHaveLength(13);
   expect(resultados.filter((r) => r.estado === 'error').map((r) => r.nombre)).toEqual(['eventos_de_aprendizaje', 'defensa-audio']);
+});
+
+test('las columnas que consulta el diagnóstico existen en la migración de las defensas', () => {
+  const sql = readFileSync(resolve(__dirname, '../../supabase/migrations/20261013_defensa_oral_piloto.sql'), 'utf8');
+  const columnasDe = (tabla: string): string[] => {
+    const inicio = sql.indexOf(`create table if not exists public.${tabla} (`);
+    expect(inicio, tabla).toBeGreaterThanOrEqual(0);
+    const cuerpo = sql.slice(inicio, sql.indexOf('\n);', inicio));
+    return cuerpo
+      .split('\n')
+      .slice(1)
+      .map((linea) => linea.trim().split(/\s+/)[0] ?? '')
+      .filter((nombre) => /^[a-z_]+$/.test(nombre));
+  };
+  const tablas = Object.keys(COLUMNAS_POR_TABLA).filter((tabla) => tabla.startsWith('defensa_'));
+  expect(tablas).toHaveLength(12);
+  for (const tabla of tablas) {
+    const existentes = columnasDe(tabla);
+    for (const columna of (COLUMNAS_POR_TABLA[tabla] ?? '').split(',')) expect(existentes, `${tabla}.${columna}`).toContain(columna);
+  }
 });
