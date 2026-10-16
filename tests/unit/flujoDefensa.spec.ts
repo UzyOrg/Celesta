@@ -2,8 +2,9 @@ import '../support/sinServerOnly';
 import { expect, test } from '@playwright/test';
 import type { DefensaCliente, PeticionResponder } from '../../src/components/defensa/contrato';
 import { DefensaError } from '../../src/lib/defensa/errores';
-import { audioFalso, crearSttMock } from '../../src/lib/defensa/providers/mock';
-import type { ProveedorStt } from '../../src/lib/defensa/providers/tipos';
+import { audioFalso, crearSttMock, crearTtsMock } from '../../src/lib/defensa/providers/mock';
+import type { ProveedorStt, ProveedorTts } from '../../src/lib/defensa/providers/tipos';
+import { textosPrevisibles } from '../../src/lib/defensa/turnEngine';
 import { entregarTextoPegado } from '../../src/lib/defensa/servicios/entregas';
 import type { SesionAlumno } from '../../src/lib/defensa/servicios/acceso';
 import {
@@ -20,7 +21,7 @@ import {
   subirParteAudio,
   ultimaActividad,
 } from '../../src/lib/defensa/servicios/defensas';
-import { prepararPlan } from '../../src/lib/defensa/servicios/planes';
+import { estadoDelPlan, prepararPlan } from '../../src/lib/defensa/servicios/planes';
 import { generarReporteDeDefensa } from '../../src/lib/defensa/servicios/reportes';
 import { TRABAJO } from '../support/fixtures';
 import {
@@ -91,6 +92,92 @@ async function mundoConPlan(parcial: Parameters<typeof crearMundo>[0] = {}) {
   const sesion = await prepararAlumnoConPlan(mundo, actividad);
   return { mundo, actividad, sesion };
 }
+
+/** Una voz que anota cada texto que le piden: así se sabe cuánto se crea de verdad. */
+function ttsQueCuenta(falla = false) {
+  const textos: string[] = [];
+  const base = crearTtsMock();
+  const tts: ProveedorTts = {
+    id: 'cuenta',
+    sintetizar: async (texto, opciones) => {
+      textos.push(texto);
+      if (falla) throw new Error('sin voz');
+      return base.sintetizar(texto, opciones);
+    },
+  };
+  return { textos, tts };
+}
+
+test.describe('la voz se crea solo para lo que se pregunta', () => {
+  test('armar el plan no crea voz; al empezar solo se crea la de las preguntas ya elegidas', async () => {
+    const voz = ttsQueCuenta();
+    const { mundo, sesion } = await mundoConPlan({ proveedores: { tts: voz.tts } });
+    expect(voz.textos).toEqual([]);
+
+    const { defensa } = await iniciarDefensa(mundo.ctx, sesion, { ensayo: false });
+    const plan = (await estadoDelPlan(mundo.ctx, sesion.alumno.id)).plan!;
+    const fila = (await mundo.ctx.repo.defensaPorId(defensa.id))!;
+    const elegidas = textosPrevisibles(plan.plan!, fila.semilla, []);
+
+    // Apertura + una candidata por objetivo + transferencia: cinco de las unas veinte posibles.
+    expect(new Set(voz.textos)).toEqual(new Set(elegidas));
+    expect(voz.textos).toHaveLength(elegidas.length);
+    expect(elegidas.length).toBeLessThanOrEqual(5);
+    expect(defensa.pregunta!.audioUrl).toMatch(/^\/api\/defensa\/archivo-dev\?/);
+    expect(Object.keys((await estadoDelPlan(mundo.ctx, sesion.alumno.id)).plan!.audios)).toHaveLength(elegidas.length);
+  });
+
+  test('una defensa sin seguimientos crea exactamente lo previsto y cada pregunta tiene su voz', async () => {
+    const voz = ttsQueCuenta();
+    const { mundo, sesion } = await mundoConPlan({ proveedores: { tts: voz.tts } });
+    const { defensa } = await iniciarDefensa(mundo.ctx, sesion, { ensayo: false });
+    const fila = (await mundo.ctx.repo.defensaPorId(defensa.id))!;
+    const plan = (await estadoDelPlan(mundo.ctx, sesion.alumno.id)).plan!;
+    const previstas = textosPrevisibles(plan.plan!, fila.semilla, []).length;
+
+    const final = await contestarTodo(mundo, sesion, defensa, LARGA);
+    expect(final.estado).toBe('por_revisar');
+    const turnos = await mundo.ctx.repo.turnosDeDefensa(defensa.id);
+    expect(turnos.map((t) => t.tipo)).not.toContain('seguimiento');
+    for (const turno of turnos) expect(turno.audioPreguntaRuta, turno.preguntaRef).not.toBeNull();
+    // Nada se creó de más: ni las candidatas que no salieron ni los seguimientos que no hicieron falta.
+    expect(voz.textos).toHaveLength(previstas);
+  });
+
+  test('un seguimiento se crea solo cuando la respuesta lo pide, y una sola vez', async () => {
+    const voz = ttsQueCuenta();
+    const { mundo, sesion } = await mundoConPlan({ proveedores: { tts: voz.tts } });
+    const { defensa } = await iniciarDefensa(mundo.ctx, sesion, { ensayo: false });
+    const antes = voz.textos.length;
+
+    await contestarTodo(mundo, sesion, defensa, (numero) => (numero === 2 ? CORTA : LARGA));
+    const turnos = await mundo.ctx.repo.turnosDeDefensa(defensa.id);
+    const seguimientos = turnos.filter((t) => t.tipo === 'seguimiento');
+    expect(seguimientos).toHaveLength(1);
+    expect(seguimientos[0]!.audioPreguntaRuta).not.toBeNull();
+    // Solo se agregó el seguimiento que se hizo; el otro seguimiento de esa candidata nunca se creó.
+    expect(voz.textos.length).toBe(antes + 1);
+    expect(new Set(voz.textos).size).toBe(voz.textos.length);
+  });
+
+  test('ensayo y defensa de verdad no repiten la voz de lo que comparten', async () => {
+    const voz = ttsQueCuenta();
+    const { mundo, sesion } = await mundoConPlan({ proveedores: { tts: voz.tts } });
+    await iniciarDefensa(mundo.ctx, sesion, { ensayo: true });
+    await iniciarDefensa(mundo.ctx, sesion, { ensayo: false });
+    // La apertura es la misma en las dos: se crea una vez.
+    expect(new Set(voz.textos).size).toBe(voz.textos.length);
+  });
+
+  test('si la voz falla, la defensa empieza igual: la pregunta siempre está escrita', async () => {
+    const voz = ttsQueCuenta(true);
+    const { mundo, sesion } = await mundoConPlan({ proveedores: { tts: voz.tts } });
+    const { defensa } = await iniciarDefensa(mundo.ctx, sesion, { ensayo: false });
+    expect(defensa.estado).toBe('en_curso');
+    expect(defensa.pregunta!.pregunta).toMatch(/^¿.+\?$/);
+    expect(defensa.pregunta!.audioUrl).toBeNull();
+  });
+});
 
 test.describe('iniciar la defensa', () => {
   test('sin entrega o con el plan todavía generándose no se puede empezar', async () => {

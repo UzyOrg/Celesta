@@ -27,11 +27,11 @@ import { limpiarTexto } from '../etiquetas';
 import { generarSemilla } from '../firmas';
 import type { PalabraTranscrita } from '../providers/tipos';
 import { aplicarRelleno, construirLineas, elegirHueco, textoDe } from '../transcripcion';
-import { buscarPregunta, separarContexto, siguienteTurno, type TurnoPrevio } from '../turnEngine';
+import { buscarPregunta, separarContexto, siguienteTurno, textosPrevisibles, type TurnoPrevio } from '../turnEngine';
 import type { SesionAlumno } from './acceso';
 import type { Ctx } from './contexto';
 import { entregaACliente, entregaVigente } from './entregas';
-import { CLAVE_AUDIO_ACLARACION, audioDeTexto, estadoDelPlan } from './planes';
+import { CLAVE_AUDIO_ACLARACION, asegurarAudios, estadoDelPlan, fraseDeAclaracion, huellaDeTexto } from './planes';
 
 /**
  * La defensa, turno por turno.
@@ -249,6 +249,9 @@ async function avanzar(ctx: Ctx, defensaActual: DefensaRow, plan: PlanRow & { pl
   }
 
   const { contexto, pregunta } = separarContexto(decision.turno.texto);
+  // La pregunta ya está elegida: solo ahora se crea su voz (si no existía ya). Un seguimiento, por ejemplo,
+  // se crea aquí y solo si la respuesta anterior lo pidió.
+  const audios = await asegurarAudios(ctx, plan.id, [{ clave: huellaDeTexto(decision.turno.texto), texto: decision.turno.texto }]);
   try {
     const turno = await ctx.repo.crearTurno({
       defensaId: defensa.id,
@@ -258,7 +261,7 @@ async function avanzar(ctx: Ctx, defensaActual: DefensaRow, plan: PlanRow & { pl
       objetivoId: decision.turno.objetivoId,
       contextoTexto: contexto,
       preguntaTexto: pregunta,
-      audioPreguntaRuta: audioDeTexto(plan, decision.turno.texto),
+      audioPreguntaRuta: audios[huellaDeTexto(decision.turno.texto)] ?? null,
       preguntadoEn: ahora,
     });
     await ctx.eventos.emitir({
@@ -352,6 +355,14 @@ export async function iniciarDefensa(
       tardia: defensa.tardia,
     },
   });
+  // Primero se eligen las preguntas (la semilla ya está guardada) y solo entonces se crea su voz: la
+  // apertura, una candidata por objetivo y la transferencia, en paralelo. Las demás se crean si hacen falta.
+  const evitar = await candidatasDelEnsayo(ctx, defensa);
+  await asegurarAudios(
+    ctx,
+    plan.id,
+    textosPrevisibles(planListo.plan, defensa.semilla, evitar).map((texto) => ({ clave: huellaDeTexto(texto), texto })),
+  );
   await avanzar(ctx, defensa, planListo);
   return { defensa: await estadoDeDefensa(ctx, (await ctx.repo.defensaPorId(defensa.id)) ?? defensa) };
 }
@@ -569,6 +580,8 @@ export async function responderTurno(
     };
 
     if (hueco) {
+      // La frase fija de "no te entendí una parte" solo se crea la primera vez que hace falta.
+      await asegurarAudios(ctx, plan.id, [{ clave: CLAVE_AUDIO_ACLARACION, texto: fraseDeAclaracion(sesion.actividad.registro) }]);
       await ctx.repo.actualizarTurno(inicial.id, {
         ...parche,
         estado: 'aclarando',

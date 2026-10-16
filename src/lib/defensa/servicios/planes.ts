@@ -26,8 +26,12 @@ import type { SesionAlumno } from './acceso';
  *
  * Se arma mientras el alumno hace la prueba de micrófono: el modelo lee el trabajo
  * y propone preguntas, el código las valida (anclas literales, una sola pregunta,
- * longitud para voz...), y si algo no pasa se reintenta una vez con el motivo. Cada
- * pregunta se sintetiza UNA vez y se guarda; durante la defensa no se sintetiza nada.
+ * longitud para voz...), y si algo no pasa se reintenta una vez con el motivo.
+ *
+ * La voz NO se crea aquí. Un plan trae unas veinte preguntas posibles y una defensa usa
+ * seis: crearlas todas gastaría tres de cada cuatro. Primero se eligen las preguntas
+ * (al empezar la defensa, con su semilla) y solo entonces se crea su voz con
+ * `asegurarAudios`; cada una se crea una sola vez y se guarda.
  *
  * El plan guardado nunca sale del servidor: el navegador solo recibe la pregunta del
  * turno en curso.
@@ -37,7 +41,7 @@ import type { SesionAlumno } from './acceso';
 const PLAN_OBSOLETO_MS = 120_000;
 const MAX_INTENTOS = 3;
 const PRESUPUESTO_TOTAL_MS = 52_000;
-const TIMEOUT_TTS_MS = 14_000;
+const TIMEOUT_TTS_MS = 10_000;
 const CONCURRENCIA_TTS = 5;
 
 export const CLAVE_AUDIO_ACLARACION = 'fija:aclaracion';
@@ -125,13 +129,44 @@ async function conConcurrencia<T>(items: readonly T[], limite: number, hacer: (i
   await Promise.all(obreros);
 }
 
-function textosParaVoz(plan: QuestionPlan): string[] {
-  const textos = [plan.opener];
-  for (const objetivo of plan.objectives) {
-    for (const c of objetivo.candidates) textos.push(c.question, c.followup_if_vague, c.followup_if_solid);
-  }
-  for (const t of plan.transfer) textos.push(t.question);
-  return Array.from(new Set(textos.filter((t) => t.trim().length > 0)));
+export interface AudioPedido {
+  /** `huellaDeTexto(texto)`, o `CLAVE_AUDIO_ACLARACION` para la frase fija. */
+  clave: string;
+  texto: string;
+}
+
+/**
+ * Crea la voz de las preguntas que se piden y NO tengan ya una guardada, y devuelve todas las
+ * rutas del plan. Solo se llama con preguntas ya elegidas: nada se crea "por si acaso".
+ * Si la voz falla la pregunta se lee igual, porque siempre está escrita.
+ */
+export async function asegurarAudios(ctx: Ctx, planId: string, pedidos: readonly AudioPedido[]): Promise<Record<string, string>> {
+  const actual = await ctx.repo.planPorId(planId);
+  if (!actual) return {};
+  const faltan = pedidos.filter(
+    (p, i) => p.texto.trim().length > 0 && !actual.audios[p.clave] && pedidos.findIndex((q) => q.clave === p.clave) === i,
+  );
+  if (faltan.length === 0) return actual.audios;
+
+  const nuevos: Record<string, string> = {};
+  await conConcurrencia(faltan, CONCURRENCIA_TTS, async ({ clave, texto }) => {
+    try {
+      const audio = await ctx.proveedores.tts.sintetizar(texto, { timeoutMs: TIMEOUT_TTS_MS });
+      const nombre = clave === CLAVE_AUDIO_ACLARACION ? 'aclaracion' : clave;
+      const destino = `preguntas/${planId}/${nombre}.${audio.extension}`;
+      await ctx.archivos.subir('audio', destino, audio.bytes, audio.mime);
+      nuevos[clave] = destino;
+    } catch {
+      // Sin voz esa pregunta se lee igual: siempre está escrita.
+    }
+  });
+  if (Object.keys(nuevos).length === 0) return actual.audios;
+
+  // Se vuelve a leer antes de guardar: otra solicitud pudo agregar audios mientras estas se creaban.
+  const fresco = (await ctx.repo.planPorId(planId)) ?? actual;
+  const audios = { ...fresco.audios, ...nuevos };
+  await ctx.repo.actualizarPlan(planId, { audios });
+  return audios;
 }
 
 function aProblemas(issues: readonly Issue[]): PlanRow['problemas'] {
@@ -149,8 +184,9 @@ export async function generarPlan(ctx: Ctx, actividad: ActividadRow, entrega: En
   let proveedor: string | null = null;
   let modelo: string | null = null;
   let intentosLlm = 0;
-  let audiosOk = 0;
-  let audiosTotal = 0;
+  // La voz ya no se crea al armar el plan (ver asegurarAudios); los contadores quedan en cero.
+  const audiosOk = 0;
+  const audiosTotal = 0;
 
   const terminar = async (
     estado: 'error' | 'no_corresponde',
@@ -202,33 +238,12 @@ export async function generarPlan(ctx: Ctx, actividad: ActividadRow, entrega: En
     const utilizable = plan !== null && plan.status === 'ok' && plan.objectives.some((o) => o.candidates.length > 0);
     if (!plan || !utilizable) return await terminar('error', aProblemas(resultado.issues));
 
-    // ── La voz: cada pregunta se sintetiza una vez y se guarda ──
-    const audios: Record<string, string> = {};
-    const textos = textosParaVoz(plan);
-    audiosTotal = textos.length + 1;
-    const sintetizar = async (clave: string, texto: string, ruta: (extension: string) => string): Promise<void> => {
-      if (restante() < 3_000) return;
-      try {
-        const audio = await ctx.proveedores.tts.sintetizar(texto, { timeoutMs: Math.min(TIMEOUT_TTS_MS, restante()) });
-        const destino = ruta(audio.extension);
-        await ctx.archivos.subir('audio', destino, audio.bytes, audio.mime);
-        audios[clave] = destino;
-        audiosOk += 1;
-      } catch {
-        // Sin voz esa pregunta se lee igual: siempre está escrita.
-      }
-    };
-    await sintetizar(CLAVE_AUDIO_ACLARACION, fraseDeAclaracion(actividad.registro), (ext) => `preguntas/${planId}/aclaracion.${ext}`);
-    await conConcurrencia(textos, CONCURRENCIA_TTS, (texto) =>
-      sintetizar(huellaDeTexto(texto), texto, (ext) => `preguntas/${planId}/${huellaDeTexto(texto)}.${ext}`),
-    );
-
     await ctx.repo.actualizarPlan(planId, {
       estado: 'listo',
       plan,
       problemas: aProblemas(resultado.issues),
       objetivosSinEvidencia: resultado.withoutEvidence,
-      audios,
+      audios: {},
       proveedor,
       modelo,
       listoEn: ctx.ahora().toISOString(),

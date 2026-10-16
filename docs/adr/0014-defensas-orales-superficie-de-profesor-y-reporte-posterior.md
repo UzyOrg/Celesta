@@ -59,7 +59,9 @@ transcripción que verá el profesor.
 - **Plan de preguntas**: antes de la defensa, a partir del trabajo que el alumno entregó, con
   la consigna y la rúbrica que mandó el profesor. Salida estructurada y validada en el servidor
   (cada ancla debe aparecer **tal cual** en el trabajo; tope de objetivos y de longitud). Se
-  guarda; las preguntas se **sintetizan a voz al armar el plan** y no durante la defensa.
+  guarda. La voz de una pregunta se crea **después de elegirla**, no al armar el plan: al empezar
+  cada defensa se crea la de las preguntas que su semilla ya eligió y, cuando hace falta, la de un
+  seguimiento. Así solo se paga la voz de lo que se pregunta, y cada texto se crea una sola vez.
 - **Clasificador de turno**: sólida, vaga, fuera de tema o sin respuesta. Solo devuelve una
   clase; con falla, cae a un clasificador local.
 - **Reporte posterior para el profesor**: el modelo propone niveles y citas; el código

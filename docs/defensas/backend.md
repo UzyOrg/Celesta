@@ -18,8 +18,9 @@ Estado: construido el 13 de octubre de 2026 en la rama `feat/defensas-backend`, 
 2. El alumno entra con nombre y matrícula, acepta tres confirmaciones y sube su trabajo
    (PDF, Word o texto pegado). Desde ese momento el trabajo **cuenta como entregado**.
 3. El servidor extrae el texto, guarda el original en un bucket privado y arma el **plan de
-   preguntas** con el modelo de lenguaje. La voz de cada pregunta se genera en ese momento y se
-   guarda (no se sintetiza nada durante la defensa).
+   preguntas** con el modelo de lenguaje. El plan trae unas veinte preguntas posibles y cada
+   defensa usa unas seis, así que la voz **no se crea al armar el plan**: primero se eligen las
+   preguntas y solo entonces se crea su voz (ver "Cuándo se crea la voz").
 4. El alumno defiende hablando (o escribiendo, siempre se puede). Cada respuesta se clasifica
    (sólida, vaga, fuera de tema, sin respuesta) y un motor determinista decide la siguiente
    pregunta. Si una parte del audio no se entendió, el alumno la aclara puntualmente.
@@ -243,6 +244,23 @@ npx playwright test tests/e2e/defensa-api.spec.ts \
 Las pruebas del navegador arrancan su propio servidor con almacén en memoria y proveedores
 `mock` y credenciales ficticias explícitas (ver `playwright.config.ts`). La del alumno con voz usa el micrófono falso de Chrome o
 Edge (`--use-fake-device-for-media-stream`); `PLAYWRIGHT_CHANNEL=msedge` sirve si no hay Chrome.
+
+## Cuándo se crea la voz (y cuánto cuesta)
+
+La voz se paga por carácter, así que solo se crea la de lo que de verdad se pregunta:
+
+1. **Al armar el plan: nada.** Un plan completo gastaría unos 2,000 a 4,000 caracteres y se
+   usaría una cuarta parte.
+2. **Al empezar la defensa o el ensayo:** la semilla de esa defensa ya elige la candidata de cada
+   objetivo, así que se crea de una vez y en paralelo la voz de la apertura, de esas candidatas y
+   de la transferencia (unos 5 textos). Si algo falla, la pregunta se lee igual: siempre está escrita.
+3. **Cuando hace falta:** un seguimiento se crea solo si la respuesta anterior lo pide; la frase
+   fija "no te entendí una parte" solo la primera vez que hay una aclaración.
+4. **Cada texto se crea una sola vez por plan** y se reutiliza (por ejemplo la apertura, que es la
+   misma en el ensayo y en la defensa de verdad).
+
+Quien quiera gastar menos aún puede usar un modelo de voz más barato con `DEFENSA_ELEVENLABS_MODEL`.
+La transcripción (Scribe v2 por lotes) cuesta mucho menos que la voz.
 
 ## Qué falta
 
