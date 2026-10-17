@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Locator, type Page } from '@playwright/test';
 import { TRABAJO } from '../support/fixtures';
 
 /**
@@ -485,5 +485,303 @@ test.describe('la pregunta: primero habla Celestea', () => {
     const registro = await leerRegistro(page);
     expect(registro.textos.length).toBeGreaterThan(0);
     expect(registro.textos.map((entrada) => entrada.valor)).not.toContain('en-espera');
+  });
+});
+
+/* ------------------------- el modo que se elige se respeta ------------------------- */
+
+/** Dónde guarda el teléfono lo que la persona eligió (ver `sesionLocal.ts`). */
+const CLAVE_DE_SESION = 'celestea-defensa-sesion-demo-celestea';
+
+/** El modo que quedó guardado: una falla del micrófono nunca debe cambiarlo. */
+const modoGuardado = (page: Page): Promise<string | null> =>
+  page.evaluate((clave) => {
+    const crudo = window.localStorage.getItem(clave);
+    return crudo ? ((JSON.parse(crudo) as { modo?: string }).modo ?? null) : null;
+  }, CLAVE_DE_SESION);
+
+/** El navegador niega el micrófono hasta que la prueba lo desbloquea (el bloqueo sobrevive a recargar). */
+async function bloquearMicrofonoHastaDesbloquear(page: Page): Promise<void> {
+  await page.addInitScript(() => {
+    const pedir = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+    navigator.mediaDevices.getUserMedia = (restricciones) =>
+      window.sessionStorage.getItem('micDesbloqueado') === '1'
+        ? pedir(restricciones)
+        : Promise.reject(new DOMException('Permission denied', 'NotAllowedError'));
+  });
+}
+
+const desbloquearMicrofono = (page: Page): Promise<void> => page.evaluate(() => window.sessionStorage.setItem('micDesbloqueado', '1'));
+
+/** Lo que pasa al abrir la página con una IP por http: el navegador ni siquiera ofrece el micrófono. */
+async function simularDireccionSinHttps(page: Page): Promise<void> {
+  await page.addInitScript(() => {
+    if (window.sessionStorage.getItem('contextoSeguro') === '1') return;
+    Object.defineProperty(window, 'isSecureContext', { value: false, configurable: true });
+    Object.defineProperty(navigator, 'mediaDevices', { value: undefined, configurable: true });
+  });
+}
+
+const volverAHttps = (page: Page): Promise<void> => page.evaluate(() => window.sessionStorage.setItem('contextoSeguro', '1'));
+
+/** Anota cuántas veces aparece un cuadro de texto en la pregunta: con voz nunca debe aparecer. */
+async function vigilarCuadroDeTexto(page: Page): Promise<void> {
+  await page.addInitScript(() => {
+    const vistos = { cuadros: 0 };
+    (window as unknown as { __vistos: typeof vistos }).__vistos = vistos;
+    new MutationObserver(() => {
+      if (document.querySelector('[data-celestea] textarea')) vistos.cuadros += 1;
+    }).observe(document, { subtree: true, childList: true });
+  });
+}
+
+const cuadrosVistos = (page: Page): Promise<number> =>
+  page.evaluate(() => (window as unknown as { __vistos: { cuadros: number } }).__vistos.cuadros);
+
+/** La pregunta por voz: sin cuadro de texto, sin aviso de falla y con "Prefiero escribir" como salida. */
+async function verPreguntaPorVoz(page: Page): Promise<void> {
+  await expect(page.getByText(/Te escucho|Celestea habla/)).toBeVisible({ timeout: 30_000 });
+  await expect(page.locator('textarea')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Prefiero escribir' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Prefiero hablar' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Probar el micrófono otra vez' })).toHaveCount(0);
+  await expect(page).not.toHaveURL(/modo=escrito/);
+}
+
+async function empezarEnsayo(page: Page): Promise<void> {
+  const ensayar = page.getByRole('button', { name: /Ensayar primero/ });
+  await expect(ensayar).not.toHaveAttribute('aria-disabled', 'true', { timeout: 60_000 });
+  await ensayar.click();
+}
+
+/** Elige hablar, con un micrófono que funciona, y llega a la primera pregunta. */
+async function llegarAPreguntaPorVoz(page: Page, empezar: (pagina: Page) => Promise<void>): Promise<void> {
+  await entrarYSubirTrabajo(page, 'Hablar');
+  await expect(page.getByRole('heading', { name: /hola/i }).first()).toBeVisible({ timeout: 30_000 });
+  await page.getByRole('button', { name: /Seguir|Listo|Sí/ }).last().click();
+  await empezar(page);
+}
+
+test.describe('el modo que se elige se respeta', () => {
+  for (const [nombre, empezar] of [
+    ['la defensa', empezarDefensa],
+    ['el ensayo', empezarEnsayo],
+  ] as const) {
+    test(`con voz, ${nombre} no muestra el cuadro de texto, tampoco al recargar`, async ({ page }) => {
+      await vigilarCuadroDeTexto(page);
+      await llegarAPreguntaPorVoz(page, empezar);
+
+      await verPreguntaPorVoz(page);
+      expect(await modoGuardado(page)).toBe('voz');
+      expect(await cuadrosVistos(page), 'no apareció un cuadro de texto').toBe(0);
+
+      await page.reload();
+      await verPreguntaPorVoz(page);
+      expect(await modoGuardado(page)).toBe('voz');
+      expect(await cuadrosVistos(page), 'no apareció un cuadro de texto tras recargar').toBe(0);
+    });
+  }
+
+  test('"Prefiero escribir" y "Prefiero hablar" son una salida discreta: sin borde, sin relleno y sin pulso', async ({ page }) => {
+    const discreto = async (boton: Locator): Promise<void> => {
+      await expect(boton).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
+      await expect(boton).toHaveCSS('border-top-color', 'rgba(0, 0, 0, 0)');
+      await expect(boton).toHaveCSS('animation-name', 'none');
+      // Discreta no es difícil de tocar: la altura de un botón táctil.
+      expect((await boton.boundingBox())?.height ?? 0).toBeGreaterThanOrEqual(44);
+    };
+    await llegarAPreguntaPorVoz(page, empezarDefensa);
+    await verPreguntaPorVoz(page);
+
+    // Con voz, la salida a escribir se ve más tenue que "Repetir pregunta", que sí conserva su borde.
+    await discreto(page.getByRole('button', { name: 'Prefiero escribir' }));
+    await expect(page.getByRole('button', { name: 'Repetir pregunta' })).not.toHaveCSS('border-top-color', 'rgba(0, 0, 0, 0)');
+
+    // Y con escritura, la salida a hablar es igual de discreta.
+    await page.getByRole('button', { name: 'Prefiero escribir' }).click();
+    await expect(page.getByLabel('Tu respuesta')).toBeVisible({ timeout: 20_000 });
+    await discreto(page.getByRole('button', { name: 'Prefiero hablar' }));
+  });
+
+  test('con el micrófono bloqueado, la pregunta dice por qué y un toque devuelve la voz', async ({ page }) => {
+    await bloquearMicrofonoHastaDesbloquear(page);
+    await llegarAPreguntaSinMicrofono(page);
+
+    // Escribe, pero no en silencio: dice el motivo y ofrece volver a intentarlo.
+    await expect(page.getByLabel('Tu respuesta')).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByText(/bloqueado el micrófono para esta página/)).toBeVisible();
+    const reintentar = page.getByRole('button', { name: 'Probar el micrófono otra vez' });
+    await expect(reintentar).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Prefiero hablar' })).toHaveCount(0);
+    // La falla no pisa lo que eligió: ni el teléfono ni la dirección dicen "escrito".
+    expect(await modoGuardado(page)).toBe('voz');
+    await expect(page).not.toHaveURL(/modo=escrito/);
+
+    // Sigue bloqueado: el aviso se queda y hace notar que sí se intentó.
+    await reintentar.click();
+    await expect(page.getByText(/Sigue sin abrir/)).toBeVisible();
+    await expect(page.getByLabel('Tu respuesta')).toBeVisible();
+
+    // Se arregla el permiso: un toque y vuelve la voz, sin cuadro de texto ni aviso.
+    await desbloquearMicrofono(page);
+    await page.getByRole('button', { name: 'Probar el micrófono otra vez' }).click();
+    await verPreguntaPorVoz(page);
+    expect(await modoGuardado(page)).toBe('voz');
+  });
+
+  test('al recargar con el micrófono bloqueado el aviso vuelve; ya desbloqueado, vuelve la voz', async ({ page }) => {
+    await bloquearMicrofonoHastaDesbloquear(page);
+    await llegarAPreguntaSinMicrofono(page);
+    await expect(page.getByText(/bloqueado el micrófono para esta página/)).toBeVisible({ timeout: 30_000 });
+
+    // Sigue bloqueado: lo elegido sigue siendo hablar, así que la pregunta vuelve a intentarlo y a avisar.
+    await page.reload();
+    await expect(page.getByLabel('Tu respuesta')).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByText(/bloqueado el micrófono para esta página/)).toBeVisible();
+    expect(await modoGuardado(page)).toBe('voz');
+
+    // Se arregla el permiso y se recarga: la pregunta vuelve por voz sin tocar nada.
+    await desbloquearMicrofono(page);
+    await page.reload();
+    await verPreguntaPorVoz(page);
+  });
+
+  test('en una dirección sin https la pregunta explica que el micrófono necesita una dirección segura', async ({ page }) => {
+    await simularDireccionSinHttps(page);
+    await entrarYSubirTrabajo(page, 'Hablar');
+
+    // Sin micrófono que probar se salta "Di hola", pero ya no en silencio.
+    await expect(page.getByRole('heading', { name: 'Cuando quieras.' })).toBeVisible({ timeout: 30_000 });
+    await empezarDefensa(page);
+    await expect(page.getByLabel('Tu respuesta')).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByText(/solo funciona en una dirección segura/)).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Probar el micrófono otra vez' })).toBeVisible();
+    expect(await modoGuardado(page)).toBe('voz');
+    await expect(page).not.toHaveURL(/modo=escrito/);
+
+    // Con una dirección segura (https o localhost) la misma persona sigue en voz: lo que eligió no se perdió.
+    await volverAHttps(page);
+    await page.reload();
+    await verPreguntaPorVoz(page);
+  });
+
+  test('si el micrófono se pierde a media respuesta, escribe con el aviso y lo elegido sigue siendo hablar', async ({ page }) => {
+    await page.addInitScript(() => {
+      // Guarda cada micrófono que se abre para poder desconectarlo después.
+      const pedir = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+      const flujos: MediaStream[] = [];
+      (window as unknown as { __flujos: MediaStream[] }).__flujos = flujos;
+      navigator.mediaDevices.getUserMedia = async (restricciones) => {
+        const flujo = await pedir(restricciones);
+        flujos.push(flujo);
+        return flujo;
+      };
+    });
+    await llegarAPreguntaPorVoz(page, empezarDefensa);
+    await expect(page.getByText('Te escucho')).toBeVisible({ timeout: 30_000 });
+
+    // El micrófono se desconecta: el navegador avisa con "ended" en cada pista.
+    await page.evaluate(() => {
+      for (const flujo of (window as unknown as { __flujos: MediaStream[] }).__flujos) {
+        for (const pista of flujo.getAudioTracks()) {
+          pista.stop();
+          pista.dispatchEvent(new Event('ended'));
+        }
+      }
+    });
+    await expect(page.getByText(/Se perdió el micrófono/)).toBeVisible();
+    await expect(page.getByLabel('Tu respuesta')).toBeVisible();
+    expect(await modoGuardado(page)).toBe('voz');
+    await expect(page).not.toHaveURL(/modo=escrito/);
+
+    // Vuelve a abrirse con un toque.
+    await page.getByRole('button', { name: 'Probar el micrófono otra vez' }).click();
+    await verPreguntaPorVoz(page);
+  });
+
+  test('si no se pudo pasar la voz a texto, escribe con el aviso y lo elegido sigue siendo hablar', async ({ page }) => {
+    await page.route('**/api/defensa/turnos/*/responder', (ruta) =>
+      ruta.fulfill({
+        status: 502,
+        contentType: 'application/json',
+        body: JSON.stringify({ error: 'transcripcion_fallo', mensaje: 'No pudimos procesar el audio. Puedes escribir tu respuesta.' }),
+      }),
+    );
+    await llegarAPreguntaPorVoz(page, empezarDefensa);
+    await expect(page.getByText('Te escucho')).toBeVisible({ timeout: 30_000 });
+    await page.waitForTimeout(2_000);
+    await page.getByRole('button', { name: 'Listo' }).click();
+
+    await expect(page.getByText('No pudimos procesar el audio. Puedes escribir tu respuesta.')).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByLabel('Tu respuesta')).toBeVisible();
+    expect(await modoGuardado(page)).toBe('voz');
+    await expect(page).not.toHaveURL(/modo=escrito/);
+
+    // El aviso trae la salida: probar otra vez devuelve a la voz.
+    await page.getByRole('button', { name: 'Probar el micrófono otra vez' }).click();
+    await verPreguntaPorVoz(page);
+  });
+
+  test('quien elige escribir sigue escribiendo al recargar, y "Prefiero hablar" también se recuerda', async ({ page }) => {
+    await entrarYSubirTrabajo(page, 'Escribir');
+    await empezarDefensa(page);
+    await expect(page.getByLabel('Tu respuesta')).toBeVisible({ timeout: 30_000 });
+    expect(await modoGuardado(page)).toBe('escrito');
+    await expect(page).toHaveURL(/modo=escrito/);
+    // Eligió escribir: no hay falla que avisar, solo la salida a hablar.
+    await expect(page.getByRole('button', { name: 'Prefiero hablar' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Probar el micrófono otra vez' })).toHaveCount(0);
+
+    await page.reload();
+    await expect(page.getByLabel('Tu respuesta')).toBeVisible({ timeout: 30_000 });
+    expect(await modoGuardado(page)).toBe('escrito');
+
+    // Cambia de idea: desde ahí lo que se recuerda es hablar.
+    await page.getByRole('button', { name: 'Prefiero hablar' }).click();
+    await verPreguntaPorVoz(page);
+    expect(await modoGuardado(page)).toBe('voz');
+    await page.reload();
+    await verPreguntaPorVoz(page);
+    expect(await modoGuardado(page)).toBe('voz');
+  });
+
+  test('un enlace con ?modo=escrito no cambia lo que la persona ya eligió', async ({ page }) => {
+    await vigilarCuadroDeTexto(page);
+    await llegarAPreguntaPorVoz(page, empezarDefensa);
+    await verPreguntaPorVoz(page);
+
+    // Alguien abre esta misma pregunta con una dirección vieja que pide escribir: manda lo que se eligió y se guardó.
+    const direccion = new URL(page.url());
+    direccion.searchParams.set('modo', 'escrito');
+    await page.goto(direccion.toString());
+    await verPreguntaPorVoz(page);
+    expect(await modoGuardado(page)).toBe('voz');
+    expect(await cuadrosVistos(page), 'no apareció un cuadro de texto').toBe(0);
+  });
+
+  test('volver con "atrás" a un paso anterior no cambia lo que se eligió', async ({ page }) => {
+    await page.goto(RUTA);
+    await page.getByRole('button', { name: 'Empezar' }).click();
+    await page.getByLabel('Nombre completo').fill('Ana Torres Ruiz');
+    await page.getByLabel('Matrícula').fill(matriculaNueva());
+    await page.getByRole('button', { name: 'Seguir' }).click();
+    for (const interruptor of await page.getByRole('switch').all()) await interruptor.check({ force: true });
+    await page.getByRole('button', { name: 'Aceptar' }).click();
+
+    // Elige escribir y avanza: esa elección es posterior a la entrada "Tres sí y seguimos" del historial.
+    await page.getByText('Escribir', { exact: true }).click();
+    await expect(page.getByRole('button', { name: /Escribir/ })).toHaveAttribute('aria-pressed', 'true');
+    await page.getByRole('button', { name: 'Seguir' }).click();
+    await expect(page.getByRole('button', { name: 'Pegar texto' })).toBeVisible();
+
+    // Atrás dos veces llega a esa entrada vieja, que no trae ?modo=escrito.
+    await page.goBack();
+    await page.goBack();
+    await expect(page.getByRole('heading', { name: 'Tres sí y seguimos.' })).toBeVisible();
+    await page.getByRole('button', { name: 'Aceptar' }).click();
+
+    await expect(page.getByRole('heading', { name: '¿Hablas o escribes?' })).toBeVisible();
+    await expect(page.getByRole('button', { name: /Escribir/ })).toHaveAttribute('aria-pressed', 'true');
+    expect(await modoGuardado(page)).toBe('escrito');
   });
 });
