@@ -31,7 +31,7 @@ import { buscarPregunta, separarContexto, siguienteTurno, textosPrevisibles, typ
 import type { SesionAlumno } from './acceso';
 import type { Ctx } from './contexto';
 import { entregaACliente, entregaVigente } from './entregas';
-import { CLAVE_AUDIO_ACLARACION, asegurarAudios, estadoDelPlan, fraseDeAclaracion, huellaDeTexto } from './planes';
+import { CLAVE_AUDIO_ACLARACION, asegurarAudios, esFraseFija, estadoDelPlan, fraseDeAclaracion, huellaDeTexto } from './planes';
 
 /**
  * La defensa, turno por turno.
@@ -251,7 +251,9 @@ async function avanzar(ctx: Ctx, defensaActual: DefensaRow, plan: PlanRow & { pl
   const { contexto, pregunta } = separarContexto(decision.turno.texto);
   // La pregunta ya está elegida: solo ahora se crea su voz (si no existía ya). Un seguimiento, por ejemplo,
   // se crea aquí y solo si la respuesta anterior lo pidió.
-  const audios = await asegurarAudios(ctx, plan.id, [{ clave: huellaDeTexto(decision.turno.texto), texto: decision.turno.texto }]);
+  const audios = await asegurarAudios(ctx, plan.id, [
+    { clave: huellaDeTexto(decision.turno.texto), texto: decision.turno.texto, fija: esFraseFija(decision.turno.texto) },
+  ]);
   try {
     const turno = await ctx.repo.crearTurno({
       defensaId: defensa.id,
@@ -361,7 +363,7 @@ export async function iniciarDefensa(
   await asegurarAudios(
     ctx,
     plan.id,
-    textosPrevisibles(planListo.plan, defensa.semilla, evitar).map((texto) => ({ clave: huellaDeTexto(texto), texto })),
+    textosPrevisibles(planListo.plan, defensa.semilla, evitar).map((texto) => ({ clave: huellaDeTexto(texto), texto, fija: esFraseFija(texto) })),
   );
   await avanzar(ctx, defensa, planListo);
   return { defensa: await estadoDeDefensa(ctx, (await ctx.repo.defensaPorId(defensa.id)) ?? defensa) };
@@ -581,7 +583,7 @@ export async function responderTurno(
 
     if (hueco) {
       // La frase fija de "no te entendí una parte" solo se crea la primera vez que hace falta.
-      await asegurarAudios(ctx, plan.id, [{ clave: CLAVE_AUDIO_ACLARACION, texto: fraseDeAclaracion(sesion.actividad.registro) }]);
+      await asegurarAudios(ctx, plan.id, [{ clave: CLAVE_AUDIO_ACLARACION, texto: fraseDeAclaracion(sesion.actividad.registro), fija: true }]);
       await ctx.repo.actualizarTurno(inicial.id, {
         ...parche,
         estado: 'aclarando',

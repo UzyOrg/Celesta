@@ -21,7 +21,16 @@ import {
   subirParteAudio,
   ultimaActividad,
 } from '../../src/lib/defensa/servicios/defensas';
-import { estadoDelPlan, prepararPlan } from '../../src/lib/defensa/servicios/planes';
+import { DEFAULT_OPENER } from '../../src/lib/defensa/questionPlan';
+import {
+  CLAVE_AUDIO_ACLARACION,
+  asegurarAudios,
+  esFraseFija,
+  estadoDelPlan,
+  fraseDeAclaracion,
+  huellaDeTexto,
+  prepararPlan,
+} from '../../src/lib/defensa/servicios/planes';
 import { generarReporteDeDefensa } from '../../src/lib/defensa/servicios/reportes';
 import { TRABAJO } from '../support/fixtures';
 import {
@@ -176,6 +185,111 @@ test.describe('la voz se crea solo para lo que se pregunta', () => {
     expect(defensa.estado).toBe('en_curso');
     expect(defensa.pregunta!.pregunta).toMatch(/^¿.+\?$/);
     expect(defensa.pregunta!.audioUrl).toBeNull();
+  });
+});
+
+test.describe('banco de frases fijas', () => {
+  const FRASE = fraseDeAclaracion('tu');
+
+  async function dosAlumnos(voz: ReturnType<typeof ttsQueCuenta>['tts']) {
+    const mundo = crearMundo({ proveedores: { tts: voz } });
+    const actividad = await crearActividadDePrueba(mundo.ctx);
+    const ana = await prepararAlumnoConPlan(mundo, actividad, { matricula: 'BANCO-A1' });
+    const luis = await prepararAlumnoConPlan(mundo, actividad, { matricula: 'BANCO-B2' });
+    const planDe = async (sesion: SesionAlumno) => (await estadoDelPlan(mundo.ctx, sesion.alumno.id)).plan!;
+    return { mundo, ana, luis, planDe };
+  }
+
+  test('una frase que se repite entre alumnos se crea una sola vez para todos', async () => {
+    const voz = ttsQueCuenta();
+    const { mundo, ana, luis, planDe } = await dosAlumnos(voz.tts);
+    const pedido = [{ clave: CLAVE_AUDIO_ACLARACION, texto: FRASE, fija: true }];
+
+    const deAna = await asegurarAudios(mundo.ctx, (await planDe(ana)).id, pedido);
+    const deLuis = await asegurarAudios(mundo.ctx, (await planDe(luis)).id, pedido);
+
+    expect(voz.textos.filter((t) => t === FRASE)).toHaveLength(1);
+    expect(deAna[CLAVE_AUDIO_ACLARACION]).toMatch(/^banco\/[0-9a-f]{32}\.wav$/);
+    expect(deLuis[CLAVE_AUDIO_ACLARACION]).toBe(deAna[CLAVE_AUDIO_ACLARACION]);
+    expect(mundo.estado.archivos.has(`audio/${deAna[CLAVE_AUDIO_ACLARACION]}`)).toBe(true);
+    // Cada plan queda con su ruta, así que la defensa de cada alumno la encuentra igual que cualquier otra.
+    expect((await planDe(luis)).audios[CLAVE_AUDIO_ACLARACION]).toBe(deAna[CLAVE_AUDIO_ACLARACION]);
+  });
+
+  test('una pregunta personal sigue siendo de cada alumno y no entra al banco', async () => {
+    const voz = ttsQueCuenta();
+    const { mundo, ana, luis, planDe } = await dosAlumnos(voz.tts);
+    const texto = 'Dices que elegiste una encuesta en línea. ¿Qué perdiste al no hacer entrevistas?';
+    const pedido = [{ clave: huellaDeTexto(texto), texto }];
+
+    const deAna = await asegurarAudios(mundo.ctx, (await planDe(ana)).id, pedido);
+    const deLuis = await asegurarAudios(mundo.ctx, (await planDe(luis)).id, pedido);
+
+    expect(deAna[huellaDeTexto(texto)]).toContain(`preguntas/${(await planDe(ana)).id}/`);
+    expect(deLuis[huellaDeTexto(texto)]).toContain(`preguntas/${(await planDe(luis)).id}/`);
+    expect(voz.textos.filter((t) => t === texto)).toHaveLength(2);
+  });
+
+  test('cambiar de voz o de tratamiento crea otro audio y no sirve el viejo', async () => {
+    const textos: string[] = [];
+    let identidad = 'voz-uno';
+    const base = crearTtsMock();
+    const tts: ProveedorTts = {
+      id: 'cambiante',
+      identidad: () => identidad,
+      sintetizar: async (texto, opciones) => {
+        textos.push(texto);
+        return base.sintetizar(texto, opciones);
+      },
+    };
+    const { mundo, ana, planDe } = await dosAlumnos(tts);
+    const planId = (await planDe(ana)).id;
+    const pedir = (texto: string) => [{ clave: CLAVE_AUDIO_ACLARACION, texto, fija: true }];
+
+    const uno = await asegurarAudios(mundo.ctx, planId, pedir(FRASE));
+    // Mismo texto y misma voz: no se vuelve a crear.
+    await asegurarAudios(mundo.ctx, planId, pedir(FRASE));
+    expect(textos).toHaveLength(1);
+
+    // Otra voz: el audio viejo no sirve para la nueva voz.
+    identidad = 'voz-dos';
+    const otraPlan = (await prepararAlumnoConPlan(mundo, await crearActividadDePrueba(mundo.ctx, { tokenGrupo: 'otro-grupo-12' }), { matricula: 'BANCO-C3' })).alumno.id;
+    const idOtro = (await estadoDelPlan(mundo.ctx, otraPlan)).plan!.id;
+    const dos = await asegurarAudios(mundo.ctx, idOtro, pedir(FRASE));
+    expect(textos).toHaveLength(2);
+    expect(dos[CLAVE_AUDIO_ACLARACION]).not.toBe(uno[CLAVE_AUDIO_ACLARACION]);
+
+    // Tratamiento distinto ("usted"): es otro texto, otro audio.
+    const usted = await asegurarAudios(mundo.ctx, idOtro, [{ clave: 'fija:usted', texto: fraseDeAclaracion('usted'), fija: true }]);
+    expect(textos).toHaveLength(3);
+    expect(usted['fija:usted']).not.toBe(dos[CLAVE_AUDIO_ACLARACION]);
+  });
+
+  test('qué cuenta como frase fija: la aclaración y las aperturas por defecto, nada más', () => {
+    expect(esFraseFija(fraseDeAclaracion('tu'))).toBe(true);
+    expect(esFraseFija(fraseDeAclaracion('usted'))).toBe(true);
+    expect(esFraseFija(DEFAULT_OPENER.tu)).toBe(true);
+    expect(esFraseFija(`  ${DEFAULT_OPENER.usted}  `)).toBe(true);
+    expect(esFraseFija('Para empezar, cuéntame de qué trata tu encuesta sobre hábitos de estudio.')).toBe(false);
+  });
+
+  test('en una defensa con aclaración, la frase fija sale del banco', async () => {
+    const voz = ttsQueCuenta();
+    const mundo = crearMundo({
+      proveedores: { tts: voz.tts, stt: crearSttMock(() => 'La muestra fue de ~~cuarenta personas~~ porque solo tenía dos semanas') },
+    });
+    const actividad = await crearActividadDePrueba(mundo.ctx);
+    const sesion = await prepararAlumnoConPlan(mundo, actividad, { matricula: 'BANCO-D4' });
+    const { defensa } = await iniciarDefensa(mundo.ctx, sesion, { ensayo: false });
+    const primera = (await responderTurno(mundo.ctx, sesion, defensa.pregunta!.turnoId, escrito(LARGA))).defensa;
+    const turnoId = primera.pregunta!.turnoId;
+    await subirParteAudio(mundo.ctx, sesion, turnoId, { intento: 0, parte: 0, bytes: new Uint8Array([1, 2, 3, 4]) });
+    const voz2 = (await responderTurno(mundo.ctx, sesion, turnoId, { modo: 'voz', intento: 0, totalPartes: 1, mime: 'audio/webm', duracionMs: 9000 })).defensa;
+    expect(voz2.aclaracion).not.toBeNull();
+    expect(voz.textos.filter((t) => t === FRASE)).toHaveLength(1);
+    const plan = (await estadoDelPlan(mundo.ctx, sesion.alumno.id)).plan!;
+    expect(plan.audios[CLAVE_AUDIO_ACLARACION]).toMatch(/^banco\//);
+    expect(voz2.aclaracion!.vozUrl).toMatch(/archivo-dev/);
   });
 });
 

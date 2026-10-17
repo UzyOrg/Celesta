@@ -258,9 +258,15 @@ La voz se paga por carácter, así que solo se crea la de lo que de verdad se pr
    fija "no te entendí una parte" solo la primera vez que hay una aclaración.
 4. **Cada texto se crea una sola vez por plan** y se reutiliza (por ejemplo la apertura, que es la
    misma en el ensayo y en la defensa de verdad).
+5. **Las frases fijas van a un banco compartido.** "No te entendí una parte, está en tu pantalla" (en
+   "tú" y en "usted") y las aperturas por defecto se dicen igual a todos los alumnos, así que su audio
+   se crea una sola vez para todo el grupo y vive en `banco/` del bucket `defensa-audio`. El nombre
+   del archivo depende del texto **y de la voz y el modelo**: si cambias `DEFENSA_ELEVENLABS_VOICE_ID`
+   o el modelo, se crea de nuevo en vez de servir una voz distinta. El banco no tiene datos de
+   alumnos y el borrado de los 7 días no lo toca.
 
-Quien quiera gastar menos aún puede usar un modelo de voz más barato con `DEFENSA_ELEVENLABS_MODEL`.
-La transcripción (Scribe v2 por lotes) cuesta mucho menos que la voz.
+La transcripción (Scribe v2 por lotes) cuesta mucho menos que la voz. Si hiciera falta gastar menos
+aún, `DEFENSA_ELEVENLABS_MODEL` permite usar un modelo de voz más barato.
 
 ## Qué falta
 

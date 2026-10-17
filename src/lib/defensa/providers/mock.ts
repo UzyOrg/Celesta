@@ -281,6 +281,7 @@ export function wavDeSilencio(milisegundos = 250): Uint8Array {
 export function crearTtsMock(): ProveedorTts {
   return {
     id: 'mock',
+    identidad: () => 'mock',
     async sintetizar(): Promise<AudioSintetizado> {
       return { bytes: wavDeSilencio(), mime: 'audio/wav', extension: 'wav' };
     },

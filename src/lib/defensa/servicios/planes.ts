@@ -12,6 +12,7 @@ import {
   repairMessage,
   validateQuestionPlan,
   validateQuestionPlanInput,
+  DEFAULT_OPENER,
   type Issue,
   type QuestionPlan,
   type QuestionPlanInput,
@@ -133,6 +134,29 @@ export interface AudioPedido {
   /** `huellaDeTexto(texto)`, o `CLAVE_AUDIO_ACLARACION` para la frase fija. */
   clave: string;
   texto: string;
+  /**
+   * Frase que se dice igual a todos los alumnos ("No te entendí una parte..."): su audio vive en el
+   * banco compartido y se crea una sola vez para todos, no una vez por alumno.
+   */
+  fija?: boolean;
+}
+
+/** Las frases que no cambian de un alumno a otro: la de aclaración y las aperturas por defecto. */
+export function esFraseFija(texto: string): boolean {
+  const limpio = texto.replace(/\s+/g, ' ').trim();
+  return (
+    limpio === fraseDeAclaracion('tu') ||
+    limpio === fraseDeAclaracion('usted') ||
+    limpio === DEFAULT_OPENER.tu ||
+    limpio === DEFAULT_OPENER.usted
+  );
+}
+
+const CARPETA_BANCO = 'banco';
+
+/** Dónde vive una frase fija en el banco: depende del texto y de la voz, así cambiar de voz crea otra. */
+function huellaDeBanco(identidadDeVoz: string, texto: string): string {
+  return createHash('sha256').update(`${identidadDeVoz}|${texto.replace(/\s+/g, ' ').trim()}`).digest('hex').slice(0, 32);
 }
 
 /**
@@ -149,11 +173,31 @@ export async function asegurarAudios(ctx: Ctx, planId: string, pedidos: readonly
   if (faltan.length === 0) return actual.audios;
 
   const nuevos: Record<string, string> = {};
-  await conConcurrencia(faltan, CONCURRENCIA_TTS, async ({ clave, texto }) => {
+  const identidadDeVoz = ctx.proveedores.tts.identidad?.() ?? ctx.proveedores.tts.id;
+  // El banco se lista una sola vez (son unas pocas frases) y solo si alguna de las pedidas es fija.
+  let enBanco: Array<{ nombre: string }> | null = null;
+  const bancoActual = async () => {
+    enBanco ??= await ctx.archivos.listar('audio', CARPETA_BANCO).catch(() => []);
+    return enBanco;
+  };
+
+  await conConcurrencia(faltan, CONCURRENCIA_TTS, async ({ clave, texto, fija }) => {
     try {
+      let nombreBanco: string | null = null;
+      if (fija) {
+        nombreBanco = huellaDeBanco(identidadDeVoz, texto);
+        const existente = (await bancoActual()).find((a) => a.nombre.startsWith(`${nombreBanco}.`));
+        if (existente) {
+          // Ya la creó otro alumno: se reutiliza y no cuesta nada.
+          nuevos[clave] = `${CARPETA_BANCO}/${existente.nombre}`;
+          return;
+        }
+      }
       const audio = await ctx.proveedores.tts.sintetizar(texto, { timeoutMs: TIMEOUT_TTS_MS });
       const nombre = clave === CLAVE_AUDIO_ACLARACION ? 'aclaracion' : clave;
-      const destino = `preguntas/${planId}/${nombre}.${audio.extension}`;
+      const destino = nombreBanco
+        ? `${CARPETA_BANCO}/${nombreBanco}.${audio.extension}`
+        : `preguntas/${planId}/${nombre}.${audio.extension}`;
       await ctx.archivos.subir('audio', destino, audio.bytes, audio.mime);
       nuevos[clave] = destino;
     } catch {
