@@ -41,8 +41,11 @@ export class Reproductor {
     }
   }
 
-  /** Reproduce una dirección; termina cuando acaba el audio, falla o se llama a `detener()`. */
-  reproducir(url: string, tramo?: { desdeMs: number; hastaMs: number }): Promise<ResultadoReproduccion> {
+  /**
+   * Reproduce una dirección; termina cuando acaba el audio, falla o se llama a `detener()`.
+   * `alSonar` avisa cuando el sonido de verdad empieza (con red lenta, pedirlo y oírlo no son lo mismo).
+   */
+  reproducir(url: string, tramo?: { desdeMs: number; hastaMs: number }, alSonar?: () => void): Promise<ResultadoReproduccion> {
     this.detener();
     const elemento = this.obtener();
     return new Promise((resolver) => {
@@ -54,12 +57,17 @@ export class Reproductor {
         elemento.removeEventListener('error', alFallar);
         elemento.removeEventListener('timeupdate', alAvanzar);
         elemento.removeEventListener('loadedmetadata', alCargar);
+        elemento.removeEventListener('playing', alEmpezar);
         this.finalizar = null;
         if (resultado !== 'termino') elemento.pause();
         resolver(resultado);
       };
       const alTerminar = () => terminar('termino');
       const alFallar = () => terminar('error');
+      const alEmpezar = () => {
+        elemento.removeEventListener('playing', alEmpezar);
+        if (!resuelto) alSonar?.();
+      };
       const alAvanzar = () => {
         if (tramo && elemento.currentTime * 1000 >= tramo.hastaMs) {
           elemento.pause();
@@ -80,6 +88,7 @@ export class Reproductor {
       this.finalizar = terminar;
       elemento.addEventListener('ended', alTerminar);
       elemento.addEventListener('error', alFallar);
+      if (alSonar) elemento.addEventListener('playing', alEmpezar);
       if (tramo) elemento.addEventListener('timeupdate', alAvanzar);
       elemento.muted = false;
       elemento.src = url;
