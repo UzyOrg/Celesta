@@ -144,9 +144,10 @@ test.describe('micrófono bloqueado', () => {
     await expect(page.getByLabel('Tu respuesta')).toBeVisible({ timeout: 30_000 });
     await expect.poll(audios, { message: 'la pregunta se pidió en audio', timeout: 15_000 }).toBeGreaterThan(0);
 
-    // Y si la persona intenta hablar, se le dice qué pasó y qué hacer, no un mensaje genérico.
-    await page.getByRole('button', { name: 'Prefiero hablar' }).click();
+    // La pregunta no calla la falla: dice qué pasó y qué hacer, no un mensaje genérico, y deja volver a intentarlo.
     await expect(page.getByText(/bloqueado el micrófono para esta página/)).toBeVisible();
+    await page.getByRole('button', { name: 'Probar el micrófono otra vez' }).click();
+    await expect(page.getByText(/Sigue sin abrir/)).toBeVisible();
     await expect(page.getByLabel('Tu respuesta')).toBeVisible();
   });
 

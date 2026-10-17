@@ -3,13 +3,14 @@ import { useReducedMotion } from 'framer-motion';
 import { Clock, Keyboard, Lock, Mic, RotateCcw } from 'lucide-react';
 import type { PreguntaDefensa } from './types';
 import type { ModoDeRespuesta } from './pasos';
-import type { VozDePregunta } from './useFlujoDefensa';
+import type { FallaDeVoz, VozDePregunta } from './useFlujoDefensa';
 import { BarrasDeVoz } from '@/components/celeste/BarrasDeVoz';
 import { Boton } from '@/components/celeste/Boton';
 import { Personaje } from '@/components/celeste/Personaje';
 import { retraso } from '@/components/celeste/variablesCss';
 import animaciones from '@/components/celeste/animaciones.module.css';
 import { AvisoDeError } from './AvisoDeError';
+import { AvisoDeMicrofono } from './AvisoDeMicrofono';
 import styles from './PantallaPregunta.module.css';
 
 interface PantallaPreguntaProps {
@@ -22,6 +23,11 @@ interface PantallaPreguntaProps {
   voz: VozDePregunta;
   /** La pregunta tiene audio: "Repetir pregunta" la vuelve a decir en voz alta. */
   conAudio: boolean;
+  /** Quería hablar pero el micrófono falló: responde escribiendo y ve por qué, con un toque para volver a la voz. */
+  falla: FallaDeVoz | null;
+  /** Se está pidiendo el micrófono otra vez. */
+  probandoMicrofono: boolean;
+  alProbarMicrofono: () => void;
   /** Se está enviando la respuesta ("Listo" ya se pulsó). */
   ocupado: boolean;
   /** Algo no salió (sin conexión, no se pudo procesar el audio...). */
@@ -57,6 +63,9 @@ export function PantallaPregunta({
   ensayo,
   voz,
   conAudio,
+  falla,
+  probandoMicrofono,
+  alProbarMicrofono,
   ocupado,
   error,
   textoEscrito,
@@ -203,12 +212,16 @@ export function PantallaPregunta({
       </section>
 
       <section className={styles.pie}>
+        {falla ? (
+          <AvisoDeMicrofono mensaje={falla.mensaje} reintentos={falla.reintentos} probando={probandoMicrofono} alProbar={alProbarMicrofono} />
+        ) : null}
         <AvisoDeError mensaje={error} />
-        <div className={styles.dos}>
+        <div className={`${styles.dos} ${falla ? styles.una : ''}`}>
           <Boton variante="tarjeta" tamano={52} icono={<RotateCcw size={16} strokeWidth={2} />} onClick={repetir}>
             Repetir pregunta
           </Boton>
-          {escribe ? (
+          {/* Con una falla del micrófono, volver a hablar es el botón del aviso. */}
+          {falla ? null : escribe ? (
             <Boton variante="tarjeta" tamano={52} icono={<Mic size={16} strokeWidth={2} />} onClick={() => !ocupado && alHablar()}>
               Prefiero hablar
             </Boton>

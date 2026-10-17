@@ -196,6 +196,11 @@
   gap: 10px;
 }
 
+/* Con una falla del micrófono solo queda "Repetir pregunta": ocupa todo el ancho. */
+.dos.una {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 /* En silencio, la opción de escribir se resalta con un pulso suave: "aquí hay otra salida". */
 .dos .sugerido {
   border-color: var(--c-acento);
