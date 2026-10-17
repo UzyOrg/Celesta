@@ -58,6 +58,14 @@ import { bloquesDeRevision, contextoDeAlcance, defensaEnPantalla, estaViva, paso
  *  - el plan de preguntas no existe en el navegador: solo se conoce la pregunta en curso.
  */
 
+/**
+ * Qué hace Celestea con la pregunta en pantalla:
+ * - `espera`: la va a decir y el audio todavía no suena (se está cargando);
+ * - `suena`: la está diciendo;
+ * - `calla`: no la dice (terminó, no hay audio, el navegador lo bloqueó o se responde escribiendo).
+ */
+export type VozDePregunta = 'espera' | 'suena' | 'calla';
+
 const MS_PRUEBA_MICROFONO = 5_000;
 const MS_ENTRE_CONSULTAS_DEL_PLAN = 2_000;
 const MS_MAXIMO_ESPERA_DEL_PLAN = 3 * 60_000;
@@ -125,7 +133,8 @@ export function useFlujoDefensa(actividad: ActividadAlumno, opciones: OpcionesFl
 
   const [estadoMicrofono, setEstadoMicrofono] = useState<EstadoPruebaMicrofono>('escuchando');
   const [microfonoListo, setMicrofonoListo] = useState(false);
-  const [preguntando, setPreguntando] = useState(false);
+  /** Celestea y la pregunta en pantalla (`clave`): ver `VozDePregunta`. */
+  const [voz, setVoz] = useState<{ clave: string | null; estado: VozDePregunta }>({ clave: null, estado: 'calla' });
   const [grabandoAclaracion, setGrabandoAclaracion] = useState(false);
   const aclaracionPorEscrito = useRef(false);
   const [oyendoParte, setOyendoParte] = useState(false);
@@ -595,24 +604,40 @@ export function useFlujoDefensa(actividad: ActividadAlumno, opciones: OpcionesFl
   // Cuando hay una pregunta nueva: si se habla, Celestea la dice y, al terminar, se empieza a grabar.
   const enPregunta = pasoVisible === 'pregunta' || pasoVisible === 'silencio';
   const claveDePregunta = defensa?.pregunta && enPregunta ? `${defensa.id}:${defensa.pregunta.turnoId}` : null;
+
+  /** Cambia la voz solo si sigue en la misma pregunta: lo que llega tarde de otra pregunta no la pisa. */
+  const fijarVoz = useCallback((clave: string | null, estado: VozDePregunta) => {
+    setVoz((previa) => (previa.clave !== clave || previa.estado === estado ? previa : { clave, estado }));
+  }, []);
+  // Si Celestea va a decir la pregunta se sabe desde el primer dibujo de la pantalla, no después de
+  // pintarla: así la pregunta escrita no aparece y se esconde.
+  if (voz.clave !== claveDePregunta) {
+    const laDira = Boolean(defensa?.pregunta?.audioUrl) && (modo === 'voz' || vozSinMicrofono);
+    setVoz({ clave: claveDePregunta, estado: claveDePregunta && laDira ? 'espera' : 'calla' });
+  }
+
   useEffect(() => {
     const pregunta = vivo.current.defensa?.pregunta;
     if (!claveDePregunta || !pregunta) return undefined;
     // Se graba solo si la persona habla; Celestea dice la pregunta si habla o si quería hablar y el micrófono falló.
     const grabara = vivo.current.modo === 'voz';
     if (!grabara && !vivo.current.vozSinMicrofono) {
-      setPreguntando(false);
+      fijarVoz(claveDePregunta, 'calla');
       return undefined;
     }
     let cancelado = false;
     (async () => {
       if (pregunta.audioUrl && preguntaLeida.current !== claveDePregunta) {
         preguntaLeida.current = claveDePregunta;
-        setPreguntando(true);
-        await reproductor.reproducir(pregunta.audioUrl);
+        fijarVoz(claveDePregunta, 'espera');
+        const resultado = await reproductor.reproducir(pregunta.audioUrl, undefined, () => {
+          if (!cancelado) fijarVoz(claveDePregunta, 'suena');
+        });
+        // "Repetir pregunta" cortó esta lectura y empezó otra: esa decide cuándo se empieza a grabar.
+        if (resultado === 'detenido') return;
       }
       if (cancelado) return;
-      setPreguntando(false);
+      fijarVoz(claveDePregunta, 'calla');
       if (!grabara) return;
       // Tras recargar la página el micrófono hay que volver a abrirlo; si el permiso sigue dado, no pregunta nada.
       if (!streamRef.current) await abrirMicrofono();
@@ -625,7 +650,7 @@ export function useFlujoDefensa(actividad: ActividadAlumno, opciones: OpcionesFl
     return () => {
       cancelado = true;
       reproductor.detener();
-      setPreguntando(false);
+      fijarVoz(claveDePregunta, 'calla');
       cancelarGrabacion();
     };
     // Solo cambia con la pregunta y con la modalidad.
@@ -784,14 +809,18 @@ export function useFlujoDefensa(actividad: ActividadAlumno, opciones: OpcionesFl
     if (!pregunta.audioUrl) return;
     // Mientras Celestea repite, no se graba: se descarta lo que hubiera y se empieza de nuevo al terminar.
     cancelarGrabacion();
-    setPreguntando(true);
-    void reproductor.reproducir(pregunta.audioUrl).then((resultado) => {
-      if (resultado === 'detenido') return;
-      setPreguntando(false);
-      if (vivo.current.modo === 'voz' && vivo.current.defensa?.pregunta?.turnoId === pregunta.turnoId) {
+    const clave = claveDePregunta;
+    fijarVoz(clave, 'espera');
+    void reproductor
+      .reproducir(pregunta.audioUrl, undefined, () => fijarVoz(clave, 'suena'))
+      .then(async (resultado) => {
+        if (resultado === 'detenido') return;
+        fijarVoz(clave, 'calla');
+        if (vivo.current.modo !== 'voz' || vivo.current.defensa?.pregunta?.turnoId !== pregunta.turnoId) return;
+        // Si se repitió antes de que terminara la primera lectura, el micrófono puede no estar abierto todavía (tras recargar).
+        if (!streamRef.current) await abrirMicrofono();
         iniciarGrabacion(pregunta.turnoId);
-      }
-    });
+      });
   };
 
   /* -------------------------- empezar la defensa -------------------------- */
@@ -1049,7 +1078,9 @@ export function useFlujoDefensa(actividad: ActividadAlumno, opciones: OpcionesFl
     error,
     estadoMicrofono,
     microfonoListo,
-    preguntando,
+    /** Celestea dice la pregunta (o está por decirla). */
+    preguntando: voz.estado !== 'calla',
+    vozDeLaPregunta: voz.estado,
     grabandoAclaracion,
     oyendoParte,
     puedeHablar,
