@@ -216,7 +216,8 @@ export function FlujoAlumno({ actividad, pasoInicial, ensayoInicial, modoInicial
             enSilencio={paso === 'silencio'}
             modo={flujo.modo}
             ensayo={flujo.ensayo}
-            preguntando={flujo.preguntando}
+            voz={flujo.vozDeLaPregunta}
+            conAudio={Boolean(pregunta.audioUrl)}
             ocupado={flujo.ocupado}
             error={flujo.error}
             textoEscrito={flujo.textoDeLaPregunta}

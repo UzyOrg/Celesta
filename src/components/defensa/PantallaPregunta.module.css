@@ -32,6 +32,26 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
+  transition:
+    opacity 0.28s ease-out,
+    transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/*
+ * Primero habla Celestea: la pregunta escrita espera invisible un instante (menos de medio
+ * segundo), sin soltar su lugar y sin salir del árbol de accesibilidad, y entra como subtítulo.
+ */
+.preguntaEnEspera {
+  opacity: 0;
+  transform: translateY(8px);
+  transition-duration: 0.12s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .preguntaEnEspera {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 .contexto {
@@ -110,10 +130,23 @@
 }
 
 .campo {
+  position: relative;
   display: flex;
   align-self: stretch;
   flex-direction: column;
   gap: 8px;
+}
+
+/* Mientras Celestea dice la pregunta, el cuadro guarda su lugar (nada salta) y "Celestea habla" ocupa ese espacio. */
+.campoEnEspera > .etiqueta,
+.campoEnEspera > .texto {
+  visibility: hidden;
+}
+
+.sobreCampo {
+  position: absolute;
+  inset: 0;
+  justify-content: center;
 }
 
 .etiqueta {
