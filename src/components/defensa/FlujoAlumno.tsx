@@ -158,7 +158,8 @@ export function FlujoAlumno({ actividad, pasoInicial, ensayoInicial, modoInicial
           />
         );
       case 'voz':
-        return <PantallaVoz modo={flujo.modo} alElegir={flujo.cambiarModo} alSeguir={() => irA('trabajo')} />;
+        // Este paso muestra lo que la persona eligió, no el modo pasajero de una falla del micrófono.
+        return <PantallaVoz modo={flujo.modoElegido} alElegir={flujo.cambiarModo} alSeguir={() => irA('trabajo')} />;
       case 'trabajo':
         return (
           <PantallaTrabajo

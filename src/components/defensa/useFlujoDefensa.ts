@@ -33,7 +33,7 @@ import {
   type ModoDeRespuesta,
   type PasoAlumnoId,
 } from './pasos';
-import type { EstadoPruebaMicrofono } from './PantallaHola';
+import { MENSAJE_DE_LA_PRUEBA, type EstadoPruebaMicrofono } from './PantallaHola';
 import type { Aceptaciones } from './PantallaPermisos';
 import { Reproductor } from './reproductor';
 import { borrarSesion, guardarSesion, leerSesion, type SesionGuardada } from './sesionLocal';
@@ -66,6 +66,20 @@ import { bloquesDeRevision, contextoDeAlcance, defensaEnPantalla, estaViva, paso
  */
 export type VozDePregunta = 'espera' | 'suena' | 'calla';
 
+/**
+ * La persona eligió hablar pero ahora no se puede: el micrófono no abre o se perdió, la dirección no es
+ * segura (sin https) o no se pudo pasar su voz a texto. Mientras tanto responde escribiendo, con el motivo
+ * a la vista. No cambia lo que eligió: solo vive en memoria y se cierra al volver a elegir o al probar otra vez.
+ */
+export interface FallaDeVoz {
+  /** Por qué no se puede hablar y qué hacer, tal como se lo dice la pantalla. */
+  mensaje: string;
+  /** Cuántas veces se intentó volver a hablar sin que funcionara. */
+  reintentos: number;
+}
+
+const MENSAJE_MICROFONO_PERDIDO = 'Se perdió el micrófono. Puedes escribir tu respuesta.';
+
 const MS_PRUEBA_MICROFONO = 5_000;
 const MS_ENTRE_CONSULTAS_DEL_PLAN = 2_000;
 const MS_MAXIMO_ESPERA_DEL_PLAN = 3 * 60_000;
@@ -97,6 +111,15 @@ function tituloDe(nombre: string): string {
   return nombre.replace(/\.[^.]+$/, '') || nombre;
 }
 
+/** Lleva el foco del teclado y del lector de pantalla al título de la pantalla. */
+function enfocarTitulo(): void {
+  const titulo = document.querySelector<HTMLElement>('#contenido-defensa h1');
+  if (titulo) {
+    titulo.setAttribute('tabindex', '-1');
+    titulo.focus({ preventScroll: true });
+  }
+}
+
 function detalleDeLaEntrega(entrega: EntregaCliente): string {
   if (entrega.paginas) return `${entrega.paginas} ${entrega.paginas === 1 ? 'página' : 'páginas'}`;
   return `${entrega.palabras} palabras`;
@@ -115,7 +138,11 @@ export function useFlujoDefensa(actividad: ActividadAlumno, opciones: OpcionesFl
   /* ------------------------------ estado ------------------------------ */
   const [paso, setPaso] = useState<PasoAlumnoId>(opciones.pasoInicial);
   const [direccion, setDireccion] = useState<DireccionDeEntrada>('ninguna');
-  const [modo, setModo] = useState<ModoDeRespuesta>(opciones.modoInicial);
+  /**
+   * Lo que la persona pidió: hablar o escribir. Solo un toque suyo lo cambia y es lo único que se recuerda
+   * (en el teléfono y en la dirección). Una `?modo=` que llega en el enlace solo es el punto de partida.
+   */
+  const [modoElegido, setModoElegido] = useState<ModoDeRespuesta>(opciones.modoInicial);
   const [ensayoPedido, setEnsayoPedido] = useState(opciones.ensayoInicial);
 
   const [nombre, setNombre] = useState('');
@@ -140,16 +167,21 @@ export function useFlujoDefensa(actividad: ActividadAlumno, opciones: OpcionesFl
   const [oyendoParte, setOyendoParte] = useState(false);
   const [puedeHablar, setPuedeHablar] = useState(false);
   /**
-   * La persona quería hablar pero el micrófono no abrió, así que responde escribiendo. Celestea sigue
-   * diciendo las preguntas en voz alta (las bocinas no dependen del micrófono). Quien ELIGE escribir
-   * no entra aquí: ahí todo queda en silencio.
+   * La persona eligió hablar pero ahora no se puede (ver `FallaDeVoz`), así que responde escribiendo.
+   * Celestea sigue diciendo las preguntas en voz alta (las bocinas no dependen del micrófono). Quien
+   * ELIGE escribir no entra aquí: ahí todo queda en silencio.
    */
-  const [vozSinMicrofono, setVozSinMicrofono] = useState(false);
+  const [fallaDeVoz, setFallaDeVoz] = useState<FallaDeVoz | null>(null);
+  const [probandoMicrofono, setProbandoMicrofono] = useState(false);
 
   const [textos, setTextos] = useState<Record<string, string>>({});
   const [aclaracionTexto, setAclaracionTexto] = useState('');
   const [marcas, setMarcas] = useState<Record<string, boolean>>({});
   const [reinicioSilencio, setReinicioSilencio] = useState(0);
+
+  /** Cómo se responde ahora: hablando solo si eligió hablar y se puede; si no, escribiendo. */
+  const modo: ModoDeRespuesta = modoElegido === 'voz' && fallaDeVoz === null ? 'voz' : 'escrito';
+  const vozSinMicrofono = fallaDeVoz !== null;
 
   /* ------------------------------- refs ------------------------------- */
   const pasoActual = useRef(paso);
@@ -166,8 +198,8 @@ export function useFlujoDefensa(actividad: ActividadAlumno, opciones: OpcionesFl
   const motivoMicrofono = useRef<MotivoSinMicrofono | null>(null);
   /** La última pregunta cuya voz ya se dijo sola: si el modo cambia a media pregunta no se repite. */
   const preguntaLeida = useRef<string | null>(null);
-  const vivo = useRef({ modo, defensa, estado, vozSinMicrofono });
-  vivo.current = { modo, defensa, estado, vozSinMicrofono };
+  const vivo = useRef({ modo, modoElegido, defensa, estado, vozSinMicrofono });
+  vivo.current = { modo, modoElegido, defensa, estado, vozSinMicrofono };
 
   const ensayo = defensa ? defensa.esEnsayo : ensayoPedido;
   const contexto = useMemo(() => contextoDeAlcance(estado, haySesion, defensa), [estado, haySesion, defensa]);
@@ -189,12 +221,16 @@ export function useFlujoDefensa(actividad: ActividadAlumno, opciones: OpcionesFl
     [],
   );
 
+  /**
+   * La persona elige cómo responder (el paso "¿Hablas o escribes?", "Prefiero escribir" o "Prefiero hablar").
+   * Solo esto cambia lo que se recuerda: se guarda en el teléfono y en la dirección. Elegir de nuevo
+   * también cierra cualquier falla anterior de la voz.
+   */
   const cambiarModo = useCallback(
-    (nuevo: ModoDeRespuesta, causa: 'eleccion' | 'falla' = 'eleccion') => {
+    (nuevo: ModoDeRespuesta) => {
       historial.current = 'reemplazar';
-      setModo(nuevo);
-      // Pasar a escribir por una falla del micrófono no apaga la voz de Celestea; elegirlo sí.
-      setVozSinMicrofono(nuevo === 'escrito' && causa === 'falla');
+      setModoElegido(nuevo);
+      setFallaDeVoz(null);
       if (sesionRef.current) {
         sesionRef.current = { ...sesionRef.current, modo: nuevo };
         guardarSesion(actividad.token, sesionRef.current);
@@ -203,16 +239,28 @@ export function useFlujoDefensa(actividad: ActividadAlumno, opciones: OpcionesFl
     [actividad.token],
   );
 
+  /**
+   * No se puede hablar ahora (el micrófono no abre, se perdió, no hay https...). Pasa a escribir mientras
+   * tanto y dice por qué, pero NO toca lo que la persona eligió: ni lo guardado ni la dirección. Quien ya
+   * eligió escribir no tiene nada que declarar.
+   */
+  const declararFalla = useCallback((mensaje: string) => {
+    if (vivo.current.modoElegido !== 'voz') return;
+    setFallaDeVoz((previa) => ({ mensaje, reintentos: previa?.reintentos ?? 0 }));
+  }, []);
+
   // El paso y las banderas viven en la dirección: se escribe con la API del historial, sin pedir nada al servidor.
+  // El modo que se escribe es el elegido, nunca el pasajero de una falla.
   useEffect(() => {
     if (historial.current === 'ninguno') return;
-    const url = construirUrl(window.location, paso, ensayo, modo);
+    const url = construirUrl(window.location, paso, ensayo, modoElegido);
     if (historial.current === 'empujar') window.history.pushState(null, '', url);
     else window.history.replaceState(null, '', url);
     historial.current = 'ninguno';
-  }, [paso, ensayo, modo]);
+  }, [paso, ensayo, modoElegido]);
 
   // "Atrás" y "adelante" del navegador. Si el paso al que vuelve ya no existe, la pantalla muestra el de respaldo.
+  // El modo no se lee de la dirección: una entrada vieja trae el modo de antes y pisaría lo que la persona eligió después.
   useEffect(() => {
     const alRecorrerHistorial = () => {
       const parametros = new URLSearchParams(window.location.search);
@@ -221,7 +269,6 @@ export function useFlujoDefensa(actividad: ActividadAlumno, opciones: OpcionesFl
       setDireccion(indiceDePaso(destino) >= indiceDePaso(pasoActual.current) ? 'der' : 'izq');
       setPaso(destino);
       setEnsayoPedido(leerBandera(parametros.get('ensayo') ?? undefined));
-      setModo(parametros.get('modo') === 'escrito' ? 'escrito' : 'voz');
     };
     window.addEventListener('popstate', alRecorrerHistorial);
     return () => window.removeEventListener('popstate', alRecorrerHistorial);
@@ -286,7 +333,10 @@ export function useFlujoDefensa(actividad: ActividadAlumno, opciones: OpcionesFl
         setHaySesion(true);
         setNombre(guardada.nombre);
         setMatricula(guardada.matricula);
-        setModo(guardada.modo);
+        // Lo que se eligió y quedó guardado manda sobre la dirección: `?modo=` puede venir de un enlace viejo,
+        // así que la dirección se corrige a lo elegido.
+        historial.current = 'reemplazar';
+        setModoElegido(guardada.modo);
         aplicarEstado(recibido, true);
       } catch (causa) {
         if (causa instanceof ErrorDeApi && causa.codigo === 'no_autorizado') borrarSesion(actividad.token);
@@ -337,9 +387,9 @@ export function useFlujoDefensa(actividad: ActividadAlumno, opciones: OpcionesFl
           transferenciaInternacional: aceptaciones[1],
           mayorDeEdad: aceptaciones[2],
         },
-        modo,
+        modo: modoElegido,
       });
-      const guardada: SesionGuardada = { sesion: r.sesion, expiraEn: r.expiraEn, nombre: r.estado.alumno.nombre, matricula: r.estado.alumno.matricula, modo };
+      const guardada: SesionGuardada = { sesion: r.sesion, expiraEn: r.expiraEn, nombre: r.estado.alumno.nombre, matricula: r.estado.alumno.matricula, modo: modoElegido };
       sesionRef.current = guardada;
       guardarSesion(actividad.token, guardada);
       setHaySesion(true);
@@ -488,10 +538,11 @@ export function useFlujoDefensa(actividad: ActividadAlumno, opciones: OpcionesFl
 
   const seguirDeEntregado = async () => {
     if (ocupado) return;
-    if (modo === 'escrito' || !microfonoSoportado()) {
-      if (modo === 'voz') {
+    if (modoElegido === 'escrito' || !microfonoSoportado()) {
+      if (modoElegido === 'voz') {
+        // Sin https (una IP por http, por ejemplo) el navegador ni ofrece el micrófono: se escribe, pero la pregunta dice por qué.
         motivoMicrofono.current = typeof window !== 'undefined' && window.isSecureContext === false ? 'inseguro' : 'no_soportado';
-        cambiarModo('escrito', 'falla');
+        declararFalla(mensajeDelMicrofono());
       }
       void reproductor.desbloquear();
       irA('respira');
@@ -502,6 +553,8 @@ export function useFlujoDefensa(actividad: ActividadAlumno, opciones: OpcionesFl
     void reproductor.desbloquear();
     const abierto = await abrirMicrofono();
     setEstadoMicrofono(abierto ? 'escuchando' : 'sin_microfono');
+    // Una falla anterior ya no vale si el micrófono abre en esta prueba.
+    if (abierto) setFallaDeVoz(null);
     setOcupado(false);
     irA('hola');
   };
@@ -540,12 +593,13 @@ export function useFlujoDefensa(actividad: ActividadAlumno, opciones: OpcionesFl
 
   const escribirDesdeHola = () => {
     // Si el micrófono no estaba bien, escribir es consecuencia de la falla y la voz de Celestea sigue; si estaba bien, es una elección.
-    cambiarModo('escrito', estadoMicrofono === 'bien' || estadoMicrofono === 'escuchando' ? 'eleccion' : 'falla');
+    if (estadoMicrofono === 'bien' || estadoMicrofono === 'escuchando') cambiarModo('escrito');
+    else declararFalla(estadoMicrofono === 'sin_microfono' ? mensajeDelMicrofono() : MENSAJE_DE_LA_PRUEBA[estadoMicrofono]);
     irA('respira');
   };
 
   const seguirDeHola = () => {
-    if (estadoMicrofono === 'sin_microfono') cambiarModo('escrito', 'falla');
+    if (estadoMicrofono === 'sin_microfono') declararFalla(mensajeDelMicrofono());
     irA('respira');
   };
 
@@ -586,9 +640,9 @@ export function useFlujoDefensa(actividad: ActividadAlumno, opciones: OpcionesFl
           // El micrófono se perdió a media respuesta: se sigue por escrito, sin perder el turno.
           cancelarGrabacion();
           setGrabandoAclaracion(false);
-          setError('Se perdió el micrófono. Puedes escribir tu respuesta.');
-          setModo('escrito');
-          setVozSinMicrofono(true);
+          declararFalla(MENSAJE_MICROFONO_PERDIDO);
+          // La aclaración no tiene aviso propio: ahí el motivo sale en el aviso de error de siempre.
+          if (pasoActual.current === 'aclaracion') setError(MENSAJE_MICROFONO_PERDIDO);
         },
       });
       grabacionRef.current = { grabador, cola, intento, turnoId, detenida: null };
@@ -598,7 +652,7 @@ export function useFlujoDefensa(actividad: ActividadAlumno, opciones: OpcionesFl
       inicioEscucha.current = ahora;
       return grabacionRef.current !== null;
     },
-    [cancelarGrabacion, subirParte],
+    [cancelarGrabacion, declararFalla, subirParte],
   );
 
   // Cuando hay una pregunta nueva: si se habla, Celestea la dice y, al terminar, se empieza a grabar.
@@ -640,12 +694,11 @@ export function useFlujoDefensa(actividad: ActividadAlumno, opciones: OpcionesFl
       fijarVoz(claveDePregunta, 'calla');
       if (!grabara) return;
       // Tras recargar la página el micrófono hay que volver a abrirlo; si el permiso sigue dado, no pregunta nada.
-      if (!streamRef.current) await abrirMicrofono();
+      const abierto = await abrirMicrofono();
       if (cancelado) return;
-      if (!iniciarGrabacion(pregunta.turnoId)) {
-        setError(mensajeDelMicrofono());
-        cambiarModo('escrito', 'falla');
-      }
+      // Sin micrófono se responde escribiendo y la pregunta dice por qué. Si el que falla es el grabador, él mismo lo declara.
+      if (abierto) iniciarGrabacion(pregunta.turnoId);
+      else declararFalla(mensajeDelMicrofono());
     })();
     return () => {
       cancelado = true;
@@ -772,12 +825,14 @@ export function useFlujoDefensa(actividad: ActividadAlumno, opciones: OpcionesFl
       grabacionRef.current = null;
       aplicarDefensa(r.defensa);
     } catch (causa) {
-      // Si no se pudo pasar la voz a texto no se insiste: se sigue por escrito en esa misma pregunta.
       if (causa instanceof ErrorDeApi && causa.codigo === 'transcripcion_fallo') {
+        // Si no se pudo pasar la voz a texto no se insiste: se sigue por escrito en esa misma pregunta, con el aviso
+        // de qué pasó y la forma de volver a hablar. Lo que eligió la persona no cambia.
         cancelarGrabacion();
-        cambiarModo('escrito', 'falla');
+        declararFalla(mensajeDeError(causa));
+      } else {
+        setError(manejarError(causa));
       }
-      setError(manejarError(causa));
     } finally {
       setOcupado(false);
     }
@@ -800,6 +855,27 @@ export function useFlujoDefensa(actividad: ActividadAlumno, opciones: OpcionesFl
     cambiarModo('voz');
   };
 
+  /**
+   * "Probar el micrófono otra vez": un toque de quien eligió hablar y ahora escribe por una falla. Si el micrófono
+   * abre, vuelve a la voz (el efecto de la pregunta empieza a grabar); si no, el aviso sigue y lo hace notar.
+   */
+  const probarMicrofonoOtraVez = async () => {
+    if (probandoMicrofono || ocupado) return;
+    setProbandoMicrofono(true);
+    setError(null);
+    try {
+      if (await abrirMicrofono()) {
+        setFallaDeVoz(null);
+        // El aviso, con el botón que tenía el foco, desaparece: el foco vuelve a la pregunta.
+        window.requestAnimationFrame(enfocarTitulo);
+      } else {
+        setFallaDeVoz((previa) => ({ mensaje: mensajeDelMicrofono(), reintentos: (previa?.reintentos ?? 0) + 1 }));
+      }
+    } finally {
+      setProbandoMicrofono(false);
+    }
+  };
+
   const repetirPregunta = () => {
     const pregunta = vivo.current.defensa?.pregunta;
     if (!pregunta) return;
@@ -818,8 +894,8 @@ export function useFlujoDefensa(actividad: ActividadAlumno, opciones: OpcionesFl
         fijarVoz(clave, 'calla');
         if (vivo.current.modo !== 'voz' || vivo.current.defensa?.pregunta?.turnoId !== pregunta.turnoId) return;
         // Si se repitió antes de que terminara la primera lectura, el micrófono puede no estar abierto todavía (tras recargar).
-        if (!streamRef.current) await abrirMicrofono();
-        iniciarGrabacion(pregunta.turnoId);
+        if (await abrirMicrofono()) iniciarGrabacion(pregunta.turnoId);
+        else declararFalla(mensajeDelMicrofono());
       });
   };
 
@@ -831,8 +907,8 @@ export function useFlujoDefensa(actividad: ActividadAlumno, opciones: OpcionesFl
     setOcupado(true);
     setError(null);
     try {
-      if (vivo.current.modo === 'voz' && !streamRef.current) await abrirMicrofono();
-      if (vivo.current.modo === 'voz' && !streamRef.current) cambiarModo('escrito', 'falla');
+      // Quien eligió hablar abre el micrófono con este toque; si no abre, escribe y la pregunta le dice por qué.
+      if (vivo.current.modo === 'voz' && !(await abrirMicrofono())) declararFalla(mensajeDelMicrofono());
       const r = await api.iniciarDefensa(sesion(), esEnsayo);
       setEnsayoPedido(esEnsayo);
       setResumenPractica(null);
@@ -1009,11 +1085,7 @@ export function useFlujoDefensa(actividad: ActividadAlumno, opciones: OpcionesFl
       (pasoVisible === 'pregunta' || pasoVisible === 'silencio') && (pasoAnterior.current === 'pregunta' || pasoAnterior.current === 'silencio');
     pasoAnterior.current = pasoVisible;
     if (mismaPregunta) return;
-    const titulo = document.querySelector<HTMLElement>('#contenido-defensa h1');
-    if (titulo) {
-      titulo.setAttribute('tabindex', '-1');
-      titulo.focus({ preventScroll: true });
-    }
+    enfocarTitulo();
   }, [pasoVisible, claveDePregunta]);
 
   // Se sabe en el navegador (no en el servidor) si hay micrófono y grabación disponibles.
@@ -1063,7 +1135,10 @@ export function useFlujoDefensa(actividad: ActividadAlumno, opciones: OpcionesFl
         copia[indice] = valor;
         return copia;
       }),
+    /** Cómo se responde ahora (hablando o escribiendo). */
     modo,
+    /** Lo que la persona eligió: es lo que recuerdan la dirección y el teléfono. */
+    modoElegido,
     cambiarModo,
     // estado del servidor
     planEstado,
@@ -1078,6 +1153,9 @@ export function useFlujoDefensa(actividad: ActividadAlumno, opciones: OpcionesFl
     error,
     estadoMicrofono,
     microfonoListo,
+    /** Quería hablar pero no se puede: por qué y cuántas veces se reintentó. Nada si todo va bien. */
+    fallaDeVoz,
+    probandoMicrofono,
     /** Celestea dice la pregunta (o está por decirla). */
     preguntando: voz.estado !== 'calla',
     vozDeLaPregunta: voz.estado,
@@ -1109,6 +1187,7 @@ export function useFlujoDefensa(actividad: ActividadAlumno, opciones: OpcionesFl
     terminarRespuesta,
     escribirEnVezDeHablar,
     hablarEnVezDeEscribir,
+    probarMicrofonoOtraVez,
     repetirPregunta,
     salirDeLaDefensa,
     setAclaracionTexto,

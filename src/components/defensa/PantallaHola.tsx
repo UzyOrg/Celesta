@@ -17,7 +17,7 @@ interface PantallaHolaProps {
   alSeguir: () => void;
 }
 
-const MENSAJE: Readonly<Record<Exclude<EstadoPruebaMicrofono, 'escuchando'>, string>> = {
+export const MENSAJE_DE_LA_PRUEBA: Readonly<Record<Exclude<EstadoPruebaMicrofono, 'escuchando'>, string>> = {
   bien: 'Te oigo bien',
   poco_volumen: 'Te oigo muy bajito. Acércate o escribe.',
   ruido: 'Hay mucho ruido. Busca un lugar más callado o escribe.',
@@ -29,7 +29,7 @@ const MENSAJE: Readonly<Record<Exclude<EstadoPruebaMicrofono, 'escuchando'>, str
  * avisa con calma y deja escribir. Nada de esto es obligatorio: escribir siempre se puede.
  */
 export function PantallaHola({ estado, preparandoPreguntas, alEscribir, alSeguir }: PantallaHolaProps) {
-  const mensaje = estado === 'escuchando' ? null : MENSAJE[estado];
+  const mensaje = estado === 'escuchando' ? null : MENSAJE_DE_LA_PRUEBA[estado];
   const aviso = estado !== 'escuchando' && estado !== 'bien';
   const Icono = estado === 'bien' ? Check : estado === 'sin_microfono' ? MicOff : Volume1;
 
