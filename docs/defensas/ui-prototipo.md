@@ -15,7 +15,8 @@ Estado verificado el 12 de octubre de 2026 sobre una copia limpia del repositori
 >   el almacén en memoria (`DEFENSA_ALMACEN=memoria`) la actividad de demostración es
 >   `/defensa/demo-celestea`. Las direcciones con `?paso=`, `?ensayo=` y `?modo=` siguen,
 >   pero un paso solo se muestra si ya existe lo que necesita (no hay "pregunta" sin una
->   pregunta); si no, se vuelve al paso que corresponde.
+>   pregunta); si no, se vuelve al paso que corresponde. `?modo=` solo es el punto de partida: si el
+>   teléfono ya tiene una sesión guardada, manda lo que la persona eligió (ver "Hablar o escribir").
 > - Profesor: el código de la dirección es el **enlace firmado** que da el script
 >   (`pnpm defensa:actividad crear`) o, en memoria, el que se imprime en la consola. Los códigos
 >   `demo` y `3b-encuesta` siguen abriendo el escenario de ejemplo **solo fuera de producción**.
@@ -126,7 +127,8 @@ el tiempo de revisión. También: copiar al portapapeles, el enlace de WhatsApp 
 el profesor lo toca) y tres datos guardados en el navegador con `localStorage`:
 
 - `celestea-defensa-sesion-<código>`: la sesión firmada del alumno y su modo (voz o escrito), para
-  retomar sin volver a poner nombre y matrícula.
+  retomar sin volver a poner nombre y matrícula. El modo guardado es solo lo que la persona eligió; una
+  falla del micrófono no lo cambia (ver "Hablar o escribir").
 - `celestea-revision-fijados-<enlace>`: las respuestas que el profesor fija ("Fijado por ti").
 - `celestea-revision-cierre-<enlace>-<matrícula>`: su respuesta a "¿El reporte coincide con lo que
   piensas?" (además se guarda en el servidor).
@@ -134,6 +136,34 @@ el profesor lo toca) y tres datos guardados en el navegador con `localStorage`:
 Lo que sigue simulado: compartir en Moodle, "Editar a mano" y pedir cambios por mensaje en la
 nueva actividad, el dictado del profesor (se oculta con datos reales) y, en el escenario de
 ejemplo, el audio, las descargas y los toques.
+
+## Hablar o escribir: lo que se eligió y lo que falla
+
+En `useFlujoDefensa` son dos cosas distintas, y mezclarlas era lo que hacía que quien elegía "Hablar" acabara
+escribiendo sin saber por qué:
+
+- **Modo elegido** (`modoElegido`): lo que la persona pidió. Solo lo cambia un toque suyo: el paso
+  "¿Hablas o escribes?", "Prefiero escribir" o "Prefiero hablar" (y "Prefiero escribir" en la prueba de
+  micrófono cuando se oía bien). Es lo único que se guarda, en el teléfono (`modo` de la sesión) y en la
+  dirección (`?modo=escrito`). Una `?modo=` que llega en un enlace solo es el punto de partida: con una sesión
+  guardada manda lo guardado y la dirección se corrige. "Atrás" y "adelante" del navegador no leen el modo de
+  la dirección: una entrada vieja traería el de antes y pisaría lo elegido después.
+- **Falla de voz** (`fallaDeVoz`): quería hablar y ahora no se puede. Cuenta como falla que el micrófono no
+  abra (permiso bloqueado, sin micrófono, en uso), que la dirección no sea segura (una IP por http: el
+  navegador ni ofrece el micrófono), que el micrófono se pierda a media respuesta o que no se pueda pasar la
+  voz a texto. Mientras dura se responde escribiendo y Celestea sigue diciendo las preguntas. Solo vive en
+  memoria y no toca lo elegido: recargar, arreglar el permiso o volver a elegir devuelve a la voz.
+
+En la pantalla de la pregunta, la falla se ve como un aviso con el motivo (las frases de `mensajeDeMicrofono`)
+y "Probar el micrófono otra vez", que abre el micrófono y, si funciona, vuelve a la voz; si no abre, el aviso
+dice "Sigue sin abrir". Quien eligió escribir no ve aviso: ahí no hay falla. Con voz nunca se dibuja el cuadro
+de texto. "Prefiero escribir" y "Prefiero hablar" son botones discretos (sin borde ni relleno, sin pulso) de
+52 px de alto: una salida, no la tarea de la pantalla.
+
+Para probar en un teléfono hace falta https (un túnel de ngrok o Cloudflare, o un Preview de Vercel) o
+localhost. Con `http://192.168.x.x` el navegador no ofrece el micrófono: la pregunta lo explica y se escribe,
+sin tocar lo que se eligió. Las pruebas de navegador de este comportamiento están en
+`tests/e2e/defensa-alumno.spec.ts` (grupo "el modo que se elige se respeta").
 
 ## Desviaciones de AGENTS.md y por qué
 
