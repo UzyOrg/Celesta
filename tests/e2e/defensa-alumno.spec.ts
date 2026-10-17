@@ -226,7 +226,7 @@ test.describe('alumno con voz', () => {
     let huboAclaracion = false;
     for (let turno = 0; turno < 10; turno += 1) {
       const revision = page.getByRole('heading', { name: 'Revisa tu transcripción' });
-      const escuchando = page.getByText(/Te escucho|Escucha la pregunta/);
+      const escuchando = page.getByText(/Te escucho|Celestea habla/);
       const aclaracion = page.getByRole('heading', { name: 'No te entendí esta parte.' });
       await expect(revision.or(escuchando).or(aclaracion).first()).toBeVisible({ timeout: 30_000 });
       if (await revision.isVisible()) break;
@@ -254,5 +254,235 @@ test.describe('alumno con voz', () => {
     await page.getByRole('button', { name: 'Entregar defensa' }).click();
     await page.getByRole('button', { name: 'Igual' }).click();
     await expect(page.getByRole('heading', { name: 'Listo.' })).toBeVisible({ timeout: 30_000 });
+  });
+});
+
+/* ------------------------- primero habla, después se lee ------------------------- */
+
+interface RegistroDeVoz {
+  /** Cuándo empezó a sonar de verdad cada audio de Celestea (evento `playing`). */
+  sonando: number[];
+  /** Cada vez que la pregunta escrita aparece en la página o cambia de "en-espera" a "visible". */
+  textos: { t: number; valor: string | null }[];
+  /** Cuándo empezó cada grabación del micrófono. */
+  grabaciones: number[];
+}
+
+/** Anota, con el reloj de la página, cuándo suena la voz y cuándo se deja ver la pregunta escrita. */
+async function registrarVozYTexto(page: Page): Promise<void> {
+  await page.addInitScript(() => {
+    const registro: RegistroDeVoz = { sonando: [], textos: [], grabaciones: [] };
+    (window as unknown as { __registro: RegistroDeVoz }).__registro = registro;
+    if (typeof MediaRecorder !== 'undefined') {
+      const grabar = MediaRecorder.prototype.start;
+      MediaRecorder.prototype.start = function start(this: MediaRecorder, ...argumentos: [number?]) {
+        registro.grabaciones.push(performance.now());
+        return grabar.apply(this, argumentos);
+      };
+    }
+    const escuchados = new WeakSet<HTMLMediaElement>();
+    const reproducir = HTMLMediaElement.prototype.play;
+    HTMLMediaElement.prototype.play = function play(this: HTMLMediaElement) {
+      if (!escuchados.has(this)) {
+        escuchados.add(this);
+        this.addEventListener('playing', () => {
+          if (this.currentSrc.includes('/api/defensa/archivo-dev')) registro.sonando.push(performance.now());
+        });
+      }
+      return reproducir.call(this);
+    };
+    const anotar = (elemento: Element) => registro.textos.push({ t: performance.now(), valor: elemento.getAttribute('data-texto') });
+    new MutationObserver((cambios) => {
+      for (const cambio of cambios) {
+        if (cambio.type === 'attributes' && cambio.target instanceof Element) anotar(cambio.target);
+        for (const nodo of Array.from(cambio.addedNodes)) {
+          if (!(nodo instanceof Element)) continue;
+          if (nodo.matches('[data-texto]')) anotar(nodo);
+          nodo.querySelectorAll('[data-texto]').forEach(anotar);
+        }
+      }
+    }).observe(document, { subtree: true, childList: true, attributes: true, attributeFilter: ['data-texto'] });
+  });
+}
+
+const leerRegistro = (page: Page): Promise<RegistroDeVoz> =>
+  page.evaluate(() => (window as unknown as { __registro: RegistroDeVoz }).__registro);
+
+/**
+ * Cada vez que la pregunta escrita pasa de "en-espera" a "visible", la voz ya había empezado
+ * a sonar y no tardó más de un segundo. Devuelve cuántas veces pasó.
+ */
+function revisarRevelaciones(registro: RegistroDeVoz): number {
+  let revelaciones = 0;
+  let desde: number | null = null;
+  for (const { t, valor } of registro.textos) {
+    if (valor === 'en-espera') {
+      desde ??= t;
+    } else if (valor === 'visible' && desde !== null) {
+      const inicio = desde;
+      expect(
+        registro.sonando.some((momento) => momento >= inicio && momento <= t),
+        'la pregunta escrita aparece después de que empieza la voz',
+      ).toBe(true);
+      expect(t - inicio, 'la pregunta escrita no hace esperar').toBeLessThan(1_000);
+      revelaciones += 1;
+      desde = null;
+    }
+  }
+  return revelaciones;
+}
+
+/** Un WAV mono de 8 kHz en silencio: sirve de voz de Celestea con la duración que haga falta. */
+function wavDeSilencio(milisegundos: number): Buffer {
+  const bytes = Math.round((8_000 * milisegundos) / 1_000) * 2;
+  const wav = Buffer.alloc(44 + bytes);
+  wav.write('RIFF', 0);
+  wav.writeUInt32LE(36 + bytes, 4);
+  wav.write('WAVEfmt ', 8);
+  wav.writeUInt32LE(16, 16);
+  wav.writeUInt16LE(1, 20);
+  wav.writeUInt16LE(1, 22);
+  wav.writeUInt32LE(8_000, 24);
+  wav.writeUInt32LE(16_000, 28);
+  wav.writeUInt16LE(2, 32);
+  wav.writeUInt16LE(16, 34);
+  wav.write('data', 36);
+  wav.writeUInt32LE(bytes, 40);
+  return wav;
+}
+
+/** La voz de las preguntas dura lo que diga la prueba (la falsa dura un cuarto de segundo). */
+async function servirVozDeCelestea(page: Page, milisegundos: number): Promise<void> {
+  const voz = wavDeSilencio(milisegundos);
+  await page.route('**/api/defensa/archivo-dev**', (ruta) => ruta.fulfill({ status: 200, contentType: 'audio/wav', body: voz }));
+}
+
+/** Las preguntas llegan sin audio (`audioUrl: null`), como cuando no se pudo crear la voz. */
+async function quitarAudioDeLasPreguntas(page: Page): Promise<void> {
+  await page.route('**/api/defensa/**', async (ruta) => {
+    if (ruta.request().url().includes('/api/defensa/archivo-dev')) return ruta.continue();
+    const respuesta = await ruta.fetch();
+    if (!(respuesta.headers()['content-type'] ?? '').includes('application/json')) return ruta.fulfill({ response: respuesta });
+    const sinAudio = JSON.stringify(await respuesta.json(), (_clave, valor: unknown) =>
+      valor !== null && typeof valor === 'object' && 'turnoId' in valor && 'pregunta' in valor ? { ...valor, audioUrl: null } : valor,
+    );
+    return ruta.fulfill({ response: respuesta, body: sinAudio });
+  });
+}
+
+async function bloquearMicrofono(page: Page): Promise<void> {
+  await page.addInitScript(() => {
+    navigator.mediaDevices.getUserMedia = () => Promise.reject(new DOMException('Permission denied', 'NotAllowedError'));
+  });
+}
+
+/** Quería hablar pero el micrófono no abrió: Celestea dice las preguntas y la persona escribe. */
+async function llegarAPreguntaSinMicrofono(page: Page): Promise<void> {
+  await entrarYSubirTrabajo(page, 'Hablar');
+  await expect(page.getByRole('heading', { name: /hola/i }).first()).toBeVisible({ timeout: 30_000 });
+  await page.getByRole('button', { name: 'Seguir' }).click();
+  await empezarDefensa(page);
+}
+
+test.describe('la pregunta: primero habla Celestea', () => {
+  test('el texto aparece después de que empieza la voz; repetir hace lo mismo y no graba encima', async ({ page }) => {
+    await registrarVozYTexto(page);
+    await servirVozDeCelestea(page, 2_500);
+    await entrarYSubirTrabajo(page, 'Hablar');
+    await expect(page.getByRole('heading', { name: /hola/i }).first()).toBeVisible({ timeout: 30_000 });
+    await page.getByRole('button', { name: /Seguir|Listo|Sí/ }).last().click();
+    await empezarDefensa(page);
+
+    // Mientras habla: la pantalla y la esfera lo marcan, y la pregunta ya está para el lector de pantalla.
+    const pantalla = page.locator('[data-celestea]');
+    await expect(pantalla).toHaveAttribute('data-celestea', 'habla', { timeout: 30_000 });
+    await expect(page.getByText('Celestea habla')).toBeVisible();
+    await expect(page.locator('[data-hablando="true"]').first()).toBeAttached();
+    await expect(page.getByRole('heading', { level: 1 }).first()).not.toHaveText('');
+    await expect(page.getByRole('button', { name: 'Listo' })).toHaveAttribute('aria-disabled', 'true');
+
+    // Repetir a media voz: Celestea sigue hablando; no se empieza a grabar encima de su voz.
+    await page.getByRole('button', { name: 'Repetir pregunta' }).click();
+    await page.waitForTimeout(700);
+    await expect(pantalla).toHaveAttribute('data-celestea', 'habla');
+    expect((await leerRegistro(page)).grabaciones, 'no se graba mientras Celestea repite').toHaveLength(0);
+    await expect(page.getByText('Te escucho')).toBeVisible({ timeout: 20_000 });
+    await expect.poll(async () => (await leerRegistro(page)).grabaciones.length, { message: 'al terminar la voz, sí se graba' }).toBe(1);
+    await expect(page.locator('[data-texto]')).toHaveAttribute('data-texto', 'visible');
+
+    // Repetir después: la misma secuencia, primero la voz y después el texto.
+    await page.getByRole('button', { name: 'Repetir pregunta' }).click();
+    await expect(pantalla).toHaveAttribute('data-celestea', 'habla');
+    await expect(page.getByText('Te escucho')).toBeVisible({ timeout: 20_000 });
+
+    const registro = await leerRegistro(page);
+    expect(registro.textos[0]?.valor, 'al llegar, la pregunta escrita espera a la voz').toBe('en-espera');
+    expect(registro.sonando.length).toBeGreaterThanOrEqual(3);
+    expect(revisarRevelaciones(registro)).toBeGreaterThanOrEqual(2);
+  });
+
+  test('si el micrófono falló, Celestea dice la pregunta y el cuadro aparece al terminar', async ({ page }) => {
+    await bloquearMicrofono(page);
+    await registrarVozYTexto(page);
+    await servirVozDeCelestea(page, 2_000);
+    await llegarAPreguntaSinMicrofono(page);
+
+    const pantalla = page.locator('[data-celestea]');
+    await expect(pantalla).toHaveAttribute('data-celestea', 'habla', { timeout: 30_000 });
+    await expect(page.getByText('Celestea habla')).toBeVisible();
+    await expect(page.getByLabel('Tu respuesta')).toBeHidden();
+    await expect(page.getByLabel('Tu respuesta')).toBeVisible({ timeout: 20_000 });
+    await expect(pantalla).toHaveAttribute('data-celestea', 'escucha');
+    expect(revisarRevelaciones(await leerRegistro(page))).toBeGreaterThanOrEqual(1);
+
+    // Lo que ya escribió no se esconde al repetir la pregunta.
+    await page.getByLabel('Tu respuesta').fill('Empecé por la encuesta');
+    await page.getByRole('button', { name: 'Repetir pregunta' }).click();
+    await expect(pantalla).toHaveAttribute('data-celestea', 'habla');
+    await expect(page.getByLabel('Tu respuesta')).toBeVisible();
+    await expect(page.getByLabel('Tu respuesta')).toHaveValue('Empecé por la encuesta');
+  });
+
+  test('sin audio, la pregunta y el cuadro se ven desde el principio', async ({ page }) => {
+    await bloquearMicrofono(page);
+    await registrarVozYTexto(page);
+    await quitarAudioDeLasPreguntas(page);
+    await llegarAPreguntaSinMicrofono(page);
+
+    await expect(page.getByLabel('Tu respuesta')).toBeVisible({ timeout: 30_000 });
+    const registro = await leerRegistro(page);
+    expect(registro.textos.length).toBeGreaterThan(0);
+    expect(registro.textos.map((entrada) => entrada.valor)).not.toContain('en-espera');
+    expect(registro.sonando).toHaveLength(0);
+  });
+
+  test('si el audio falla, la pregunta se ve enseguida', async ({ page }) => {
+    await bloquearMicrofono(page);
+    await registrarVozYTexto(page);
+    await page.route('**/api/defensa/archivo-dev**', (ruta) => ruta.abort());
+    await llegarAPreguntaSinMicrofono(page);
+
+    await expect(page.getByLabel('Tu respuesta')).toBeVisible({ timeout: 30_000 });
+    const { textos } = await leerRegistro(page);
+    const visible = textos.find((entrada) => entrada.valor === 'visible');
+    expect(visible).toBeDefined();
+    // Sin esperar el tope de medio segundo: la falla misma destapa la pregunta.
+    expect((visible?.t ?? Infinity) - (textos[0]?.t ?? 0)).toBeLessThan(400);
+  });
+
+  test('con movimiento reducido, todo aparece a la vez', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await bloquearMicrofono(page);
+    await registrarVozYTexto(page);
+    await servirVozDeCelestea(page, 2_500);
+    await llegarAPreguntaSinMicrofono(page);
+
+    // Mientras Celestea habla ya están la pregunta y el cuadro de respuesta.
+    await expect(page.locator('[data-celestea]')).toHaveAttribute('data-celestea', 'habla', { timeout: 30_000 });
+    await expect(page.getByLabel('Tu respuesta')).toBeVisible();
+    await expect(page.locator('[data-texto]')).toHaveCSS('opacity', '1');
+    const registro = await leerRegistro(page);
+    expect(registro.textos.length).toBeGreaterThan(0);
+    expect(registro.textos.map((entrada) => entrada.valor)).not.toContain('en-espera');
   });
 });
