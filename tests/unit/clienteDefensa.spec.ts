@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { ColaSubida, type ResultadoDeSubida } from '../../src/components/defensa/colaSubida';
 import { ErrorDeApi, conReintentos } from '../../src/components/defensa/clienteApi';
-import { UMBRAL_RUIDO, UMBRAL_VOZ, evaluarPrueba } from '../../src/components/defensa/microfono';
+import { UMBRAL_RUIDO, UMBRAL_VOZ, evaluarPrueba, mensajeDeMicrofono, type MotivoSinMicrofono } from '../../src/components/defensa/microfono';
 
 const parte = (texto: string) => new Blob([texto]);
 const pausa = (ms: number) => new Promise<void>((resolver) => setTimeout(resolver, ms));
@@ -178,6 +178,22 @@ test.describe('conReintentos', () => {
       }, { intentos: 3, espera: async () => undefined }),
     ).rejects.toMatchObject({ codigo: 'tiempo_agotado', esDeRed: true });
     expect(llamadas).toBe(3);
+  });
+});
+
+test.describe('mensajeDeMicrofono · decir por qué no abrió', () => {
+  const motivos: MotivoSinMicrofono[] = ['denegado', 'no_hay', 'ocupado', 'inseguro', 'no_soportado'];
+
+  test('cada motivo tiene su propio mensaje y siempre deja escribir', () => {
+    const mensajes = motivos.map(mensajeDeMicrofono);
+    expect(new Set(mensajes).size).toBe(motivos.length);
+    for (const mensaje of mensajes) expect(mensaje).toMatch(/escrib/i);
+  });
+
+  test('un permiso bloqueado explica dónde se desbloquea, y una dirección insegura dice que necesita https', () => {
+    expect(mensajeDeMicrofono('denegado')).toMatch(/candado/);
+    expect(mensajeDeMicrofono('inseguro')).toMatch(/https/);
+    expect(mensajeDeMicrofono('no_hay')).toMatch(/No encontramos un micrófono/);
   });
 });
 

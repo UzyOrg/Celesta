@@ -14,6 +14,8 @@ import { Grabador } from './grabador';
 import {
   ErrorDeMicrofono,
   UMBRAL_VOZ,
+  mensajeDeMicrofono,
+  type MotivoSinMicrofono,
   crearMedidor,
   evaluarPrueba,
   microfonoSoportado,
@@ -128,6 +130,12 @@ export function useFlujoDefensa(actividad: ActividadAlumno, opciones: OpcionesFl
   const aclaracionPorEscrito = useRef(false);
   const [oyendoParte, setOyendoParte] = useState(false);
   const [puedeHablar, setPuedeHablar] = useState(false);
+  /**
+   * La persona quería hablar pero el micrófono no abrió, así que responde escribiendo. Celestea sigue
+   * diciendo las preguntas en voz alta (las bocinas no dependen del micrófono). Quien ELIGE escribir
+   * no entra aquí: ahí todo queda en silencio.
+   */
+  const [vozSinMicrofono, setVozSinMicrofono] = useState(false);
 
   const [textos, setTextos] = useState<Record<string, string>>({});
   const [aclaracionTexto, setAclaracionTexto] = useState('');
@@ -146,8 +154,11 @@ export function useFlujoDefensa(actividad: ActividadAlumno, opciones: OpcionesFl
   const intentosPorTurno = useRef<Map<string, number>>(new Map());
   const ultimaVoz = useRef(0);
   const inicioEscucha = useRef(0);
-  const vivo = useRef({ modo, defensa, estado });
-  vivo.current = { modo, defensa, estado };
+  const motivoMicrofono = useRef<MotivoSinMicrofono | null>(null);
+  /** La última pregunta cuya voz ya se dijo sola: si el modo cambia a media pregunta no se repite. */
+  const preguntaLeida = useRef<string | null>(null);
+  const vivo = useRef({ modo, defensa, estado, vozSinMicrofono });
+  vivo.current = { modo, defensa, estado, vozSinMicrofono };
 
   const ensayo = defensa ? defensa.esEnsayo : ensayoPedido;
   const contexto = useMemo(() => contextoDeAlcance(estado, haySesion, defensa), [estado, haySesion, defensa]);
@@ -170,9 +181,11 @@ export function useFlujoDefensa(actividad: ActividadAlumno, opciones: OpcionesFl
   );
 
   const cambiarModo = useCallback(
-    (nuevo: ModoDeRespuesta) => {
+    (nuevo: ModoDeRespuesta, causa: 'eleccion' | 'falla' = 'eleccion') => {
       historial.current = 'reemplazar';
       setModo(nuevo);
+      // Pasar a escribir por una falla del micrófono no apaga la voz de Celestea; elegirlo sí.
+      setVozSinMicrofono(nuevo === 'escrito' && causa === 'falla');
       if (sesionRef.current) {
         sesionRef.current = { ...sesionRef.current, modo: nuevo };
         guardarSesion(actividad.token, sesionRef.current);
@@ -453,15 +466,25 @@ export function useFlujoDefensa(actividad: ActividadAlumno, opciones: OpcionesFl
     } catch (causa) {
       streamRef.current = null;
       setMicrofonoListo(false);
-      if (causa instanceof ErrorDeMicrofono) return false;
+      const motivo = causa instanceof ErrorDeMicrofono ? causa.motivo : 'ocupado';
+      motivoMicrofono.current = motivo;
+      // Solo el motivo, nunca nada de la persona: sirve para saber qué le pasó al navegador.
+      console.warn('defensa_microfono', motivo);
       return false;
     }
   };
 
+  /** El mensaje de por qué no abrió el micrófono la última vez, con lo que hay que hacer. */
+  const mensajeDelMicrofono = () => mensajeDeMicrofono(motivoMicrofono.current ?? 'no_soportado');
+
   const seguirDeEntregado = async () => {
     if (ocupado) return;
     if (modo === 'escrito' || !microfonoSoportado()) {
-      if (modo === 'voz') cambiarModo('escrito');
+      if (modo === 'voz') {
+        motivoMicrofono.current = typeof window !== 'undefined' && window.isSecureContext === false ? 'inseguro' : 'no_soportado';
+        cambiarModo('escrito', 'falla');
+      }
+      void reproductor.desbloquear();
       irA('respira');
       return;
     }
@@ -507,12 +530,13 @@ export function useFlujoDefensa(actividad: ActividadAlumno, opciones: OpcionesFl
   }, [pasoVisible, sinMicrofono]);
 
   const escribirDesdeHola = () => {
-    cambiarModo('escrito');
+    // Si el micrófono no estaba bien, escribir es consecuencia de la falla y la voz de Celestea sigue; si estaba bien, es una elección.
+    cambiarModo('escrito', estadoMicrofono === 'bien' || estadoMicrofono === 'escuchando' ? 'eleccion' : 'falla');
     irA('respira');
   };
 
   const seguirDeHola = () => {
-    if (estadoMicrofono === 'sin_microfono') cambiarModo('escrito');
+    if (estadoMicrofono === 'sin_microfono') cambiarModo('escrito', 'falla');
     irA('respira');
   };
 
@@ -555,6 +579,7 @@ export function useFlujoDefensa(actividad: ActividadAlumno, opciones: OpcionesFl
           setGrabandoAclaracion(false);
           setError('Se perdió el micrófono. Puedes escribir tu respuesta.');
           setModo('escrito');
+          setVozSinMicrofono(true);
         },
       });
       grabacionRef.current = { grabador, cola, intento, turnoId, detenida: null };
@@ -573,24 +598,28 @@ export function useFlujoDefensa(actividad: ActividadAlumno, opciones: OpcionesFl
   useEffect(() => {
     const pregunta = vivo.current.defensa?.pregunta;
     if (!claveDePregunta || !pregunta) return undefined;
-    if (vivo.current.modo !== 'voz') {
+    // Se graba solo si la persona habla; Celestea dice la pregunta si habla o si quería hablar y el micrófono falló.
+    const grabara = vivo.current.modo === 'voz';
+    if (!grabara && !vivo.current.vozSinMicrofono) {
       setPreguntando(false);
       return undefined;
     }
     let cancelado = false;
     (async () => {
-      if (pregunta.audioUrl) {
+      if (pregunta.audioUrl && preguntaLeida.current !== claveDePregunta) {
+        preguntaLeida.current = claveDePregunta;
         setPreguntando(true);
         await reproductor.reproducir(pregunta.audioUrl);
       }
       if (cancelado) return;
       setPreguntando(false);
+      if (!grabara) return;
       // Tras recargar la página el micrófono hay que volver a abrirlo; si el permiso sigue dado, no pregunta nada.
       if (!streamRef.current) await abrirMicrofono();
       if (cancelado) return;
       if (!iniciarGrabacion(pregunta.turnoId)) {
-        setError('No pudimos usar el micrófono. Puedes escribir tu respuesta.');
-        cambiarModo('escrito');
+        setError(mensajeDelMicrofono());
+        cambiarModo('escrito', 'falla');
       }
     })();
     return () => {
@@ -721,7 +750,7 @@ export function useFlujoDefensa(actividad: ActividadAlumno, opciones: OpcionesFl
       // Si no se pudo pasar la voz a texto no se insiste: se sigue por escrito en esa misma pregunta.
       if (causa instanceof ErrorDeApi && causa.codigo === 'transcripcion_fallo') {
         cancelarGrabacion();
-        cambiarModo('escrito');
+        cambiarModo('escrito', 'falla');
       }
       setError(manejarError(causa));
     } finally {
@@ -739,7 +768,7 @@ export function useFlujoDefensa(actividad: ActividadAlumno, opciones: OpcionesFl
   const hablarEnVezDeEscribir = async () => {
     setError(null);
     if (!(await abrirMicrofono())) {
-      setError('No pude usar el micrófono. Puedes seguir escribiendo.');
+      setError(mensajeDelMicrofono());
       return;
     }
     void reproductor.desbloquear();
@@ -774,7 +803,7 @@ export function useFlujoDefensa(actividad: ActividadAlumno, opciones: OpcionesFl
     setError(null);
     try {
       if (vivo.current.modo === 'voz' && !streamRef.current) await abrirMicrofono();
-      if (vivo.current.modo === 'voz' && !streamRef.current) cambiarModo('escrito');
+      if (vivo.current.modo === 'voz' && !streamRef.current) cambiarModo('escrito', 'falla');
       const r = await api.iniciarDefensa(sesion(), esEnsayo);
       setEnsayoPedido(esEnsayo);
       setResumenPractica(null);
@@ -846,7 +875,7 @@ export function useFlujoDefensa(actividad: ActividadAlumno, opciones: OpcionesFl
     setOyendoParte(false);
     setError(null);
     if (!(await abrirMicrofono()) || !iniciarGrabacion(aclaracion.turnoId)) {
-      setError('No pude usar el micrófono. Escribe esa parte.');
+      setError(`${mensajeDelMicrofono()} Escribe esa parte.`);
       return;
     }
     setGrabandoAclaracion(true);

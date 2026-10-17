@@ -7,7 +7,7 @@
  * sigue por escrito, sin tener que explicar por qué.
  */
 
-export type MotivoSinMicrofono = 'denegado' | 'no_hay' | 'no_soportado' | 'ocupado';
+export type MotivoSinMicrofono = 'denegado' | 'no_hay' | 'no_soportado' | 'inseguro' | 'ocupado';
 
 export class ErrorDeMicrofono extends Error {
   readonly motivo: MotivoSinMicrofono;
@@ -27,7 +27,28 @@ export function microfonoSoportado(): boolean {
   );
 }
 
+/**
+ * Qué decirle a la persona cuando el micrófono no abre. Siempre dice qué hacer y que puede escribir:
+ * "no pude usar el micrófono" a secas no deja saber si es un permiso, un cable o el navegador.
+ */
+export function mensajeDeMicrofono(motivo: MotivoSinMicrofono): string {
+  switch (motivo) {
+    case 'denegado':
+      return 'El navegador tiene bloqueado el micrófono para esta página. Toca el candado junto a la dirección, permite el micrófono y vuelve a intentar. Mientras, puedes escribir.';
+    case 'no_hay':
+      return 'No encontramos un micrófono en este dispositivo. Puedes escribir tu respuesta.';
+    case 'ocupado':
+      return 'Otra aplicación está usando el micrófono. Ciérrala y vuelve a intentar, o escribe tu respuesta.';
+    case 'inseguro':
+      return 'El micrófono solo funciona en una dirección segura (https, o localhost en tu computadora). Puedes escribir tu respuesta.';
+    default:
+      return 'Este navegador no deja usar el micrófono aquí. Prueba con Chrome o Safari, o escribe tu respuesta.';
+  }
+}
+
 export async function pedirMicrofono(): Promise<MediaStream> {
+  // Fuera de https (o localhost) el navegador ni siquiera ofrece el micrófono: no hay ventana de permiso.
+  if (typeof window !== 'undefined' && window.isSecureContext === false) throw new ErrorDeMicrofono('inseguro');
   if (!microfonoSoportado()) throw new ErrorDeMicrofono('no_soportado');
   try {
     return await navigator.mediaDevices.getUserMedia({

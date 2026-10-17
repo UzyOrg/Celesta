@@ -115,6 +115,55 @@ test('permite reintentar una sesión fallida sin perder los switches', async ({ 
   await page.screenshot({ path: testInfo.outputPath('permisos-resueltos.png'), scale: 'css' });
 });
 
+/** Cuenta las veces que el navegador pide un audio de Celestea (las preguntas se sirven desde esta ruta en pruebas). */
+function contarAudiosDeCelestea(page: Page): () => number {
+  let pedidos = 0;
+  page.on('request', (peticion) => {
+    if (peticion.url().includes('/api/defensa/archivo-dev')) pedidos += 1;
+  });
+  return () => pedidos;
+}
+
+test.describe('micrófono bloqueado', () => {
+  test.beforeEach(async ({ page }) => {
+    // Lo mismo que ve quien pulsó "Bloquear" o abre la página en un navegador que no ofrece permisos.
+    await page.addInitScript(() => {
+      navigator.mediaDevices.getUserMedia = () => Promise.reject(new DOMException('Permission denied', 'NotAllowedError'));
+    });
+  });
+
+  test('dice por qué falló y Celestea sigue diciendo las preguntas aunque se responda escribiendo', async ({ page }) => {
+    const audios = contarAudiosDeCelestea(page);
+    await entrarYSubirTrabajo(page, 'Hablar');
+
+    // La prueba de micrófono avisa que no hay micrófono; "Seguir" pasa a escribir sin apagar la voz de Celestea.
+    await expect(page.getByRole('heading', { name: /hola/i }).first()).toBeVisible({ timeout: 30_000 });
+    await page.getByRole('button', { name: 'Seguir' }).click();
+    await empezarDefensa(page);
+
+    await expect(page.getByLabel('Tu respuesta')).toBeVisible({ timeout: 30_000 });
+    await expect.poll(audios, { message: 'la pregunta se pidió en audio', timeout: 15_000 }).toBeGreaterThan(0);
+
+    // Y si la persona intenta hablar, se le dice qué pasó y qué hacer, no un mensaje genérico.
+    await page.getByRole('button', { name: 'Prefiero hablar' }).click();
+    await expect(page.getByText(/bloqueado el micrófono para esta página/)).toBeVisible();
+    await expect(page.getByLabel('Tu respuesta')).toBeVisible();
+  });
+
+  test('quien elige escribir desde el principio no oye nada solo', async ({ page }) => {
+    const audios = contarAudiosDeCelestea(page);
+    await entrarYSubirTrabajo(page, 'Escribir');
+    await empezarDefensa(page);
+    await expect(page.getByLabel('Tu respuesta')).toBeVisible({ timeout: 30_000 });
+    await page.waitForTimeout(2_500);
+    expect(audios()).toBe(0);
+
+    // Repetir la pregunta es otro toque: eso sí la dice.
+    await page.getByRole('button', { name: 'Repetir pregunta' }).click();
+    await expect.poll(audios, { timeout: 15_000 }).toBeGreaterThan(0);
+  });
+});
+
 test.describe('alumno por escrito', () => {
   test('recorre el flujo completo sin micrófono y entrega', async ({ page }) => {
     await entrarYSubirTrabajo(page, 'Escribir');
