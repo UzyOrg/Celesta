@@ -201,12 +201,6 @@
   grid-template-columns: minmax(0, 1fr);
 }
 
-/* En silencio, la opción de escribir se resalta con un pulso suave: "aquí hay otra salida". */
-.dos .sugerido {
-  border-color: var(--c-acento);
-  animation: sugerir 2.4s ease-in-out 0.8s infinite;
-}
-
 @keyframes puntos {
   0%,
   100% {
@@ -215,16 +209,5 @@
 
   50% {
     opacity: 1;
-  }
-}
-
-@keyframes sugerir {
-  0%,
-  100% {
-    box-shadow: 0 0 0 0 rgba(140, 200, 255, 0);
-  }
-
-  50% {
-    box-shadow: 0 0 0 6px rgba(140, 200, 255, 0.2);
   }
 }

@@ -220,19 +220,14 @@ export function PantallaPregunta({
           <Boton variante="tarjeta" tamano={52} icono={<RotateCcw size={16} strokeWidth={2} />} onClick={repetir}>
             Repetir pregunta
           </Boton>
+          {/* Cambiar de modo es una salida, no la tarea: botón discreto (sin borde ni relleno) y sin llamar la atención. */}
           {/* Con una falla del micrófono, volver a hablar es el botón del aviso. */}
           {falla ? null : escribe ? (
-            <Boton variante="tarjeta" tamano={52} icono={<Mic size={16} strokeWidth={2} />} onClick={() => !ocupado && alHablar()}>
+            <Boton variante="sutil" tamano={52} icono={<Mic size={16} strokeWidth={2} />} onClick={() => !ocupado && alHablar()}>
               Prefiero hablar
             </Boton>
           ) : (
-            <Boton
-              variante="tarjeta"
-              tamano={52}
-              icono={<Keyboard size={16} strokeWidth={1.9} />}
-              className={enSilencio || error ? styles.sugerido : ''}
-              onClick={() => !ocupado && alEscribir()}
-            >
+            <Boton variante="sutil" tamano={52} icono={<Keyboard size={16} strokeWidth={1.9} />} onClick={() => !ocupado && alEscribir()}>
               Prefiero escribir
             </Boton>
           )}
