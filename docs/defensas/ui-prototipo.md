@@ -154,6 +154,14 @@ escribiendo sin saber por qué:
   voz a texto. Mientras dura se responde escribiendo y Celestea sigue diciendo las preguntas. Solo vive en
   memoria y no toca lo elegido: recargar, arreglar el permiso o volver a elegir devuelve a la voz.
 
+El micrófono se pide en "Di «hola»" (paso 8), justo cuando se va a usar, y no en la pantalla de antes: la
+ventana de permiso del navegador sale sobre "Di «hola»" y, si se permite, empieza la prueba de cinco segundos.
+Si no se puede (lo niega, no hay micrófono o la dirección no es segura) no hay nada que probar: "Di «hola»"
+dice "No pude usar el micrófono. Seguimos por escrito." un par de segundos y sigue solo al ejercicio por
+escrito, sin pedir nada más; la pregunta explica el motivo y deja volver a probar. Quien llega a "Di «hola»"
+con "atrás" no se manda otra vez hacia adelante, y quien elige escribir mientras el navegador pregunta no
+deja el micrófono abierto sin usarse si el permiso llega tarde.
+
 En la pantalla de la pregunta, la falla se ve como un aviso con el motivo (las frases de `mensajeDeMicrofono`)
 y "Probar el micrófono otra vez", que abre el micrófono y, si funciona, vuelve a la voz; si no abre, el aviso
 dice "Sigue sin abrir". Quien eligió escribir no ve aviso: ahí no hay falla. Con voz nunca se dibuja el cuadro
