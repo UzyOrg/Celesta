@@ -21,7 +21,7 @@ export const MENSAJE_DE_LA_PRUEBA: Readonly<Record<Exclude<EstadoPruebaMicrofono
   bien: 'Te oigo bien',
   poco_volumen: 'Te oigo muy bajito. Acércate o escribe.',
   ruido: 'Hay mucho ruido. Busca un lugar más callado o escribe.',
-  sin_microfono: 'No pude usar el micrófono. Puedes escribir.',
+  sin_microfono: 'No pude usar el micrófono. Seguimos por escrito.',
 };
 
 /**

@@ -81,6 +81,8 @@ export interface FallaDeVoz {
 const MENSAJE_MICROFONO_PERDIDO = 'Se perdió el micrófono. Puedes escribir tu respuesta.';
 
 const MS_PRUEBA_MICROFONO = 5_000;
+/** Lo menos que se ve "Di «hola»" cuando el micrófono no se puede usar: un navegador que ni lo ofrece contesta al instante. */
+const MS_MINIMO_EN_HOLA = 2_200;
 const MS_ENTRE_CONSULTAS_DEL_PLAN = 2_000;
 const MS_MAXIMO_ESPERA_DEL_PLAN = 3 * 60_000;
 const MS_VACIAR_COLA = 25_000;
@@ -160,6 +162,8 @@ export function useFlujoDefensa(actividad: ActividadAlumno, opciones: OpcionesFl
 
   const [estadoMicrofono, setEstadoMicrofono] = useState<EstadoPruebaMicrofono>('escuchando');
   const [microfonoListo, setMicrofonoListo] = useState(false);
+  /** Cuántas veces se abrió un micrófono nuevo: la prueba de "Di «hola»" se reinicia con cada uno. */
+  const [aperturasDeMicrofono, setAperturasDeMicrofono] = useState(0);
   /** Celestea y la pregunta en pantalla (`clave`): ver `VozDePregunta`. */
   const [voz, setVoz] = useState<{ clave: string | null; estado: VozDePregunta }>({ clave: null, estado: 'calla' });
   const [grabandoAclaracion, setGrabandoAclaracion] = useState(false);
@@ -186,6 +190,8 @@ export function useFlujoDefensa(actividad: ActividadAlumno, opciones: OpcionesFl
   /* ------------------------------- refs ------------------------------- */
   const pasoActual = useRef(paso);
   pasoActual.current = paso;
+  const direccionActual = useRef(direccion);
+  direccionActual.current = direccion;
   const historial = useRef<ModoDeHistorial>('ninguno');
   const primerRender = useRef(true);
   const sesionRef = useRef<SesionGuardada | null>(null);
@@ -196,6 +202,8 @@ export function useFlujoDefensa(actividad: ActividadAlumno, opciones: OpcionesFl
   const ultimaVoz = useRef(0);
   const inicioEscucha = useRef(0);
   const motivoMicrofono = useRef<MotivoSinMicrofono | null>(null);
+  /** El micrófono que ya se está pidiendo (con su ventana de permiso abierta, por ejemplo). */
+  const abriendoMicrofono = useRef<Promise<boolean> | null>(null);
   /** La última pregunta cuya voz ya se dijo sola: si el modo cambia a media pregunta no se repite. */
   const preguntaLeida = useRef<string | null>(null);
   const vivo = useRef({ modo, modoElegido, defensa, estado, vozSinMicrofono });
@@ -516,48 +524,87 @@ export function useFlujoDefensa(actividad: ActividadAlumno, opciones: OpcionesFl
   };
 
   /* ----------------------- micrófono y prueba de voz ----------------------- */
-  const abrirMicrofono = async (): Promise<boolean> => {
-    if (streamRef.current && streamRef.current.getAudioTracks().some((pista) => pista.readyState === 'live')) return true;
-    try {
-      streamRef.current = await pedirMicrofono();
-      setMicrofonoListo(true);
-      return true;
-    } catch (causa) {
-      streamRef.current = null;
-      setMicrofonoListo(false);
-      const motivo = causa instanceof ErrorDeMicrofono ? causa.motivo : 'ocupado';
-      motivoMicrofono.current = motivo;
-      // Solo el motivo, nunca nada de la persona: sirve para saber qué le pasó al navegador.
-      console.warn('defensa_microfono', motivo);
-      return false;
-    }
+  const abrirMicrofono = (): Promise<boolean> => {
+    if (streamRef.current && streamRef.current.getAudioTracks().some((pista) => pista.readyState === 'live')) return Promise.resolve(true);
+    // Si ya se está pidiendo (otro efecto, un doble toque), se espera esa misma petición: nunca se abren dos micrófonos.
+    if (abriendoMicrofono.current) return abriendoMicrofono.current;
+    const peticion = (async (): Promise<boolean> => {
+      try {
+        streamRef.current = await pedirMicrofono();
+        setMicrofonoListo(true);
+        setAperturasDeMicrofono((veces) => veces + 1);
+        return true;
+      } catch (causa) {
+        streamRef.current = null;
+        setMicrofonoListo(false);
+        const motivo = causa instanceof ErrorDeMicrofono ? causa.motivo : 'ocupado';
+        motivoMicrofono.current = motivo;
+        // Solo el motivo, nunca nada de la persona: sirve para saber qué le pasó al navegador.
+        console.warn('defensa_microfono', motivo);
+        return false;
+      } finally {
+        abriendoMicrofono.current = null;
+      }
+    })();
+    abriendoMicrofono.current = peticion;
+    return peticion;
   };
 
   /** El mensaje de por qué no abrió el micrófono la última vez, con lo que hay que hacer. */
   const mensajeDelMicrofono = () => mensajeDeMicrofono(motivoMicrofono.current ?? 'no_soportado');
 
-  const seguirDeEntregado = async () => {
+  const seguirDeEntregado = () => {
     if (ocupado) return;
-    if (modoElegido === 'escrito' || !microfonoSoportado()) {
-      if (modoElegido === 'voz') {
-        // Sin https (una IP por http, por ejemplo) el navegador ni ofrece el micrófono: se escribe, pero la pregunta dice por qué.
-        motivoMicrofono.current = typeof window !== 'undefined' && window.isSecureContext === false ? 'inseguro' : 'no_soportado';
-        declararFalla(mensajeDelMicrofono());
-      }
-      void reproductor.desbloquear();
+    // Este toque autoriza el audio de las preguntas (iOS lo exige).
+    void reproductor.desbloquear();
+    if (modoElegido === 'escrito') {
       irA('respira');
       return;
     }
-    setOcupado(true);
-    // Este toque es el que autoriza el micrófono y el audio (iOS lo exige).
-    void reproductor.desbloquear();
-    const abierto = await abrirMicrofono();
-    setEstadoMicrofono(abierto ? 'escuchando' : 'sin_microfono');
-    // Una falla anterior ya no vale si el micrófono abre en esta prueba.
-    if (abierto) setFallaDeVoz(null);
-    setOcupado(false);
+    // Quien eligió hablar pasa por "Di «hola»": ahí se pide el micrófono, justo cuando se va a usar (ver el efecto de abajo).
+    setEstadoMicrofono('escuchando');
     irA('hola');
   };
+
+  // "Di «hola»": quien eligió hablar pide el micrófono aquí, justo cuando se va a usar. Si no se puede (lo negó, no hay
+  // micrófono, la dirección no es segura) no hay nada que probar: sigue al ejercicio por escrito y la pregunta dice por qué.
+  useEffect(() => {
+    if (pasoVisible !== 'hola' || vivo.current.modoElegido !== 'voz') return undefined;
+    let cancelado = false;
+    let seguir: number | undefined;
+    const llegada = Date.now();
+    void (async () => {
+      const abierto = await abrirMicrofono();
+      if (cancelado) {
+        // Eligió escribir (o se fue) mientras el navegador preguntaba: si el permiso llegó, el micrófono no se queda abierto sin usarse.
+        if (abierto && vivo.current.modoElegido === 'escrito') {
+          soltarMicrofono(streamRef.current);
+          streamRef.current = null;
+          setMicrofonoListo(false);
+        }
+        return;
+      }
+      if (abierto) {
+        // Una falla anterior ya no vale si el micrófono abre en esta prueba.
+        setFallaDeVoz(null);
+        setEstadoMicrofono('escuchando');
+        return;
+      }
+      setEstadoMicrofono('sin_microfono');
+      declararFalla(mensajeDelMicrofono());
+      // Se alcanza a ver qué pasó y se sigue solo (un navegador que ni ofrece el micrófono contesta al instante). Quien llegó
+      // aquí con "atrás" no se manda de vuelta hacia adelante: se queda en esta pantalla y decide.
+      if (direccionActual.current !== 'izq') {
+        seguir = window.setTimeout(() => irA('respira'), Math.max(0, MS_MINIMO_EN_HOLA - (Date.now() - llegada)));
+      }
+    })();
+    return () => {
+      cancelado = true;
+      window.clearTimeout(seguir);
+    };
+    // abrirMicrofono se recrea en cada dibujo y solo lee refs: la petición depende de llegar a este paso y nada más.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pasoVisible]);
 
   // Cinco segundos oyendo el micrófono: dice si se oye bien o si hay ruido o poco volumen.
   const sinMicrofono = estadoMicrofono === 'sin_microfono';
@@ -589,7 +636,8 @@ export function useFlujoDefensa(actividad: ActividadAlumno, opciones: OpcionesFl
       window.clearTimeout(final);
       cerrar();
     };
-  }, [pasoVisible, sinMicrofono]);
+    // La prueba empieza cuando el micrófono está abierto: con cada micrófono nuevo se reinicia.
+  }, [pasoVisible, sinMicrofono, aperturasDeMicrofono]);
 
   const escribirDesdeHola = () => {
     // Si el micrófono no estaba bien, escribir es consecuencia de la falla y la voz de Celestea sigue; si estaba bien, es una elección.

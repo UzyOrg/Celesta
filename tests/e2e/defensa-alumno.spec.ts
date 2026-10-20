@@ -136,9 +136,8 @@ test.describe('micrófono bloqueado', () => {
     const audios = contarAudiosDeCelestea(page);
     await entrarYSubirTrabajo(page, 'Hablar');
 
-    // La prueba de micrófono avisa que no hay micrófono; "Seguir" pasa a escribir sin apagar la voz de Celestea.
+    // "Di hola" pide el micrófono, el navegador lo niega y la prueba sigue sola al ejercicio por escrito, sin apagar la voz de Celestea.
     await expect(page.getByRole('heading', { name: /hola/i }).first()).toBeVisible({ timeout: 30_000 });
-    await page.getByRole('button', { name: 'Seguir' }).click();
     await empezarDefensa(page);
 
     await expect(page.getByLabel('Tu respuesta')).toBeVisible({ timeout: 30_000 });
@@ -377,11 +376,10 @@ async function bloquearMicrofono(page: Page): Promise<void> {
   });
 }
 
-/** Quería hablar pero el micrófono no abrió: Celestea dice las preguntas y la persona escribe. */
+/** Quería hablar pero el micrófono no abrió: "Di hola" sigue solo al ejercicio, Celestea dice las preguntas y la persona escribe. */
 async function llegarAPreguntaSinMicrofono(page: Page): Promise<void> {
   await entrarYSubirTrabajo(page, 'Hablar');
   await expect(page.getByRole('heading', { name: /hola/i }).first()).toBeVisible({ timeout: 30_000 });
-  await page.getByRole('button', { name: 'Seguir' }).click();
   await empezarDefensa(page);
 }
 
@@ -650,7 +648,8 @@ test.describe('el modo que se elige se respeta', () => {
     await simularDireccionSinHttps(page);
     await entrarYSubirTrabajo(page, 'Hablar');
 
-    // Sin micrófono que probar se salta "Di hola", pero ya no en silencio.
+    // "Di hola" intenta pedir el micrófono, el navegador ni lo ofrece y se sigue solo al ejercicio por escrito: ya no en silencio.
+    await expect(page.getByRole('heading', { name: /hola/i }).first()).toBeVisible({ timeout: 30_000 });
     await expect(page.getByRole('heading', { name: 'Cuando quieras.' })).toBeVisible({ timeout: 30_000 });
     await empezarDefensa(page);
     await expect(page.getByLabel('Tu respuesta')).toBeVisible({ timeout: 30_000 });
@@ -783,5 +782,118 @@ test.describe('el modo que se elige se respeta', () => {
     await expect(page.getByRole('heading', { name: '¿Hablas o escribes?' })).toBeVisible();
     await expect(page.getByRole('button', { name: /Escribir/ })).toHaveAttribute('aria-pressed', 'true');
     expect(await modoGuardado(page)).toBe('escrito');
+  });
+});
+
+/* ---------------------------- "Di hola": ahí se pide el micrófono ---------------------------- */
+
+test.describe('"Di hola": ahí se pide el micrófono', () => {
+  test('el micrófono se pide al llegar a "Di hola", no en la pantalla de antes', async ({ page }) => {
+    await page.addInitScript(() => {
+      const pedir = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+      // Anota qué pantalla estaba a la vista cada vez que el navegador recibe la petición.
+      const pantallas: string[] = [];
+      (window as unknown as { __pedidos: string[] }).__pedidos = pantallas;
+      navigator.mediaDevices.getUserMedia = (restricciones) => {
+        pantallas.push(document.querySelector('#contenido-defensa h1')?.textContent ?? '');
+        return pedir(restricciones);
+      };
+    });
+    await entrarYSubirTrabajo(page, 'Hablar');
+    await expect(page.getByRole('heading', { name: /hola/i }).first()).toBeVisible({ timeout: 30_000 });
+
+    // Una sola petición y desde "Di hola": en "Ya cuenta" todavía no se había pedido nada.
+    await expect
+      .poll(() => page.evaluate(() => (window as unknown as { __pedidos: string[] }).__pedidos.length), { message: 'se pidió el micrófono' })
+      .toBe(1);
+    const pantallas = await page.evaluate(() => (window as unknown as { __pedidos: string[] }).__pedidos);
+    expect(pantallas[0]).toMatch(/hola/i);
+  });
+
+  test('mientras el navegador pregunta por el micrófono, "Di hola" espera; al permitir, empieza la prueba', async ({ page }) => {
+    await page.addInitScript(() => {
+      const pedir = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+      // La persona tarda tres segundos en tocar "Permitir".
+      navigator.mediaDevices.getUserMedia = async (restricciones) => {
+        await new Promise((resolver) => setTimeout(resolver, 3_000));
+        return pedir(restricciones);
+      };
+    });
+    await entrarYSubirTrabajo(page, 'Hablar');
+    await expect(page.getByRole('heading', { name: /hola/i }).first()).toBeVisible({ timeout: 30_000 });
+
+    // Todavía sin respuesta del navegador: la pantalla se queda, no se sigue sola ni dice que falló.
+    await page.waitForTimeout(1_500);
+    await expect(page.getByRole('heading', { name: /hola/i }).first()).toBeVisible();
+    await expect(page.getByText('No pude usar el micrófono')).toHaveCount(0);
+
+    // Al permitir arranca la prueba de cinco segundos y dice cómo se oye.
+    await expect(page.getByText(/Te oigo|Hay mucho ruido/)).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByRole('heading', { name: 'Cuando quieras.' })).toHaveCount(0);
+  });
+
+  test('si se niega el micrófono en "Di hola", sigue solo al ejercicio por escrito y se alcanza a leer qué pasó', async ({ page }) => {
+    await bloquearMicrofonoHastaDesbloquear(page);
+    await entrarYSubirTrabajo(page, 'Hablar');
+    await expect(page.getByRole('heading', { name: /hola/i }).first()).toBeVisible({ timeout: 30_000 });
+    const llegada = Date.now();
+    await expect(page.getByText('No pude usar el micrófono. Seguimos por escrito.')).toBeVisible();
+
+    // Sin tocar nada pasa al ejercicio, pero no tan rápido que no se lea qué pasó.
+    await expect(page.getByRole('heading', { name: 'Cuando quieras.' })).toBeVisible({ timeout: 10_000 });
+    expect(Date.now() - llegada, 'el aviso se queda un momento').toBeGreaterThan(1_500);
+
+    // La pregunta es por escrito, con el motivo y la forma de volver a intentar; lo elegido sigue siendo hablar.
+    await empezarDefensa(page);
+    await expect(page.getByLabel('Tu respuesta')).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByText(/bloqueado el micrófono para esta página/)).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Probar el micrófono otra vez' })).toBeVisible();
+    expect(await modoGuardado(page)).toBe('voz');
+  });
+
+  test('quien vuelve a "Di hola" con "atrás" se queda ahí en vez de que lo manden otra vez hacia adelante', async ({ page }) => {
+    await bloquearMicrofonoHastaDesbloquear(page);
+    await entrarYSubirTrabajo(page, 'Hablar');
+    await expect(page.getByRole('heading', { name: 'Cuando quieras.' })).toBeVisible({ timeout: 30_000 });
+
+    await page.goBack();
+    await expect(page.getByRole('heading', { name: /hola/i }).first()).toBeVisible();
+    // Más que el tiempo mínimo de la pantalla: si fuera a seguir sola ya lo habría hecho.
+    await page.waitForTimeout(3_200);
+    await expect(page.getByRole('heading', { name: /hola/i }).first()).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Seguir' })).toBeVisible();
+  });
+
+  test('quien elige escribir mientras el navegador pregunta no deja el micrófono abierto sin usarse', async ({ page }) => {
+    await page.addInitScript(() => {
+      const pedir = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+      const flujos: MediaStream[] = [];
+      (window as unknown as { __flujos: MediaStream[] }).__flujos = flujos;
+      // El permiso llega dos segundos después.
+      navigator.mediaDevices.getUserMedia = async (restricciones) => {
+        await new Promise((resolver) => setTimeout(resolver, 2_000));
+        const flujo = await pedir(restricciones);
+        flujos.push(flujo);
+        return flujo;
+      };
+    });
+    await entrarYSubirTrabajo(page, 'Hablar');
+    await expect(page.getByRole('heading', { name: /hola/i }).first()).toBeVisible({ timeout: 30_000 });
+
+    // Antes de contestarle al navegador, dice que prefiere escribir.
+    await page.getByRole('button', { name: 'Prefiero escribir' }).click();
+    await expect(page.getByRole('heading', { name: 'Cuando quieras.' })).toBeVisible();
+    await expect
+      .poll(() => page.evaluate(() => (window as unknown as { __flujos: MediaStream[] }).__flujos.length), { message: 'llegó el permiso' })
+      .toBe(1);
+
+    // El permiso llegó tarde: el micrófono se suelta en vez de quedarse encendido mientras escribe.
+    await expect
+      .poll(() =>
+        page.evaluate(() =>
+          (window as unknown as { __flujos: MediaStream[] }).__flujos.every((flujo) => flujo.getAudioTracks().every((pista) => pista.readyState === 'ended')),
+        ),
+      )
+      .toBe(true);
   });
 });
