@@ -16,13 +16,12 @@ import {
   UMBRAL_VOZ,
   mensajeDeMicrofono,
   type MotivoSinMicrofono,
-  crearMedidor,
   evaluarPrueba,
   microfonoSoportado,
   pedirMicrofono,
   soltarMicrofono,
-  type Medidor,
 } from './microfono';
+import { useMedidorDeVoz } from './medidorDeVoz';
 import {
   indiceDePaso,
   leerBandera,
@@ -196,6 +195,8 @@ export function useFlujoDefensa(actividad: ActividadAlumno, opciones: OpcionesFl
   const primerRender = useRef(true);
   const sesionRef = useRef<SesionGuardada | null>(null);
   const [reproductor] = useState(() => new Reproductor());
+  /** El único medidor del micrófono: lo leen la prueba de "Di «hola»", "Sin prisa" y las barras de voz. */
+  const medidorDeVoz = useMedidorDeVoz();
   const streamRef = useRef<MediaStream | null>(null);
   const grabacionRef = useRef<Grabacion | null>(null);
   const intentosPorTurno = useRef<Map<string, number>>(new Map());
@@ -531,6 +532,7 @@ export function useFlujoDefensa(actividad: ActividadAlumno, opciones: OpcionesFl
     const peticion = (async (): Promise<boolean> => {
       try {
         streamRef.current = await pedirMicrofono();
+        medidorDeVoz.conectar(streamRef.current);
         setMicrofonoListo(true);
         setAperturasDeMicrofono((veces) => veces + 1);
         return true;
@@ -562,6 +564,8 @@ export function useFlujoDefensa(actividad: ActividadAlumno, opciones: OpcionesFl
       return;
     }
     // Quien eligió hablar pasa por "Di «hola»": ahí se pide el micrófono, justo cuando se va a usar (ver el efecto de abajo).
+    // Este mismo toque deja listo el medidor de voz (iOS no lo deja empezar fuera de un toque).
+    medidorDeVoz.desbloquear();
     setEstadoMicrofono('escuchando');
     irA('hola');
   };
@@ -578,6 +582,7 @@ export function useFlujoDefensa(actividad: ActividadAlumno, opciones: OpcionesFl
       if (cancelado) {
         // Eligió escribir (o se fue) mientras el navegador preguntaba: si el permiso llegó, el micrófono no se queda abierto sin usarse.
         if (abierto && vivo.current.modoElegido === 'escrito') {
+          medidorDeVoz.desconectar();
           soltarMicrofono(streamRef.current);
           streamRef.current = null;
           setMicrofonoListo(false);
@@ -612,13 +617,13 @@ export function useFlujoDefensa(actividad: ActividadAlumno, opciones: OpcionesFl
     if (pasoVisible !== 'hola' || !streamRef.current || sinMicrofono) return undefined;
     setEstadoMicrofono('escuchando');
     const muestras: number[] = [];
-    let medidor: Medidor | null = null;
+    let dejarDeOir: (() => void) | null = null;
     let cerrado = false;
     const cerrar = () => {
       cerrado = true;
-      medidor?.cerrar();
+      dejarDeOir?.();
     };
-    medidor = crearMedidor(streamRef.current, (nivel) => {
+    dejarDeOir = medidorDeVoz.escucharNivel((nivel) => {
       if (cerrado) return;
       muestras.push(nivel);
       if (evaluarPrueba(muestras) === 'bien') {
@@ -637,7 +642,7 @@ export function useFlujoDefensa(actividad: ActividadAlumno, opciones: OpcionesFl
       cerrar();
     };
     // La prueba empieza cuando el micrófono está abierto: con cada micrófono nuevo se reinicia.
-  }, [pasoVisible, sinMicrofono, aperturasDeMicrofono]);
+  }, [pasoVisible, sinMicrofono, aperturasDeMicrofono, medidorDeVoz]);
 
   const escribirDesdeHola = () => {
     // Si el micrófono no estaba bien, escribir es consecuencia de la falla y la voz de Celestea sigue; si estaba bien, es una elección.
@@ -762,9 +767,14 @@ export function useFlujoDefensa(actividad: ActividadAlumno, opciones: OpcionesFl
   useEffect(() => {
     if (modo !== 'voz' || !claveDePregunta) return undefined;
     let entroASilencio = false;
+    // Con la pantalla apagada o en otra pestaña el medidor no corre: ese rato no cuenta como silencio.
+    const alCambiarVisibilidad = () => {
+      if (document.visibilityState === 'visible') ultimaVoz.current = Date.now();
+    };
+    document.addEventListener('visibilitychange', alCambiarVisibilidad);
     const intervalo = window.setInterval(() => {
       const grabacion = grabacionRef.current;
-      if (!grabacion) return;
+      if (!grabacion || document.visibilityState === 'hidden') return;
       const sinVoz = Date.now() - Math.max(ultimaVoz.current, inicioEscucha.current);
       const limite = actividad.segundosSilencio * 1000;
       if (sinVoz >= limite && pasoActual.current === 'pregunta') {
@@ -778,18 +788,20 @@ export function useFlujoDefensa(actividad: ActividadAlumno, opciones: OpcionesFl
         entroASilencio = false;
       }
     }, 1_000);
-    return () => window.clearInterval(intervalo);
+    return () => {
+      window.clearInterval(intervalo);
+      document.removeEventListener('visibilitychange', alCambiarVisibilidad);
+    };
   }, [modo, claveDePregunta, reinicioSilencio, actividad.segundosSilencio, irA]);
 
   // El volumen del micrófono mantiene viva la conversación: mientras haya voz no hay "sin prisa".
+  // Se oye el medidor compartido, así que también cuenta un micrófono que abre después (tras recargar).
   useEffect(() => {
-    const stream = streamRef.current;
-    if (modo !== 'voz' || !claveDePregunta || !stream) return undefined;
-    const medidor = crearMedidor(stream, (nivel) => {
+    if (modo !== 'voz' || !claveDePregunta) return undefined;
+    return medidorDeVoz.escucharNivel((nivel) => {
       if (nivel >= UMBRAL_VOZ) ultimaVoz.current = Date.now();
     });
-    return () => medidor.cerrar();
-  }, [modo, claveDePregunta]);
+  }, [modo, claveDePregunta, medidorDeVoz]);
 
   /* ------------------------------- responder ------------------------------- */
   const textoDeLaPregunta = defensa?.pregunta ? (textos[defensa.pregunta.turnoId] ?? '') : '';
@@ -894,6 +906,7 @@ export function useFlujoDefensa(actividad: ActividadAlumno, opciones: OpcionesFl
   };
 
   const hablarEnVezDeEscribir = async () => {
+    medidorDeVoz.desbloquear();
     setError(null);
     if (!(await abrirMicrofono())) {
       setError(mensajeDelMicrofono());
@@ -909,6 +922,7 @@ export function useFlujoDefensa(actividad: ActividadAlumno, opciones: OpcionesFl
    */
   const probarMicrofonoOtraVez = async () => {
     if (probandoMicrofono || ocupado) return;
+    medidorDeVoz.desbloquear();
     setProbandoMicrofono(true);
     setError(null);
     try {
@@ -950,8 +964,9 @@ export function useFlujoDefensa(actividad: ActividadAlumno, opciones: OpcionesFl
   /* -------------------------- empezar la defensa -------------------------- */
   const empezarDefensa = async (esEnsayo: boolean) => {
     if (ocupado || planEstado !== 'listo') return;
-    // Este toque autoriza el audio de todas las preguntas que vienen (iOS lo exige).
+    // Este toque autoriza el audio de todas las preguntas que vienen (iOS lo exige) y, si habla, el medidor de voz.
     void reproductor.desbloquear();
+    if (vivo.current.modo === 'voz') medidorDeVoz.desbloquear();
     setOcupado(true);
     setError(null);
     try {
@@ -1024,6 +1039,7 @@ export function useFlujoDefensa(actividad: ActividadAlumno, opciones: OpcionesFl
   const empezarADecirLaParte = async () => {
     const aclaracion = vivo.current.defensa?.aclaracion;
     if (!aclaracion || ocupado) return;
+    medidorDeVoz.desbloquear();
     reproductor.detener();
     setOyendoParte(false);
     setError(null);
@@ -1144,10 +1160,11 @@ export function useFlujoDefensa(actividad: ActividadAlumno, opciones: OpcionesFl
     return () => {
       cancelarGrabacion();
       reproductor.liberar();
+      medidorDeVoz.desconectar();
       soltarMicrofono(streamRef.current);
       streamRef.current = null;
     };
-  }, [cancelarGrabacion, reproductor]);
+  }, [cancelarGrabacion, reproductor, medidorDeVoz]);
 
   // La cola reintenta enseguida cuando el navegador avisa que volvió la red.
   useEffect(() => {
@@ -1201,6 +1218,8 @@ export function useFlujoDefensa(actividad: ActividadAlumno, opciones: OpcionesFl
     error,
     estadoMicrofono,
     microfonoListo,
+    /** Lo que oye el micrófono, para las barras de voz (decorativas). */
+    medidorDeVoz,
     /** Quería hablar pero no se puede: por qué y cuántas veces se reintentó. Nada si todo va bien. */
     fallaDeVoz,
     probandoMicrofono,

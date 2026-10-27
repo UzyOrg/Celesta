@@ -1,5 +1,5 @@
 /**
- * Micrófono del alumno: pedirlo, medir el volumen y decidir si se oye bien.
+ * Micrófono del alumno: pedirlo, soltarlo y decidir si se oye bien (el volumen lo mide `medidorDeVoz.ts`).
  *
  * Solo se pide después de un toque (lo exige iOS y es lo correcto), solo en /defensa
  * (el encabezado Permissions-Policy lo cierra en el resto del sitio), y nunca se pide
@@ -68,47 +68,7 @@ export function soltarMicrofono(stream: MediaStream | null): void {
   stream?.getTracks().forEach((pista) => pista.stop());
 }
 
-// ── Medidor de volumen ──────────────────────────────────────────────────────
-
-export interface Medidor {
-  cerrar: () => void;
-}
-
-/** Llama a `alNivel` unas diez veces por segundo con el volumen (RMS de 0 a 1) del micrófono. */
-export function crearMedidor(stream: MediaStream, alNivel: (nivel: number) => void): Medidor {
-  const Contexto: typeof AudioContext | undefined =
-    typeof window !== 'undefined'
-      ? (window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext)
-      : undefined;
-  if (!Contexto) return { cerrar: () => undefined };
-
-  const contexto = new Contexto();
-  void contexto.resume().catch(() => undefined);
-  const fuente = contexto.createMediaStreamSource(stream);
-  const analizador = contexto.createAnalyser();
-  analizador.fftSize = 1024;
-  fuente.connect(analizador);
-  const muestras = new Float32Array(analizador.fftSize);
-
-  const temporizador = window.setInterval(() => {
-    analizador.getFloatTimeDomainData(muestras);
-    let suma = 0;
-    for (let i = 0; i < muestras.length; i += 1) suma += (muestras[i] as number) ** 2;
-    alNivel(Math.sqrt(suma / muestras.length));
-  }, 100);
-
-  return {
-    cerrar: () => {
-      window.clearInterval(temporizador);
-      try {
-        fuente.disconnect();
-      } catch {
-        // Ya estaba desconectado.
-      }
-      void contexto.close().catch(() => undefined);
-    },
-  };
-}
+// El volumen se mide en `medidorDeVoz.ts`: un solo AudioContext para la prueba, "Sin prisa" y las barras.
 
 // ── La prueba de micrófono ──────────────────────────────────────────────────
 
@@ -120,7 +80,7 @@ export const UMBRAL_RUIDO = 0.06;
 const MUESTRAS_MINIMAS_DE_VOZ = 3;
 
 /**
- * Qué se concluye con lo medido hasta ahora (una muestra cada 100 ms):
+ * Qué se concluye con lo medido hasta ahora (una muestra cada 100 ms, ver `MedidorDeVoz.escucharNivel`):
  *  - ruido: el fondo, incluso entre palabras, ya es fuerte;
  *  - poco volumen: casi no se oyó voz;
  *  - bien: se oyó voz clara sin mucho fondo.
