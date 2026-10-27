@@ -1,5 +1,5 @@
 import { Check, MicOff, Volume1 } from 'lucide-react';
-import { BarrasDeVoz } from '@/components/celeste/BarrasDeVoz';
+import { BarrasDeVoz, type FuenteDeVoz } from '@/components/celeste/BarrasDeVoz';
 import { Boton } from '@/components/celeste/Boton';
 import { Personaje } from '@/components/celeste/Personaje';
 import { retraso } from '@/components/celeste/variablesCss';
@@ -13,6 +13,8 @@ interface PantallaHolaProps {
   estado: EstadoPruebaMicrofono;
   /** Las preguntas todavía se están armando. */
   preparandoPreguntas: boolean;
+  /** Lo que oye el micrófono: las barras siguen la voz (sin micrófono quedan en reposo). */
+  fuenteDeVoz: FuenteDeVoz;
   alEscribir: () => void;
   alSeguir: () => void;
 }
@@ -28,7 +30,7 @@ export const MENSAJE_DE_LA_PRUEBA: Readonly<Record<Exclude<EstadoPruebaMicrofono
  * Paso 8: prueba de micrófono. Se oye cinco segundos y, si hay ruido o poco volumen,
  * avisa con calma y deja escribir. Nada de esto es obligatorio: escribir siempre se puede.
  */
-export function PantallaHola({ estado, preparandoPreguntas, alEscribir, alSeguir }: PantallaHolaProps) {
+export function PantallaHola({ estado, preparandoPreguntas, fuenteDeVoz, alEscribir, alSeguir }: PantallaHolaProps) {
   const mensaje = estado === 'escuchando' ? null : MENSAJE_DE_LA_PRUEBA[estado];
   const aviso = estado !== 'escuchando' && estado !== 'bien';
   const Icono = estado === 'bien' ? Check : estado === 'sin_microfono' ? MicOff : Volume1;
@@ -44,7 +46,7 @@ export function PantallaHola({ estado, preparandoPreguntas, alEscribir, alSeguir
         layoutId="orbe"
       />
 
-      <BarrasDeVoz preset="hola" className={styles.barras} />
+      <BarrasDeVoz preset="voz" fuente={fuenteDeVoz} className={styles.barras} />
 
       <h1 className={`${styles.titulo} ${animaciones.entra}`} style={retraso(0.2, 0.7)}>
         Di «hola».

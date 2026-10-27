@@ -189,6 +189,7 @@ export function FlujoAlumno({ actividad, pasoInicial, ensayoInicial, modoInicial
           <PantallaHola
             estado={flujo.estadoMicrofono}
             preparandoPreguntas={flujo.planEstado === 'generando'}
+            fuenteDeVoz={flujo.medidorDeVoz}
             alEscribir={flujo.escribirDesdeHola}
             alSeguir={flujo.seguirDeHola}
           />
@@ -219,6 +220,7 @@ export function FlujoAlumno({ actividad, pasoInicial, ensayoInicial, modoInicial
             ensayo={flujo.ensayo}
             voz={flujo.vozDeLaPregunta}
             conAudio={Boolean(pregunta.audioUrl)}
+            fuenteDeVoz={flujo.medidorDeVoz}
             falla={flujo.fallaDeVoz}
             probandoMicrofono={flujo.probandoMicrofono}
             alProbarMicrofono={flujo.probarMicrofonoOtraVez}
@@ -246,6 +248,7 @@ export function FlujoAlumno({ actividad, pasoInicial, ensayoInicial, modoInicial
             alOir={flujo.oirParte}
             puedeHablar={flujo.puedeHablar && flujo.modo === 'voz'}
             grabando={flujo.grabandoAclaracion}
+            fuenteDeVoz={flujo.medidorDeVoz}
             alEmpezarADecir={flujo.empezarADecirLaParte}
             alListo={flujo.terminarAclaracion}
             alCambiarMedio={flujo.cambiarMedioDeAclaracion}

@@ -4,7 +4,7 @@ import { Clock, Keyboard, Lock, Mic, RotateCcw } from 'lucide-react';
 import type { PreguntaDefensa } from './types';
 import type { ModoDeRespuesta } from './pasos';
 import type { FallaDeVoz, VozDePregunta } from './useFlujoDefensa';
-import { BarrasDeVoz } from '@/components/celeste/BarrasDeVoz';
+import { BarrasDeVoz, type FuenteDeVoz } from '@/components/celeste/BarrasDeVoz';
 import { Boton } from '@/components/celeste/Boton';
 import { Personaje } from '@/components/celeste/Personaje';
 import { retraso } from '@/components/celeste/variablesCss';
@@ -23,6 +23,8 @@ interface PantallaPreguntaProps {
   voz: VozDePregunta;
   /** La pregunta tiene audio: "Repetir pregunta" la vuelve a decir en voz alta. */
   conAudio: boolean;
+  /** Lo que oye el micrófono: con "Te escucho" las barras siguen la voz de la persona. */
+  fuenteDeVoz: FuenteDeVoz;
   /** Quería hablar pero el micrófono falló: responde escribiendo y ve por qué, con un toque para volver a la voz. */
   falla: FallaDeVoz | null;
   /** Se está pidiendo el micrófono otra vez. */
@@ -63,6 +65,7 @@ export function PantallaPregunta({
   ensayo,
   voz,
   conAudio,
+  fuenteDeVoz,
   falla,
   probandoMicrofono,
   alProbarMicrofono,
@@ -199,7 +202,8 @@ export function PantallaPregunta({
               hablando={habla}
               layoutId="orbe"
             />
-            <BarrasDeVoz preset="pregunta" />
+            {/* Siguen la voz solo mientras se escucha: si habla Celestea o se está enviando, quedan en reposo. */}
+            <BarrasDeVoz preset="voz" fuente={habla || ocupado ? null : fuenteDeVoz} />
             <span className={styles.estado}>
               <span className={styles.latido} aria-hidden="true" />
               {ocupado ? 'Enviando…' : habla ? 'Celestea habla' : avisoRepeticion ? 'Repito la pregunta' : 'Te escucho'}

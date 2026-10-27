@@ -172,6 +172,12 @@
   min-height: 24px;
 }
 
+/* Mientras se graba esa parte: las barras siguen la voz, arriba de los botones. */
+.barrasVoz {
+  align-self: center;
+  margin-bottom: 16px;
+}
+
 .escribir {
   display: flex;
   flex-direction: column;
