@@ -897,3 +897,93 @@ test.describe('"Di hola": ahí se pide el micrófono', () => {
       .toBe(true);
   });
 });
+
+/* ---------------------------- las barras siguen la voz ---------------------------- */
+
+/** Las alturas que escribieron las barras de voz (`--nivel-N`): vacío mientras están en reposo. */
+async function alturasEscritas(barras: Locator): Promise<number[]> {
+  return barras.evaluate((elemento) =>
+    Array.from({ length: 18 }, (_, i) => (elemento as HTMLElement).style.getPropertyValue(`--nivel-${i}`))
+      .filter(Boolean)
+      .map(Number),
+  );
+}
+
+/** Espera, cuadro a cuadro, a que alguna barra suba con el sonido del micrófono falso (un tono que va y viene). */
+async function esperarBarrasConSonido(page: Page): Promise<void> {
+  await page.waitForFunction(
+    () => {
+      const barras = document.querySelector<HTMLElement>('[data-barras="voz"]');
+      if (!barras) return false;
+      return Array.from({ length: 18 }, (_, i) => Number(barras.style.getPropertyValue(`--nivel-${i}`) || 0)).some((valor) => valor > 0.3);
+    },
+    undefined,
+    { polling: 'raf', timeout: 15_000 },
+  );
+}
+
+/** Lo más alto que llegaron las barras (y si marcaron voz) durante un rato, mirando cada cuadro. */
+async function vigilarBarras(barras: Locator, milisegundos: number): Promise<{ maximo: number; conVoz: boolean }> {
+  return barras.evaluate(async (elemento, duracion) => {
+    let maximo = 0;
+    let conVoz = false;
+    const fin = performance.now() + duracion;
+    while (performance.now() < fin) {
+      for (let i = 0; i < 18; i += 1) maximo = Math.max(maximo, Number((elemento as HTMLElement).style.getPropertyValue(`--nivel-${i}`) || 0));
+      conVoz ||= elemento.hasAttribute('data-voz');
+      await new Promise((resolver) => requestAnimationFrame(resolver));
+    }
+    return { maximo, conVoz };
+  }, milisegundos);
+}
+
+test.describe('las barras siguen la voz', () => {
+  test('con micrófono, las barras de "Di hola" y de "Te escucho" siguen el sonido; mientras habla Celestea, descansan', async ({ page }) => {
+    await servirVozDeCelestea(page, 2_500);
+    await entrarYSubirTrabajo(page, 'Hablar');
+    await expect(page.getByRole('heading', { name: /hola/i }).first()).toBeVisible({ timeout: 30_000 });
+    const barras = page.locator('[data-barras="voz"]');
+    await expect(barras).toHaveAttribute('aria-hidden', 'true');
+    await esperarBarrasConSonido(page);
+
+    await page.getByRole('button', { name: /Seguir|Listo|Sí/ }).last().click();
+    await empezarDefensa(page);
+
+    // Celestea dice la pregunta: el micrófono sigue abierto, pero las barras no la "oyen".
+    await expect(page.locator('[data-celestea]')).toHaveAttribute('data-celestea', 'habla', { timeout: 30_000 });
+    expect((await vigilarBarras(barras, 1_000)).maximo, 'mientras habla Celestea no se escribe ninguna altura').toBe(0);
+
+    // "Te escucho": las barras vuelven a seguir el micrófono y el estado en texto no cambia.
+    await expect(page.getByText('Te escucho')).toBeVisible({ timeout: 20_000 });
+    await esperarBarrasConSonido(page);
+    await expect(page.getByText('Te escucho')).toBeVisible();
+  });
+
+  test('con el micrófono bloqueado, las barras de "Di hola" se quedan en reposo', async ({ page }) => {
+    await bloquearMicrofono(page);
+    await entrarYSubirTrabajo(page, 'Hablar');
+    await expect(page.getByText('No pude usar el micrófono. Seguimos por escrito.')).toBeVisible({ timeout: 30_000 });
+
+    const barras = page.locator('[data-barras="voz"]');
+    const visto = await vigilarBarras(barras, 1_200);
+    expect(visto.maximo, 'ninguna altura escrita').toBe(0);
+    expect(visto.conVoz, 'nunca marcan voz').toBe(false);
+    expect(await alturasEscritas(barras)).toEqual([]);
+  });
+
+  test('con movimiento reducido no se escribe una altura por cuadro: solo cambia de forma cuando hay voz', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await entrarYSubirTrabajo(page, 'Hablar');
+    await expect(page.getByRole('heading', { name: /hola/i }).first()).toBeVisible({ timeout: 30_000 });
+
+    const barras = page.locator('[data-barras="voz"]');
+    const visto = await vigilarBarras(barras, 3_000);
+    expect(visto.conVoz, 'el tono del micrófono cuenta como voz').toBe(true);
+    expect(visto.maximo, 'sin alturas por cuadro').toBe(0);
+    // Y sin animación continua: ninguna barra respira.
+    const animadas = await barras.evaluate((elemento) =>
+      Array.from(elemento.children).filter((barra) => getComputedStyle(barra).animationName !== 'none').length,
+    );
+    expect(animadas).toBe(0);
+  });
+});
