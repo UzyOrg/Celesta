@@ -173,6 +173,31 @@ localhost. Con `http://192.168.x.x` el navegador no ofrece el micrófono: la pre
 sin tocar lo que se eligió. Las pruebas de navegador de este comportamiento están en
 `tests/e2e/defensa-alumno.spec.ts` (grupo "el modo que se elige se respeta").
 
+### Las barras siguen la voz
+
+Las barras de "Di «hola»", de "Te escucho" y de la aclaración (solo mientras se graba esa parte) siguen la voz
+real de la persona en lugar de moverse siempre igual. Sin voz quedan en reposo con una respiración muy suave;
+mientras habla Celestea o se envía la respuesta descansan, porque no hay a quién oír. "Sin prisa" conserva sus
+barras casi quietas. Siguen siendo decorativas (`aria-hidden`): el estado lo dice el texto ("Te escucho").
+
+- **Un solo medidor** (`defensa/medidorDeVoz.ts`): un AudioContext y un AnalyserNode (fftSize 512) por flujo.
+  Lo leen la prueba de "Di «hola»", el detector de "Sin prisa" (una muestra cada 100 ms, como antes) y las
+  barras. El AudioContext se crea o reanuda dentro de un toque (iOS) y, tras recargar, con el primer toque en
+  cualquier parte; se pausa al soltar el micrófono y se cierra al salir. Solo mide: no guarda ni manda audio, y
+  la grabación por partes no cambió.
+- **Las cuentas** (`defensa/nivelDeVoz.ts`, funciones puras con pruebas en `tests/unit/nivelDeVoz.spec.ts`):
+  nueve bandas logarítmicas de 90 Hz a 5 kHz reflejadas en dieciocho barras (graves al centro), compuerta en
+  `UMBRAL_VOZ`, tamaño según el volumen y suavizado que sube rápido y baja lento.
+- **Gama baja**: un solo `requestAnimationFrame` con tope de ~30 cuadros por segundo; nada corre sin micrófono,
+  sin nadie escuchando o con la pestaña oculta (ese rato no cuenta como silencio para "Sin prisa"). Cada cuadro
+  escribe `--nivel-0` … `--nivel-17` en el contenedor desde una ref, sin estado de React, y cada barra lo usa en
+  `transform: scaleY`.
+- **Movimiento reducido**: no se escribe nada por cuadro ni hay respiración; dos formas fijas, una baja en reposo
+  y la onda completa mientras hay voz.
+
+Las pruebas de navegador están en el grupo "las barras siguen la voz" del mismo archivo (micrófono falso de
+Edge, micrófono bloqueado y movimiento reducido).
+
 ## Desviaciones de AGENTS.md y por qué
 
 No se editó `AGENTS.md`, `CURRENT_STATE.md` ni el contrato tipográfico. Estas son las diferencias que hay entre lo construido y lo que dicen:
