@@ -1,0 +1,67 @@
+.sinSubrayado {
+  text-decoration: none;
+}
+
+.indice {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding-top: 48px;
+}
+
+.titulo {
+  margin: 0;
+  font-size: 34px;
+  font-weight: 650;
+  letter-spacing: -0.03em;
+}
+
+.explicacion {
+  max-width: 640px;
+  margin: 0;
+  color: var(--c-texto-2);
+  font-size: 17px;
+  line-height: 1.5;
+}
+
+.explicacion code {
+  font-family: var(--c-mono);
+  font-size: 14px;
+}
+
+.lista {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.enlace {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 16px;
+  box-sizing: border-box;
+  min-height: 52px;
+  padding: 10px 16px;
+  border: 1px solid var(--c-linea-suave);
+  border-radius: 14px;
+  background: var(--c-tarjeta);
+  color: var(--c-texto);
+  font-size: 16px;
+  text-decoration: none;
+  transition: background-color 0.15s ease;
+}
+
+.enlace:hover {
+  background: var(--c-hover);
+}
+
+.clave {
+  color: var(--c-apagado);
+  font-family: var(--c-mono);
+  font-size: 13px;
+}

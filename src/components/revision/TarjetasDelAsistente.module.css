@@ -1,0 +1,410 @@
+/* Piezas compartidas por las tarjetas del catálogo del asistente (lista, objetivo, citas,
+   pendientes, ritmo y enlace). Siguen las medidas de TarjetaAvance y TarjetaGrupo. */
+
+.cuerpo {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px 22px 22px;
+}
+
+.vacio {
+  margin: 0;
+  padding: 20px 22px;
+  color: var(--c-texto-2);
+  font-size: 15px;
+}
+
+.cuerpo .vacio {
+  padding: 0;
+}
+
+.detalle {
+  color: var(--c-texto-2);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+p.detalle {
+  margin: 0;
+}
+
+.mono {
+  color: var(--c-texto);
+  font-family: var(--c-mono);
+  font-size: 13px;
+}
+
+.nombre {
+  overflow: hidden;
+  font-size: 15px;
+  font-weight: 550;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.enlaceTexto {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--c-acento-enlace);
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.enlaceTexto:hover {
+  text-decoration: underline;
+}
+
+.error {
+  margin: 0;
+  color: var(--c-oro-claro);
+  font-size: 14px;
+}
+
+/* ───────── Lista filtrada ───────── */
+
+.filas {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 10px;
+  list-style: none;
+}
+
+.fila {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  box-sizing: border-box;
+  min-height: 60px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  transition: background-color 0.15s ease;
+}
+
+.fila:hover {
+  background: var(--c-hover);
+}
+
+.persona {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.datos {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+}
+
+.ver,
+.bajar {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  height: 40px;
+  border: 1px solid var(--c-linea);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--c-texto-2);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.ver {
+  padding: 0 16px;
+}
+
+.bajar {
+  width: 40px;
+  padding: 0;
+}
+
+.ver:hover,
+.bajar:hover {
+  background: var(--c-superficie-2);
+  color: var(--c-texto);
+}
+
+.pie {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  padding: 4px 20px 14px;
+  border-top: 1px solid var(--c-linea-suave);
+}
+
+/* ───────── Objetivo de cerca ───────── */
+
+.objetivoTexto {
+  margin: 0;
+  font-size: 17px;
+  line-height: 1.45;
+}
+
+.columnas {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr));
+  gap: 16px 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--c-linea-suave);
+}
+
+.columna {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.tituloColumna {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 4px;
+  color: var(--c-texto-2);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.personaEnlace {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+  margin: 0 -8px;
+  padding: 0 8px;
+  border-radius: 10px;
+  color: var(--c-texto);
+  text-decoration: none;
+}
+
+.personaEnlace:hover {
+  background: var(--c-hover);
+}
+
+/* ───────── Citas ───────── */
+
+.citas {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cita {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px;
+  border-left: 3px solid var(--c-linea);
+  border-radius: 4px 12px 12px 4px;
+  background: var(--c-panel);
+}
+
+.citaTexto {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.55;
+  text-wrap: pretty;
+}
+
+.citaPie {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+}
+
+/* ───────── Pendientes ───────── */
+
+.cifra {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.numero {
+  font-size: 56px;
+  line-height: 0.9;
+  font-weight: 600;
+  letter-spacing: -0.04em;
+}
+
+.numeroTexto {
+  color: var(--c-texto-2);
+  font-size: 17px;
+}
+
+.pendientes {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pendiente {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+.pendienteIcono {
+  display: inline-flex;
+  flex: none;
+  padding-top: 2px;
+  color: var(--c-texto-2);
+}
+
+/* ───────── Ritmo ───────── */
+
+.leyenda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 22px;
+  color: var(--c-texto-2);
+  font-size: 13.5px;
+}
+
+.leyendaItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.muestra {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+}
+
+.muestraEntrega {
+  background: var(--c-ev-parte);
+}
+
+.muestraDefensa {
+  background: var(--c-ev-explico);
+}
+
+.dias {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dia {
+  display: grid;
+  grid-template-columns: 112px 1fr;
+  align-items: center;
+  gap: 12px;
+}
+
+.diaNombre {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  color: var(--c-texto-2);
+  font-size: 14px;
+}
+
+.diaBarras {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.diaFila {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.diaBarra {
+  width: max(3px, var(--ancho, 0%));
+  max-width: calc(100% - 32px);
+  height: 8px;
+  border-radius: 4px;
+}
+
+/* ───────── Enlace ───────── */
+
+.estadoEnlace {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.puntoActivo,
+.puntoInactivo {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.puntoActivo {
+  background: var(--c-acento);
+}
+
+.puntoInactivo {
+  border: 2px solid var(--c-apagado);
+  box-sizing: border-box;
+}
+
+.acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* ───────── Pantallas angostas ───────── */
+
+@media (max-width: 560px) {
+  .cuerpo {
+    padding: 18px 16px 20px;
+  }
+
+  .dia {
+    grid-template-columns: 84px 1fr;
+  }
+
+  .numero {
+    font-size: 48px;
+  }
+}

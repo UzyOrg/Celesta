@@ -5,6 +5,8 @@ import { construirMenu, resumenDelGrupo } from '@/components/revision/derivados'
 import { TITULOS_DE_ESCENA } from '@/components/revision/frases';
 import { InicioAgentico } from '@/components/revision/InicioAgentico';
 import { leerEscenaInicial } from '@/components/revision/intenciones';
+import { MaquetaDelAsistente } from '@/components/revision/MaquetaDelAsistente';
+import { leerEscenaDeMaqueta, maquetaDelAsistente } from '@/components/revision/maquetas';
 import { MarcoProfesor } from '@/components/revision/MarcoProfesor';
 
 // El enlace firmado y los datos del grupo cambian con cada visita: nunca se prerenderiza.
@@ -17,6 +19,7 @@ interface PaginaRevisionProps {
 
 export async function generateMetadata({ searchParams }: PaginaRevisionProps): Promise<Metadata> {
   const consulta = await searchParams;
+  if (leerEscenaDeMaqueta(consulta.escena)) return { title: 'Maquetas del asistente | Celestea' };
   return { title: `${TITULOS_DE_ESCENA[leerEscenaInicial(consulta.escena)]} | Celestea` };
 }
 
@@ -27,6 +30,9 @@ export async function generateMetadata({ searchParams }: PaginaRevisionProps): P
  * respuestas ya dadas: `avance`, `ana` (o `alumno`), `descarga`, `lista` u
  * `objetivos`; sin ella abre el inicio. El grupo sale de la base de datos
  * (ver `consultas.ts`).
+ *
+ * Solo con el grupo de ejemplo, `?escena=asistente` abre las maquetas del
+ * asistente del profesor (propuesta en `docs/defensas/asistente-profesor.md`).
  */
 export default async function PaginaRevision({ params, searchParams }: PaginaRevisionProps) {
   const { token } = await params;
@@ -37,10 +43,15 @@ export default async function PaginaRevision({ params, searchParams }: PaginaRev
 
   const resumen = resumenDelGrupo(grupo.alumnos);
   const menu = construirMenu('revisar', grupo.actividad, resumen, grupo.otrasActividades, grupo.conectado === true);
+  const maqueta = grupo.conectado === true ? null : leerEscenaDeMaqueta(consulta.escena);
 
   return (
     <MarcoProfesor token={grupo.actividad.token} menu={menu} profesora={grupo.profesora} forma="agente">
-      <InicioAgentico grupo={grupo} escenaInicial={leerEscenaInicial(consulta.escena)} />
+      {maqueta ? (
+        <MaquetaDelAsistente grupo={grupo} maqueta={maqueta === 'asistente' ? null : maquetaDelAsistente(grupo, maqueta)} />
+      ) : (
+        <InicioAgentico grupo={grupo} escenaInicial={leerEscenaInicial(consulta.escena)} />
+      )}
     </MarcoProfesor>
   );
 }
