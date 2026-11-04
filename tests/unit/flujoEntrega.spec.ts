@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import '../support/sinServerOnly';
+import { AVISO_PRIVACIDAD_VERSION } from '../../src/lib/defensa/config';
 import { DefensaError } from '../../src/lib/defensa/errores';
 import { verificarToken } from '../../src/lib/defensa/firmas';
 import { crearTtsMock } from '../../src/lib/defensa/providers/mock';
@@ -51,7 +52,7 @@ test.describe('entrada del alumno', () => {
     expect(verificado.ok && verificado.claims.ac).toBe(actividad.id);
     expect(r.alumno).toMatchObject({ nombre: 'Ana Torres Ruiz', matricula: '20231457', modoPreferido: 'voz', dispositivo: 'android' });
     expect(estado.consentimientos.map((c) => c.tipo).sort()).toEqual(['aviso_privacidad', 'mayor_de_edad', 'transferencia_internacional']);
-    expect(estado.consentimientos.every((c) => c.aceptado && c.versionAviso === '2026-10-v1')).toBe(true);
+    expect(estado.consentimientos.every((c) => c.aceptado && c.versionAviso === AVISO_PRIVACIDAD_VERSION)).toBe(true);
 
     const sesion = await autenticarAlumno(ctx, r.sesion);
     expect(sesion.alumno.id).toBe(r.alumno.id);

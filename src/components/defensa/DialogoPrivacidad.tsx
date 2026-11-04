@@ -11,23 +11,53 @@ interface DialogoPrivacidadProps {
   alCerrar: () => void;
 }
 
-/** Puntos del aviso, en lenguaje llano. Texto de ejemplo: lo definitivo lo valida el área legal. */
+/**
+ * Datos del responsable (art. 15 de la Ley). Mientras tengan corchetes el aviso es un borrador:
+ * no uses datos reales. Se llenan aquí, en un solo lugar (ver `docs/legal/`).
+ */
+const RESPONSABLE = '[NOMBRE LEGAL DEL RESPONSABLE]';
+const DOMICILIO = '[DOMICILIO]';
+const CORREO_PRIVACIDAD = '[CORREO DE PRIVACIDAD]';
+const AVISO_INTEGRAL = '[URL DEL AVISO INTEGRAL]';
+
+/**
+ * Aviso simplificado, en lenguaje llano (`docs/legal/aviso-privacidad-simplificado.md`).
+ * Borrador pendiente de revisión legal: al cambiar el texto, sube `AVISO_PRIVACIDAD_VERSION`.
+ */
 const PUNTOS: readonly { titulo: string; texto: string }[] = [
   {
-    titulo: 'Tu audio',
-    texto: 'Se borra a los 7 días. Lo único que se conserva es la transcripción de lo que dijiste.',
+    titulo: 'Quién trata tus datos',
+    texto: `Celestea, de ${RESPONSABLE}, con domicilio en ${DOMICILIO}.`,
   },
   {
-    titulo: 'Quién lo ve',
-    texto: 'Tu profe ve tu transcripción y tu trabajo. Tu ensayo es privado: nadie lo ve.',
+    titulo: 'Qué datos',
+    texto:
+      'Tu nombre y matrícula, tu trabajo, tu voz si eliges hablar, tus respuestas y, si quieres, cuánto estrés te dio. No usamos cámara. No te pedimos datos sensibles (salud, religión, política): no los pongas si no hacen falta. Si aparecen, los tratamos solo para tu defensa.',
   },
   {
-    titulo: 'Dónde se procesa',
-    texto: 'En servidores de EE. UU. Por eso te pedimos que lo aceptes.',
+    titulo: 'Para qué',
+    texto: 'Para hacer tu defensa y preparar el reporte de tu profesor. Nada más: sin publicidad. No hay ninguna finalidad que necesite un permiso extra.',
   },
   {
-    titulo: 'Lo que nunca hacemos',
-    texto: 'No entrenamos IA con tus datos y no usamos tu cámara.',
+    titulo: 'Quién lo recibe',
+    texto:
+      'Tu profesor y tu universidad reciben tu reporte, tu transcripción y tu trabajo, y el audio solo de lo que marques. Proveedores de IA, voz y almacenamiento, muchos en EE. UU., tratan los datos por nuestra cuenta. Celestea no vende tus datos ni entrena IA con ellos.',
+  },
+  {
+    titulo: 'Cuánto tiempo',
+    texto: 'Tu audio se borra a los 7 días. Lo demás, hasta 90 días después de que cierre el grupo.',
+  },
+  {
+    titulo: 'Esto es una IA',
+    texto: 'Hablas con una inteligencia artificial. No te califica: decide tu profesor. Tu trabajo cuenta como entregado desde que llega.',
+  },
+  {
+    titulo: 'Tus derechos',
+    texto: `Puedes pedir ver, corregir, cancelar u oponerte al uso de tus datos, y retirar tu permiso, escribiendo a ${CORREO_PRIVACIDAD}. Es gratis. Puedes escribir en vez de hablar y omitir la pregunta del estrés. Si no aceptas, tu trabajo cuenta igual y tu profesor te ofrece otra forma de mostrar lo que sabes.`,
+  },
+  {
+    titulo: 'Aviso completo',
+    texto: AVISO_INTEGRAL,
   },
 ];
 
@@ -56,7 +86,7 @@ export function DialogoPrivacidad({ abierto, alCerrar }: DialogoPrivacidadProps)
           ))}
         </dl>
 
-        <p className={styles.nota}>Resumen de ejemplo para esta demostración.</p>
+        <p className={styles.nota}>Borrador pendiente de revisión legal: úsalo solo con datos ficticios.</p>
 
         <Boton tamano={64} onClick={alCerrar}>
           Entendido

@@ -9,8 +9,11 @@ import { MAX_NOMBRE_CARACTERES } from '../../components/defensa/identidad';
  * pruebas puedan cambiarlas sin reiniciar nada.
  */
 
-/** Versión del aviso de privacidad que aceptó el alumno. Súbela al cambiar el texto. */
-export const AVISO_PRIVACIDAD_VERSION = '2026-10-v1';
+/**
+ * Versión del aviso de privacidad que aceptó el alumno. Súbela al cambiar el texto.
+ * «borrador» marca que el texto de `docs/legal/` aún no lo aprueba un abogado: quítalo al aprobarlo.
+ */
+export const AVISO_PRIVACIDAD_VERSION = '2026-11-borrador-v1';
 
 export const LIMITES = {
   /** Tamaño máximo del archivo original. Se sube directo al bucket, no por la API. */
