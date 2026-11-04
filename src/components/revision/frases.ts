@@ -1,6 +1,7 @@
 import type { NivelEvidencia } from '../celeste/types';
 import { cantidadEnLetra, estadoDe } from './derivados';
 import { diaLargo, nombreDelDia } from './fechas';
+import type { TarjetaRespuesta, TipoTarjeta } from './catalogo';
 import type { RamaReporte } from './intenciones';
 import type { Alumno, BloqueReporte, ConteoObjetivo, EscenaProfesor, ReporteAlumno, ResumenGrupo } from './types';
 
@@ -69,6 +70,7 @@ export const TITULOS_DE_ESCENA: Readonly<Record<EscenaProfesor, string>> = {
   lista: 'Celestea: Grupo por estado',
   objetivos: 'Celestea: Lo que mostró el grupo',
   otro: 'Celestea',
+  asistente: 'Celestea',
 };
 
 /* ------------------------------------------------------------------------ */
@@ -192,3 +194,66 @@ export function respuestaDelReporte(rama: RamaReporte, contexto: ContextoDeRespu
     irAPregunta: null,
   };
 }
+
+/* ------------------------------------------------------------------------ */
+/* Plantillas del asistente del profesor                                    */
+/* ------------------------------------------------------------------------ */
+
+function personas(cantidad: number): string {
+  return cantidad === 1 ? '1 persona' : `${cantidad} personas`;
+}
+
+/**
+ * La frase de respaldo de cada tarjeta del catálogo: la que se usa cuando la
+ * frase del modelo no pasa la verificación (una cifra o un nombre que no sale de
+ * los datos) o cuando contestan las reglas.
+ */
+export function fraseDeTarjeta(tarjeta: TarjetaRespuesta): string {
+  switch (tarjeta.tipo) {
+    case 'avance':
+      return fraseAvance(tarjeta.props.resumen);
+    case 'alumno':
+      return fraseAlumno(tarjeta.props.alumno);
+    case 'grupo': {
+      const porRevisar = tarjeta.props.secciones.find((seccion) => seccion.id === 'por-revisar')?.filas.length ?? 0;
+      return fraseLista(porRevisar);
+    }
+    case 'objetivos': {
+      const masCostoso = tarjeta.props.conteos.find((conteo) => conteo.masCostoso);
+      const defendieron = masCostoso ? masCostoso.explico + masCostoso.enParte + masCostoso.noSalio + masCostoso.sinDato : 0;
+      return masCostoso ? fraseObjetivo(masCostoso, defendieron) : 'Todavía nadie ha defendido.';
+    }
+    case 'descarga':
+      return fraseDescarga(false, tarjeta.props.entregaron);
+    case 'lista':
+      return tarjeta.props.total === 0 ? tarjeta.props.vacio : `${tarjeta.props.titulo}: ${personas(tarjeta.props.total)}.`;
+    case 'objetivo':
+      return fraseObjetivo(tarjeta.props.conteo, tarjeta.props.defendieron);
+    case 'citas':
+      return tarjeta.props.citas.length === 0
+        ? 'Todavía no hay frases verificadas sobre ese objetivo.'
+        : 'Estas son frases de sus defensas, tal como las dijeron o escribieron.';
+    case 'pendientes':
+      return frasePendientes(tarjeta.props.porRevisar);
+    case 'ritmo':
+      return 'Así se repartieron las entregas y las defensas por día.';
+    case 'accion':
+      return 'Te llevo.';
+  }
+}
+
+/** Qué sugerir después de cada tarjeta. */
+export const SUGERENCIAS_POR_TARJETA: Readonly<Record<TipoTarjeta | 'ninguna', readonly string[]>> = {
+  avance: ['¿Qué me falta?', '¿Quién entregó tarde?'],
+  alumno: ['¿Qué objetivo les costó más?', 'Muéstrame a todos'],
+  grupo: ['¿Qué me falta?', '¿Qué objetivo les costó más?'],
+  objetivos: ['¿Qué dijeron sobre el objetivo más difícil?', 'Muéstrame a todos'],
+  descarga: ['¿Cuántos defendieron?', '¿Qué me falta?'],
+  lista: ['¿Qué me falta?', 'Muéstrame a todos'],
+  objetivo: ['¿Qué dijeron sobre ese objetivo?', '¿Qué me falta?'],
+  citas: ['¿Qué objetivo les costó más?', '¿Qué me falta?'],
+  pendientes: ['¿Qué reportes traen algo para oír?', '¿Quién entregó tarde?'],
+  ritmo: ['¿Quién entregó tarde?', '¿Qué me falta?'],
+  accion: ['¿Cuántos defendieron?'],
+  ninguna: ['¿Cuántos defendieron?', '¿Qué objetivo les costó más?', '¿Qué me falta?'],
+};

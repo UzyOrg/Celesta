@@ -189,6 +189,9 @@ errores `{ error, mensaje }` con un código estable. El portador va en
 | `POST /revision/{toque,tiempo,audio}` | Profesor | Los dos toques por reporte, el tiempo activo y el enlace firmado para oír una parte. |
 | `POST /descargas` | Profesor | Enlace que caduca para un trabajo o el zip del grupo. |
 | `POST /enlace` | Profesor | Desactiva o reactiva el enlace del grupo. |
+| `POST /asistente` | Profesor | El asistente con catálogo cerrado: pasos y respuesta en NDJSON (ver [asistente-profesor.md](./asistente-profesor.md)). |
+| `POST /asistente/dictado` | Profesor | Dictado a texto en la barra; solo con transcripción real (con `mock`, 503). El audio no se guarda. |
+| `POST /revision/trabajo` | Profesor | El texto del trabajo de un alumno para el visor de solo lectura. |
 | `GET /mantenimiento` | Cron de Vercel | Limpieza diaria (con `CRON_SECRET`). |
 | `GET /archivo-dev` | Solo modo memoria | Sirve los archivos en memoria con soporte de `Range`. |
 
@@ -227,9 +230,10 @@ Fuente: [documentación de Vercel](https://vercel.com/docs/cron-jobs/quickstart)
   (responde "no encontrado") y la entrada no aparece en el menú; las actividades se dan de alta
   con el script.
 - Compartir a Moodle, "Editar a mano" y "Pedir cambios por mensaje" del borrador.
-- El dictado del profesor en la barra de Celestea se oculta con datos reales.
-- Las respuestas de Celestea en la pantalla del profesor salen de reglas de palabras sobre el
-  mismo grupo o reporte, sin modelo de lenguaje.
+- El dictado del profesor en la barra de Celestea solo aparece con transcripción real configurada.
+- En el inicio del profesor, con datos reales, contesta el asistente con catálogo cerrado
+  (`DEFENSA_LLM_MODEL_ASISTENTE`, ver [asistente-profesor.md](./asistente-profesor.md)); si falla,
+  las reglas de palabras de siempre. Las preguntas dentro de un reporte siguen con reglas, sin modelo.
 
 ## Pruebas
 

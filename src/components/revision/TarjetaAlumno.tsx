@@ -18,8 +18,9 @@ interface TarjetaAlumnoProps {
   /** Dirección del reporte directo, para la parte para oír. */
   rutaPartes: string;
   alDescargarTrabajo: () => void;
-  fijado: boolean;
-  alAlternarFijado: () => void;
+  /** Sin estos dos no hay botón de fijar (el asistente muestra a cualquier persona, no solo la fijable). */
+  fijado?: boolean;
+  alAlternarFijado?: () => void;
 }
 
 /** La ficha de un alumno: sus tiempos, qué mostró en cada objetivo y qué hay para oír. */
@@ -40,7 +41,7 @@ export function TarjetaAlumno({
     <TarjetaDeCelestea
       etiqueta={alumno.nombre}
       titulo={rotulo}
-      fijable={{ fijado, alAlternar: alAlternarFijado }}
+      fijable={fijado !== undefined && alAlternarFijado ? { fijado, alAlternar: alAlternarFijado } : undefined}
     >
       <div className={styles.cuerpo}>
         <div className={styles.encabezado}>

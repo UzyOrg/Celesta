@@ -89,10 +89,12 @@ async function contestarTodo(request: APIRequestContext, alumno: Alumno, inicial
 }
 
 test.describe('cabeceras y superficie', () => {
-  test('el micrófono solo se permite en /defensa; la cámara nunca', async ({ request }) => {
+  test('el micrófono solo se permite en /defensa y /revision (dictado); la cámara nunca', async ({ request }) => {
     const defensa = await request.get('/defensa/no-existe-este-grupo');
     expect(defensa.headers()['permissions-policy']).toBe('camera=(), geolocation=(), microphone=(self), payment=(), usb=()');
-    for (const ruta of ['/crear', '/api/health', '/revision/x', '/api/defensa/estado']) {
+    const revision = await request.get('/revision/x');
+    expect(revision.headers()['permissions-policy']).toBe('camera=(), geolocation=(), microphone=(self), payment=(), usb=()');
+    for (const ruta of ['/crear', '/api/health', '/api/defensa/estado']) {
       const r = await request.get(ruta);
       expect(r.headers()['permissions-policy'], ruta).toBe('camera=(), geolocation=(), microphone=(), payment=(), usb=()');
     }

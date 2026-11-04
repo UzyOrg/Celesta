@@ -1,4 +1,5 @@
 import 'server-only';
+import { DefensaError } from '../errores';
 import type {
   AudioSintetizado,
   PalabraTranscrita,
@@ -165,6 +166,38 @@ function reporteFalso(mensaje: string): unknown {
   };
 }
 
+// ── Asistente del profesor ──────────────────────────────────────────────────
+
+const MARCA_PETICION = '\nPETICIÓN\n';
+const SIN_PROPS = { alias: null, objetivo: null, niveles: null, filtros: null, id: null };
+
+/**
+ * Elige tarjetas con palabras clave sobre la petición ya seudonimizada, con la
+ * misma forma que pide la herramienta `responder`. "simula una falla" hace fallar
+ * al modelo (para probar que contestan las reglas); "simula una cifra" escribe una
+ * cifra que no existe (para probar la plantilla).
+ */
+function asistenteFalso(mensaje: string): unknown {
+  const peticionOriginal = mensaje.split(MARCA_PETICION)[1] ?? '';
+  const peticion = peticionOriginal.toLowerCase().normalize('NFD').replace(new RegExp('[\\u0300-\\u036f]', 'g'), '');
+  if (peticion.includes('simula una falla')) throw new DefensaError('proveedor_fallo', 502);
+  const alias = /\[(A\d{2,3})\]/.exec(peticionOriginal)?.[1];
+  const tarjeta = (tipo: string, props: Record<string, unknown> = {}) => ({ tipo, props: { ...SIN_PROPS, ...props } });
+  if (peticion.includes('simula una cifra')) return { texto: 'Son 9999 personas.', rechazo: 'ninguno', tarjetas: [tarjeta('avance')] };
+  if (alias) return { texto: `Aquí está [${alias}].`, rechazo: 'ninguno', tarjetas: [tarjeta('alumno', { alias })] };
+  if (/tarde/.test(peticion)) {
+    return { texto: 'Estas personas llegaron después del cierre.', rechazo: 'ninguno', tarjetas: [tarjeta('lista', { filtros: [{ filtro: 'tarde', objetivo: null, niveles: null }] })] };
+  }
+  if (/dijeron|frases|citas/.test(peticion)) return { texto: 'Estas son sus palabras.', rechazo: 'ninguno', tarjetas: [tarjeta('citas', { objetivo: 1 })] };
+  if (/me falta|pendiente/.test(peticion)) return { texto: '', rechazo: 'ninguno', tarjetas: [tarjeta('pendientes')] };
+  if (/cuando entregaron|ritmo|por dia/.test(peticion)) return { texto: '', rechazo: 'ninguno', tarjetas: [tarjeta('ritmo')] };
+  if (/objetivo|costo|cost/.test(peticion)) return { texto: '', rechazo: 'ninguno', tarjetas: [tarjeta('objetivos')] };
+  if (/cuant|defend|avance|falta/.test(peticion)) return { texto: '', rechazo: 'ninguno', tarjetas: [tarjeta('avance')] };
+  if (/todos|lista/.test(peticion)) return { texto: '', rechazo: 'ninguno', tarjetas: [tarjeta('grupo')] };
+  if (/descarg|bajar/.test(peticion)) return { texto: '', rechazo: 'ninguno', tarjetas: [tarjeta('descarga')] };
+  return { texto: '', rechazo: 'fuera-de-alcance', tarjetas: [] };
+}
+
 export function crearLlmMock(): ProveedorLlm {
   return {
     id: 'mock',
@@ -175,8 +208,10 @@ export function crearLlmMock(): ProveedorLlm {
           ? planFalso(mensaje)
           : solicitud.tarea === 'clasificar_turno'
             ? claseFalsa(mensaje)
-            : reporteFalso(mensaje);
-      return { json, proveedor: 'mock', modelo: 'mock' };
+            : solicitud.tarea === 'asistente'
+              ? asistenteFalso(mensaje)
+              : reporteFalso(mensaje);
+      return { json, proveedor: 'mock', modelo: 'mock', uso: { entrada: 0, salida: 0 } };
     },
   };
 }

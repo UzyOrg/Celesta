@@ -23,7 +23,8 @@
     "test:unit": "playwright test -c playwright.unit.config.ts",
     "defensa:actividad": "tsx --conditions=react-server scripts/defensa-actividad.ts",
     "dev:defensa": "node scripts/defensa-dev.mjs",
-    "defensa:diagnostico": "tsx --conditions=react-server scripts/defensa-diagnostico.ts"
+    "defensa:diagnostico": "tsx --conditions=react-server scripts/defensa-diagnostico.ts",
+    "defensa:evaluar-asistente": "tsx --conditions=react-server scripts/evaluar-asistente.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.0.1",

@@ -1,6 +1,7 @@
 import 'server-only';
 import { cache } from 'react';
 import { esProduccion } from '@/lib/defensa/config';
+import { dictadoDisponible } from '@/lib/defensa/servicios/asistenteProfesor';
 import { DefensaError } from '@/lib/defensa/errores';
 import { autenticarProfesor } from '@/lib/defensa/servicios/acceso';
 import { contextoDeSolicitud } from '@/lib/defensa/servicios/contexto';
@@ -18,6 +19,7 @@ import {
   OTRAS_ACTIVIDADES,
   PROFESORA,
   REPORTE_ANA,
+  TRABAJO_DE_ANA,
 } from './mock';
 import type { Alumno, BloqueReporte, DatosGrupo, DatosReporte, Objetivo, ReporteAlumno } from './types';
 
@@ -91,7 +93,7 @@ export const obtenerGrupoPorToken = cache(async (token: string): Promise<DatosGr
   }
   const acceso = await accesoDelProfesor(token);
   if (!acceso) return null;
-  return datosDelGrupo(acceso.ctx, acceso.actividad, acceso.enlace);
+  return { ...(await datosDelGrupo(acceso.ctx, acceso.actividad, acceso.enlace)), dictadoDisponible: dictadoDisponible() };
 });
 
 /** Reporte con las tres preguntas sin respuesta para quien no tiene transcripción de ejemplo. */
@@ -121,7 +123,13 @@ export const obtenerReporte = cache(async (token: string, alumnoId: string): Pro
     if (!alumno || !alumno.defensa) return null;
     const reporte =
       alumno.matricula === MATRICULA_DEMO ? REPORTE_ANA : reporteReducido(alumno, OBJETIVOS, PREGUNTAS);
-    return { grupo, alumno, reporte, cola: colaDeRevision(grupo.alumnos, alumno.matricula) };
+    return {
+      grupo,
+      alumno,
+      reporte,
+      cola: colaDeRevision(grupo.alumnos, alumno.matricula),
+      ...(alumno.matricula === MATRICULA_DEMO ? { trabajoDeEjemplo: TRABAJO_DE_ANA } : {}),
+    };
   }
   const acceso = await accesoDelProfesor(token);
   if (!acceso || !matricula) return null;

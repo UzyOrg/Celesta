@@ -1,9 +1,40 @@
-# Asistente del profesor con catálogo cerrado · Propuesta (fase 1)
+# Asistente del profesor con catálogo cerrado
 
-- **Fecha:** 2026-11-02
-- **Estado:** **PROPUESTA. Espera la aprobación de Hi.** No hay modelo, ruta ni servicio nuevos.
-  Lo único construido son las **maquetas** (sección 6) y el contrato de las tarjetas que usan.
-- **Encargo:** `03-panel-profesor-ia.md` (fase 1).
+- **Fecha:** propuesta 2026-11-02 · construido 2026-11-03
+- **Estado:** **APROBADO por Hi el 2026-11-03 y construido (fase 2).** El cuarto uso del modelo ya
+  está en la sección 3 del [ADR 0014](../adr/0014-defensas-orales-superficie-de-profesor-y-reporte-posterior.md).
+  Abajo queda la propuesta tal como se aprobó; lo que cambió con la aprobación está en "Fase 2".
+- **Encargo:** `03-panel-profesor-ia.md`.
+
+## Fase 2: lo que se construyó
+
+Decisiones de Hi del 2026-11-03 y cómo quedaron:
+
+| Decisión | Dónde quedó |
+| --- | --- |
+| Celestea responde con texto que escribe el modelo; cada número y nombre debe salir de los datos del servidor, si no, plantilla; mismo filtro de notas, porcentajes y sospechas | `verificarTexto` en `src/lib/defensa/servicios/asistenteProfesor.ts`. Además de cifras y alias: una persona nombrada debe salir en lo que se muestra, "N personas" debe ser el total de la lista y no se nombran piezas internas ("hoja", "tarjeta", "vista"…). |
+| `citas` entra | `TarjetaCitas`, con frases ya verificadas por `reporte.ts` (nunca pasan por el modelo). |
+| `objetivo`: primero conteos, nombres al tocar | `TarjetaObjetivo`, botón "Ver quiénes no lo explicaron del todo". |
+| `enlace` queda para la v2 | Fuera del catálogo (`TIPOS_DE_TARJETA`); solo queda su maqueta. |
+| Visor del trabajo junto al reporte, solo lectura | `VisorDelTrabajo` en el reporte ("Leer su trabajo"), `POST /api/defensa/revision/trabajo`, `trabajoParaLeer` en `servicios/profesor.ts`. Escritorio: columna a la derecha; celular: hoja a pantalla completa. Nunca va al modelo. |
+| Dictado solo con transcripción real | `POST /api/defensa/asistente/dictado` (503 con `mock`), `useDictado`, `dictadoDisponible` en `DatosGrupo`; micrófono abierto en `/revision` en `next.config.js`. El audio no se guarda. |
+| Nombres parecidos también van a alias | `seudonimizarPeticion`: igual o con 1–2 letras de diferencia (OSA), por nombre o apellido. Una sola palabra parecida en minúsculas no cuenta ("vagas" no es "Vargas"); con mayúscula sí ("Espinosa" → Espinoza). Si se parece a dos personas, se pregunta a cuál, sin modelo. |
+
+Piezas nuevas: ruta `POST /api/defensa/asistente` (NDJSON: pasos y respuesta), servicio
+`asistenteProfesor.ts`, `RespuestaDelAsistente.tsx` (catálogo con límite de error por tarjeta),
+`extensiones/` (punto de extensión de la barra), `PasosDeCelestea`, el modelo falso de la tarea
+`asistente` y `npm run defensa:evaluar-asistente`.
+
+**Evaluación** (detalle en [evaluacion-asistente.md](evaluacion-asistente.md)), con `claude-haiku-5-5`
+sobre un grupo ficticio de 18 personas: 38 de 38 peticiones con la tarjeta o el rechazo esperado,
+mediana 1.3 s y p95 1.6 s en el servidor, ~4,300 tokens de entrada y ~210 de salida por petición
+que llega al modelo (menos de $0.001). Los 7 rechazos claros no llegan al modelo. Ojo: la
+verificación es **mecánica** (cifras y nombres que existen en lo mostrado), no garantiza que la
+frase sea la mejor lectura; dos frases de la corrida salieron torpes aunque correctas.
+
+**Riesgos que quedan:** un nombre que no se parece a nadie del grupo, o una sola palabra parecida
+en minúsculas, llega al modelo tal como lo escribió el profesor; los alias cambian si cambia el
+grupo (no se guardan); la frase del modelo puede ser verdadera en cifras y aun así torpe.
 - **Base:** `feat/defensas-backend` en `4f243c3`. Rama de trabajo `Uziel/panel-profesor-ia-4d2f72`.
 - **Modelo:** Claude Haiku 5.5, id `claude-haiku-5-5`. Lo verifiqué el 2026-11-02 en la página de
   modelos de la documentación de Claude: está activo (salió el 7 de octubre de 2026 y no se retira

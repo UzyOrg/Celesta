@@ -1,6 +1,6 @@
 'use client';
 
-import { ChevronLeft, ChevronRight, Download, Headphones } from 'lucide-react';
+import { BookOpen, ChevronLeft, ChevronRight, Download, Headphones } from 'lucide-react';
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Avatar } from '../celeste/Avatar';
@@ -18,6 +18,7 @@ import type { RamaReporte } from './intenciones';
 import { RespuestaEnReporte } from './RespuestaEnReporte';
 import type { CierreReporte, DatosReporte, ParteParaOir } from './types';
 import { useTiempoDeRevision } from './useTiempoDeRevision';
+import { VisorDelTrabajo } from './VisorDelTrabajo';
 import styles from './ReporteDelAlumno.module.css';
 
 interface ReporteDelAlumnoProps {
@@ -68,6 +69,12 @@ export function ReporteDelAlumno({ datos }: ReporteDelAlumnoProps) {
   const [barraAbierta, setBarraAbierta] = useState(true);
   const [pregunta, setPregunta] = useState('');
   const [respuesta, setRespuesta] = useState<EstadoRespuesta | null>(null);
+  const [visorAbierto, setVisorAbierto] = useState(false);
+  const botonVisor = useRef<HTMLButtonElement>(null);
+  const cerrarVisor = useCallback(() => {
+    setVisorAbierto(false);
+    botonVisor.current?.focus({ preventScroll: true });
+  }, []);
 
   const [reproductor] = useState(() => new Reproductor());
   const sonandoAhora = useRef<ParteParaOir['id'] | null>(null);
@@ -242,137 +249,162 @@ export function ReporteDelAlumno({ datos }: ReporteDelAlumnoProps) {
 
   return (
     <div className={styles.raiz}>
-      <div className={styles.columna}>
-        <div className={styles.migas}>
-          <Link href={rutaInicio} className={styles.volver}>
-            <ChevronLeft size={18} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" />
-            Inicio
-          </Link>
-          {cola ? (
-            <div className={styles.cola}>
-              <span className={styles.posicion}>{`${cola.posicion} de ${cola.total} por revisar`}</span>
-              {cola.anterior ? (
-                <Link
-                  href={rutaAlumno(cola.anterior.matricula)}
-                  className={styles.flecha}
-                  aria-label={`Anterior: ${cola.anterior.nombre}`}
-                >
-                  <ChevronLeft size={18} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" />
-                </Link>
+      <div className={visorAbierto ? styles.conVisor : styles.sinVisor}>
+        <div className={styles.columna}>
+          <div className={styles.migas}>
+            <Link href={rutaInicio} className={styles.volver}>
+              <ChevronLeft size={18} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" />
+              Inicio
+            </Link>
+            {cola ? (
+              <div className={styles.cola}>
+                <span className={styles.posicion}>{`${cola.posicion} de ${cola.total} por revisar`}</span>
+                {cola.anterior ? (
+                  <Link
+                    href={rutaAlumno(cola.anterior.matricula)}
+                    className={styles.flecha}
+                    aria-label={`Anterior: ${cola.anterior.nombre}`}
+                  >
+                    <ChevronLeft size={18} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" />
+                  </Link>
+                ) : null}
+                {cola.siguiente ? (
+                  <Link
+                    href={rutaAlumno(cola.siguiente.matricula)}
+                    className={styles.flecha}
+                    aria-label={`Siguiente: ${cola.siguiente.nombre}`}
+                  >
+                    <ChevronRight size={18} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" />
+                  </Link>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
+
+          <header className={styles.cabecera}>
+            <div className={styles.identidad}>
+              <Avatar iniciales={alumno.iniciales} nombre={alumno.nombre} tamano={64} />
+              <div className={styles.textos}>
+                <h1 className={styles.nombre}>{alumno.nombre}</h1>
+                <div className={styles.meta}>
+                  <span className={styles.matricula}>{alumno.matricula}</span>
+                  {entrega ? <span>{entrega}</span> : null}
+                  {defensa ? <span>{defensa}</span> : null}
+                </div>
+              </div>
+            </div>
+            <div className={styles.accionesCabecera}>
+              <button
+                ref={botonVisor}
+                type="button"
+                className={styles.descargar}
+                aria-expanded={visorAbierto}
+                onClick={() => setVisorAbierto((abierto) => !abierto)}
+              >
+                <BookOpen size={18} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" />
+                {visorAbierto ? 'Cerrar su trabajo' : 'Leer su trabajo'}
+              </button>
+              <button type="button" className={styles.descargar} onClick={descargar}>
+                <Download size={18} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" />
+                {descargando ? 'Preparando…' : descargado ? 'Descargado' : errorDeDescarga ? 'Inténtalo otra vez' : 'Descargar trabajo'}
+              </button>
+            </div>
+          </header>
+
+          <section aria-label="Resumen por objetivo" className={styles.resumen}>
+            {reporte.bloques.map((bloque) => (
+              <a
+                key={bloque.objetivo.id}
+                href={`#p${bloque.pregunta.numero}`}
+                className={styles.objetivo}
+                onClick={() => brillar(bloque.pregunta.numero)}
+              >
+                <span className={styles.objetivoNumero}>{`Objetivo ${bloque.objetivo.id}`}</span>
+                <span className={styles.objetivoTexto}>{bloque.objetivo.texto}</span>
+                <span className={styles.objetivoNivel}>
+                  {bloque.nivel ? <IconoNivel nivel={bloque.nivel} tamano={12} /> : null}
+                  {bloque.nivel ? ETIQUETA_NIVEL[bloque.nivel] : 'Sin dato'}
+                </span>
+              </a>
+            ))}
+          </section>
+
+          {reporte.aviso ? (
+            <div className={styles.nota}>
+              <span>{reporte.aviso}</span>
+            </div>
+          ) : null}
+
+          {!reporte.completo ? (
+            <div className={styles.nota}>
+              <span>{`Esta demostración solo trae la transcripción y el audio de ${grupo.alumnoBuscado.nombreCorto}.`}</span>
+            </div>
+          ) : null}
+
+          {partesParaOir > 0 || hayVoz ? (
+            <div className={styles.nota}>
+              {partesParaOir > 0 ? (
+                <span className={styles.notaOir}>
+                  <Headphones size={15} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className={styles.notaIcono} />
+                  {`${cantidadEnLetra(partesParaOir)} ${partesParaOir === 1 ? 'parte' : 'partes'} para oír, dentro de sus respuestas`}
+                </span>
               ) : null}
-              {cola.siguiente ? (
-                <Link
-                  href={rutaAlumno(cola.siguiente.matricula)}
-                  className={styles.flecha}
-                  aria-label={`Siguiente: ${cola.siguiente.nombre}`}
-                >
-                  <ChevronRight size={18} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" />
-                </Link>
+              {hayVoz && alumno.defensa ? (
+                <span>
+                  {reporte.audioDisponible === false
+                    ? 'El audio ya se borró'
+                    : `El audio se borra el ${diaDeBorradoDelAudio(alumno.defensa)}`}
+                </span>
               ) : null}
             </div>
           ) : null}
-        </div>
 
-        <header className={styles.cabecera}>
-          <div className={styles.identidad}>
-            <Avatar iniciales={alumno.iniciales} nombre={alumno.nombre} tamano={64} />
-            <div className={styles.textos}>
-              <h1 className={styles.nombre}>{alumno.nombre}</h1>
-              <div className={styles.meta}>
-                <span className={styles.matricula}>{alumno.matricula}</span>
-                {entrega ? <span>{entrega}</span> : null}
-                {defensa ? <span>{defensa}</span> : null}
-              </div>
-            </div>
-          </div>
-          <button type="button" className={styles.descargar} onClick={descargar}>
-            <Download size={18} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" />
-            {descargando ? 'Preparando…' : descargado ? 'Descargado' : errorDeDescarga ? 'Inténtalo otra vez' : 'Descargar trabajo'}
-          </button>
-        </header>
-
-        <section aria-label="Resumen por objetivo" className={styles.resumen}>
           {reporte.bloques.map((bloque) => (
-            <a
+            <BloqueDeObjetivo
               key={bloque.objetivo.id}
-              href={`#p${bloque.pregunta.numero}`}
-              className={styles.objetivo}
-              onClick={() => brillar(bloque.pregunta.numero)}
-            >
-              <span className={styles.objetivoNumero}>{`Objetivo ${bloque.objetivo.id}`}</span>
-              <span className={styles.objetivoTexto}>{bloque.objetivo.texto}</span>
-              <span className={styles.objetivoNivel}>
-                {bloque.nivel ? <IconoNivel nivel={bloque.nivel} tamano={12} /> : null}
-                {bloque.nivel ? ETIQUETA_NIVEL[bloque.nivel] : 'Sin dato'}
-              </span>
-            </a>
+              bloque={bloque}
+              alumno={alumno}
+              resaltado={brillo === bloque.pregunta.numero}
+              sonando={sonando}
+              alTocarParte={tocarParte}
+            />
           ))}
-        </section>
 
-        {reporte.aviso ? (
-          <div className={styles.nota}>
-            <span>{reporte.aviso}</span>
-          </div>
-        ) : null}
-
-        {!reporte.completo ? (
-          <div className={styles.nota}>
-            <span>{`Esta demostración solo trae la transcripción y el audio de ${grupo.alumnoBuscado.nombreCorto}.`}</span>
-          </div>
-        ) : null}
-
-        {partesParaOir > 0 || hayVoz ? (
-          <div className={styles.nota}>
-            {partesParaOir > 0 ? (
-              <span className={styles.notaOir}>
-                <Headphones size={15} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className={styles.notaIcono} />
-                {`${cantidadEnLetra(partesParaOir)} ${partesParaOir === 1 ? 'parte' : 'partes'} para oír, dentro de sus respuestas`}
-              </span>
-            ) : null}
-            {hayVoz && alumno.defensa ? (
-              <span>
-                {reporte.audioDisponible === false
-                  ? 'El audio ya se borró'
-                  : `El audio se borra el ${diaDeBorradoDelAudio(alumno.defensa)}`}
-              </span>
-            ) : null}
-          </div>
-        ) : null}
-
-        {reporte.bloques.map((bloque) => (
-          <BloqueDeObjetivo
-            key={bloque.objetivo.id}
-            bloque={bloque}
-            alumno={alumno}
-            resaltado={brillo === bloque.pregunta.numero}
-            sonando={sonando}
-            alTocarParte={tocarParte}
+          <CierreDelReporte
+            valor={cierre}
+            alElegir={elegirCierre}
+            siguiente={cola?.siguiente ?? null}
+            rutaSiguiente={cola?.siguiente ? rutaAlumno(cola.siguiente.matricula) : rutaInicio}
+            rutaInicio={rutaInicio}
           />
-        ))}
 
-        <CierreDelReporte
-          valor={cierre}
-          alElegir={elegirCierre}
-          siguiente={cola?.siguiente ?? null}
-          rutaSiguiente={cola?.siguiente ? rutaAlumno(cola.siguiente.matricula) : rutaInicio}
-          rutaInicio={rutaInicio}
-        />
-
-        <BarraDeCelestea
-          variante="reporte"
-          abierta={barraAbierta}
-          alCambiarAbierta={setBarraAbierta}
-          texto={texto}
-          alCambiarTexto={setTexto}
-          alEnviar={pedir}
-          sugerencias={!texto && respuesta?.tipo !== 'pensando' ? SUGERENCIAS_REPORTE : null}
-          alPedirSugerencia={pedir}
-          pensando={respuesta?.tipo === 'pensando'}
-          placeholder={`Pregunta sobre la defensa de ${alumno.primerNombre}…`}
-          etiquetaCampo={`Pregúntale a Celestea sobre ${alumno.primerNombre}`}
-          etiquetaBotonCerrado={`Pregúntale sobre ${alumno.primerNombre}`}
-          arriba={arriba}
-        />
+          <BarraDeCelestea
+            variante="reporte"
+            abierta={barraAbierta}
+            alCambiarAbierta={setBarraAbierta}
+            texto={texto}
+            alCambiarTexto={setTexto}
+            alEnviar={pedir}
+            sugerencias={!texto && respuesta?.tipo !== 'pensando' ? SUGERENCIAS_REPORTE : null}
+            alPedirSugerencia={pedir}
+            pensando={respuesta?.tipo === 'pensando'}
+            placeholder={`Pregunta sobre la defensa de ${alumno.primerNombre}…`}
+            etiquetaCampo={`Pregúntale a Celestea sobre ${alumno.primerNombre}`}
+            etiquetaBotonCerrado={`Pregúntale sobre ${alumno.primerNombre}`}
+            arriba={arriba}
+          />
+        </div>
+        {visorAbierto ? (
+          <VisorDelTrabajo
+            token={token}
+            entregaId={alumno.entregaId}
+            deEjemplo={datos.trabajoDeEjemplo ?? null}
+            conectado={conectado}
+            primerNombre={alumno.primerNombre}
+            alDescargar={() => void descargar()}
+            alCerrar={cerrarVisor}
+          />
+        ) : null}
       </div>
 
       <p role="status" className={styles.soloLector}>

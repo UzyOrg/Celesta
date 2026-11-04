@@ -21,7 +21,7 @@ const GRUPO: DatosGrupo = {
 };
 
 test('la lista de quienes llegaron tarde trae a cada uno con su acción', () => {
-  const lista = listaFiltrada(ALUMNOS, 'tarde');
+  const lista = listaFiltrada(ALUMNOS, [{ filtro: 'tarde' }]);
   expect(lista.total).toBe(3);
   expect(lista.filas.map((fila) => fila.matricula).sort()).toEqual(['20231368', '20231377', '20231418']);
   const salazar = lista.filas.find((fila) => fila.matricula === '20231368');
@@ -30,7 +30,7 @@ test('la lista de quienes llegaron tarde trae a cada uno con su acción', () => 
 });
 
 test('una lista sin nadie trae su frase de vacío', () => {
-  const lista = listaFiltrada([], 'incompleta');
+  const lista = listaFiltrada([], [{ filtro: 'incompleta' }]);
   expect(lista.filas).toHaveLength(0);
   expect(lista.total).toBe(0);
   expect(lista.vacio).toBe('Ninguna defensa quedó incompleta.');
@@ -44,7 +44,7 @@ test('la lista respeta el tope de filas y dice cuántos son en total', () => {
     nombre: `Persona ${indice}`,
     entregaTardia: true,
   }));
-  const lista = listaFiltrada(muchos, 'tarde');
+  const lista = listaFiltrada(muchos, [{ filtro: 'tarde' }]);
   expect(lista.filas).toHaveLength(LIMITES_TARJETAS.filasLista);
   expect(lista.total).toBe(LIMITES_TARJETAS.filasLista + 7);
 });
@@ -52,7 +52,7 @@ test('la lista respeta el tope de filas y dice cuántos son en total', () => {
 test('el nivel en un objetivo solo cuenta a quienes defendieron', () => {
   const objetivo = OBJETIVOS[0];
   if (!objetivo) throw new Error('falta el objetivo 1');
-  const lista = listaFiltrada(ALUMNOS, 'nivel-en-objetivo', { objetivo, nivel: 'no-salio' });
+  const lista = listaFiltrada(ALUMNOS, [{ filtro: 'nivel-en-objetivo', objetivo, niveles: ['no-salio'] }]);
   expect(lista.filas.map((fila) => fila.matricula)).toEqual(['20231323']);
 });
 

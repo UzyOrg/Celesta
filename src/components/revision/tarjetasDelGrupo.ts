@@ -3,6 +3,7 @@ import {
   LIMITES_TARJETAS,
   type DiaDeRitmo,
   type FiltroLista,
+  type NivelDeFiltro,
   type FilaLista,
   type GrupoPorNivel,
   type PersonaEnTarjeta,
@@ -12,15 +13,14 @@ import {
 } from './catalogo';
 import { conteoPorObjetivo, estadoDe, textoDeDefensa, textoDeEntrega, textoPartesParaOir } from './derivados';
 import { claveDeOrden } from './fechas';
-import type { Alumno, MarcaDeTiempo, Objetivo } from './types';
+import type { Alumno, EvidenciaObjetivo, MarcaDeTiempo, Objetivo } from './types';
 
 /**
  * Arma los props de las tarjetas nuevas del catálogo a partir de la lista de
  * alumnos, igual que `derivados.ts`: ninguna cifra ni nombre se escribe a mano.
  *
- * Son funciones puras para que el servidor del asistente (fase 2) las use tal
- * cual al "hidratar" lo que eligió el modelo, y para que las maquetas muestren
- * hoy lo mismo que se verá con datos reales.
+ * Son funciones puras: el servidor del asistente (`servicios/asistenteProfesor.ts`)
+ * las usa al armar lo que eligió el modelo, y las maquetas muestran lo mismo.
  */
 
 function persona(alumno: Alumno): PersonaEnTarjeta {
@@ -31,10 +31,12 @@ function persona(alumno: Alumno): PersonaEnTarjeta {
 /* Lista filtrada                                                           */
 /* ------------------------------------------------------------------------ */
 
-export interface OpcionesLista {
-  /** Solo para `nivel-en-objetivo`. */
+/** Un filtro cerrado; `objetivo` y `niveles` solo valen para `nivel-en-objetivo`. */
+export interface FiltroDeLista {
+  filtro: FiltroLista;
   objetivo?: Objetivo;
-  nivel?: NivelEvidencia | null;
+  /** Uno o varios niveles: basta con estar en cualquiera ("en parte o no salió"). */
+  niveles?: readonly NivelDeFiltro[];
 }
 
 const TITULO_DE_FILTRO: Readonly<Record<Exclude<FiltroLista, 'nivel-en-objetivo'>, string>> = {
@@ -59,13 +61,18 @@ const VACIO_DE_FILTRO: Readonly<Record<Exclude<FiltroLista, 'nivel-en-objetivo'>
   'partes-para-oir': 'Ningún reporte trae algo para oír.',
 };
 
-const NOMBRE_DE_NIVEL: Readonly<Record<NivelEvidencia, string>> = {
-  explico: 'Lo explicaron',
-  'en-parte': 'Lo explicaron en parte',
-  'no-salio': 'No salió',
+const NOMBRE_DE_NIVEL: Readonly<Record<NivelDeFiltro, string>> = {
+  explico: 'lo explicaron',
+  'en-parte': 'lo explicaron en parte',
+  'no-salio': 'no salió',
+  'sin-dato': 'sin dato',
 };
 
-function cumple(alumno: Alumno, filtro: FiltroLista, opciones: OpcionesLista): boolean {
+function valorDeFiltro(nivel: EvidenciaObjetivo): NivelDeFiltro {
+  return nivel ?? 'sin-dato';
+}
+
+function cumple(alumno: Alumno, { filtro, objetivo, niveles }: FiltroDeLista): boolean {
   switch (filtro) {
     case 'tarde':
       return alumno.entregaTardia || alumno.defensaTardia;
@@ -76,13 +83,19 @@ function cumple(alumno: Alumno, filtro: FiltroLista, opciones: OpcionesLista): b
     case 'partes-para-oir':
       return alumno.defensa !== null && alumno.partesParaOir > 0;
     case 'nivel-en-objetivo': {
-      if (!opciones.objetivo || alumno.defensa === null) return false;
-      const valor = alumno.evidencia[opciones.objetivo.id - 1] ?? null;
-      return valor === (opciones.nivel ?? null);
+      if (!objetivo || alumno.defensa === null || !niveles || niveles.length === 0) return false;
+      return niveles.includes(valorDeFiltro(alumno.evidencia[objetivo.id - 1] ?? null));
     }
     default:
       return estadoDe(alumno) === filtro;
   }
+}
+
+function tituloDe({ filtro, objetivo, niveles }: FiltroDeLista): string {
+  if (filtro !== 'nivel-en-objetivo') return TITULO_DE_FILTRO[filtro];
+  const cuales = (niveles ?? []).map((nivel) => NOMBRE_DE_NIVEL[nivel]);
+  const lista = cuales.length > 1 ? `${cuales.slice(0, -1).join(', ')} o ${cuales[cuales.length - 1]}` : (cuales[0] ?? 'sin dato');
+  return `Objetivo ${objetivo?.id ?? 0}: ${lista}`;
 }
 
 function filaDe(alumno: Alumno): FilaLista {
@@ -98,30 +111,33 @@ function filaDe(alumno: Alumno): FilaLista {
   return { ...persona(alumno), detalle, etiquetas: etiquetas.slice(0, 3), accion };
 }
 
-/** Quienes cumplen un filtro cerrado, en el orden de la lista por estado y con un tope de filas. */
-export function listaFiltrada(alumnos: readonly Alumno[], filtro: FiltroLista, opciones: OpcionesLista = {}): PropsTarjetaLista {
+/**
+ * Quienes cumplen todos los filtros (de uno a tres), por momento de defensa o de
+ * entrega y luego por nombre, nunca por desempeño. Con tope de filas.
+ */
+export function listaFiltrada(alumnos: readonly Alumno[], filtros: readonly FiltroDeLista[]): PropsTarjetaLista {
   const cumplen = alumnos
-    .filter((alumno) => cumple(alumno, filtro, opciones))
+    .filter((alumno) => filtros.length > 0 && filtros.every((filtro) => cumple(alumno, filtro)))
     .sort((a, b) => claveDeOrden(a.defensa ?? a.entrega) - claveDeOrden(b.defensa ?? b.entrega) || a.nombre.localeCompare(b.nombre, 'es'));
 
-  let titulo: string;
-  let vacio: string;
-  if (filtro === 'nivel-en-objetivo') {
-    const nivel = opciones.nivel ? NOMBRE_DE_NIVEL[opciones.nivel] : 'Sin dato';
-    const numero = opciones.objetivo?.id ?? 0;
-    titulo = `Objetivo ${numero}: ${nivel.toLowerCase()}`;
-    vacio = 'Nadie quedó en ese nivel.';
-  } else {
-    titulo = TITULO_DE_FILTRO[filtro];
-    vacio = VACIO_DE_FILTRO[filtro];
-  }
+  const titulos = filtros.map(tituloDe);
+  const titulo = titulos.map((parte, indice) => (indice === 0 ? parte : parte.charAt(0).toLowerCase() + parte.slice(1))).join(' y ');
+  const unico = filtros.length === 1 ? filtros[0] : undefined;
+  const vacio =
+    unico && unico.filtro !== 'nivel-en-objetivo' ? VACIO_DE_FILTRO[unico.filtro] : unico ? 'Nadie quedó en ese nivel.' : 'Nadie cumple todo eso.';
 
   return {
-    titulo,
+    titulo: titulo.slice(0, 90),
     filas: cumplen.slice(0, LIMITES_TARJETAS.filasLista).map(filaDe),
     total: cumplen.length,
     vacio,
   };
+}
+
+/** Unas personas concretas (por ejemplo, las que se llaman parecido), en orden alfabético. */
+export function listaDePersonas(alumnos: readonly Alumno[], titulo: string, vacio: string): PropsTarjetaLista {
+  const ordenadas = alumnos.slice().sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
+  return { titulo, filas: ordenadas.slice(0, LIMITES_TARJETAS.filasLista).map(filaDe), total: ordenadas.length, vacio };
 }
 
 /* ------------------------------------------------------------------------ */

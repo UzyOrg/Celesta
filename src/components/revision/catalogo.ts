@@ -1,14 +1,23 @@
 import type { NivelEvidencia } from '../celeste/types';
-import type { ConteoObjetivo, EvidenciaObjetivo, ModoRespuesta } from './types';
+import type {
+  Alumno,
+  ConteoObjetivo,
+  DescargaGrupo,
+  EvidenciaObjetivo,
+  ModoRespuesta,
+  ResumenGrupo,
+  SeccionGrupo,
+} from './types';
 
 /**
  * Catálogo cerrado de tarjetas con las que Celestea le responde al profesor
- * (propuesta, fase 1: hoy solo lo usan las maquetas de `/revision/demo?escena=asistente`).
+ * (ADR 0014, cuarto uso del modelo; diseño en `docs/defensas/asistente-profesor.md`).
  *
  * Cada tipo trae props ya armados por el servidor con datos del grupo del enlace.
- * El modelo de lenguaje, cuando exista, solo elegirá el tipo y sus argumentos
- * (un filtro, un objetivo, un alias); nunca escribe estos props ni la interfaz.
- * Los límites de abajo son los mismos que validará el servidor.
+ * El modelo de lenguaje solo elige el tipo y sus argumentos (un filtro, un
+ * objetivo, un alias); nunca escribe estos props ni la interfaz. Los límites de
+ * abajo son los mismos que valida el servidor. Este archivo es el contrato entre
+ * `servicios/asistenteProfesor.ts` y el navegador.
  */
 
 export const LIMITES_TARJETAS = {
@@ -29,16 +38,24 @@ export const LIMITES_TARJETAS = {
 } as const;
 
 /** Los filtros que puede pedir una lista; ningún otro existe. */
-export type FiltroLista =
-  | 'sin-entregar'
-  | 'sin-defensa'
-  | 'por-revisar'
-  | 'revisado'
-  | 'tarde'
-  | 'incompleta'
-  | 'otra-version'
-  | 'partes-para-oir'
-  | 'nivel-en-objetivo';
+export const FILTROS_DE_LISTA = [
+  'sin-entregar',
+  'sin-defensa',
+  'por-revisar',
+  'revisado',
+  'tarde',
+  'incompleta',
+  'otra-version',
+  'partes-para-oir',
+  'nivel-en-objetivo',
+] as const;
+
+export type FiltroLista = (typeof FILTROS_DE_LISTA)[number];
+
+/** Un nivel de evidencia, o "sin dato", para filtrar por objetivo. */
+export const NIVELES_DE_FILTRO = ['explico', 'en-parte', 'no-salio', 'sin-dato'] as const;
+
+export type NivelDeFiltro = (typeof NIVELES_DE_FILTRO)[number];
 
 /** Lo mínimo para nombrar a alguien en una tarjeta. */
 export interface PersonaEnTarjeta {
@@ -96,6 +113,8 @@ export interface PropsTarjetaCitas {
 
 export interface PropsTarjetaPendientes {
   porRevisar: number;
+  /** El primero de la cola de revisión, para "Revisar uno por uno". */
+  primeraMatricula: string | null;
   /** De los que esperan revisión, cuántos traen algo para oír. */
   conPartesParaOir: number;
   reportesPreparando: number;
@@ -120,6 +139,7 @@ export interface PropsTarjetaRitmo {
   duracionTipica: string | null;
 }
 
+/** Queda para la v2: no está en el catálogo que ve el modelo, solo en su maqueta. */
 export interface PropsTarjetaEnlace {
   activo: boolean;
   enviosUsados: number;
@@ -142,3 +162,70 @@ export const FRASE_DE_RECHAZO: Readonly<Record<MotivoRechazo, string>> = {
   'fuera-de-alcance':
     'Eso no lo sé hacer. Puedo mostrarte el avance, a una persona, listas del grupo, lo que costó cada objetivo, frases de las defensas o lo que te falta.',
 };
+
+/* ------------------------------------------------------------------------ */
+/* Respuesta del asistente: lo que el servidor manda y el navegador pinta   */
+/* ------------------------------------------------------------------------ */
+
+/** Los tipos del catálogo de la v1. Cualquier otro que llegue se ignora. */
+export const TIPOS_DE_TARJETA = [
+  'avance',
+  'alumno',
+  'grupo',
+  'objetivos',
+  'descarga',
+  'lista',
+  'objetivo',
+  'citas',
+  'pendientes',
+  'ritmo',
+  'accion',
+] as const;
+
+export type TipoTarjeta = (typeof TIPOS_DE_TARJETA)[number];
+
+export type TarjetaRespuesta =
+  | { tipo: 'avance'; props: { resumen: ResumenGrupo; sinEntregar: readonly Alumno[]; sinDefensa: readonly Alumno[] } }
+  | { tipo: 'alumno'; props: { alumno: Alumno } }
+  | { tipo: 'grupo'; props: { secciones: readonly SeccionGrupo[] } }
+  | { tipo: 'objetivos'; props: { conteos: readonly ConteoObjetivo[] } }
+  | { tipo: 'descarga'; props: { descarga: DescargaGrupo; entregaron: number; sinEntregar: number } }
+  | { tipo: 'lista'; props: PropsTarjetaLista }
+  | { tipo: 'objetivo'; props: PropsTarjetaObjetivo }
+  | { tipo: 'citas'; props: PropsTarjetaCitas }
+  | { tipo: 'pendientes'; props: PropsTarjetaPendientes }
+  | { tipo: 'ritmo'; props: PropsTarjetaRitmo }
+  /** Una acción de una extensión de la barra (ver `extensiones/`); se ejecuta en el navegador. */
+  | { tipo: 'accion'; props: { id: string } };
+
+/** De dónde salió la respuesta: el modelo, una plantilla tras descartar su frase, las reglas o el filtro de rechazos. */
+export type FuenteRespuesta = 'modelo' | 'plantilla' | 'reglas' | 'filtro';
+
+export interface RespuestaAsistente {
+  /** Ya verificado en el servidor: cada cifra y nombre sale de los datos del grupo. */
+  texto: string;
+  tarjetas: readonly TarjetaRespuesta[];
+  sugerencias: readonly string[];
+  fuente: FuenteRespuesta;
+  rechazo: MotivoRechazo | null;
+}
+
+/** Una línea del flujo NDJSON de `POST /api/defensa/asistente`. */
+export type EventoAsistente =
+  | { tipo: 'paso'; texto: string }
+  | { tipo: 'respuesta'; respuesta: RespuestaAsistente }
+  | { tipo: 'error'; mensaje: string };
+
+export const LIMITES_ASISTENTE = {
+  /** Caracteres de lo que escribe o dicta el profesor. */
+  peticion: 300,
+  /** Peticiones anteriores que acompañan a la nueva. */
+  historial: 2,
+  /** Caracteres de la frase de Celestea. */
+  texto: 280,
+} as const;
+
+export interface PeticionAsistente {
+  peticion: string;
+  historial: readonly { peticion: string; tipos: readonly TipoTarjeta[] }[];
+}

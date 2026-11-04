@@ -6,8 +6,9 @@
  * @type {import('next').NextConfig}
  */
 /**
- * El micrófono está cerrado en todo el sitio salvo en /defensa, donde el alumno habla
- * y solo el propio sitio (`self`) puede pedirlo: ningún iframe ni script ajeno. La cámara
+ * El micrófono está cerrado en todo el sitio salvo en /defensa, donde el alumno habla, y en
+ * /revision, donde el profesor puede dictarle a Celestea (solo si hay transcripción real
+ * configurada). Solo el propio sitio (`self`) puede pedirlo: ningún iframe ni script ajeno. La cámara
  * sigue cerrada en todas partes, también en /defensa: no hay cámara ni vigilancia.
  */
 const permissionsPolicy = (microphone) => ({
@@ -66,6 +67,7 @@ const nextConfig = {
     return [
       { source: '/:path*', headers: [...headers, permissionsPolicy('()')] },
       { source: '/defensa/:path*', headers: [permissionsPolicy('(self)')] },
+      { source: '/revision/:path*', headers: [permissionsPolicy('(self)')] },
     ];
   },
   async rewrites() {

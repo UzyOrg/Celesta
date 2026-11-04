@@ -23,6 +23,7 @@ import type {
   ParteParaOir,
   ReporteAlumno,
   RespuestaReporte,
+  TrabajoParaLeer,
   TurnoAdicionalReporte,
 } from '../../../components/revision/types';
 import type {
@@ -521,6 +522,40 @@ async function emitirDescarga(ctx: Ctx, actividad: ActividadRow, alcance: 'uno' 
     clave: `${actividad.id}:${ctx.ahora().getTime()}:${alcance}`,
     medidas: { alcance, cantidad },
   });
+}
+
+// ── Visor del trabajo ───────────────────────────────────────────────────────
+
+/** Caracteres que se mandan al visor; un trabajo más largo se lee completo al descargarlo. */
+const MAX_TEXTO_VISOR = 200_000;
+
+/**
+ * El texto del trabajo que entregó un alumno de esta actividad, para leerlo junto a su
+ * reporte. Solo lectura y solo para el profesor; nunca va al modelo del asistente.
+ */
+export async function trabajoParaLeer(ctx: Ctx, actividad: ActividadRow, entregaId: string): Promise<TrabajoParaLeer> {
+  const entrega = await ctx.repo.entregaPorId(entregaId);
+  if (!entrega || entrega.actividadId !== actividad.id || entrega.estado !== 'lista') throw noEncontrado();
+  const texto = entrega.textoExtraido ?? '';
+  await ctx.eventos.emitir({
+    verbo: 'completo_paso',
+    evento: 'visor_trabajo',
+    pasoId: 'visor-trabajo',
+    actividadId: actividad.id,
+    actorId: actividad.id,
+    clave: `${entrega.id}:${ctx.ahora().getTime()}`,
+    medidas: { entregaId: entrega.id },
+  });
+  return {
+    nombre: entrega.tipo === 'texto' ? 'Texto pegado' : entrega.nombreArchivo,
+    tipo: entrega.tipo,
+    version: entrega.version,
+    paginas: entrega.paginas,
+    palabras: entrega.palabras,
+    entregadoEn: marcaDeFecha(new Date(entrega.listaEn ?? entrega.creadaEn)),
+    texto: texto.slice(0, MAX_TEXTO_VISOR),
+    recortado: texto.length > MAX_TEXTO_VISOR,
+  };
 }
 
 // ── Toques, tiempo de revisión, audio y enlace ──────────────────────────────

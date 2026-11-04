@@ -3,7 +3,7 @@ import { config } from '../config';
 import { crearLlmAnthropic, crearLlmOpenai } from './llm';
 import { crearLlmMock, crearSttMock, crearTtsMock } from './mock';
 import { crearSttAssemblyai, crearSttDeepgram, crearSttElevenlabs } from './stt';
-import type { Proveedores, ProveedorLlm, ProveedorStt, ProveedorTts } from './tipos';
+import type { Proveedores, ProveedorLlm, ProveedorStt, ProveedorTts, TareaLlm } from './tipos';
 import { crearTtsElevenlabs } from './tts';
 
 /**
@@ -17,12 +17,18 @@ import { crearTtsElevenlabs } from './tts';
  * interfaces de providers/tipos.ts. Las llaves y el modelo se leen en cada
  * llamada, nunca se guardan en una constante.
  */
+/** El clasificador y el asistente del profesor usan modelos rápidos; el plan y el reporte, el principal. */
+function modeloParaTarea(tarea: TareaLlm): string | undefined {
+  if (tarea === 'asistente') return config.modeloAsistente();
+  return tarea === 'clasificar_turno' ? config.modeloClasificador() : config.modeloPlan();
+}
+
 export function crearLlm(): ProveedorLlm {
   switch (config.proveedorLlm()) {
     case 'openai':
-      return crearLlmOpenai({ clave: config.claveOpenai, modelo: (tarea) => (tarea === 'clasificar_turno' ? config.modeloClasificador() : config.modeloPlan()) });
+      return crearLlmOpenai({ clave: config.claveOpenai, modelo: modeloParaTarea });
     case 'anthropic':
-      return crearLlmAnthropic({ clave: config.claveAnthropic, modelo: (tarea) => (tarea === 'clasificar_turno' ? config.modeloClasificador() : config.modeloPlan()) });
+      return crearLlmAnthropic({ clave: config.claveAnthropic, modelo: modeloParaTarea });
     default:
       return crearLlmMock();
   }

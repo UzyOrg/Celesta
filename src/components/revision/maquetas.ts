@@ -81,7 +81,7 @@ export const DESCRIPCION_DE_MAQUETA: Readonly<Record<EscenaDeMaqueta, string>> =
   'asistente-alumno': 'Cualquier persona del grupo, no solo Ana',
   'asistente-pendientes': 'Lo que te falta',
   'asistente-ritmo': 'Cuándo entregaron y defendieron',
-  'asistente-enlace': 'Desactivar el enlace, con confirmación',
+  'asistente-enlace': 'Desactivar el enlace, con confirmación (queda para la v2)',
   'asistente-varias': 'Una respuesta con dos tarjetas',
   'asistente-rechazo': 'Rechazo amable: sospecha',
   'asistente-calificar': 'Rechazo con alternativa: calificar',
@@ -117,7 +117,7 @@ export function maquetaDelAsistente(grupo: DatosGrupo, escena: EscenaDeMaqueta):
 
   switch (escena) {
     case 'asistente-lista': {
-      const lista = listaFiltrada(alumnos, 'tarde');
+      const lista = listaFiltrada(alumnos, [{ filtro: 'tarde' }]);
       return {
         escena,
         peticion: '¿Quién entregó tarde?',
@@ -131,7 +131,7 @@ export function maquetaDelAsistente(grupo: DatosGrupo, escena: EscenaDeMaqueta):
       };
     }
     case 'asistente-vacia': {
-      const lista = listaFiltrada(alumnosEnEstado(alumnos, 'revisado'), 'incompleta');
+      const lista = listaFiltrada(alumnosEnEstado(alumnos, 'revisado'), [{ filtro: 'incompleta' }]);
       return {
         escena,
         peticion: 'De los que ya revisé, ¿alguno quedó incompleto?',
@@ -194,6 +194,7 @@ export function maquetaDelAsistente(grupo: DatosGrupo, escena: EscenaDeMaqueta):
             tipo: 'pendientes',
             props: {
               porRevisar: resumen.porRevisar,
+              primeraMatricula: porRevisar[0]?.matricula ?? null,
               conPartesParaOir: porRevisar.filter((alumno) => alumno.partesParaOir > 0).length,
               reportesPreparando: 1,
               reportesConError: 0,
@@ -235,6 +236,7 @@ export function maquetaDelAsistente(grupo: DatosGrupo, escena: EscenaDeMaqueta):
             tipo: 'pendientes',
             props: {
               porRevisar: resumen.porRevisar,
+              primeraMatricula: porRevisar[0]?.matricula ?? null,
               conPartesParaOir: porRevisar.filter((alumno) => alumno.partesParaOir > 0).length,
               reportesPreparando: 0,
               reportesConError: 0,

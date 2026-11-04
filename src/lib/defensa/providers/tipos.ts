@@ -12,7 +12,7 @@ import 'server-only';
 
 // ── Modelo de lenguaje ──────────────────────────────────────────────────────
 
-export type TareaLlm = 'plan' | 'clasificar_turno' | 'reporte';
+export type TareaLlm = 'plan' | 'clasificar_turno' | 'reporte' | 'asistente';
 
 export interface MensajeLlm {
   rol: 'user' | 'assistant';
@@ -36,6 +36,8 @@ export interface RespuestaJson {
   json: unknown;
   proveedor: string;
   modelo: string;
+  /** Tokens que cobró el proveedor, si los reporta. */
+  uso?: { entrada: number; salida: number };
 }
 
 export interface ProveedorLlm {
