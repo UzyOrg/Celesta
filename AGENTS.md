@@ -8,10 +8,18 @@ Celestea is a **voice-first, AI-native learning companion** for Mexican high-sch
 
 ## 0. WHAT WE ARE — AND ARE NOT (read first)
 **We ARE:** a B2C voice-first companion; guided discovery with explicit support; success measured by **transfer + a durable retest**; a warm, low-stakes, **zero-surveillance** tone.
+- una superficie separada de **defensas orales** (`/defensa`, `/revision`, `/api/defensa`):
+  el alumno explica con su voz un trabajo que ya entregó y un profesor lee un reporte
+  posterior. No reemplaza a `/crear`, no califica y no vigila (ver ADR 0014).
 
 **We are NOT (deprecated):** a teacher dashboard, a proctoring / anti-cheat *"Verification OS"*, a *"Cognitive Gym"* with a Cognitive Growth Index, stealth assessment, tab-switch tracking, or "productive friction" via UI lockdown. **Do not build on that philosophy.**
 
 **LEGACY ZONES — keep them, do NOT extend them, do NOT import their philosophy:** `src/app/(dashboard)/`, anything `teacher*`, `src/components/teacher/`, `src/components/grupos/`, `src/components/cognitive-tools/` (`TerminalCanvas`, `LogicScaffold`, `OralDefenseTrigger`), `src/app/transparencia-ia/`, `src/app/ai-transparencia/`.
+
+**ZONA PROPIA — extender con cuidado:** `src/app/defensa/`, `src/app/revision/`,
+`src/app/api/defensa/`, `src/lib/defensa/`, `src/components/defensa/`,
+`src/components/revision/`, `src/components/celeste/`. No importan nada de `/crear` ni de las
+zonas heredadas, y `/crear` no importa nada de ellas.
 
 ## 1. STRICT TECHNICAL RULES
 1. **CSS Modules ONLY** (`.module.css`). **ZERO Tailwind.**
@@ -24,11 +32,15 @@ Celestea is a **voice-first, AI-native learning companion** for Mexican high-sch
    - the founder-provided wave video is an atmospheric layer, not decoration competing with the lesson;
    - preserve its seamless opacity fade and loading poster unless the founder approves a change;
    - avoid generic AI-design patterns: gratuitous gradients, excessive cards, floating pills, ornamental labels, repeated headings, and copy that names internal UI concepts.
+   - Excepción: la superficie de defensas usa el sistema visual Celeste de los tableros aprobados
+     (`docs/defensas/ui-prototipo.md`), no *chalk over film*. Sigue sin Tailwind y con CSS Modules.
 3. **TypeScript strict.** Interfaces for every component prop and every JSON contract (lesson JSON, classifier I/O, telemetry).
 4. **Mobile-first, local-first, offline-tolerant.** Assume low-end Android over flaky networks.
 5. Motion must clarify state, progression, or feedback. Use smooth `framer-motion` transitions, respect reduced motion, and avoid animation that delays comprehension.
 6. Icons from `lucide-react`; accessibility always. Primary actions belong in the mobile thumb zone. Narration must remain available to assistive technology and have a visible fallback when audio fails.
 7. **Typography:** [`docs/design-system/typography.md`](docs/design-system/typography.md) is the canonical type contract for active product surfaces. Use the existing Celestea type tokens by semantic role; do not add raw, one-off font sizes or fluid typography for readable lesson copy without updating that contract.
+   - Excepción: la superficie de defensas usa Bricolage Grotesque y DM Mono con los tamaños de los
+     tableros aprobados, definidos en `src/components/celeste/tokens.module.css`.
 
 ## 2. THE LEARNING EXPERIENCE (voice-first)
 - The companion **speaks** (TTS); the student responds. **v1 = TTS output is core; student input is TEXT.** Voice input (STT / Whisper) is a **flagged fast-follow**, NOT required for v1 — keep the voice layer thin to validate the pedagogy fast and cheap.
@@ -38,6 +50,15 @@ Celestea is a **voice-first, AI-native learning companion** for Mexican high-sch
 - Do not reintroduce the deprecated three-long-free-text-answer flow. The first student observation showed stress, repetition, fatigue, and poor access to the explanation. Early practice should be structured and low-friction; independent production belongs in transfer.
 - Guidance must remain consultable during practice. Record meaningful assistance so supported and independent performance are distinguishable.
 - **Tone:** warm, curious, peer-like, zero judgment. A wrong answer is a normal step met with a useful nudge — never punishment, never a "gotcha."
+- Excepción acotada para las defensas orales: el LLM puede (a) armar, antes de la defensa, el
+  plan de preguntas a partir del trabajo entregado por el alumno, validado y guardado en el
+  servidor; (b) clasificar cada respuesta en una clase fija; (c) redactar el reporte
+  posterior para el profesor, con cada cita verificada en código contra la transcripción; y
+  (d) en la pantalla del profesor, elegir tarjetas de un catálogo cerrado y redactar una frase
+  corta sobre ellas, con datos seudónimos del grupo y cada cifra y nombre verificados en código.
+  Nunca genera interfaz, nunca escribe preguntas durante la defensa y nada de eso llega al navegador.
+  La salida del alumno puede ser voz; su transcripción pasa por un proveedor externo con la
+  opción de no retención y el audio se borra a los 7 días.
 
 ## 3. REUSE THE PLUMBING (do not rebuild it)
 - **Identity / session:** `src/lib/session.ts` (`getOrCreateSessionId`, 7-day expiry — ideal for the 7-day retest), `src/lib/alias.ts`.
@@ -46,6 +67,8 @@ Celestea is a **voice-first, AI-native learning companion** for Mexican high-sch
 - **Lesson content:** authored JSON under `public/workshops/`; no runtime-generated instructional copy. Preserve explicit content and audio versioning.
 - **Local / state:** reuse `src/lib/idb.ts`; `/crear` study progression lives in `src/lib/crear/studyState.ts`. **Supabase:** `src/lib/supabase/` (Service Role server-side only).
 - `src/lib/workshops/` and `src/lib/workshopState.ts` remain reusable infrastructure for older workshop surfaces, but they are not the active `/crear` player contract.
+- Las defensas usan su propia sesión firmada (`src/lib/defensa/firmas.ts`) y escriben sus
+  eventos desde el servidor; no usan `session.ts`, `alias.ts` ni `track.ts`.
 
 ## 4. ACTIVE PRODUCT SURFACE
 - `/crear` is the active student companion surface: `src/app/crear/` + `src/components/crear/`. Extend it directly; do **not** reskin or import philosophy from the teacher/workshop UI.
@@ -62,8 +85,11 @@ Call `trackEvent(verbo, { tallerId, pasoId, result })`:
 
 Analysis derives pre/post/transfer from `result.fase`. **Preserve raw `texto`** for human grading at small n.
 
+`taller_id` con prefijo `defensa:` está reservado al servidor de defensas; la ingesta pública
+lo rechaza.
+
 ## 6. GOVERNANCE
 - **Propose architecture → founder approves → build.** For any non-trivial structural change, write a short **Architecture Proposal** first (see Notion `07 · Prompt del Arquitecto`) and wait for approval.
-- Never extend legacy zones (§0). Never add Tailwind to `/crear` or new product surfaces. Never let the LLM generate content/UI at runtime.
+- Never extend legacy zones (§0). Never add Tailwind to `/crear` or new product surfaces. Never let the LLM generate content/UI at runtime (outside the bounded defensas exception in §2, ADR 0014).
 - Before changing the active MVP, read `docs/CURRENT_STATE.md` and inspect the worktree. Preserve founder-owned changes and do not overwrite unrelated work.
 - Source of truth is Notion **00–08**. When in doubt, ask the founder — do not guess the product direction.
