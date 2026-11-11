@@ -16,6 +16,26 @@
   max-width: 900px;
 }
 
+/* Con el trabajo abierto, el reporte y el visor van lado a lado (el visor es una hoja en pantallas angostas). */
+.sinVisor,
+.conVisor {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 28px;
+  width: 100%;
+}
+
+.conVisor .columna {
+  min-width: 0;
+}
+
+.accionesCabecera {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
 /* ───────── Migas y cola ───────── */
 
 .migas {

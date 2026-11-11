@@ -201,8 +201,9 @@ export function localizarCita(respuesta: string, cita: string): string | null {
 
 // ── Texto libre del modelo: sin notas, porcentajes ni sospechas ─────────────
 
-const PROHIBIDO = new RegExp(
-  '(?:\\d+\\s*(?:%|por\\s*ciento)|\\bpuntos?\\b|\\bpuntaje\\b|\\bcalificaci[oó]n\\b|\\bnota\\b|\\bsospech|\\btrampa|\\bplagi|\\bcopi[oó]\\b|\\binteligencia\\s+artificial\\b|\\bchatgpt\\b)',
+/** Notas, porcentajes y sospechas: lo usan el reporte y la frase del asistente del profesor. */
+export const PROHIBIDO = new RegExp(
+  '(?:\\d+\\s*(?:%|por\\s*ciento)|\\bpuntos?\\b|\\bpuntaje\\b|\\bcalificaci[oó]n\\b|\\bnota\\b|\\bsospech|\\btrampa|\\bplagi|\\bcopi[oó](?![a-záéíóúñ])|\\binteligencia\\s+artificial\\b|\\bchatgpt\\b)',
   'iu',
 );
 

@@ -38,6 +38,7 @@ function analizarJson(texto: string, proveedor: string): unknown {
 
 interface RespuestaOpenai {
   choices?: Array<{ message?: { content?: string | null; refusal?: string | null } }>;
+  usage?: { prompt_tokens?: number; completion_tokens?: number };
 }
 
 export function crearLlmOpenai(credenciales: CredencialesLlm): ProveedorLlm {
@@ -76,13 +77,15 @@ export function crearLlmOpenai(credenciales: CredencialesLlm): ProveedorLlm {
         console.error('defensa_llm_sin_contenido', { proveedor: 'openai', rechazo: Boolean(mensaje?.refusal) });
         throw new DefensaError('proveedor_fallo', 502);
       }
-      return { json: analizarJson(mensaje.content, 'openai'), proveedor: 'openai', modelo };
+      const uso = datos.usage ? { entrada: datos.usage.prompt_tokens ?? 0, salida: datos.usage.completion_tokens ?? 0 } : undefined;
+      return { json: analizarJson(mensaje.content, 'openai'), proveedor: 'openai', modelo, ...(uso ? { uso } : {}) };
     },
   };
 }
 
 interface RespuestaAnthropic {
   content?: Array<{ type: string; input?: unknown }>;
+  usage?: { input_tokens?: number; output_tokens?: number; cache_read_input_tokens?: number; cache_creation_input_tokens?: number };
 }
 
 export function crearLlmAnthropic(credenciales: CredencialesLlm): ProveedorLlm {
@@ -126,7 +129,11 @@ export function crearLlmAnthropic(credenciales: CredencialesLlm): ProveedorLlm {
         console.error('defensa_llm_sin_contenido', { proveedor: 'anthropic' });
         throw new DefensaError('proveedor_fallo', 502);
       }
-      return { json: bloque.input, proveedor: 'anthropic', modelo };
+      const u = datos.usage;
+      const uso = u
+        ? { entrada: (u.input_tokens ?? 0) + (u.cache_read_input_tokens ?? 0) + (u.cache_creation_input_tokens ?? 0), salida: u.output_tokens ?? 0 }
+        : undefined;
+      return { json: bloque.input, proveedor: 'anthropic', modelo, ...(uso ? { uso } : {}) };
     },
   };
 }

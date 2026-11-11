@@ -127,6 +127,7 @@ export const SUGERENCIAS_POR_ESCENA: Readonly<Record<EscenaProfesor, readonly st
   objetivos: ['Muéstrame a Ana Torres', 'Muéstrame a todos'],
   otro: ['¿Cuántos defendieron?', 'Muéstrame a todos'],
   pensando: [],
+  asistente: [],
 };
 
 /** Texto mientras "piensa", según lo que se pidió. */

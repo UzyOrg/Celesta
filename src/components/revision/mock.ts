@@ -10,6 +10,7 @@ import type {
   Objetivo,
   Profesora,
   ReporteAlumno,
+  TrabajoParaLeer,
 } from './types';
 
 /**
@@ -296,4 +297,40 @@ export const REPORTE_ANA: ReporteAlumno = {
       },
     },
   ],
+};
+
+/* ------------------------------------------------------------------------ */
+/* Trabajo de Ana (visor de solo lectura)                                   */
+/* ------------------------------------------------------------------------ */
+
+/** Ficticio, coherente con lo que Ana dice en su defensa de ejemplo. */
+export const TRABAJO_DE_ANA: TrabajoParaLeer = {
+  nombre: 'encuesta-habitos-de-estudio-ana-torres.pdf',
+  tipo: 'archivo',
+  version: 1,
+  paginas: 4,
+  palabras: 612,
+  entregadoEn: { dia: 'vie 9', hora: '21:05' },
+  recortado: false,
+  texto: `Encuesta sobre hábitos de estudio en la Facultad de Psicología
+
+1. Pregunta de investigación
+¿Cuántas horas a la semana estudian fuera de clase los estudiantes de primer semestre, y en qué momento del día lo hacen?
+
+2. Método
+Elegí una encuesta en línea en lugar de entrevistas porque me permitía llegar a más compañeros en menos tiempo. Con entrevistas solo hubiera podido hablar con unas cinco personas en las dos semanas que tenía para el trabajo.
+
+El cuestionario tiene doce preguntas cerradas (opción múltiple y escala de frecuencia) y una abierta sobre lo que más les cuesta para organizarse.
+
+3. Muestra
+La muestra fue de cuarenta personas de primer semestre de la Facultad de Psicología. Repartí el enlace en los grupos de WhatsApp de la generación y lo dejé abierto cuatro días. Contestaron cuarenta y dos personas; descarté dos respuestas incompletas.
+
+4. Resultados
+La mayoría dijo estudiar entre tres y seis horas a la semana fuera de clase, casi siempre de noche y casi nunca los fines de semana. Quienes trabajan además de estudiar reportaron menos horas y más estudio de última hora antes de los exámenes.
+
+5. Límites
+Solo encuesté a mi facultad, así que no sé si pasa lo mismo en otras carreras. Además, las respuestas dependen de lo que cada quien recuerda y quiere contar, y quienes contestaron pueden ser los más interesados en el tema.
+
+6. Qué haría distinto
+Lo aplicaría en dos facultades para comparar, daría más tiempo para que contesten y agregaría una pregunta sobre si trabajan, que en esta versión salió solo en la pregunta abierta.`,
 };

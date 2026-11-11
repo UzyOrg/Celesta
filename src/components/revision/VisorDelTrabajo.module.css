@@ -1,0 +1,170 @@
+/* En escritorio, una columna a la derecha del reporte que se queda a la vista al bajar.
+   En pantallas angostas, una hoja que cubre la pantalla. */
+
+.visor {
+  position: sticky;
+  top: 20px;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  width: min(520px, 42vw);
+  max-height: calc(100vh - 40px);
+  border: 1px solid var(--c-linea-suave);
+  border-radius: 20px;
+  background: var(--c-tarjeta);
+  animation: entrar 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.cabecera {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 18px 10px 22px;
+}
+
+.titulos {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.titulo {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 650;
+  overflow-wrap: anywhere;
+}
+
+.detalle {
+  margin: 0;
+  color: var(--c-texto-2);
+  font-size: 13px;
+}
+
+.cerrar {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid var(--c-linea);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--c-texto);
+  cursor: pointer;
+}
+
+.cerrar:hover {
+  background: var(--c-superficie-2);
+}
+
+.aviso {
+  margin: 0 22px 10px;
+  color: var(--c-texto-2);
+  font-size: 13px;
+}
+
+.cuerpo {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 14px 22px 18px;
+  border-top: 1px solid var(--c-linea-suave);
+}
+
+.cuerpo:focus-visible {
+  outline: 2px solid var(--c-foco);
+  outline-offset: -2px;
+}
+
+.texto {
+  font-size: 16px;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.estado {
+  margin: 0 0 12px;
+  color: var(--c-texto-2);
+  font-size: 15px;
+}
+
+.pie {
+  display: flex;
+  padding: 12px 18px 16px 22px;
+  border-top: 1px solid var(--c-linea-suave);
+}
+
+.descargar {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  box-sizing: border-box;
+  height: 44px;
+  padding: 0 18px;
+  border: 1px solid var(--c-linea);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--c-texto);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.descargar:hover {
+  background: var(--c-superficie-2);
+}
+
+@media (max-width: 1100px) {
+  .visor {
+    position: fixed;
+    inset: 0;
+    z-index: 30;
+    width: auto;
+    max-height: none;
+    border: 0;
+    border-radius: 0;
+    background: var(--c-fondo);
+  }
+
+  .cabecera {
+    padding: 14px 16px 8px;
+  }
+
+  .aviso {
+    margin: 0 16px 10px;
+  }
+
+  .cuerpo {
+    padding: 14px 16px 18px;
+  }
+
+  /* El botón para descargar queda en la zona del pulgar. */
+  .pie {
+    padding: 12px 16px 20px;
+  }
+}
+
+@keyframes entrar {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .visor {
+    animation: none;
+  }
+}

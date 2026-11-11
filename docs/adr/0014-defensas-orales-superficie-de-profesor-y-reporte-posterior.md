@@ -1,8 +1,8 @@
 # ADR 0014 · Defensas orales: una superficie de profesor y un reporte posterior
 
 - **Fecha:** 2026-10-13
-- **Estado:** **BORRADOR. Pendiente de aprobación del fundador.** El cambio a `AGENTS.md` que
-  propone este documento **no está aplicado**: `AGENTS.md` sigue diciendo lo que decía.
+- **Estado:** **APROBADO por el fundador el 2026-11-03**, con el cuarto uso del modelo
+  (asistente del profesor). El cambio de la sección 5 ya está aplicado en `AGENTS.md`.
 - **Ámbito:** `/defensa`, `/revision`, `/api/defensa`, `src/lib/defensa/`,
   `src/components/defensa/`, `src/components/revision/`, `src/components/celeste/`,
   `supabase/migrations/20261013_defensa_oral_piloto.sql`
@@ -41,15 +41,17 @@ escribir en vez de hablar.
 `/defensa`, `/revision` y `/api/defensa` son una superficie propia con su propia sesión firmada
 (token de portador de 48 horas para el alumno; enlace firmado de 180 días para el profesor,
 invalidable con `rotar`). No reutiliza el runtime de lecciones de `/crear` ni sus zonas
-heredadas, y no se extiende desde ellas. Mientras no se apruebe este ADR, `productionSurface.ts`
-las **oculta en producción** (se abren con `DEFENSA_PUBLICA=1`).
+heredadas, y no se extiende desde ellas. Aunque el ADR ya está aprobado, `productionSurface.ts`
+las **oculta en producción** (se abren con `DEFENSA_PUBLICA=1`). Abrirlas es una decisión aparte:
+falta el aviso de privacidad.
 
 ### 2. El profesor lee, no vigila
 
 La pantalla del profesor existe para **leer un reporte y bajar trabajos**: qué mostró el alumno
 en cada objetivo (niveles escritos, nunca notas ni porcentajes), la transcripción de lo que
-dijo, el audio **solo** de la frase que el propio alumno marcó o aclaró, y la descarga de los
-trabajos. El profesor califica donde siempre. Se le pregunta qué cree antes de ver el reporte y
+dijo, el audio **solo** de la frase que el propio alumno marcó o aclaró, la descarga de los
+trabajos y un **visor de solo lectura** del trabajo entregado, junto a su reporte (no se califica
+dentro de Celestea). El profesor califica donde siempre. Se le pregunta qué cree antes de ver el reporte y
 si coincidió al cerrarlo, como evidencia de si el reporte le sirve; el alumno nunca lo ve.
 El alumno puede **marcar lo que no dijo así** antes de entregar y ver exactamente la
 transcripción que verá el profesor.
@@ -68,6 +70,21 @@ transcripción que verá el profesor.
   **verifica que cada cita aparezca literalmente en la transcripción** (3 a 60 palabras, del
   turno del mismo objetivo) y degrada a "sin dato" cualquier nivel sin cita verificada. Un
   filtro descarta textos con notas, porcentajes o sospechas.
+- **Asistente del profesor con catálogo cerrado** (aprobado el 2026-11-03): en `/revision`, el
+  profesor pide en lenguaje natural lo que quiere ver. El modelo **elige** de un catálogo cerrado
+  de tarjetas (`src/components/revision/catalogo.ts`) y de sus argumentos cerrados (filtro,
+  objetivo, alias), con salida estructurada, y **redacta una frase corta** sobre ellas (máximo 280
+  caracteres). El servidor arma cada tarjeta con consultas tipadas del grupo del enlace firmado del
+  profesor, sin acceso a otra actividad, y descarta lo que no cumpla el esquema. Al modelo le llega
+  una hoja **seudónima** del grupo (alias, estados, niveles y fechas por día), nunca nombres,
+  matrículas, trabajos, transcripciones ni citas; los nombres que escribe el profesor, y los que se
+  les parecen, se cambian por alias en el servidor antes de enviarse. **Cada número y cada nombre
+  de esa frase debe salir de los datos del servidor** y la frase pasa por el mismo filtro de notas,
+  porcentajes y sospechas; si algo no coincide, se usa una plantilla fija. Calificar, ordenar a
+  personas por desempeño, buscar copia o uso de IA, mostrar el ensayo o el estrés y consultar otro
+  grupo se rechazan con una frase fija, primero con un filtro de palabras y luego con el modelo.
+  Ninguna acción con efecto ocurre sin un toque del profesor. Si el modelo falla, contestan las
+  reglas locales (`intenciones.ts`). Diseño completo en `docs/defensas/asistente-profesor.md`.
 
 El modelo **nunca** genera la interfaz, **nunca** escribe preguntas durante la defensa (el motor
 de turnos es una función pura que elige entre las del plan) y **nunca** recibe el plan ni los
@@ -88,9 +105,9 @@ existente (`eventos_de_aprendizaje`, mismos verbos, detalle en `result`, **sin t
 alumno**); el prefijo `taller_id = defensa:<actividad>` queda **reservado** y la ingesta pública
 lo rechaza.
 
-### 5. Cambio propuesto a `AGENTS.md` (NO aplicado)
+### 5. Cambio a `AGENTS.md` (aplicado el 2026-11-03)
 
-> Esto es lo que se propone escribir en `AGENTS.md` si se aprueba el ADR. Hoy no está ahí.
+> Esto es lo que se escribió en `AGENTS.md` al aprobarse el ADR.
 
 **§0, en "We ARE", añadir:**
 
@@ -120,8 +137,10 @@ lo rechaza.
 > Excepción acotada para las defensas orales: el LLM puede (a) armar, antes de la defensa, el
 > plan de preguntas a partir del trabajo entregado por el alumno, validado y guardado en el
 > servidor; (b) clasificar cada respuesta en una clase fija; y (c) redactar el reporte
-> posterior para el profesor, con cada cita verificada en código contra la transcripción. Nunca
-> genera interfaz, nunca escribe preguntas durante la defensa y nada de eso llega al navegador.
+> posterior para el profesor, con cada cita verificada en código contra la transcripción; y
+> (d) en la pantalla del profesor, elegir tarjetas de un catálogo cerrado y redactar una frase
+> corta sobre ellas, con datos seudónimos del grupo y cada cifra y nombre verificados en código.
+> Nunca genera interfaz, nunca escribe preguntas durante la defensa y nada de eso llega al navegador.
 > La salida del alumno puede ser voz; su transcripción pasa por un proveedor externo con la
 > opción de no retención y el audio se borra a los 7 días.
 
@@ -167,8 +186,8 @@ lo rechaza.
 
 ## Preguntas abiertas para el fundador
 
-1. ¿Se aprueba la excepción al §2 tal como está redactada, o se prefiere reducirla (por
-   ejemplo, sin reporte generado por el modelo)?
+1. ~~¿Se aprueba la excepción al §2 tal como está redactada?~~ Resuelta el 2026-11-03: se
+   aprueba tal como está, con el cuarto uso del modelo.
 2. ¿Quién cierra una cohorte y cuándo empieza a contar el borrado de 90 días?
 3. ¿Los participantes del piloto son mayores de edad? La confirmación "soy mayor de edad" está
    en la entrada; si hay menores, el flujo de consentimiento cambia.

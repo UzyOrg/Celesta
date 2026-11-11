@@ -104,6 +104,9 @@ export const config = {
   proveedorLlm: () => elegir<ProveedorLlm>('DEFENSA_LLM_PROVIDER', ['openai', 'anthropic', 'mock'], 'mock'),
   modeloPlan: () => texto('DEFENSA_LLM_MODEL'),
   modeloClasificador: () => texto('DEFENSA_LLM_MODEL_CLASIFICADOR') ?? texto('DEFENSA_LLM_MODEL'),
+  /** El asistente del profesor; sin variable propia usa el del clasificador. */
+  modeloAsistente: () =>
+    texto('DEFENSA_LLM_MODEL_ASISTENTE') ?? texto('DEFENSA_LLM_MODEL_CLASIFICADOR') ?? texto('DEFENSA_LLM_MODEL'),
   claveOpenai: () => texto('DEFENSA_OPENAI_API_KEY'),
   claveAnthropic: () => texto('DEFENSA_ANTHROPIC_API_KEY'),
 

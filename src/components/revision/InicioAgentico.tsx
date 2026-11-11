@@ -4,7 +4,9 @@ import { ArrowRight, Check, ChevronLeft } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { BarraDeCelestea } from './BarraDeCelestea';
+import type { RespuestaAsistente, TipoTarjeta } from './catalogo';
 import { apiProfesor, bajarArchivo, ErrorDelProfesor } from './clienteProfesor';
+import { extensionPorId, extensionPorReglas, type ContextoDeExtension } from './extensiones';
 import {
   alumnosEnEstado,
   conteoPorObjetivo,
@@ -25,13 +27,17 @@ import {
 } from './frases';
 import {
   interpretarPeticion,
+  normalizarTexto,
   PETICION_POR_ESCENA,
   RESPUESTA_DESCONOCIDA,
   SUGERENCIAS_POR_ESCENA,
   textoPensando,
 } from './intenciones';
 import { LineaDeCelestea } from './LineaDeCelestea';
+import type { PasoVisible } from './PasosDeCelestea';
 import { Pildora } from './Pildora';
+import { RespuestaDelAsistente } from './RespuestaDelAsistente';
+import { useDictado } from './useDictado';
 import { TarjetaAlumno } from './TarjetaAlumno';
 import { TarjetaAvance } from './TarjetaAvance';
 import { TarjetaDescarga } from './TarjetaDescarga';
@@ -59,6 +65,8 @@ const SECCIONES_DE_INICIO: SeccionesAbiertas = {
 
 /** Cuánto tarda el simulacro en "pensar", en milisegundos. */
 const MS_PENSANDO = 800;
+/** Cada paso visible del asistente queda al menos esto en pantalla, para que no parpadee. */
+const MS_POR_PASO = 250;
 const MS_DESCARGA = 1750;
 const MS_DICTADO = 1600;
 const MS_AVISO = 2600;
@@ -106,9 +114,13 @@ export function InicioAgentico({ grupo, escenaInicial }: InicioAgenticoProps) {
   const [descargaLista, setDescargaLista] = useState(false);
   const [descargaError, setDescargaError] = useState<string | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
+  const [respuesta, setRespuesta] = useState<RespuestaAsistente | null>(null);
+  const [pasos, setPasos] = useState<PasoVisible[]>([]);
 
   const contenido = useRef<HTMLDivElement>(null);
   const solicitudDeDescarga = useRef(0);
+  const solicitudDelAsistente = useRef(0);
+  const historial = useRef<{ peticion: string; tipos: TipoTarjeta[] }[]>([]);
   const temporizadores = useRef<{
     pensar?: ReturnType<typeof setTimeout>;
     descarga?: ReturnType<typeof setTimeout>;
@@ -230,7 +242,7 @@ export function InicioAgentico({ grupo, escenaInicial }: InicioAgenticoProps) {
   useEffect(() => {
     contenido.current?.scrollTo({ top: 0 });
     document.title = TITULOS_DE_ESCENA[escena];
-    if (escena === 'pensando' || escena === 'otro') return;
+    if (escena === 'pensando' || escena === 'otro' || escena === 'asistente') return;
     const direccion = new URL(window.location.href);
     if (escena === 'inicio') direccion.searchParams.delete('escena');
     else direccion.searchParams.set('escena', escena);
@@ -239,19 +251,16 @@ export function InicioAgentico({ grupo, escenaInicial }: InicioAgenticoProps) {
 
   /* ───── Acciones ───── */
 
-  const pedir = useCallback(
-    (peticion: string) => {
-      const limpia = peticion.trim();
-      if (!limpia) return;
+  const contextoDeExtension = useMemo<ContextoDeExtension>(
+    () => ({ token, conectado, irA: (ruta) => router.push(ruta), avisar }),
+    [token, conectado, router, avisar],
+  );
+
+  /** Con reglas de palabras: el escenario de ejemplo y el respaldo si el servidor no contesta. */
+  const pedirConReglas = useCallback(
+    (limpia: string) => {
       const intencion = interpretarPeticion(limpia);
-      if (intencion.destino.tipo === 'accion') {
-        // Con datos reales las actividades todavía se dan de alta con el script, no desde esta pantalla.
-        if (conectado) avisar('Por ahora las actividades las damos de alta nosotros. Pídenos la tuya.');
-        else router.push(`/revision/${token}/nueva`);
-        return;
-      }
-      const siguiente: EscenaConsulta | 'otro' =
-        intencion.destino.tipo === 'escena' ? intencion.destino.escena : 'otro';
+      const siguiente: EscenaConsulta | 'otro' = intencion.destino.tipo === 'escena' ? intencion.destino.escena : 'otro';
       clearTimeout(temporizadores.current.pensar);
       setPregunta(limpia);
       setTexto('');
@@ -263,20 +272,107 @@ export function InicioAgentico({ grupo, escenaInicial }: InicioAgenticoProps) {
         if (siguiente === 'descarga') iniciarDescarga();
       }, MS_PENSANDO);
     },
-    [router, token, iniciarDescarga, conectado, avisar],
+    [iniciarDescarga],
+  );
+
+  /** Con datos reales, Celestea contesta desde el servidor con el catálogo de tarjetas. */
+  const pedirAlAsistente = useCallback(
+    async (limpia: string) => {
+      solicitudDelAsistente.current += 1;
+      const solicitud = solicitudDelAsistente.current;
+      clearTimeout(temporizadores.current.pensar);
+      setPregunta(limpia);
+      setTexto('');
+      setRespuesta(null);
+      setPasos([]);
+      setEscena('asistente');
+      setBarraAbierta(true);
+      const inicio = Date.now();
+      let cuantos = 0;
+      try {
+        const recibida = await apiProfesor.asistente(token, { peticion: limpia, historial: historial.current }, (paso) => {
+          if (solicitud !== solicitudDelAsistente.current) return;
+          cuantos += 1;
+          setPasos((anteriores) => [...anteriores.map((p) => ({ ...p, hecho: true })), { texto: paso, hecho: false }]);
+        });
+        // Cada paso queda un momento en pantalla, para que se alcance a leer.
+        const espera = Math.max(0, cuantos * MS_POR_PASO - (Date.now() - inicio));
+        if (espera > 0) await new Promise((resolver) => setTimeout(resolver, espera));
+        if (solicitud !== solicitudDelAsistente.current) return;
+        setPasos((anteriores) => anteriores.map((p) => ({ ...p, hecho: true })));
+        setRespuesta(recibida);
+        historial.current = [...historial.current, { peticion: limpia, tipos: recibida.tarjetas.map((t) => t.tipo) }].slice(-2);
+        if (recibida.tarjetas.some((t) => t.tipo === 'descarga')) iniciarDescarga();
+        for (const tarjeta of recibida.tarjetas) {
+          if (tarjeta.tipo === 'accion') extensionPorId(tarjeta.props.id, grupo)?.ejecutar(contextoDeExtension);
+        }
+      } catch (causa) {
+        if (solicitud !== solicitudDelAsistente.current) return;
+        // Sin servidor contestan las reglas de siempre, con los datos que ya tiene la página.
+        if (causa instanceof ErrorDelProfesor && causa.status === 0) pedirConReglas(limpia);
+        else {
+          setPasos([]);
+          setRespuesta({
+            texto: causa instanceof ErrorDelProfesor ? causa.message : 'No pude contestar eso ahora. Intenta otra vez.',
+            tarjetas: [],
+            sugerencias: SUGERENCIAS_POR_ESCENA.inicio,
+            fuente: 'reglas',
+            rechazo: null,
+          });
+        }
+      }
+    },
+    [token, grupo, contextoDeExtension, iniciarDescarga, pedirConReglas],
+  );
+
+  const pedir = useCallback(
+    (peticion: string) => {
+      const limpia = peticion.trim();
+      if (!limpia) return;
+      // Una extensión de la barra (por ejemplo, crear actividad) se reconoce sin preguntarle al modelo.
+      const extension = extensionPorReglas(normalizarTexto(limpia), grupo);
+      if (extension) {
+        setTexto('');
+        extension.ejecutar(contextoDeExtension);
+        return;
+      }
+      const intencion = interpretarPeticion(limpia);
+      if (intencion.destino.tipo === 'accion') {
+        // Con datos reales las actividades todavía se dan de alta con el script, no desde esta pantalla.
+        if (conectado) avisar('Por ahora las actividades las damos de alta nosotros. Pídenos la tuya.');
+        else router.push(`/revision/${token}/nueva`);
+        return;
+      }
+      if (conectado) void pedirAlAsistente(limpia);
+      else pedirConReglas(limpia);
+    },
+    [router, token, conectado, avisar, grupo, contextoDeExtension, pedirAlAsistente, pedirConReglas],
   );
 
   const irA = useCallback((siguiente: EscenaConsulta) => {
     clearTimeout(temporizadores.current.pensar);
+    solicitudDelAsistente.current += 1;
     setEscena(siguiente);
     setPregunta(PETICION_POR_ESCENA[siguiente]);
   }, []);
 
   const irAlInicio = useCallback(() => {
     clearTimeout(temporizadores.current.pensar);
+    solicitudDelAsistente.current += 1;
     setEscena('inicio');
     setPregunta(null);
   }, []);
+
+  // El dictado real solo existe con transcripción real configurada; el del ejemplo es un simulacro.
+  const dictado = useDictado({
+    token,
+    alEntender: (entendido) => {
+      setTexto(entendido);
+      setBarraAbierta(true);
+    },
+    alFallar: avisar,
+  });
+  const dictadoReal = conectado && grupo.dictadoDisponible === true;
 
   const alternarDictado = useCallback(() => {
     clearTimeout(temporizadores.current.dictado);
@@ -305,8 +401,12 @@ export function InicioAgentico({ grupo, escenaInicial }: InicioAgenticoProps) {
 
   const enInicio = escena === 'inicio';
   const peticion =
-    pregunta ?? (escena !== 'inicio' && escena !== 'pensando' && escena !== 'otro' ? PETICION_POR_ESCENA[escena] : '');
-  const sugerencias = !texto && escena !== 'pensando' && !escuchando ? SUGERENCIAS_POR_ESCENA[escena] : null;
+    pregunta ??
+    (escena !== 'inicio' && escena !== 'pensando' && escena !== 'otro' && escena !== 'asistente' ? PETICION_POR_ESCENA[escena] : '');
+  const asistentePensando = escena === 'asistente' && respuesta === null;
+  const oyendo = escuchando || dictado.escuchando;
+  const sugerenciasDeEscena = escena === 'asistente' ? (respuesta?.sugerencias ?? []) : SUGERENCIAS_POR_ESCENA[escena];
+  const sugerencias = !texto && escena !== 'pensando' && !asistentePensando && !oyendo ? sugerenciasDeEscena : null;
   const rotuloGrupo = `Grupo ${actividad.grupo}`;
 
   return (
@@ -469,6 +569,31 @@ export function InicioAgentico({ grupo, escenaInicial }: InicioAgenticoProps) {
               ) : null}
 
               {escena === 'otro' ? <LineaDeCelestea>{RESPUESTA_DESCONOCIDA}</LineaDeCelestea> : null}
+
+              {escena === 'asistente' ? (
+                <RespuestaDelAsistente
+                  respuesta={respuesta}
+                  pasos={pasos}
+                  actividad={actividad}
+                  alumnoBuscado={alumnoBuscado}
+                  rutaReporte={rutaReporte}
+                  rutaReporteDirecto={rutaReporteDirecto}
+                  fijados={fijados}
+                  alAlternarFijado={alternarFijado}
+                  alDescargarTrabajo={(quien) => {
+                    const alumno = typeof quien === 'string' ? alumnos.find((a) => a.matricula === quien) : quien;
+                    if (alumno) void descargarTrabajo(alumno);
+                  }}
+                  descarga={{
+                    archivo: descarga,
+                    lista: descargaLista,
+                    error: descargaError,
+                    alDescargarOtraVez: iniciarDescarga,
+                  }}
+                  secciones={{ abiertas, alAlternar: alternarSeccion }}
+                  alVerTodo={() => irA('lista')}
+                />
+              ) : null}
             </>
           )}
         </div>
@@ -492,16 +617,18 @@ export function InicioAgentico({ grupo, escenaInicial }: InicioAgenticoProps) {
         alEnviar={pedir}
         sugerencias={sugerencias}
         alPedirSugerencia={pedir}
-        pensando={escena === 'pensando'}
-        escuchando={escuchando}
-        alAlternarDictado={conectado ? undefined : alternarDictado}
-        placeholder={escuchando ? 'Te escucho…' : 'Pide lo que quieras ver o hacer…'}
+        pensando={escena === 'pensando' || asistentePensando || dictado.transcribiendo}
+        escuchando={oyendo}
+        alAlternarDictado={dictadoReal ? dictado.alternar : conectado ? undefined : alternarDictado}
+        placeholder={
+          oyendo ? 'Te escucho… toca otra vez para terminar' : dictado.transcribiendo ? 'Escribiendo lo que dijiste…' : 'Pide lo que quieras ver o hacer…'
+        }
         etiquetaCampo="Pídele algo a Celestea"
         etiquetaBotonCerrado="Pregúntale a Celestea"
         pie="Celestea responde con los datos de tu grupo. Tú decides."
       />
 
-      <AnuncioDeEscena escena={escena} />
+      <AnuncioDeEscena escena={asistentePensando ? 'pensando' : escena} />
     </>
   );
 }
@@ -515,6 +642,7 @@ function AnuncioDeEscena({ escena }: { escena: EscenaProfesor }) {
     objetivos: 'Celestea mostró lo que mostró el grupo en cada objetivo.',
     lista: 'Celestea mostró el grupo por estado.',
     otro: 'Celestea no supo hacer esa petición.',
+    asistente: 'Celestea respondió.',
   };
   return (
     <p aria-live="polite" className={styles.soloLector}>

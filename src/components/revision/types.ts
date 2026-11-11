@@ -285,6 +285,8 @@ export type ValorToque = CierreReporte | 'no_se';
 export interface DatosGrupo {
   /** `true` cuando los datos vienen del servidor; `false`/ausente en el escenario de ejemplo. */
   conectado?: boolean;
+  /** Hay transcripción real configurada: la barra ofrece dictar. */
+  dictadoDisponible?: boolean;
   profesora: Profesora;
   actividad: ActividadProfesor;
   alumnos: readonly Alumno[];
@@ -297,6 +299,21 @@ export interface DatosGrupo {
   descarga: DescargaGrupo;
 }
 
+/** El trabajo que entregó un alumno, en texto, para leerlo junto a su reporte (solo lectura). */
+export interface TrabajoParaLeer {
+  /** Nombre del archivo, o "Texto pegado". */
+  nombre: string;
+  tipo: 'archivo' | 'texto';
+  version: number;
+  paginas: number | null;
+  palabras: number | null;
+  entregadoEn: MarcaDeTiempo;
+  /** El texto que se extrajo del archivo, tal cual; vacío si no se pudo extraer. */
+  texto: string;
+  /** El texto se cortó por largo; el original completo se baja con "Descargar". */
+  recortado: boolean;
+}
+
 /** Todo lo que necesita la vista del reporte de un alumno. */
 export interface DatosReporte {
   /** La defensa que se está leyendo (con datos reales), para guardar los dos toques y el tiempo. */
@@ -306,6 +323,8 @@ export interface DatosReporte {
   reporte: ReporteAlumno;
   /** `null` si el alumno no está entre los que esperan revisión. */
   cola: ColaReporte | null;
+  /** Solo en el escenario de ejemplo: el trabajo ya escrito para el visor. Con datos reales se pide al abrirlo. */
+  trabajoDeEjemplo?: TrabajoParaLeer;
 }
 
 /* ------------------------------------------------------------------------ */
@@ -316,7 +335,7 @@ export interface DatosReporte {
 export type EscenaConsulta = 'avance' | 'ana' | 'descarga' | 'lista' | 'objetivos';
 
 /** Escenas que puede mostrar el inicio del profesor. */
-export type EscenaProfesor = 'inicio' | 'pensando' | EscenaConsulta | 'otro';
+export type EscenaProfesor = 'inicio' | 'pensando' | EscenaConsulta | 'otro' | 'asistente';
 
 /** Lo que se puede fijar en el inicio. */
 export type ClaveFijable = 'avance' | 'ana' | 'objetivos';

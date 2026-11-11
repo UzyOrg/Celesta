@@ -1,0 +1,116 @@
+.linea {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.columna {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding-top: 6px;
+}
+
+.pasos {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.paso {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  color: var(--c-texto-2);
+  font-size: 15px;
+  line-height: 1.45;
+  animation: entrar 0.35s ease both;
+}
+
+.enCurso {
+  color: var(--c-texto);
+}
+
+.marca {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 21px;
+  color: var(--c-acento);
+}
+
+.punto {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--c-acento);
+  animation: latir 1.1s ease-in-out infinite;
+}
+
+.plegado {
+  margin-left: 44px;
+  color: var(--c-texto-2);
+  font-size: 14px;
+}
+
+.resumen {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.resumen:focus-visible {
+  outline: 2px solid var(--c-foco);
+  outline-offset: 2px;
+}
+
+.plegado .pasos {
+  padding: 8px 0 4px;
+}
+
+.plegado .paso {
+  font-size: 14px;
+  animation: none;
+}
+
+.soloLector {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@keyframes entrar {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes latir {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .paso,
+  .punto {
+    animation: none;
+  }
+}
