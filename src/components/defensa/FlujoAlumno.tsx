@@ -158,7 +158,8 @@ export function FlujoAlumno({ actividad, pasoInicial, ensayoInicial, modoInicial
           />
         );
       case 'voz':
-        return <PantallaVoz modo={flujo.modo} alElegir={flujo.cambiarModo} alSeguir={() => irA('trabajo')} />;
+        // Este paso muestra lo que la persona eligió, no el modo pasajero de una falla del micrófono.
+        return <PantallaVoz modo={flujo.modoElegido} alElegir={flujo.cambiarModo} alSeguir={() => irA('trabajo')} />;
       case 'trabajo':
         return (
           <PantallaTrabajo
@@ -188,6 +189,7 @@ export function FlujoAlumno({ actividad, pasoInicial, ensayoInicial, modoInicial
           <PantallaHola
             estado={flujo.estadoMicrofono}
             preparandoPreguntas={flujo.planEstado === 'generando'}
+            fuenteDeVoz={flujo.medidorDeVoz}
             alEscribir={flujo.escribirDesdeHola}
             alSeguir={flujo.seguirDeHola}
           />
@@ -216,7 +218,12 @@ export function FlujoAlumno({ actividad, pasoInicial, ensayoInicial, modoInicial
             enSilencio={paso === 'silencio'}
             modo={flujo.modo}
             ensayo={flujo.ensayo}
-            preguntando={flujo.preguntando}
+            voz={flujo.vozDeLaPregunta}
+            conAudio={Boolean(pregunta.audioUrl)}
+            fuenteDeVoz={flujo.medidorDeVoz}
+            falla={flujo.fallaDeVoz}
+            probandoMicrofono={flujo.probandoMicrofono}
+            alProbarMicrofono={flujo.probarMicrofonoOtraVez}
             ocupado={flujo.ocupado}
             error={flujo.error}
             textoEscrito={flujo.textoDeLaPregunta}
@@ -241,6 +248,7 @@ export function FlujoAlumno({ actividad, pasoInicial, ensayoInicial, modoInicial
             alOir={flujo.oirParte}
             puedeHablar={flujo.puedeHablar && flujo.modo === 'voz'}
             grabando={flujo.grabandoAclaracion}
+            fuenteDeVoz={flujo.medidorDeVoz}
             alEmpezarADecir={flujo.empezarADecirLaParte}
             alListo={flujo.terminarAclaracion}
             alCambiarMedio={flujo.cambiarMedioDeAclaracion}

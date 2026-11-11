@@ -1,9 +1,11 @@
 import 'server-only';
 import type { PeticionSesion } from '../../../components/defensa/contrato';
 import type { ActividadRow, AlumnoRow, Dispositivo } from '../almacen/tipos';
-import { AVISO_PRIVACIDAD_VERSION, LIMITES } from '../config';
+import { AVISO_PRIVACIDAD_VERSION } from '../config';
+import { limpiarNombre, limpiarMatricula } from '../../../components/defensa/identidad';
+export { limpiarNombre, limpiarMatricula } from '../../../components/defensa/identidad';
 import { DefensaError, noAutorizado } from '../errores';
-import { emitirAccesoProfesor, emitirSesionAlumno, verificarToken } from '../firmas';
+import { emitirAccesoProfesor, emitirSesionAlumno, exigirSecretoFirma, verificarToken } from '../firmas';
 import type { Ctx } from './contexto';
 
 /**
@@ -23,20 +25,6 @@ export interface SesionAlumno {
 export function limpiarTokenGrupo(token: string): string | null {
   const limpio = token.trim().toLowerCase();
   return /^[a-z0-9-]{8,48}$/.test(limpio) ? limpio : null;
-}
-
-const SIN_CONTROL = new RegExp('[\\u0000-\\u001F\\u007F]', 'g');
-
-export function limpiarNombre(nombre: string): string | null {
-  const limpio = nombre.replace(SIN_CONTROL, ' ').replace(/\s+/g, ' ').trim();
-  if (limpio.length < 2 || limpio.length > LIMITES.nombreCaracteres) return null;
-  return new RegExp('\\p{L}', 'u').test(limpio) ? limpio : null;
-}
-
-/** La matrícula se compara sin mayúsculas ni espacios: "a01 234" y "A01234" son la misma. */
-export function limpiarMatricula(matricula: string): string | null {
-  const limpia = matricula.replace(/\s+/g, '').toUpperCase();
-  return /^[A-Z0-9._-]{3,30}$/.test(limpia) ? limpia : null;
 }
 
 /** Android, iOS o escritorio según el navegador; solo sirve para comparar el piloto por dispositivo. */
@@ -71,6 +59,8 @@ export async function iniciarSesion(
     throw new DefensaError('consentimiento_requerido', 400);
   }
 
+  // Validar antes de guardar al alumno o sus consentimientos: un fallo de firma no deja una entrada parcial.
+  exigirSecretoFirma();
   const actividad = await ctx.repo.actividadPorTokenGrupo(tokenGrupo);
   if (!actividad) throw new DefensaError('no_encontrado', 404);
 

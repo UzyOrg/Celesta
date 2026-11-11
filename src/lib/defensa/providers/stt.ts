@@ -200,3 +200,92 @@ export function crearSttAssemblyai(credenciales: CredencialesStt): ProveedorStt 
     },
   };
 }
+
+interface PalabraElevenlabs {
+  text?: string;
+  start?: number | null;
+  end?: number | null;
+  type?: string;
+  logprob?: number | null;
+}
+
+interface RespuestaElevenlabs {
+  text?: string;
+  words?: PalabraElevenlabs[] | null;
+  audio_duration_secs?: number | null;
+}
+
+/** Extensión para el nombre del archivo; ElevenLabs detecta el formato por el contenido. */
+function extensionDeAudio(mime: string): string {
+  const base = mimeBase(mime);
+  if (base.includes('webm')) return 'webm';
+  if (base.includes('mp4') || base.includes('m4a') || base.includes('aac')) return 'm4a';
+  if (base.includes('ogg')) return 'ogg';
+  if (base.includes('wav')) return 'wav';
+  if (base.includes('mpeg') || base.includes('mp3')) return 'mp3';
+  return 'audio';
+}
+
+export interface CredencialesSttElevenlabs extends CredencialesStt {
+  /** Modo sin registro (`enable_logging=false`): solo lo permiten los planes enterprise. */
+  sinRegistro?: () => boolean;
+}
+
+/**
+ * Scribe v2 por lotes (no el de tiempo real): se sube la grabación completa y vuelve el texto con
+ * el momento y el `logprob` de cada palabra. La confianza es la probabilidad, `exp(logprob)`.
+ *
+ * Es otra escala que la de Deepgram o AssemblyAI: el umbral de DEFENSA_UMBRAL_CONFIANZA hay que
+ * calibrarlo con audio real de este proveedor antes de fijarlo.
+ */
+export function crearSttElevenlabs(credenciales: CredencialesSttElevenlabs): ProveedorStt {
+  return {
+    id: 'elevenlabs',
+    async transcribir(audio: Uint8Array, mime: string, opciones: OpcionesTranscripcion): Promise<Transcripcion> {
+      const clave = exigirClave(credenciales.clave());
+      const modelo = credenciales.modelo() ?? 'scribe_v2';
+      const formulario = new FormData();
+      formulario.append('model_id', modelo);
+      // "es-419" → "es": el servicio acepta el código de idioma sin región.
+      formulario.append('language_code', (opciones.idioma.split('-')[0] ?? 'es').toLowerCase());
+      formulario.append('timestamps_granularity', 'word');
+      // Sin "(risas)" ni otros sonidos entre las palabras: solo lo que dijo la persona.
+      formulario.append('tag_audio_events', 'false');
+      formulario.append('diarize', 'false');
+      formulario.append('file', new Blob([audio as unknown as BlobPart], { type: mimeBase(mime) }), `respuesta.${extensionDeAudio(mime)}`);
+
+      const parametros = credenciales.sinRegistro?.() ? '?enable_logging=false' : '';
+      const respuesta = await pedir(
+        'elevenlabs',
+        `https://api.elevenlabs.io/v1/speech-to-text${parametros}`,
+        { method: 'POST', headers: { 'xi-api-key': clave }, body: formulario },
+        opciones.timeoutMs,
+        credenciales.fetchFn,
+      );
+      const datos = (await respuesta.json()) as RespuestaElevenlabs;
+      const palabras: PalabraTranscrita[] = (datos.words ?? []).flatMap((p) => {
+        // Solo palabras: los espacios y los sonidos de fondo no son parte de la respuesta.
+        if (p.type !== undefined && p.type !== 'word') return [];
+        const texto = (p.text ?? '').trim();
+        if (!texto) return [];
+        return [
+          {
+            texto,
+            inicioMs: Math.round(numeroFinito(p.start) * 1000),
+            finMs: Math.round(numeroFinito(p.end) * 1000),
+            // Sin logprob se da por segura: es mejor no pedir aclaraciones que pedirlas por todo.
+            confianza: typeof p.logprob === 'number' && Number.isFinite(p.logprob) ? limitarConfianza(Math.exp(p.logprob)) : 1,
+          },
+        ];
+      });
+      const ultima = palabras[palabras.length - 1];
+      return {
+        texto: palabras.map((p) => p.texto).join(' '),
+        palabras,
+        duracionMs: Math.round(numeroFinito(datos.audio_duration_secs) * 1000) || (ultima ? ultima.finMs : 0),
+        proveedor: 'elevenlabs',
+        modelo,
+      };
+    },
+  };
+}

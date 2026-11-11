@@ -1,5 +1,6 @@
 import { useId } from 'react';
 import type { ChangeEvent } from 'react';
+import { limpiarNombre, limpiarMatricula } from './identidad';
 import { Boton } from '@/components/celeste/Boton';
 import { Personaje } from '@/components/celeste/Personaje';
 import { retraso } from '@/components/celeste/variablesCss';
@@ -19,7 +20,7 @@ interface PantallaQuienProps {
 export function PantallaQuien({ nombre, matricula, alCambiarNombre, alCambiarMatricula, alSeguir }: PantallaQuienProps) {
   const idNombre = useId();
   const idMatricula = useId();
-  const completo = nombre.trim().length > 0 && matricula.trim().length > 0;
+  const completo = Boolean(limpiarNombre(nombre) && limpiarMatricula(matricula));
 
   return (
     <form
@@ -45,8 +46,14 @@ export function PantallaQuien({ nombre, matricula, alCambiarNombre, alCambiarMat
             type="text"
             name="nombre"
             autoComplete="name"
+            required
+            maxLength={200}
             value={nombre}
-            onChange={(evento: ChangeEvent<HTMLInputElement>) => alCambiarNombre(evento.target.value)}
+            onChange={(evento: ChangeEvent<HTMLInputElement>) => {
+              const campo = evento.currentTarget;
+              campo.setCustomValidity(limpiarNombre(campo.value) ? '' : 'Escribe tu nombre con 2 a 120 caracteres e incluye al menos una letra.');
+              alCambiarNombre(campo.value);
+            }}
           />
         </div>
         <div className={styles.campo}>
@@ -58,10 +65,16 @@ export function PantallaQuien({ nombre, matricula, alCambiarNombre, alCambiarMat
             className={`${styles.entrada} ${styles.matricula}`}
             type="text"
             name="matricula"
-            inputMode="numeric"
+            inputMode="text"
+            required
+            maxLength={60}
             autoComplete="off"
             value={matricula}
-            onChange={(evento: ChangeEvent<HTMLInputElement>) => alCambiarMatricula(evento.target.value)}
+            onChange={(evento: ChangeEvent<HTMLInputElement>) => {
+              const campo = evento.currentTarget;
+              campo.setCustomValidity(limpiarMatricula(campo.value) ? '' : 'Escribe de 3 a 30 letras o números; también puedes usar punto, guion y guion bajo.');
+              alCambiarMatricula(campo.value);
+            }}
           />
         </div>
       </div>

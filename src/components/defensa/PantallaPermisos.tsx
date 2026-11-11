@@ -24,9 +24,14 @@ interface PantallaPermisosProps {
 }
 
 const FILAS: readonly { indice: 0 | 1 | 2; etiqueta: string; entrada: number }[] = [
-  { indice: 0, etiqueta: 'Leí el aviso de privacidad', entrada: 0.25 },
-  { indice: 1, etiqueta: 'Acepto que mis datos se procesen en EE. UU.', entrada: 0.35 },
-  { indice: 2, etiqueta: 'Soy mayor de edad', entrada: 0.45 },
+  {
+    indice: 0,
+    etiqueta:
+      'Leí el aviso de privacidad y acepto que usen mi trabajo, mi voz (si hablo) y mis respuestas en mi defensa, y que mi profesor reciba el reporte.',
+    entrada: 0.25,
+  },
+  { indice: 1, etiqueta: 'Acepto que mis datos se procesen con proveedores fuera de México, sobre todo en EE. UU.', entrada: 0.35 },
+  { indice: 2, etiqueta: 'Soy mayor de edad (tengo 18 años o más).', entrada: 0.45 },
 ];
 
 /** Paso 3: tres interruptores, todos apagados al llegar; hay que activarlos a conciencia. */
@@ -60,14 +65,14 @@ export function PantallaPermisos({ aceptaciones, alCambiar, alAceptar, ocupado =
         </button>
         <span className={styles.garantia}>
           <Lock size={16} strokeWidth={2} aria-hidden="true" />
-          Nunca entrenamos IA con tus datos.
+          Celestea no vende tus datos ni entrena IA con ellos.
         </span>
       </div>
 
       <div className={styles.relleno} />
 
       <p id={idAyuda} className={styles.ayuda} hidden={todos}>
-        Activa los tres para seguir.
+        Activa los tres para seguir. Si prefieres no hacerlo, tu trabajo cuenta igual y tu profesor te ofrece otra forma de mostrar lo que sabes.
       </p>
       <AvisoDeError mensaje={error} />
       <Boton

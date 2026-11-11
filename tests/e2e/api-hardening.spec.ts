@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { classAssignmentBelongsTo } from '../../src/lib/server/classReadAuthorization';
 
 test('rejects unsafe workshop ids before filesystem access', async ({ request }) => {
   const response = await request.get('/api/talleres/package.json');
@@ -137,8 +138,6 @@ test('public beta form rejects oversized and structurally unexpected input', asy
 });
 
 test('an authenticated identity still needs to own the requested cohort', async () => {
-  const { classAssignmentBelongsTo } =
-    await import('../../src/lib/server/classReadAuthorization');
   expect(classAssignmentBelongsTo('teacher-a', { teacher_id: 'teacher-a' })).toBe(true);
   expect(classAssignmentBelongsTo('teacher-a', { teacher_id: 'teacher-b' })).toBe(false);
   expect(classAssignmentBelongsTo('teacher-a', null)).toBe(false);

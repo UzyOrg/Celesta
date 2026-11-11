@@ -1,0 +1,25 @@
+.aviso {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px 14px;
+  border-radius: 18px;
+  background: rgba(255, 217, 138, 0.1);
+}
+
+.texto {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0;
+  color: var(--c-oro-claro);
+  font-size: 14px;
+  line-height: 1.35;
+  text-align: left;
+}
+
+.icono {
+  flex: none;
+  margin-top: 1px;
+  color: var(--c-oro);
+}

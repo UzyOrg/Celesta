@@ -6,10 +6,10 @@ import type { AudioSintetizado, ProveedorTts } from './tipos';
 /**
  * Voz de Celestea con ElevenLabs.
  *
- * Las preguntas se sintetizan UNA vez, al armar el plan, y se guardan en el
- * bucket de audio. Durante la defensa no se sintetiza nada: el navegador solo
- * reproduce un archivo ya hecho, así el costo y la latencia no dependen de
- * cuántas veces se repita una pregunta.
+ * Cada pregunta se sintetiza UNA vez, después de elegirla, y se guarda en el
+ * bucket de audio: el navegador solo reproduce un archivo ya hecho, así el costo
+ * y la latencia no dependen de cuántas veces se repita una pregunta. Las frases
+ * que se repiten entre alumnos van al banco compartido (ver planes.ts).
  */
 
 export interface CredencialesTts {
@@ -24,6 +24,7 @@ export interface CredencialesTts {
 export function crearTtsElevenlabs(credenciales: CredencialesTts): ProveedorTts {
   return {
     id: 'elevenlabs',
+    identidad: () => `elevenlabs|${credenciales.voz() ?? ''}|${credenciales.modelo()}`,
     async sintetizar(texto: string, opciones: { timeoutMs: number }): Promise<AudioSintetizado> {
       const clave = exigirClave(credenciales.clave());
       const voz = credenciales.voz();

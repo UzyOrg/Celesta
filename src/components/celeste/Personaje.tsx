@@ -71,6 +71,11 @@ interface PersonajeProps {
   preparaCelestia?: boolean;
   /** Identificador de vuelo compartido entre pantallas. */
   layoutId?: string;
+  /**
+   * Celestea está hablando (su voz suena). Marca `data-hablando` en la raíz para colgar ahí la
+   * animación de la voz; el gesto visible lo dan las demás props (ondas, movimiento, expresión).
+   */
+  hablando?: boolean;
   /** Nombre accesible. Sin él, el personaje es decorativo. */
   etiqueta?: string;
   className?: string;
@@ -188,6 +193,7 @@ export function Personaje({
   inclina = false,
   preparaCelestia = false,
   layoutId,
+  hablando = false,
   etiqueta,
   className,
 }: PersonajeProps) {
@@ -220,6 +226,7 @@ export function Personaje({
   const accesibilidad = etiqueta
     ? ({ role: 'img', 'aria-label': etiqueta } as const)
     : ({ 'aria-hidden': true } as const);
+  const senalDeVoz = { 'data-hablando': hablando ? 'true' : undefined };
 
   const anillos = Array.from({ length: ondas }, (_, indice) => (
     <span
@@ -290,6 +297,7 @@ export function Personaje({
         style={estiloRaiz}
         transition={{ layout: { duration: 0.95, ease: [0.68, -0.35, 0.27, 1.35] } }}
         {...accesibilidad}
+        {...senalDeVoz}
       >
         {contenido}
       </motion.span>
@@ -297,7 +305,7 @@ export function Personaje({
   }
 
   return (
-    <span className={clasesRaiz} style={estiloRaiz} {...accesibilidad}>
+    <span className={clasesRaiz} style={estiloRaiz} {...accesibilidad} {...senalDeVoz}>
       {contenido}
     </span>
   );

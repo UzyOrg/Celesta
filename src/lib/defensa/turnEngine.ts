@@ -134,6 +134,26 @@ function elegirTransferencia(plan: PlanParaMotor, semilla: number, objetivosPreg
   return bolsa[elegirIndice(semilla, 'transferencia', bolsa.length)];
 }
 
+/**
+ * Las preguntas que ya se conocen al empezar una defensa: la apertura, la candidata que la semilla
+ * elige en cada objetivo y la transferencia del caso normal (todos los objetivos ya preguntados).
+ * No dependen de lo que conteste la persona, así que su voz se puede crear de una vez y en
+ * paralelo. Los seguimientos sí dependen de la respuesta, y la transferencia cambia si se acaba el
+ * tiempo antes: esas se crean en el momento en que el motor las elige. Solo lee; no cambia
+ * ninguna elección del motor.
+ */
+export function textosPrevisibles(plan: PlanParaMotor, semilla: number, evitar: readonly string[] = []): string[] {
+  const textos = [plan.opener];
+  const conCandidatas = plan.objectives.filter((o) => o.candidates.length > 0);
+  for (const objetivo of conCandidatas) {
+    const candidata = elegirCandidata(objetivo, semilla, evitar);
+    if (candidata) textos.push(candidata.question);
+  }
+  const transferencia = elegirTransferencia(plan, semilla, new Set(conCandidatas.map((o) => o.objective_id)));
+  if (transferencia) textos.push(transferencia.question);
+  return Array.from(new Set(textos.filter((t) => t.trim().length > 0)));
+}
+
 function preguntar(turno: TurnoPlaneado): Decision {
   return { accion: 'preguntar', turno };
 }

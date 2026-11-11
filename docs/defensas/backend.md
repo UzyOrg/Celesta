@@ -18,8 +18,9 @@ Estado: construido el 13 de octubre de 2026 en la rama `feat/defensas-backend`, 
 2. El alumno entra con nombre y matrícula, acepta tres confirmaciones y sube su trabajo
    (PDF, Word o texto pegado). Desde ese momento el trabajo **cuenta como entregado**.
 3. El servidor extrae el texto, guarda el original en un bucket privado y arma el **plan de
-   preguntas** con el modelo de lenguaje. La voz de cada pregunta se genera en ese momento y se
-   guarda (no se sintetiza nada durante la defensa).
+   preguntas** con el modelo de lenguaje. El plan trae unas veinte preguntas posibles y cada
+   defensa usa unas seis, así que la voz **no se crea al armar el plan**: primero se eligen las
+   preguntas y solo entonces se crea su voz (ver "Cuándo se crea la voz").
 4. El alumno defiende hablando (o escribiendo, siempre se puede). Cada respuesta se clasifica
    (sólida, vaga, fuera de tema, sin respuesta) y un motor determinista decide la siguiente
    pregunta. Si una parte del audio no se entendió, el alumno la aclara puntualmente.
@@ -77,15 +78,16 @@ Los nombres están en [`.env.example`](../../.env.example). Resumen:
 | `DEFENSA_ALMACEN` | `supabase` (por defecto) o `memoria` | `memoria` solo existe fuera de producción. |
 | `DEFENSA_LLM_PROVIDER`, `DEFENSA_LLM_MODEL`, `DEFENSA_LLM_MODEL_CLASIFICADOR` | Modelo de lenguaje (`openai`, `anthropic` o `mock`) | Sin modelo por defecto a propósito: elige uno vigente. |
 | `DEFENSA_OPENAI_API_KEY` / `DEFENSA_ANTHROPIC_API_KEY` | Llave del modelo elegido | Solo servidor. |
-| `DEFENSA_STT_PROVIDER`, `DEFENSA_STT_MODEL`, `DEFENSA_STT_IDIOMA` | Transcripción (`deepgram`, `assemblyai` o `mock`) | Debe dar confianza y momento por palabra. |
-| `DEFENSA_DEEPGRAM_API_KEY` / `DEFENSA_ASSEMBLYAI_API_KEY` | Llave del transcriptor elegido | |
+| `DEFENSA_STT_PROVIDER`, `DEFENSA_STT_MODEL`, `DEFENSA_STT_IDIOMA` | Transcripción (`elevenlabs`, `deepgram`, `assemblyai` o `mock`) | Debe dar confianza y momento por palabra. Con `elevenlabs` se usa Scribe v2 por lotes (`scribe_v2`) y la confianza es `exp(logprob)`, otra escala que la de Deepgram: calibra el umbral con audio real. No usa tiempo real. |
+| `DEFENSA_DEEPGRAM_API_KEY` / `DEFENSA_ASSEMBLYAI_API_KEY` | Llave del transcriptor elegido | Con `elevenlabs` se usa `DEFENSA_ELEVENLABS_API_KEY`, la misma de la voz (su llave debe tener permiso de Speech to Text). |
 | `DEFENSA_UMBRAL_CONFIANZA` | Debajo de esta confianza una palabra puede pedir aclaración | 0,55 por defecto; el valor final sale de la etapa 1 del piloto. |
 | `DEFENSA_TTS_PROVIDER`, `DEFENSA_ELEVENLABS_API_KEY`, `DEFENSA_ELEVENLABS_VOICE_ID`, `DEFENSA_ELEVENLABS_MODEL`, `DEFENSA_ELEVENLABS_SIN_REGISTRO` | Voz de Celestea | |
 | `NEXT_PUBLIC_SITE_URL` | Para que los enlaces salgan completos | Sin diagonal final. |
 | Las de Supabase de siempre | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` | La subida directa del archivo usa la llave anónima solo para llegar al bucket con un enlace firmado. |
 
-Con `DEFENSA_LLM_PROVIDER`, `DEFENSA_STT_PROVIDER` y `DEFENSA_TTS_PROVIDER` en `mock` todo el
-flujo funciona sin llaves ni red (respuestas falsas): sirve para desarrollar y para las pruebas.
+Poner los tres proveedores en `mock` solo simula modelo, transcripción y voz. La base sigue
+siendo Supabase salvo que se seleccione `DEFENSA_ALMACEN=memoria`, y la sesión requiere una
+firma válida. Para una demo completa sin configurar nada, usa el comando de la sección 4.
 
 ### 3. Dar de alta una actividad
 
@@ -108,13 +110,46 @@ cambiando la versión de acceso (`rotar`). El enlace del grupo tiene un límite 
 ### 4. Desarrollo local sin Supabase
 
 ```bash
-DEFENSA_ALMACEN=memoria DEFENSA_SIGNING_SECRET=<32+ caracteres> CRON_SECRET=<16+ caracteres> \
-DEFENSA_LLM_PROVIDER=mock DEFENSA_STT_PROVIDER=mock DEFENSA_TTS_PROVIDER=mock pnpm dev
+npm run dev:defensa
+# Si el puerto 3000 está ocupado:
+npm run dev:defensa -- --port 3006
 ```
 
-Arranca con una actividad de demostración ya creada y al iniciar imprime en la consola los dos
-enlaces: el del alumno es `/defensa/demo-celestea` y el del profesor trae su firma. Además, solo
-fuera de producción, `/revision/demo` abre el escenario de ejemplo del diseño (datos falsos).
+Funciona en macOS y Windows. Selecciona memoria y los tres proveedores mock, genera secretos
+temporales y usa valores ficticios de Supabase para el layout compartido. Esos valores se
+imponen a `.env.local`: la demo no apunta a tu base real. Se niega a arrancar en Vercel o
+producción. No modifica tu archivo de variables.
+
+Abre `http://127.0.0.1:3000/defensa/demo-celestea` (ajusta el puerto si lo cambiaste).
+La consola imprime el enlace firmado del profesor. Al reiniciar se pierden las entregas y
+caducan las sesiones de esta demo. `/revision/demo` sigue siendo la vista previa del diseño.
+
+### 5. Diagnóstico antes de usar servicios reales
+
+```bash
+npm run defensa:diagnostico
+npm run defensa:diagnostico -- --supabase
+npm run defensa:diagnostico -- --proveedores
+```
+
+- Sin opciones: revisa variables de `.env.local` y `.env` sin red ni valores visibles.
+  Sale con código 1 si falta algo.
+- `--supabase`: comprueba las doce tablas, las columnas de eventos utilizadas por el código
+  y que los dos buckets existan y sean privados. Solo HEAD/metadatos: no lee filas ni crea
+  registros. No sustituye la comprobación de permisos con anon/authenticated.
+- `--proveedores`: hace llamadas reales con costo usando texto ficticio. Comprueba los dos
+  modelos, voz y transcripción. Usa los adaptadores sin fallback local, para no ocultar
+  errores. Los proveedores mock se reportan como SIMULADO, nunca como una cuenta validada.
+- Si usas transcripción real y voz mock, añade `--audio ruta/a/muestra.wav` (o MP3, máximo
+  2 MB). Usa una grabación ficticia: el archivo se envía al transcriptor.
+
+Todavía hay que comprobar mediante un recorrido real con datos ficticios: subida firmada
+desde el navegador, escritura de eventos, generación del plan completo y calidad de STT.
+
+En un proyecto Supabase vacío, las dos migraciones indicadas arriba **no crean**
+`eventos_de_aprendizaje`: la de defensas la reutiliza y la de seguridad solo cierra objetos
+existentes. Hace falta el esquema base compatible de eventos. El diagnóstico detecta esa
+ausencia; aquí no se inventa ni instala otro esquema.
 
 ## Partes del servidor
 
@@ -181,6 +216,11 @@ El cron diario (`/api/defensa/mantenimiento`, 9:17 UTC) también cierra por inac
 las defensas abandonadas a medias, descarta las entregas que nunca llegaron al bucket
 (3 h) y genera los reportes de las incompletas.
 
+**Preview no ejecuta el cron automáticamente.** Vercel solo programa invocaciones en
+producción. En Preview se prueba el endpoint manualmente con su autorización; no se puede
+asumir que el audio se limpiará solo.
+Fuente: [documentación de Vercel](https://vercel.com/docs/cron-jobs/quickstart).
+
 ## Qué sigue simulado en la interfaz
 
 - **Nueva actividad con Celestea** (`/revision/<enlace>/nueva`): con datos reales no existe
@@ -194,22 +234,46 @@ las defensas abandonadas a medias, descarta las entregas que nunca llegaron al b
 ## Pruebas
 
 ```bash
-pnpm typecheck && pnpm lint
-pnpm test:unit                    # 282 pruebas, sin servidor ni red
-PLAYWRIGHT_CHANNEL=msedge pnpm exec playwright test tests/e2e/defensa-api.spec.ts \
+npm run typecheck
+npm run lint
+npm run test:unit
+npx playwright test tests/e2e/defensa-api.spec.ts \
   tests/e2e/defensa-alumno.spec.ts tests/e2e/defensa-profesor.spec.ts
 ```
 
 Las pruebas del navegador arrancan su propio servidor con almacén en memoria y proveedores
-`mock` (ver `playwright.config.ts`). La del alumno con voz usa el micrófono falso de Chrome o
+`mock` y credenciales ficticias explícitas (ver `playwright.config.ts`). La del alumno con voz usa el micrófono falso de Chrome o
 Edge (`--use-fake-device-for-media-stream`); `PLAYWRIGHT_CHANNEL=msedge` sirve si no hay Chrome.
+
+## Cuándo se crea la voz (y cuánto cuesta)
+
+La voz se paga por carácter, así que solo se crea la de lo que de verdad se pregunta:
+
+1. **Al armar el plan: nada.** Un plan completo gastaría unos 2,000 a 4,000 caracteres y se
+   usaría una cuarta parte.
+2. **Al empezar la defensa o el ensayo:** la semilla de esa defensa ya elige la candidata de cada
+   objetivo, así que se crea de una vez y en paralelo la voz de la apertura, de esas candidatas y
+   de la transferencia (unos 5 textos). Si algo falla, la pregunta se lee igual: siempre está escrita.
+3. **Cuando hace falta:** un seguimiento se crea solo si la respuesta anterior lo pide; la frase
+   fija "no te entendí una parte" solo la primera vez que hay una aclaración.
+4. **Cada texto se crea una sola vez por plan** y se reutiliza (por ejemplo la apertura, que es la
+   misma en el ensayo y en la defensa de verdad).
+5. **Las frases fijas van a un banco compartido.** "No te entendí una parte, está en tu pantalla" (en
+   "tú" y en "usted") y las aperturas por defecto se dicen igual a todos los alumnos, así que su audio
+   se crea una sola vez para todo el grupo y vive en `banco/` del bucket `defensa-audio`. El nombre
+   del archivo depende del texto **y de la voz y el modelo**: si cambias `DEFENSA_ELEVENLABS_VOICE_ID`
+   o el modelo, se crea de nuevo en vez de servir una voz distinta. El banco no tiene datos de
+   alumnos y el borrado de los 7 días no lo toca.
+
+La transcripción (Scribe v2 por lotes) cuesta mucho menos que la voz. Si hiciera falta gastar menos
+aún, `DEFENSA_ELEVENLABS_MODEL` permite usar un modelo de voz más barato.
 
 ## Qué falta
 
 - Probar con **llaves reales** el modelo, la transcripción y la voz, y la subida firmada directa
   a Supabase. Todo lo verificado aquí fue con proveedores `mock` y almacén en memoria; la
   migración se validó en una base PGlite, no en Supabase.
-- Comparar dos transcriptores (Deepgram y AssemblyAI) con audio real de estudiantes mexicanos y
+- Comparar transcriptores (ElevenLabs Scribe, Deepgram y AssemblyAI) con audio real de estudiantes mexicanos y
   fijar `DEFENSA_UMBRAL_CONFIANZA`.
 - Borrar a los 90 días del cierre de la cohorte (decisión de retención pendiente) y definir qué
   significa "cerrar la cohorte" (hoy existe la columna `cohorte_cerrada_en`, sin pantalla ni job).

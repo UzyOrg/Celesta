@@ -241,7 +241,12 @@ test.describe('el reporte de un alumno', () => {
     const sesion = await prepararAlumnoConPlan(mundo, actividad);
     const id = await defenderPorVoz(mundo, sesion);
     await generarReporteDeDefensa(mundo.ctx, id);
-    const audios = () => Array.from(mundo.estado.archivos.keys()).filter((k) => k.startsWith('audio/') && !k.startsWith('audio/preguntas/'));
+    // Las respuestas del alumno: lo que se borra. La voz de las preguntas (preguntas/ y el banco compartido) no es de nadie.
+    const audios = () =>
+      Array.from(mundo.estado.archivos.keys()).filter((k) => k.startsWith('audio/') && !k.startsWith('audio/preguntas/') && !k.startsWith('audio/banco/'));
+    const banco = () => Array.from(mundo.estado.archivos.keys()).filter((k) => k.startsWith('audio/banco/'));
+    const enElBanco = banco().length;
+    expect(enElBanco).toBeGreaterThan(0);
     expect(audios().length).toBeGreaterThan(0);
 
     mundo.reloj.avanzar(6 * 24 * 60 * 60 * 1000);
@@ -253,6 +258,8 @@ test.describe('el reporte de un alumno', () => {
     expect(resumen.defensasSinAudio).toBe(1);
     expect(resumen.archivosDeAudioBorrados).toBeGreaterThan(0);
     expect(audios()).toEqual([]);
+    // El banco de frases fijas no tiene datos de nadie y sirve a los demás alumnos: el borrado no lo toca.
+    expect(banco()).toHaveLength(enElBanco);
     expect((await mundo.ctx.repo.defensaPorId(id))!.audioBorradoEn).toBe(mundo.ctx.ahora().toISOString());
     for (const turno of await mundo.ctx.repo.turnosDeDefensa(id)) expect(turno.audioRuta).toBeNull();
 

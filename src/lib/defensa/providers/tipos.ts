@@ -87,6 +87,11 @@ export interface AudioSintetizado {
 
 export interface ProveedorTts {
   readonly id: string;
+  /**
+   * Identifica la voz y el modelo en uso (por ejemplo "elevenlabs|<voz>|<modelo>"). El banco de frases
+   * fijas la usa para no servir un audio hecho con otra voz si se cambia la configuración.
+   */
+  identidad?(): string;
   sintetizar(texto: string, opciones: { timeoutMs: number }): Promise<AudioSintetizado>;
 }
 

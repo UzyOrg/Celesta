@@ -2,7 +2,7 @@ import 'server-only';
 import { config } from '../config';
 import { crearLlmAnthropic, crearLlmOpenai } from './llm';
 import { crearLlmMock, crearSttMock, crearTtsMock } from './mock';
-import { crearSttAssemblyai, crearSttDeepgram } from './stt';
+import { crearSttAssemblyai, crearSttDeepgram, crearSttElevenlabs } from './stt';
 import type { Proveedores, ProveedorLlm, ProveedorStt, ProveedorTts } from './tipos';
 import { crearTtsElevenlabs } from './tts';
 
@@ -10,7 +10,7 @@ import { crearTtsElevenlabs } from './tts';
  * Elige los proveedores según las variables de entorno:
  *
  *   DEFENSA_LLM_PROVIDER   openai | anthropic | mock
- *   DEFENSA_STT_PROVIDER   deepgram | assemblyai | mock
+ *   DEFENSA_STT_PROVIDER   deepgram | assemblyai | elevenlabs | mock
  *   DEFENSA_TTS_PROVIDER   elevenlabs | mock
  *
  * Cambiar de proveedor es cambiar una variable; los servicios solo conocen las
@@ -34,6 +34,12 @@ export function crearStt(): ProveedorStt {
       return crearSttDeepgram({ clave: config.claveDeepgram, modelo: config.modeloStt });
     case 'assemblyai':
       return crearSttAssemblyai({ clave: config.claveAssemblyai, modelo: config.modeloStt });
+    case 'elevenlabs':
+      return crearSttElevenlabs({
+        clave: config.claveElevenlabs,
+        modelo: config.modeloStt,
+        sinRegistro: () => process.env.DEFENSA_ELEVENLABS_SIN_REGISTRO === '1',
+      });
     default:
       return crearSttMock(() => process.env.DEFENSA_MOCK_STT_TEXTO?.trim() || undefined);
   }

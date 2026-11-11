@@ -12,7 +12,7 @@ import {
   wavDeSilencio,
 } from '../../src/lib/defensa/providers/mock';
 import { crearLlm, crearStt, crearTts } from '../../src/lib/defensa/providers';
-import { crearSttAssemblyai, crearSttDeepgram } from '../../src/lib/defensa/providers/stt';
+import { crearSttAssemblyai, crearSttDeepgram, crearSttElevenlabs } from '../../src/lib/defensa/providers/stt';
 import type { SolicitudJson } from '../../src/lib/defensa/providers/tipos';
 import { crearTtsElevenlabs } from '../../src/lib/defensa/providers/tts';
 import { buildQuestionPlanUser, questionPlanJsonSchema, validateQuestionPlan } from '../../src/lib/defensa/questionPlan';
@@ -262,6 +262,97 @@ test.describe('Deepgram', () => {
   });
 });
 
+test.describe('ElevenLabs Scribe (por lotes)', () => {
+  const respuesta = {
+    language_code: 'spa',
+    text: 'Hola mundo',
+    words: [
+      { text: 'Hola,', start: 0.31, end: 0.62, type: 'word', logprob: -0.1 },
+      { text: ' ', start: 0.62, end: 0.7, type: 'spacing', logprob: 0 },
+      { text: 'mundo', start: 0.7, end: 1.04, type: 'word', logprob: -2.3 },
+      { text: '(risas)', start: 1.1, end: 1.5, type: 'audio_event', logprob: -0.2 },
+      { text: 'sin', start: 1.6, end: 1.9, type: 'word' },
+      { text: '', start: 2, end: 2.1, type: 'word', logprob: -0.1 },
+    ],
+  };
+
+  test('sube la grabación como formulario con palabra por palabra y la llave en el encabezado', async () => {
+    const { fetchFn, llamadas } = fetchFalso([json(respuesta)]);
+    const stt = crearSttElevenlabs({ clave: () => 'el-clave', modelo: () => undefined, fetchFn });
+    const audio = new Uint8Array([1, 2, 3, 4]);
+    await stt.transcribir(audio, 'audio/webm;codecs=opus', { idioma: 'es-419', timeoutMs: 5000 });
+
+    const llamada = llamadas[0]!;
+    expect(llamada.url).toBe('https://api.elevenlabs.io/v1/speech-to-text');
+    expect(llamada.init.method).toBe('POST');
+    // Sin Content-Type propio: el navegador de Node pone el límite del multipart.
+    expect(encabezados(llamada)).toEqual({ 'xi-api-key': 'el-clave' });
+    const formulario = llamada.init.body as FormData;
+    expect(formulario.get('model_id')).toBe('scribe_v2');
+    expect(formulario.get('language_code')).toBe('es');
+    expect(formulario.get('timestamps_granularity')).toBe('word');
+    expect(formulario.get('tag_audio_events')).toBe('false');
+    expect(formulario.get('diarize')).toBe('false');
+    const archivo = formulario.get('file') as File;
+    expect(archivo.name).toBe('respuesta.webm');
+    expect(archivo.type).toBe('audio/webm');
+    expect(Array.from(new Uint8Array(await archivo.arrayBuffer()))).toEqual([1, 2, 3, 4]);
+  });
+
+  test('la confianza es exp(logprob); ignora espacios y sonidos y no inventa palabras', async () => {
+    const { fetchFn } = fetchFalso([json(respuesta)]);
+    const stt = crearSttElevenlabs({ clave: () => 'k', modelo: () => undefined, fetchFn });
+    const r = await stt.transcribir(new Uint8Array(1), 'audio/mp4', { idioma: 'es', timeoutMs: 1000 });
+    expect(r.proveedor).toBe('elevenlabs');
+    expect(r.modelo).toBe('scribe_v2');
+    expect(r.texto).toBe('Hola, mundo sin');
+    expect(r.palabras.map((p) => [p.texto, p.inicioMs, p.finMs])).toEqual([
+      ['Hola,', 310, 620],
+      ['mundo', 700, 1040],
+      ['sin', 1600, 1900],
+    ]);
+    expect(r.palabras[0]!.confianza).toBeCloseTo(Math.exp(-0.1), 6);
+    // Una palabra dudosa (logprob -2.3 ≈ 10 %) queda por debajo del umbral de aclaración.
+    expect(r.palabras[1]!.confianza).toBeCloseTo(Math.exp(-2.3), 6);
+    expect(r.palabras[1]!.confianza).toBeLessThan(0.55);
+    // Sin logprob se da por segura, para no pedir aclaraciones por todo.
+    expect(r.palabras[2]!.confianza).toBe(1);
+    // Sin duración en la respuesta, se usa donde termina la última palabra.
+    expect(r.duracionMs).toBe(1900);
+  });
+
+  test('una confianza imposible se limita a 0–1 y la duración de la respuesta manda si viene', async () => {
+    const { fetchFn } = fetchFalso([json({ audio_duration_secs: 4.5, words: [{ text: 'a', start: 0, end: 1, type: 'word', logprob: 3 }] })]);
+    const stt = crearSttElevenlabs({ clave: () => 'k', modelo: () => 'scribe_v2', fetchFn });
+    const r = await stt.transcribir(new Uint8Array(1), 'audio/wav', { idioma: 'es', timeoutMs: 1000 });
+    expect(r.palabras[0]!.confianza).toBe(1);
+    expect(r.duracionMs).toBe(4500);
+  });
+
+  test('el modo sin registro solo se pide si está activado, y una respuesta vacía no rompe', async () => {
+    const normal = fetchFalso([json({})]);
+    const sin = fetchFalso([json({ words: null })]);
+    const a = await crearSttElevenlabs({ clave: () => 'k', modelo: () => undefined, fetchFn: normal.fetchFn }).transcribir(new Uint8Array(1), 'audio/webm', { idioma: 'es', timeoutMs: 1000 });
+    const b = await crearSttElevenlabs({ clave: () => 'k', modelo: () => undefined, sinRegistro: () => true, fetchFn: sin.fetchFn }).transcribir(new Uint8Array(1), 'audio/webm', { idioma: 'es', timeoutMs: 1000 });
+    expect(normal.llamadas[0]!.url).not.toContain('enable_logging');
+    expect(sin.llamadas[0]!.url).toBe('https://api.elevenlabs.io/v1/speech-to-text?enable_logging=false');
+    expect(a).toMatchObject({ texto: '', palabras: [], duracionMs: 0 });
+    expect(b.palabras).toEqual([]);
+  });
+
+  test('sin llave no llama, y un error del servicio no revela su contenido', async () => {
+    const { fetchFn, llamadas } = fetchFalso([json({ detail: 'secreto-del-proveedor' }, 401)]);
+    const sinLlave = crearSttElevenlabs({ clave: () => undefined, modelo: () => undefined, fetchFn });
+    expect((await fallo(() => sinLlave.transcribir(new Uint8Array(1), 'audio/webm', { idioma: 'es', timeoutMs: 1000 }))).codigo).toBe('no_configurado');
+    expect(llamadas).toHaveLength(0);
+    const conLlave = crearSttElevenlabs({ clave: () => 'k', modelo: () => undefined, fetchFn });
+    const error = await fallo(() => conLlave.transcribir(new Uint8Array(1), 'audio/webm', { idioma: 'es', timeoutMs: 1000 }));
+    expect(error.codigo).toBe('proveedor_fallo');
+    expect(error.message).not.toContain('secreto-del-proveedor');
+  });
+});
+
+
 test.describe('AssemblyAI', () => {
   const completada = {
     status: 'completed',
@@ -417,6 +508,9 @@ test.describe('elegir proveedor por variable de entorno', () => {
     });
     con({ DEFENSA_LLM_PROVIDER: 'openai', DEFENSA_STT_PROVIDER: 'deepgram', DEFENSA_TTS_PROVIDER: 'elevenlabs' }, () => {
       expect([crearLlm().id, crearStt().id, crearTts().id]).toEqual(['openai', 'deepgram', 'elevenlabs']);
+    });
+    con({ DEFENSA_LLM_PROVIDER: 'openai', DEFENSA_STT_PROVIDER: 'elevenlabs', DEFENSA_TTS_PROVIDER: 'elevenlabs' }, () => {
+      expect([crearStt().id, crearTts().id]).toEqual(['elevenlabs', 'elevenlabs']);
     });
     con({ DEFENSA_LLM_PROVIDER: 'anthropic', DEFENSA_STT_PROVIDER: 'assemblyai' }, () => {
       expect([crearLlm().id, crearStt().id, crearTts().id]).toEqual(['anthropic', 'assemblyai', 'mock']);

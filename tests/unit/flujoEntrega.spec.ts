@@ -1,7 +1,9 @@
 import { expect, test } from '@playwright/test';
 import '../support/sinServerOnly';
+import { AVISO_PRIVACIDAD_VERSION } from '../../src/lib/defensa/config';
 import { DefensaError } from '../../src/lib/defensa/errores';
 import { verificarToken } from '../../src/lib/defensa/firmas';
+import { crearTtsMock } from '../../src/lib/defensa/providers/mock';
 import type { ProveedorLlm } from '../../src/lib/defensa/providers/tipos';
 import { PROMPT_VERSION } from '../../src/lib/defensa/questionPlan';
 import {
@@ -22,7 +24,7 @@ import {
   nombreSeguro,
   subirArchivoPorApi,
 } from '../../src/lib/defensa/servicios/entregas';
-import { CLAVE_AUDIO_ACLARACION, estadoDelPlan, prepararPlan } from '../../src/lib/defensa/servicios/planes';
+import { estadoDelPlan, prepararPlan } from '../../src/lib/defensa/servicios/planes';
 import { docxConParrafos, pdfConTexto } from '../support/archivos';
 import { ORACIONES, TRABAJO, planCrudoValido } from '../support/fixtures';
 import { CONSENTIMIENTOS, comoSesion, crearActividadDePrueba, crearMundo, entrarComoAlumno } from '../support/mundo';
@@ -50,12 +52,29 @@ test.describe('entrada del alumno', () => {
     expect(verificado.ok && verificado.claims.ac).toBe(actividad.id);
     expect(r.alumno).toMatchObject({ nombre: 'Ana Torres Ruiz', matricula: '20231457', modoPreferido: 'voz', dispositivo: 'android' });
     expect(estado.consentimientos.map((c) => c.tipo).sort()).toEqual(['aviso_privacidad', 'mayor_de_edad', 'transferencia_internacional']);
-    expect(estado.consentimientos.every((c) => c.aceptado && c.versionAviso === '2026-10-v1')).toBe(true);
+    expect(estado.consentimientos.every((c) => c.aceptado && c.versionAviso === AVISO_PRIVACIDAD_VERSION)).toBe(true);
 
     const sesion = await autenticarAlumno(ctx, r.sesion);
     expect(sesion.alumno.id).toBe(r.alumno.id);
     expect(sesion.actividad.id).toBe(actividad.id);
   });
+
+  for (const secreto of ['', 'demasiado-corto']) {
+    test(`sin una firma válida no persiste al alumno ni consentimientos (${secreto || 'ausente'})`, async () => {
+      const { ctx, estado } = crearMundo();
+      const actividad = await crearActividadDePrueba(ctx);
+      const anterior = process.env.DEFENSA_SIGNING_SECRET;
+      process.env.DEFENSA_SIGNING_SECRET = secreto;
+      try {
+        expect(await codigoDe(() => entrarComoAlumno(ctx, actividad))).toBe('no_configurado');
+        expect(estado.alumnos.size).toBe(0);
+        expect(estado.consentimientos).toHaveLength(0);
+      } finally {
+        if (anterior === undefined) delete process.env.DEFENSA_SIGNING_SECRET;
+        else process.env.DEFENSA_SIGNING_SECRET = anterior;
+      }
+    });
+  }
 
   test('volver a entrar con la misma matrícula retoma al mismo alumno y no cambia su nombre', async () => {
     const { ctx } = crearMundo();
@@ -291,8 +310,20 @@ test.describe('entrega del trabajo', () => {
 });
 
 test.describe('plan de preguntas', () => {
-  test('se arma una vez, con voz guardada, y el prompt queda versionado', async () => {
-    const { ctx, estado } = crearMundo();
+  test('se arma una vez, sin gastar voz, y el prompt queda versionado', async () => {
+    const sintetizados: string[] = [];
+    const base = crearTtsMock();
+    const { ctx } = crearMundo({
+      proveedores: {
+        tts: {
+          id: 'cuenta',
+          sintetizar: (texto, opciones) => {
+            sintetizados.push(texto);
+            return base.sintetizar(texto, opciones);
+          },
+        },
+      },
+    });
     const actividad = await crearActividadDePrueba(ctx);
     const sesion = comoSesion(await entrarComoAlumno(ctx, actividad));
     await entregarTextoPegado(ctx, sesion, TRABAJO);
@@ -309,10 +340,10 @@ test.describe('plan de preguntas', () => {
     expect(plan).toMatchObject({ promptVersion: PROMPT_VERSION, proveedor: 'mock', objetivosSinEvidencia: [], intentos: 1 });
     expect(plan!.plan!.objectives.map((o) => o.candidates.length)).toEqual([2, 2, 2]);
 
-    // 1 apertura + 6 candidatas x 3 textos + 2 transferencias + la frase fija.
-    expect(Object.keys(plan!.audios).length).toBe(1 + 6 * 3 + 2 + 1 - duplicados(plan!.plan!));
-    expect(plan!.audios[CLAVE_AUDIO_ACLARACION]).toMatch(/^preguntas\/.+\/aclaracion\.wav$/);
-    for (const ruta of Object.values(plan!.audios)) expect(estado.archivos.has(`audio/${ruta}`), ruta).toBe(true);
+    // El plan trae unas veinte preguntas posibles y una defensa usa seis: la voz se crea después de
+    // elegirlas (al empezar la defensa), no aquí. Armar el plan no debe gastar nada de voz.
+    expect(sintetizados).toEqual([]);
+    expect(plan!.audios).toEqual({});
 
     const otra = await prepararPlan(ctx, sesion);
     expect(otra).toEqual({ estado: 'listo', trabajo: null });
@@ -458,12 +489,6 @@ test.describe('plan de preguntas', () => {
     expect(plan!.problemas.map((p) => p.message).join(' ')).toContain('máximo 3 objetivos');
   });
 });
-
-/** Cuántos textos de voz se repiten en el plan (comparten audio). */
-function duplicados(plan: { opener: string; objectives: { candidates: { question: string; followup_if_vague: string; followup_if_solid: string }[] }[]; transfer: { question: string }[] }): number {
-  const todos = [plan.opener, ...plan.objectives.flatMap((o) => o.candidates.flatMap((c) => [c.question, c.followup_if_vague, c.followup_if_solid])), ...plan.transfer.map((t) => t.question)];
-  return todos.length - new Set(todos).size;
-}
 
 async function silenciar<T>(accion: () => Promise<T>): Promise<T> {
   const original = console.error;

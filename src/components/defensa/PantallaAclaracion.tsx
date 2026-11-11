@@ -1,6 +1,7 @@
 import { useEffect, useId, useState } from 'react';
 import { Mic, Pause, Pencil, Play, Shield } from 'lucide-react';
 import type { AclaracionPuntual } from './types';
+import { BarrasDeVoz, type FuenteDeVoz } from '@/components/celeste/BarrasDeVoz';
 import { Boton } from '@/components/celeste/Boton';
 import { Personaje } from '@/components/celeste/Personaje';
 import { retraso } from '@/components/celeste/variablesCss';
@@ -22,6 +23,8 @@ interface PantallaAclaracionProps {
   puedeHablar: boolean;
   /** Se está grabando lo que la persona dice para llenar el hueco. */
   grabando: boolean;
+  /** Lo que oye el micrófono: mientras se graba, las barras siguen la voz. */
+  fuenteDeVoz: FuenteDeVoz;
   alEmpezarADecir: () => void;
   /** Termina de decirlo (o manda lo escrito). */
   alListo: () => void;
@@ -68,6 +71,7 @@ export function PantallaAclaracion({
   alOir,
   puedeHablar,
   grabando,
+  fuenteDeVoz,
   alEmpezarADecir,
   alListo,
   alCambiarMedio,
@@ -166,6 +170,8 @@ export function PantallaAclaracion({
       </p>
 
       <div className={styles.espacio} />
+
+      {!escribiendo && grabando ? <BarrasDeVoz preset="voz" fuente={fuenteDeVoz} className={styles.barrasVoz} /> : null}
 
       <AvisoDeError mensaje={error} />
       {escribiendo ? (

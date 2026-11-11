@@ -38,6 +38,30 @@
   animation-name: quieto;
 }
 
+/*
+ * Barras que siguen la voz: la altura la escribe cada cuadro (`--nivel-N`, leída en `--n`).
+ * Sin voz respiran con `scale`, que se suma al `transform` sin pisarlo.
+ */
+.vivas .barra {
+  transform: scaleY(var(--n, 0.12));
+  animation: respira 3.2s ease-in-out var(--respira, 0s) infinite;
+}
+
+.vivas[data-voz] .barra {
+  animation: none;
+}
+
+@keyframes respira {
+  0%,
+  100% {
+    scale: 1 1;
+  }
+
+  50% {
+    scale: 1 1.5;
+  }
+}
+
 @keyframes barra {
   0%,
   100% {
@@ -68,5 +92,15 @@
 
   .quieta .barra {
     transform: scaleY(0.15);
+  }
+
+  /* Con voz: dos formas fijas, una baja en reposo y la onda completa mientras se oye voz. Sin respirar. */
+  .vivas .barra {
+    animation: none;
+    transform: scaleY(calc(var(--fija, 0.6) * 0.3));
+  }
+
+  .vivas[data-voz] .barra {
+    transform: scaleY(var(--fija, 0.6));
   }
 }
